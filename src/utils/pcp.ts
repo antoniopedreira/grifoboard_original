@@ -1,5 +1,4 @@
-
-import { DayOfWeek, PCPBreakdown, Task, TaskStatus } from "../types";
+import { DayOfWeek, PCPBreakdown, Task, TaskStatus, WeeklyPCPData } from "../types";
 
 export const dayNameMap: Record<DayOfWeek, string> = {
   mon: "Seg",
@@ -24,22 +23,69 @@ export const getFullDayName = (day: DayOfWeek): string => {
   return map[day];
 };
 
-export const getCurrentWeekDates = (): { start: Date, end: Date } => {
-  const today = new Date();
-  const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
+// Get the start date (Monday) from a given date
+export const getWeekStartDate = (date: Date): Date => {
+  const dayOfWeek = date.getDay(); // 0 for Sunday, 1 for Monday, etc.
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days, otherwise go back to Monday
   
-  // Calculate days to subtract to get to Monday (first day of week)
-  const daysToMonday = currentDay === 0 ? 6 : currentDay - 1;
-  
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - daysToMonday);
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - daysToSubtract);
   monday.setHours(0, 0, 0, 0);
   
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+  return monday;
+};
+
+// Get the end date (Sunday) from a given date's week
+export const getWeekEndDate = (date: Date): Date => {
+  const startDate = getWeekStartDate(date);
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 6);
+  endDate.setHours(23, 59, 59, 999);
   
-  return { start: monday, end: sunday };
+  return endDate;
+};
+
+// Format date as a string for display
+export const formatDateRange = (startDate: Date, endDate: Date): string => {
+  const startDay = startDate.getDate().toString().padStart(2, '0');
+  const startMonth = (startDate.getMonth() + 1).toString().padStart(2, '0');
+  
+  const endDay = endDate.getDate().toString().padStart(2, '0');
+  const endMonth = (endDate.getMonth() + 1).toString().padStart(2, '0');
+  
+  return `${startDay}/${startMonth} - ${endDay}/${endMonth}`;
+};
+
+export const getCurrentWeekDates = (): { start: Date, end: Date } => {
+  const today = new Date();
+  const startDate = getWeekStartDate(today);
+  const endDate = getWeekEndDate(today);
+  
+  return { start: startDate, end: endDate };
+};
+
+// Navigate to previous week
+export const getPreviousWeekDates = (currentStart: Date): { start: Date, end: Date } => {
+  const newStart = new Date(currentStart);
+  newStart.setDate(currentStart.getDate() - 7);
+  
+  const newEnd = new Date(newStart);
+  newEnd.setDate(newStart.getDate() + 6);
+  newEnd.setHours(23, 59, 59, 999);
+  
+  return { start: newStart, end: newEnd };
+};
+
+// Navigate to next week
+export const getNextWeekDates = (currentStart: Date): { start: Date, end: Date } => {
+  const newStart = new Date(currentStart);
+  newStart.setDate(currentStart.getDate() + 7);
+  
+  const newEnd = new Date(newStart);
+  newEnd.setDate(newStart.getDate() + 6);
+  newEnd.setHours(23, 59, 59, 999);
+  
+  return { start: newStart, end: newEnd };
 };
 
 export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
@@ -54,7 +100,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
     };
   }
 
-  // Overall PCP - now based on completionStatus
+  // Overall PCP - based on completionStatus
   const completedTasks = tasksWithPlannedDays.filter(task => task.completionStatus === "completed").length;
   const totalTasks = tasksWithPlannedDays.length;
   const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
@@ -108,7 +154,7 @@ export const getStatusColor = (status: TaskStatus): string => {
   }
 };
 
-export const generateMockTasks = (): Task[] => {
+export const generateMockTasks = (weekStart?: Date): Task[] => {
   const sectors = ["Fundação", "Alvenaria", "Estrutura", "Acabamento", "Instalações"];
   const disciplines = ["Civil", "Elétrica", "Hidráulica", "Arquitetura"];
   const teams = ["Equipe A", "Equipe B", "Equipe C"];
@@ -162,11 +208,38 @@ export const generateMockTasks = (): Task[] => {
       responsible,
       plannedDays,
       dailyStatus,
-      isFullyCompleted: false,  // This is now ignored for PCP calculation
+      isFullyCompleted: false,
       completionStatus,
-      causeIfNotDone: completionStatus === "completed" ? undefined : "Falta de material"
+      causeIfNotDone: completionStatus === "completed" ? undefined : "Falta de material",
+      weekStartDate: weekStart ? new Date(weekStart) : undefined
     });
   }
   
   return mockTasks;
+};
+
+// Generate mock weekly PCP data for the chart
+export const generateMockWeeklyData = (currentWeekStart: Date, weeksToGenerate: number = 4): WeeklyPCPData[] => {
+  const weeklyData: WeeklyPCPData[] = [];
+  
+  // Generate previous weeks data
+  for (let i = weeksToGenerate - 1; i >= 0; i--) {
+    const weekDate = new Date(currentWeekStart);
+    weekDate.setDate(currentWeekStart.getDate() - (7 * i));
+    
+    const startDate = getWeekStartDate(weekDate);
+    const endDate = getWeekEndDate(startDate);
+    const dateStr = formatDateRange(startDate, endDate);
+    
+    // Generate a random percentage between 30 and 95
+    const percentage = Math.floor(Math.random() * (95 - 30 + 1)) + 30;
+    
+    weeklyData.push({
+      week: dateStr,
+      percentage,
+      date: new Date(startDate)
+    });
+  }
+  
+  return weeklyData;
 };

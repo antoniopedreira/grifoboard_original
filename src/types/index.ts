@@ -21,8 +21,9 @@ export interface Task {
   plannedDays: DayOfWeek[];
   dailyStatus: DailyStatus[];
   isFullyCompleted: boolean;
-  completionStatus: TaskCompletionStatus;  // New field
+  completionStatus: TaskCompletionStatus;
   causeIfNotDone?: string;
+  weekStartDate?: Date; // The start of the week this task belongs to
 }
 
 export interface PCPData {
@@ -35,4 +36,10 @@ export interface PCPBreakdown {
   overall: PCPData;
   bySector: Record<string, PCPData>;
   byResponsible: Record<string, PCPData>;
+}
+
+export interface WeeklyPCPData {
+  week: string;
+  percentage: number;
+  date: Date; // For sorting purposes
 }
