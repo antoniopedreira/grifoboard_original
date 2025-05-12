@@ -54,8 +54,8 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
     };
   }
 
-  // Overall PCP
-  const completedTasks = tasksWithPlannedDays.filter(task => task.isFullyCompleted).length;
+  // Overall PCP - now based on completionStatus
+  const completedTasks = tasksWithPlannedDays.filter(task => task.completionStatus === "completed").length;
   const totalTasks = tasksWithPlannedDays.length;
   const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
@@ -65,7 +65,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   
   sectors.forEach(sector => {
     const sectorTasks = tasksWithPlannedDays.filter(task => task.sector === sector);
-    const sectorCompletedTasks = sectorTasks.filter(task => task.isFullyCompleted).length;
+    const sectorCompletedTasks = sectorTasks.filter(task => task.completionStatus === "completed").length;
     bySector[sector] = {
       completedTasks: sectorCompletedTasks,
       totalTasks: sectorTasks.length,
@@ -79,7 +79,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   
   responsibles.forEach(responsible => {
     const responsibleTasks = tasksWithPlannedDays.filter(task => task.responsible === responsible);
-    const responsibleCompletedTasks = responsibleTasks.filter(task => task.isFullyCompleted).length;
+    const responsibleCompletedTasks = responsibleTasks.filter(task => task.completionStatus === "completed").length;
     byResponsible[responsible] = {
       completedTasks: responsibleCompletedTasks,
       totalTasks: responsibleTasks.length,
@@ -149,10 +149,8 @@ export const generateMockTasks = (): Task[] => {
       }
     });
     
-    // Determine if task is fully completed
-    const isFullyCompleted = plannedDays.length > 0 && plannedDays.every(
-      plannedDay => dailyStatus.find(s => s.day === plannedDay)?.status === "completed"
-    );
+    // Randomly assign completionStatus
+    const completionStatus = Math.random() > 0.5 ? "completed" : "not_completed";
     
     mockTasks.push({
       id: `task-${i}`,
@@ -164,8 +162,9 @@ export const generateMockTasks = (): Task[] => {
       responsible,
       plannedDays,
       dailyStatus,
-      isFullyCompleted,
-      causeIfNotDone: isFullyCompleted ? undefined : "Falta de material"
+      isFullyCompleted: false,  // This is now ignored for PCP calculation
+      completionStatus,
+      causeIfNotDone: completionStatus === "completed" ? undefined : "Falta de material"
     });
   }
   

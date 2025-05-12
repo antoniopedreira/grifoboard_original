@@ -3,6 +3,8 @@ export type DayOfWeek = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 export type TaskStatus = "planned" | "completed" | "not_done" | "not_planned";
 
+export type TaskCompletionStatus = "completed" | "not_completed";
+
 export interface DailyStatus {
   day: DayOfWeek;
   status: TaskStatus;
@@ -19,6 +21,7 @@ export interface Task {
   plannedDays: DayOfWeek[];
   dailyStatus: DailyStatus[];
   isFullyCompleted: boolean;
+  completionStatus: TaskCompletionStatus;  // New field
   causeIfNotDone?: string;
 }
 

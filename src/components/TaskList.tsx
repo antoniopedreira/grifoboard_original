@@ -14,6 +14,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSector, setFilterSector] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   
   // Extract unique sectors and responsibles for filters
   const sectors = Array.from(new Set(tasks.map(task => task.sector)));
@@ -28,8 +29,11 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
       
     const matchesSector = filterSector === "all" || task.sector === filterSector;
     const matchesResponsible = filterResponsible === "all" || task.responsible === filterResponsible;
+    const matchesStatus = filterStatus === "all" || 
+                         (filterStatus === "completed" && task.completionStatus === "completed") ||
+                         (filterStatus === "not_completed" && task.completionStatus === "not_completed");
     
-    return matchesSearch && matchesSector && matchesResponsible;
+    return matchesSearch && matchesSector && matchesResponsible && matchesStatus;
   });
   
   return (
@@ -42,6 +46,19 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
           />
+        </div>
+        
+        <div className="w-full md:w-40">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="completed">Concluídas</SelectItem>
+              <SelectItem value="not_completed">Não Concluídas</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         
         <div className="w-full md:w-52">

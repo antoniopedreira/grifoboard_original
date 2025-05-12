@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { DayOfWeek, Task, TaskStatus } from "@/types";
 import { dayNameMap, getStatusColor } from "@/utils/pcp";
 
@@ -22,15 +23,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
       status.day === day ? { ...status, status: newStatus } : status
     );
 
-    // Check if all planned days are completed
-    const isFullyCompleted = task.plannedDays.every(plannedDay => 
-      updatedDailyStatus.find(s => s.day === plannedDay)?.status === "completed"
-    );
-
     onTaskUpdate({
       ...task,
       dailyStatus: updatedDailyStatus,
-      isFullyCompleted
+    });
+  };
+
+  const handleCompletionStatusChange = (completed: boolean) => {
+    onTaskUpdate({
+      ...task,
+      completionStatus: completed ? "completed" : "not_completed",
     });
   };
 
@@ -87,10 +89,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
             <h3 className="font-semibold">{task.description}</h3>
             <p className="text-sm text-gray-500">{task.item}</p>
           </div>
-          {task.isFullyCompleted ? (
+          {task.completionStatus === "completed" ? (
             <Badge className="bg-green-500">Concluída</Badge>
           ) : (
-            <Badge variant="outline" className="text-orange-500 border-orange-500">Em Andamento</Badge>
+            <Badge variant="outline" className="text-orange-500 border-orange-500">Não Concluída</Badge>
           )}
         </div>
       </CardHeader>
@@ -125,11 +127,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
             ))}
           </div>
         </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <span className="font-medium">Status da Tarefa:</span>
+          <div className="flex items-center space-x-2">
+            <span className={task.completionStatus === "completed" ? "text-gray-400" : "font-medium"}>Não Concluída</span>
+            <Switch 
+              checked={task.completionStatus === "completed"}
+              onCheckedChange={handleCompletionStatusChange}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <span className={task.completionStatus !== "completed" ? "text-gray-400" : "font-medium"}>Concluída</span>
+          </div>
+        </div>
       </CardContent>
       
       <CardFooter className="pt-2">
         <div className="w-full flex justify-between items-center">
-          {!task.isFullyCompleted ? (
+          {task.completionStatus !== "completed" ? (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-xs text-red-500">
