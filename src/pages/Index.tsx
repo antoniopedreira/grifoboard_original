@@ -37,7 +37,8 @@ const Index = () => {
       id: uuidv4(),
       ...newTaskData,
       dailyStatus: allDays,
-      isFullyCompleted: false
+      isFullyCompleted: false,
+      completionStatus: newTaskData.completionStatus || "not_completed" // Use the provided completionStatus or default to "not_completed"
     };
     
     setTasks(prev => [newTask, ...prev]);

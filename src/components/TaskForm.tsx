@@ -29,6 +29,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
   const [team, setTeam] = useState("");
   const [responsible, setResponsible] = useState("");
   const [plannedDays, setPlannedDays] = useState<DayOfWeek[]>([]);
+  const [completionStatus, setCompletionStatus] = useState<"completed" | "not_completed">("not_completed");
   
   const handleDayToggle = (day: DayOfWeek) => {
     setPlannedDays(prev => 
@@ -46,7 +47,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
       discipline,
       team,
       responsible,
-      plannedDays
+      plannedDays,
+      completionStatus, // Add the completion status to the task
     });
     
     // Reset form fields
@@ -57,6 +59,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
     setTeam("");
     setResponsible("");
     setPlannedDays([]);
+    setCompletionStatus("not_completed");
     
     // Close the dialog
     onOpenChange(false);
