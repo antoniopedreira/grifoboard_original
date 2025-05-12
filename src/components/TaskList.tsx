@@ -12,8 +12,8 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterSector, setFilterSector] = useState("");
-  const [filterResponsible, setFilterResponsible] = useState("");
+  const [filterSector, setFilterSector] = useState("all");
+  const [filterResponsible, setFilterResponsible] = useState("all");
   
   // Extract unique sectors and responsibles for filters
   const sectors = Array.from(new Set(tasks.map(task => task.sector)));
@@ -26,8 +26,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
       task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.item.toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesSector = filterSector === "" || task.sector === filterSector;
-    const matchesResponsible = filterResponsible === "" || task.responsible === filterResponsible;
+    const matchesSector = filterSector === "all" || task.sector === filterSector;
+    const matchesResponsible = filterResponsible === "all" || task.responsible === filterResponsible;
     
     return matchesSearch && matchesSector && matchesResponsible;
   });
@@ -50,7 +50,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
               <SelectValue placeholder="Filtrar por setor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os setores</SelectItem>
+              <SelectItem value="all">Todos os setores</SelectItem>
               {sectors.map(sector => (
                 <SelectItem key={sector} value={sector}>{sector}</SelectItem>
               ))}
@@ -64,7 +64,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
               <SelectValue placeholder="Filtrar por responsável" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os responsáveis</SelectItem>
+              <SelectItem value="all">Todos os responsáveis</SelectItem>
               {responsibles.map(responsible => (
                 <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
               ))}
