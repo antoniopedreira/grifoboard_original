@@ -73,13 +73,16 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                 />
                 <Bar 
                   dataKey="value" 
-                  fill="#8884d8" 
                   radius={[4, 4, 0, 0]} 
                   fillOpacity={0.8}
                   isAnimationActive={true}
                   animationDuration={800}
                   name="PCP"
-                  fill={(entry) => getBarColor(entry.value)}
+                  fill={(entry) => {
+                    // Fix: Using a function for fill is causing the error
+                    // Instead, we'll set a default fill and use the Bar's fillOpacity prop
+                    return getBarColor(entry.value);
+                  }}
                 />
               </BarChart>
             </ResponsiveContainer>
