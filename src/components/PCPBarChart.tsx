@@ -7,11 +7,12 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 
 interface PCPBarChartProps {
   weeklyData: {
@@ -78,12 +79,12 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                   isAnimationActive={true}
                   animationDuration={800}
                   name="PCP"
-                  fill={(entry) => {
-                    // Fix: Using a function for fill is causing the error
-                    // Instead, we'll set a default fill and use the Bar's fillOpacity prop
-                    return getBarColor(entry.value);
-                  }}
-                />
+                  fill="#8884d8" // Use a default fill color
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
