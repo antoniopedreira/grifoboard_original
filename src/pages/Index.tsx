@@ -181,15 +181,11 @@ const Index = () => {
           </Button>
         </div>
         
-        {/* PCP Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <PCPChart pcpData={pcpData} />
-        </div>
-        
-        {/* Weekly Bar Chart */}
-        <div className="mb-8">
-          <PCPBarChart weeklyData={weeklyPCPData} />
-        </div>
+        {/* PCP Charts - now includes the bar chart in the grid */}
+        <PCPChart 
+          pcpData={pcpData} 
+          weeklyData={weeklyPCPData} 
+        />
         
         <TaskList 
           tasks={tasks} 

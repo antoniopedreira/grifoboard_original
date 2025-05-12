@@ -1,10 +1,12 @@
 
 import { Progress } from "@/components/ui/progress";
-import { PCPBreakdown, PCPData } from "@/types";
+import { PCPBreakdown, PCPData, WeeklyPCPData } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import PCPBarChart from "./PCPBarChart";
 
 interface PCPChartProps {
   pcpData: PCPBreakdown;
+  weeklyData: WeeklyPCPData[];
 }
 
 interface PCPProgressProps {
@@ -46,9 +48,9 @@ const PCPProgress: React.FC<PCPProgressProps> = ({ data, label }) => {
   );
 };
 
-const PCPChart: React.FC<PCPChartProps> = ({ pcpData }) => {
+const PCPChart: React.FC<PCPChartProps> = ({ pcpData, weeklyData }) => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
       {/* Overall PCP */}
       <Card className="col-span-1 shadow-sm">
         <CardHeader className="pb-2">
@@ -93,6 +95,11 @@ const PCPChart: React.FC<PCPChartProps> = ({ pcpData }) => {
             ))}
           </div>
         </CardContent>
+      </Card>
+
+      {/* Weekly PCP Chart */}
+      <Card className="col-span-1 shadow-sm">
+        <PCPBarChart weeklyData={weeklyData} />
       </Card>
     </div>
   );

@@ -29,19 +29,20 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
   }));
 
   const getBarColor = (percentage: number) => {
-    if (percentage >= 80) return "#16a34a"; // green-600
-    if (percentage >= 60) return "#ca8a04"; // yellow-600
-    if (percentage >= 40) return "#f97316"; // orange-500
-    return "#dc2626"; // red-600
+    // Use different shades of blue based on completion percentage
+    if (percentage >= 80) return "#0EA5E9"; // Deep ocean blue for high completion
+    if (percentage >= 60) return "#38BDF8"; // Medium blue
+    if (percentage >= 40) return "#7DD3FC"; // Light blue
+    return "#BAE6FD"; // Very light blue for low completion
   };
 
   return (
-    <Card className="col-span-3 shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl">PCP por Semana</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="pb-1">
+        <CardTitle className="text-lg">PCP por Semana</CardTitle>
       </CardHeader>
-      <CardContent className="pt-2">
-        <div className="h-[300px] w-full">
+      <CardContent className="pt-1">
+        <div className="h-[180px] w-full">
           <ChartContainer
             config={{
               value: {
@@ -50,12 +51,14 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
             }}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                 <YAxis
                   tickFormatter={(value) => `${value}%`}
                   domain={[0, 100]}
+                  tick={{ fontSize: 10 }}
+                  width={35}
                 />
                 <Tooltip
                   content={({ active, payload }) => {
@@ -75,11 +78,11 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                 <Bar 
                   dataKey="value" 
                   radius={[4, 4, 0, 0]} 
-                  fillOpacity={0.8}
+                  fillOpacity={0.9}
                   isAnimationActive={true}
-                  animationDuration={800}
+                  animationDuration={600}
                   name="PCP"
-                  fill="#8884d8" // Use a default fill color
+                  fill="#0EA5E9"
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
