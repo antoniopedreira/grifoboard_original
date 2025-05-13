@@ -40,7 +40,7 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
 
   return (
     <CardContent className="pt-1 px-0">
-      <div className="h-[140px] w-full">
+      <div className="h-[220px] w-full">
         <ChartContainer
           config={{
             value: {
@@ -52,7 +52,7 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
             <BarChart 
               data={chartData} 
               margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-              barSize={30} // Adjusted bar width
+              barSize={36} // Aumentado a largura das barras
               barGap={2}   // Gap between bars
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />

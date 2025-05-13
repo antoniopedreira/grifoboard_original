@@ -19,11 +19,10 @@ const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
     <Bar 
       dataKey="value" 
       radius={[4, 4, 0, 0]} 
-      fillOpacity={0.9}
-      isAnimationActive={true}
-      animationDuration={600}
+      fillOpacity={1}
+      isAnimationActive={false}
       name="PCP"
-      minPointSize={2} // Ensure small values are still visible
+      minPointSize={5} // Garantir que valores pequenos sejam visíveis
     >
       {chartData.map((entry, index) => (
         <Cell 
