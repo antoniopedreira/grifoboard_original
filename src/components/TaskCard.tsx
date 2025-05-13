@@ -5,14 +5,52 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { DayOfWeek, Task, TaskStatus } from "@/types";
 import { dayNameMap, getStatusColor } from "@/utils/pcp";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuTrigger, 
+  DropdownMenuItem 
+} from "@/components/ui/dropdown-menu";
 
 interface TaskCardProps {
   task: Task;
   onTaskUpdate: (updatedTask: Task) => void;
 }
+
+// Standard causes list
+const standardCauses = [
+  "Absenteísmo",
+  "Chuva",
+  "Equipe produzindo abaixo do planejado",
+  "Equipe trabalhando em outra obra",
+  "Erro no planejamento",
+  "Falta de comunicação",
+  "Falta de equipamento",
+  "Falta de liberação dos espaços",
+  "Falta de mão de abra (atraso na contratação)",
+  "Falta de mão de obra",
+  "Falta de material",
+  "Falta de planejamento de compra",
+  "Falta de projeto",
+  "Indefinição Engenharia",
+  "Material distribuido em quant. Insuficiente",
+  "Material incorreto",
+  "Material solicitado em qt insuficiente",
+  "Mau dimensionamento da equipe",
+  "Modificação de projeto",
+  "Monitoramento de quant. de material em estoque",
+  "Mudança do plano de ataque",
+  "Pacote de trabalho grande",
+  "Predecessora concluída fora de prazo",
+  "Presença de água",
+  "Quebra/Manutenção de equipamento",
+  "Relocação da mão de obra",
+  "Retrabalho",
+  "Sem disponibilidade",
+  "Vento"
+];
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -29,10 +67,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
     });
   };
 
-  const handleCompletionStatusChange = (completed: boolean) => {
+  const handleCompletionStatusChange = () => {
+    const newCompletionStatus = task.completionStatus === "completed" ? "not_completed" : "completed";
+    
     onTaskUpdate({
       ...task,
-      completionStatus: completed ? "completed" : "not_completed",
+      completionStatus: newCompletionStatus,
     });
   };
 
@@ -42,6 +82,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
       causeIfNotDone: causeText
     });
     setIsDialogOpen(false);
+  };
+
+  const handleCauseSelect = (cause: string) => {
+    setCauseText(cause);
+    onTaskUpdate({
+      ...task,
+      causeIfNotDone: cause
+    });
   };
 
   // Function to render status button for each day
@@ -89,11 +137,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
             <h3 className="font-semibold">{task.description}</h3>
             <p className="text-sm text-gray-500">{task.item}</p>
           </div>
-          {task.completionStatus === "completed" ? (
-            <Badge className="bg-green-500">Concluída</Badge>
-          ) : (
-            <Badge variant="outline" className="text-orange-500 border-orange-500">Não Concluída</Badge>
-          )}
+          <Badge 
+            className={`cursor-pointer ${
+              task.completionStatus === "completed" 
+                ? "bg-green-500 hover:bg-green-600" 
+                : "text-orange-500 border-orange-500 hover:bg-orange-100"
+            }`}
+            variant={task.completionStatus === "completed" ? "default" : "outline"}
+            onClick={handleCompletionStatusChange}
+          >
+            {task.completionStatus === "completed" ? "Concluída" : "Não Concluída"}
+          </Badge>
         </div>
       </CardHeader>
       
@@ -127,45 +181,52 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
             ))}
           </div>
         </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <span className="font-medium">Status da Tarefa:</span>
-          <div className="flex items-center space-x-2">
-            <span className={task.completionStatus === "completed" ? "text-gray-400" : "font-medium"}>Não Concluída</span>
-            <Switch 
-              checked={task.completionStatus === "completed"}
-              onCheckedChange={handleCompletionStatusChange}
-              className="data-[state=checked]:bg-green-500"
-            />
-            <span className={task.completionStatus !== "completed" ? "text-gray-400" : "font-medium"}>Concluída</span>
-          </div>
-        </div>
       </CardContent>
       
       <CardFooter className="pt-2">
         <div className="w-full flex justify-between items-center">
           {task.completionStatus !== "completed" ? (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-xs text-red-500">
-                  {task.causeIfNotDone ? "Editar causa" : "Adicionar causa"}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Justificativa de Não Execução</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4 space-y-4">
-                  <Textarea 
-                    value={causeText} 
-                    onChange={(e) => setCauseText(e.target.value)}
-                    placeholder="Informe o motivo da não execução..."
-                    className="min-h-[100px]"
-                  />
-                  <Button onClick={handleCauseSave}>Salvar</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-xs text-red-500">
+                    {task.causeIfNotDone ? "Editar causa" : "Adicionar causa"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Justificativa de Não Execução</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 space-y-4">
+                    <Textarea 
+                      value={causeText} 
+                      onChange={(e) => setCauseText(e.target.value)}
+                      placeholder="Informe o motivo da não execução..."
+                      className="min-h-[100px]"
+                    />
+                    <Button onClick={handleCauseSave}>Salvar</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-xs">
+                    Causas Padrão
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="max-h-[200px] overflow-y-auto">
+                  {standardCauses.map(cause => (
+                    <DropdownMenuItem 
+                      key={cause} 
+                      onClick={() => handleCauseSelect(cause)}
+                    >
+                      {cause}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <span />
           )}
