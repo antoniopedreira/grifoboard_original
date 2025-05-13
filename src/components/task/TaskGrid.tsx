@@ -98,30 +98,26 @@ const TaskGrid: React.FC<TaskGridProps> = ({
                   href="#" 
                   onClick={(e) => {
                     e.preventDefault();
-                    if (currentPage > 1) onPageChange(currentPage - 1);
+                    onPageChange(currentPage - 1);
                   }}
                   className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
               
               {getPageNumbers().map((page, index) => (
-                page === "ellipsis" ? (
-                  <PaginationItem key={`ellipsis-${index}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={`page-${page}`}>
-                    <PaginationLink 
-                      href="#" 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onPageChange(Number(page));
-                      }}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
+                React.createElement(PaginationItem, { key: `page-${page}-${index}` },
+                  page === "ellipsis" 
+                    ? <PaginationEllipsis /> 
+                    : <PaginationLink 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onPageChange(Number(page));
+                        }}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
                 )
               ))}
               
@@ -130,7 +126,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({
                   href="#" 
                   onClick={(e) => {
                     e.preventDefault();
-                    if (currentPage < totalPages) onPageChange(currentPage + 1);
+                    onPageChange(currentPage + 1);
                   }}
                   className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                 />

@@ -19,8 +19,9 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
   
   // Reset to page 1 when tasks are updated
   useEffect(() => {
+    setFilteredTasks(tasks);
     setCurrentPage(1);
-  }, [tasks.length]);
+  }, [tasks]);
   
   const handleTaskUpdate = (updatedTask: Task) => {
     onTaskUpdate(updatedTask);
