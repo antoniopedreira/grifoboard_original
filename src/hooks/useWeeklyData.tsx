@@ -17,6 +17,9 @@ export function useWeeklyData() {
   // Store historical PCP data for consistency when navigating between weeks
   const historicalDataRef = useRef<Map<string, number>>(new Map());
   
+  // Store tasks by week start date
+  const weeklyTasksRef = useRef<Map<string, Task[]>>(new Map());
+  
   // Initialize tasks and weekly data when component mounts or week changes
   useEffect(() => {
     // Set end date based on start date
@@ -25,31 +28,50 @@ export function useWeeklyData() {
     endDate.setHours(23, 59, 59, 999);
     setWeekEndDate(endDate);
     
-    // Generate new tasks for the current week
-    const newTasks = generateMockTasks(weekStartDate);
-    setTasks(newTasks);
+    // Get weekly key for storage
+    const weekKey = weekStartDate.toISOString().split('T')[0];
+    
+    // Check if we already have tasks for this week
+    let currentWeekTasks: Task[];
+    if (weeklyTasksRef.current.has(weekKey)) {
+      // Use stored tasks for this week
+      currentWeekTasks = weeklyTasksRef.current.get(weekKey)!;
+    } else {
+      // Generate new tasks for the current week and store them
+      currentWeekTasks = generateMockTasks(weekStartDate);
+      weeklyTasksRef.current.set(weekKey, currentWeekTasks);
+    }
+    
+    // Update current tasks state
+    setTasks(currentWeekTasks);
     
     // Calculate PCP for the current week's tasks
-    const pcpData = calculatePCP(newTasks);
+    const pcpData = calculatePCP(currentWeekTasks);
     const currentWeekPCP = Math.round(pcpData.overall.percentage);
     
-    // Store the current week's PCP in historical data
-    const weekKey = weekStartDate.toISOString().split('T')[0];
-    historicalDataRef.current.set(weekKey, currentWeekPCP);
+    // Store the current week's PCP in historical data if not already set
+    if (!historicalDataRef.current.has(weekKey)) {
+      historicalDataRef.current.set(weekKey, currentWeekPCP);
+    }
     
     // Generate weekly PCP data with consistent historical values
     setWeeklyPCPData(
-      generateWeeklyPCPData(weekStartDate, currentWeekPCP, historicalDataRef.current)
+      generateWeeklyPCPData(weekStartDate, historicalDataRef.current.get(weekKey) || currentWeekPCP, historicalDataRef.current)
     );
   }, [weekStartDate]);
   
   const updateHistoricalDataAndCharts = (updatedTasks: Task[]) => {
+    // Get weekly key for storage
+    const weekKey = weekStartDate.toISOString().split('T')[0];
+    
+    // Update tasks in storage
+    weeklyTasksRef.current.set(weekKey, updatedTasks);
+    
     // Recalculate PCP
     const newPcpData = calculatePCP(updatedTasks);
     const currentWeekPCP = Math.round(newPcpData.overall.percentage);
     
     // Update historical data for current week
-    const weekKey = weekStartDate.toISOString().split('T')[0];
     historicalDataRef.current.set(weekKey, currentWeekPCP);
     
     // Update weekly data to match the current week's actual PCP
