@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Task } from "@/types";
@@ -15,6 +16,7 @@ const MainPageContent = () => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
+  const [selectedCause, setSelectedCause] = useState<string | null>(null);
   
   const {
     weekStartDate,
@@ -42,6 +44,23 @@ const MainPageContent = () => {
       title: "Tarefa atualizada",
       description: "As alterações foram salvas com sucesso.",
     });
+  };
+  
+  const handleCauseSelect = (cause: string) => {
+    // If user clicks the same cause, clear the filter
+    if (selectedCause === cause) {
+      setSelectedCause(null);
+      toast({
+        title: "Filtro removido",
+        description: "Mostrando todas as tarefas.",
+      });
+    } else {
+      setSelectedCause(cause);
+      toast({
+        title: "Tarefas filtradas",
+        description: `Mostrando tarefas com causa: ${cause}`,
+      });
+    }
   };
   
   const handleTaskCreate = (newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
@@ -75,11 +94,13 @@ const MainPageContent = () => {
   const navigateToPreviousWeek = () => {
     const { start } = getPreviousWeekDates(weekStartDate);
     setWeekStartDate(start);
+    setSelectedCause(null); // Clear filter when changing week
   };
   
   const navigateToNextWeek = () => {
     const { start } = getNextWeekDates(weekStartDate);
     setWeekStartDate(start);
+    setSelectedCause(null); // Clear filter when changing week
   };
   
   return (
@@ -109,12 +130,31 @@ const MainPageContent = () => {
       {/* PCP Charts */}
       <PCPChart 
         pcpData={pcpData} 
-        weeklyData={weeklyPCPData} 
+        weeklyData={weeklyPCPData}
+        tasks={tasks}
+        onCauseSelect={handleCauseSelect}
       />
+      
+      {selectedCause && (
+        <div className="mb-4 px-4 py-2 bg-muted rounded-lg flex justify-between items-center">
+          <div className="text-sm">
+            <span className="font-medium">Filtro ativo: </span>
+            <span className="text-primary">{selectedCause}</span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setSelectedCause(null)}
+          >
+            Limpar
+          </Button>
+        </div>
+      )}
       
       <TaskList 
         tasks={tasks} 
         onTaskUpdate={handleTaskUpdate} 
+        selectedCause={selectedCause}
       />
       
       <TaskForm 

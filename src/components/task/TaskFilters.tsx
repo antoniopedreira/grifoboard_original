@@ -7,9 +7,10 @@ import { Task } from "@/types";
 interface TaskFiltersProps {
   tasks: Task[];
   onFiltersChange: (filteredTasks: Task[]) => void;
+  selectedCause: string | null;
 }
 
-const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => {
+const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selectedCause }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSector, setFilterSector] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
@@ -44,6 +45,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
 
     onFiltersChange(filteredTasks);
   }, [searchTerm, filterSector, filterResponsible, filterExecutor, filterCable, filterStatus, tasks, onFiltersChange]);
+
+  // Reset filters when selectedCause changes
+  useEffect(() => {
+    setSearchTerm("");
+    setFilterSector("all");
+    setFilterResponsible("all");
+    setFilterExecutor("all");
+    setFilterCable("all");
+    setFilterStatus("all");
+  }, [selectedCause]);
   
   return (
     <div className="flex flex-wrap gap-4 mb-6">

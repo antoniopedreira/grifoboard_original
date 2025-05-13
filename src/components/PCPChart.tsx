@@ -1,15 +1,17 @@
 
-import { PCPBreakdown, WeeklyPCPData } from "@/types";
+import { PCPBreakdown, Task, WeeklyPCPData } from "@/types";
 import PCPOverallCard from "./chart/PCPOverallCard";
 import PCPBreakdownCard from "./chart/PCPBreakdownCard";
-import PCPWeeklyCard from "./chart/PCPWeeklyCard";
+import CausesCountCard from "./chart/CausesCountCard";
 
 interface PCPChartProps {
   pcpData: PCPBreakdown;
   weeklyData: WeeklyPCPData[];
+  tasks: Task[];
+  onCauseSelect: (cause: string) => void;
 }
 
-const PCPChart: React.FC<PCPChartProps> = ({ pcpData, weeklyData }) => {
+const PCPChart: React.FC<PCPChartProps> = ({ pcpData, weeklyData, tasks, onCauseSelect }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
       {/* Overall PCP */}
@@ -21,8 +23,8 @@ const PCPChart: React.FC<PCPChartProps> = ({ pcpData, weeklyData }) => {
       {/* PCP by Responsible */}
       <PCPBreakdownCard title="PCP por Responsável" data={pcpData.byResponsible} />
 
-      {/* Weekly PCP Chart */}
-      <PCPWeeklyCard weeklyData={weeklyData} />
+      {/* Causes Count Card */}
+      <CausesCountCard tasks={tasks} onCauseSelect={onCauseSelect} />
     </div>
   );
 };
