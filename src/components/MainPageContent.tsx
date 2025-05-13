@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Task } from "@/types";
@@ -43,6 +42,20 @@ const MainPageContent = () => {
     toast({
       title: "Tarefa atualizada",
       description: "As alterações foram salvas com sucesso.",
+    });
+  };
+
+  const handleTaskDelete = (taskId: string) => {
+    // Remove the task
+    const updatedTasks = tasks.filter(task => task.id !== taskId);
+    setTasks(updatedTasks);
+    
+    // Update charts with consistent historical data
+    updateHistoricalDataAndCharts(updatedTasks);
+    
+    toast({
+      title: "Tarefa excluída",
+      description: "A tarefa foi removida com sucesso.",
     });
   };
   
@@ -154,6 +167,7 @@ const MainPageContent = () => {
       <TaskList 
         tasks={tasks} 
         onTaskUpdate={handleTaskUpdate} 
+        onTaskDelete={handleTaskDelete}
         selectedCause={selectedCause}
       />
       
