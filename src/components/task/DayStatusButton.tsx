@@ -17,7 +17,7 @@ const DayStatusButton: React.FC<DayStatusButtonProps> = ({ day, status, isPlanne
     );
   }
 
-  // Update color mapping to match new design
+  // Update color mapping to match new color palette
   const getNewStatusColor = (status: TaskStatus): string => {
     switch (status) {
       case "completed":
@@ -25,10 +25,10 @@ const DayStatusButton: React.FC<DayStatusButtonProps> = ({ day, status, isPlanne
       case "not_done":
         return "bg-red-500 border-red-600";
       case "planned":
-        return "bg-[#E0E2EC] border-gray-300";
+        return "bg-[#927535] border-[#927535]/70";
       case "not_planned":
       default:
-        return "bg-gray-200 border-gray-300";
+        return "bg-[#E0E2EC] border-gray-300";
     }
   };
 

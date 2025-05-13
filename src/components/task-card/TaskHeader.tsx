@@ -18,9 +18,9 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({ task, onCompletionStatusChange 
         className={`cursor-pointer hover-effect ${
           task.completionStatus === "completed" 
             ? "bg-green-500 hover:bg-green-600" 
-            : "text-[#081C2C] border-[#081C2C] hover:bg-[#EEEBEB]"
+            : "bg-[#927535] hover:bg-[#927535]/90 text-white"
         }`}
-        variant={task.completionStatus === "completed" ? "default" : "outline"}
+        variant={task.completionStatus === "completed" ? "default" : "secondary"}
         onClick={onCompletionStatusChange}
       >
         {task.completionStatus === "completed" ? "Concluída" : "Não Concluída"}

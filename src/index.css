@@ -10,7 +10,7 @@
     --background: 0 0% 100%;
     --foreground: 212 36% 10%; /* #081C2C */
 
-    --card: 220 20% 90%;  /* #E0E2EC */
+    --card: 220 14% 90%;  /* #E0E2EC */
     --card-foreground: 212 36% 10%; /* #081C2C */
 
     --popover: 0 0% 100%;
@@ -19,10 +19,10 @@
     --primary: 212 36% 10%; /* #081C2C */
     --primary-foreground: 210 40% 98%; /* white text on primary */
 
-    --secondary: 350 10% 93%; /* #EEEBEB */
-    --secondary-foreground: 212 36% 10%; /* #081C2C */
+    --secondary: 39 47% 39%; /* #927535 */
+    --secondary-foreground: 0 0% 100%; /* white text on secondary */
 
-    --muted: 220 20% 90%; /* #E0E2EC */
+    --muted: 220 14% 90%; /* #E0E2EC */
     --muted-foreground: 212 36% 18%;
 
     --accent: 350 10% 93%; /* #EEEBEB */
@@ -31,8 +31,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 20% 90%; /* #E0E2EC */
-    --input: 220 20% 90%; /* #E0E2EC */
+    --border: 220 14% 90%; /* #E0E2EC */
+    --input: 220 14% 90%; /* #E0E2EC */
     --ring: 212 36% 10%; /* #081C2C */
 
     --radius: 0.5rem;
@@ -48,7 +48,7 @@
 
     /* Status colors */
     --status-completed: 142 76% 36%;
-    --status-planned: 217 91% 60%;
+    --status-planned: 39 47% 39%; /* Updated to #927535 */
     --status-not-done: 0 84% 60%;
   }
 
@@ -62,17 +62,17 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 39 47% 39%; /* #927535 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 212 36% 10%; /* #081C2C */
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 350 10% 93%; /* #EEEBEB */
+    --accent-foreground: 212 36% 10%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
@@ -94,7 +94,7 @@
   }
 }
 
-/* Custom classes for the new design */
+/* Custom classes for the design */
 .card-highlight {
   @apply border-l-4;
 }
@@ -104,7 +104,7 @@
 }
 
 .card-highlight-medium {
-  @apply border-l-yellow-500;
+  @apply border-l-[#927535];
 }
 
 .card-highlight-bad {

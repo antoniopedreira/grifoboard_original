@@ -15,7 +15,7 @@ const PCPProgress: React.FC<PCPProgressProps> = ({ data, label }) => {
   if (percentage >= 80) {
     progressColor = "bg-green-500";
   } else if (percentage >= 60) {
-    progressColor = "bg-yellow-500";
+    progressColor = "bg-[#927535]"; // Our secondary golden color
   } else if (percentage >= 40) {
     progressColor = "bg-orange-500";
   }
