@@ -9,21 +9,10 @@ interface PCPBreakdownCardProps {
 }
 
 const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
-  const getCardHighlightClass = (data: Record<string, PCPData>): string => {
-    if (!data || Object.keys(data).length === 0) return "";
-    
-    const percentages = Object.values(data).map(item => item.percentage);
-    const avgPercentage = percentages.reduce((sum, val) => sum + val, 0) / percentages.length;
-    
-    if (avgPercentage >= 80) return "card-highlight card-highlight-good";
-    if (avgPercentage >= 60) return "card-highlight card-highlight-medium";
-    return "card-highlight card-highlight-bad";
-  };
-
   return (
-    <Card className={`col-span-1 lg:col-span-1 shadow-sm bg-[#E0E2EC] ${getCardHighlightClass(data)}`}>
+    <Card className="col-span-1 lg:col-span-1 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl text-[#081C2C]">{title}</CardTitle>
+        <CardTitle className="text-xl">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

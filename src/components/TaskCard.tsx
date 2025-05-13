@@ -101,7 +101,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
     toast({
       title: "Tarefa atualizada",
       description: "As alterações foram salvas com sucesso.",
-      className: "bg-[#081C2C] text-white",
     });
   };
 
@@ -114,7 +113,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
       toast({
         title: "Tarefa excluída",
         description: "A tarefa foi excluída com sucesso.",
-        className: "bg-[#081C2C] text-white",
       });
     }
   };
@@ -130,7 +128,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
 
   return (
     <>
-      <Card className="task-card">
+      <Card className="w-full bg-white shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="pb-2">
           <TaskHeader 
             task={task} 
