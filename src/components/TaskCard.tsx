@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +6,7 @@ import { DayOfWeek, Task, TaskStatus } from "@/types";
 import TaskDetails from "./task/TaskDetails";
 import TaskStatusDisplay from "./task/TaskStatusDisplay";
 import CausesDropdown from "./task/CausesDropdown";
-import TaskEditDialog from "./task/TaskEditDialog";
+import TaskEditDialog from "./task/edit/TaskEditDialog";
 
 interface TaskCardProps {
   task: Task;
