@@ -38,6 +38,7 @@ export interface PCPBreakdown {
   overall: PCPData;
   bySector: Record<string, PCPData>;
   byResponsible: Record<string, PCPData>;
+  byDiscipline: Record<string, PCPData>;
 }
 
 export interface WeeklyPCPData {

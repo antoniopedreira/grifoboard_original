@@ -9,7 +9,8 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
     return {
       overall: { completedTasks: 0, totalTasks: 0, percentage: 0 },
       bySector: {},
-      byResponsible: {}
+      byResponsible: {},
+      byDiscipline: {}
     };
   }
 
@@ -45,11 +46,26 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
       percentage: (responsibleCompletedTasks / responsibleTasks.length) * 100
     };
   });
+  
+  // By discipline
+  const disciplines = Array.from(new Set(tasksWithPlannedDays.map(task => task.discipline)));
+  const byDiscipline: Record<string, { completedTasks: number; totalTasks: number; percentage: number }> = {};
+  
+  disciplines.forEach(discipline => {
+    const disciplineTasks = tasksWithPlannedDays.filter(task => task.discipline === discipline);
+    const disciplineCompletedTasks = disciplineTasks.filter(task => task.completionStatus === "completed").length;
+    byDiscipline[discipline] = {
+      completedTasks: disciplineCompletedTasks,
+      totalTasks: disciplineTasks.length,
+      percentage: (disciplineCompletedTasks / disciplineTasks.length) * 100
+    };
+  });
 
   return {
     overall: { completedTasks, totalTasks, percentage },
     bySector,
-    byResponsible
+    byResponsible,
+    byDiscipline
   };
 };
 

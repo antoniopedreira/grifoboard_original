@@ -17,11 +17,11 @@ const PCPChart: React.FC<PCPChartProps> = ({ pcpData, weeklyData, tasks, onCause
       {/* Overall PCP */}
       <PCPOverallCard data={pcpData.overall} />
       
-      {/* PCP by Discipline (previously by Sector) */}
-      <PCPBreakdownCard title="PCP por Disciplina" data={pcpData.byDiscipline} />
+      {/* PCP by Discipline */}
+      <PCPBreakdownCard title="PCP por Disciplina" data={pcpData.byDiscipline || {}} />
       
       {/* PCP by Responsible */}
-      <PCPBreakdownCard title="PCP por Responsável" data={pcpData.byResponsible} />
+      <PCPBreakdownCard title="PCP por Responsável" data={pcpData.byResponsible || {}} />
 
       {/* Causes Count Card */}
       <CausesCountCard tasks={tasks} onCauseSelect={onCauseSelect} />

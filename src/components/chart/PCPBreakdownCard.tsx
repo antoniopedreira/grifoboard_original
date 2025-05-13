@@ -16,9 +16,12 @@ const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {Object.entries(data).map(([key, value]) => (
+          {data && Object.entries(data).map(([key, value]) => (
             <PCPProgress key={key} data={value} label={key} />
           ))}
+          {(!data || Object.keys(data).length === 0) && (
+            <div className="text-sm text-muted-foreground">Sem dados disponíveis</div>
+          )}
         </div>
       </CardContent>
     </Card>
