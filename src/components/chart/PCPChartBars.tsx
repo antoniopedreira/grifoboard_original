@@ -23,6 +23,7 @@ const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
       isAnimationActive={true}
       animationDuration={600}
       name="PCP"
+      minPointSize={2} // Ensure small values are still visible
     >
       {chartData.map((entry, index) => (
         <Cell 
