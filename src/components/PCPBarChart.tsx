@@ -19,22 +19,21 @@ interface PCPBarChartProps {
     week: string;
     percentage: number;
     date: Date;
+    isCurrentWeek?: boolean;
   }[];
 }
 
 const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
   const chartData = weeklyData.map(item => ({
     name: format(item.date, "dd/MM", { locale: ptBR }),
-    value: item.percentage
+    value: item.percentage,
+    isCurrentWeek: item.isCurrentWeek
   }));
 
-  const getBarColor = (percentage: number) => {
-    // Use different shades of blue based on completion percentage
-    if (percentage >= 80) return "#0EA5E9"; // Deep blue for high completion
-    if (percentage >= 60) return "#38BDF8"; // Medium blue
-    if (percentage >= 40) return "#7DD3FC"; // Light blue
-    return "#BAE6FD"; // Very light blue for low completion
-  };
+  // Standard blue color for all bars
+  const standardBarColor = "#38BDF8";
+  // Highlighted color for current week
+  const highlightedBarColor = "#0EA5E9";
 
   return (
     <CardContent className="pt-1 px-0">
@@ -80,7 +79,12 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                 name="PCP"
               >
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.isCurrentWeek ? highlightedBarColor : standardBarColor} 
+                    stroke={entry.isCurrentWeek ? "#0284C7" : ""}
+                    strokeWidth={entry.isCurrentWeek ? 1 : 0}
+                  />
                 ))}
               </Bar>
             </BarChart>

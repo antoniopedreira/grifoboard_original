@@ -42,4 +42,5 @@ export interface WeeklyPCPData {
   week: string;
   percentage: number;
   date: Date; // For sorting purposes
+  isCurrentWeek?: boolean; // Flag to highlight current week
 }

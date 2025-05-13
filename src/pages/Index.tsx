@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
@@ -13,7 +12,9 @@ import {
   formatDateRange,
   getWeekStartDate,
   getPreviousWeekDates,
-  getNextWeekDates
+  getNextWeekDates,
+  generateWeeklyPCPData,
+  storeHistoricalPCPData
 } from "@/utils/pcp";
 import { useToast } from "@/components/ui/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -26,44 +27,8 @@ const Index = () => {
   const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   
-  // Generate weekly PCP data with 3 previous weeks
-  const generateWeeklyData = (currentWeekDate: Date, currentWeekPCP: number) => {
-    const result: WeeklyPCPData[] = [];
-    
-    // Add 3 previous weeks
-    let weekDate = new Date(currentWeekDate);
-    for (let i = 3; i > 0; i--) {
-      const { start } = getPreviousWeekDates(weekDate);
-      const dateStr = formatDateRange(start, new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000));
-      
-      // Generate a random percentage between 30 and 95 for previous weeks
-      const percentage = Math.floor(Math.random() * (95 - 30 + 1)) + 30;
-      
-      result.push({
-        week: dateStr,
-        percentage,
-        date: new Date(start)
-      });
-      
-      weekDate = start;
-    }
-    
-    // Reverse to get chronological order
-    result.reverse();
-    
-    // Add current week
-    const currentWeekStr = formatDateRange(
-      currentWeekDate, 
-      new Date(currentWeekDate.getTime() + 6 * 24 * 60 * 60 * 1000)
-    );
-    result.push({
-      week: currentWeekStr,
-      percentage: currentWeekPCP,
-      date: new Date(currentWeekDate)
-    });
-    
-    return result;
-  };
+  // Store historical PCP data for consistency when navigating between weeks
+  const historicalDataRef = useRef<Map<string, number>>(new Map());
   
   // Initialize tasks and weekly data when component mounts or week changes
   useEffect(() => {
@@ -81,11 +46,32 @@ const Index = () => {
     const pcpData = calculatePCP(newTasks);
     const currentWeekPCP = Math.round(pcpData.overall.percentage);
     
-    // Generate weekly PCP data with the current week's actual PCP
-    setWeeklyPCPData(generateWeeklyData(weekStartDate, currentWeekPCP));
+    // Store the current week's PCP in historical data
+    const weekKey = weekStartDate.toISOString().split('T')[0];
+    historicalDataRef.current.set(weekKey, currentWeekPCP);
+    
+    // Generate weekly PCP data with consistent historical values
+    setWeeklyPCPData(
+      generateWeeklyPCPData(weekStartDate, currentWeekPCP, historicalDataRef.current)
+    );
   }, [weekStartDate]);
   
   const pcpData = calculatePCP(tasks);
+  
+  const updateHistoricalDataAndCharts = (updatedTasks: Task[]) => {
+    // Recalculate PCP
+    const newPcpData = calculatePCP(updatedTasks);
+    const currentWeekPCP = Math.round(newPcpData.overall.percentage);
+    
+    // Update historical data for current week
+    const weekKey = weekStartDate.toISOString().split('T')[0];
+    historicalDataRef.current.set(weekKey, currentWeekPCP);
+    
+    // Update weekly data to match the current week's actual PCP
+    setWeeklyPCPData(
+      generateWeeklyPCPData(weekStartDate, currentWeekPCP, historicalDataRef.current)
+    );
+  };
   
   const handleTaskUpdate = (updatedTask: Task) => {
     // Update the task
@@ -94,23 +80,8 @@ const Index = () => {
     );
     setTasks(updatedTasks);
     
-    // Recalculate PCP
-    const newPcpData = calculatePCP(updatedTasks);
-    const currentWeekPCP = Math.round(newPcpData.overall.percentage);
-    
-    // Update weekly data to match the current week's actual PCP
-    setWeeklyPCPData(prev => {
-      return prev.map((week, index) => {
-        // Update only the current week (last item in the array)
-        if (index === prev.length - 1) {
-          return {
-            ...week,
-            percentage: currentWeekPCP
-          };
-        }
-        return week;
-      });
-    });
+    // Update charts with consistent historical data
+    updateHistoricalDataAndCharts(updatedTasks);
     
     toast({
       title: "Tarefa atualizada",
@@ -137,23 +108,8 @@ const Index = () => {
     const updatedTasks = [newTask, ...tasks];
     setTasks(updatedTasks);
     
-    // Recalculate PCP with the new task
-    const newPcpData = calculatePCP(updatedTasks);
-    const currentWeekPCP = Math.round(newPcpData.overall.percentage);
-    
-    // Update weekly data to match the current week's actual PCP
-    setWeeklyPCPData(prev => {
-      return prev.map((week, index) => {
-        // Update only the current week (last item in the array)
-        if (index === prev.length - 1) {
-          return {
-            ...week,
-            percentage: currentWeekPCP
-          };
-        }
-        return week;
-      });
-    });
+    // Update charts with consistent historical data
+    updateHistoricalDataAndCharts(updatedTasks);
     
     toast({
       title: "Tarefa criada",

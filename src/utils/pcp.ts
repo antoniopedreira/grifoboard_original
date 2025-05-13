@@ -243,3 +243,65 @@ export const generateMockWeeklyData = (currentWeekStart: Date, weeksToGenerate: 
   
   return weeklyData;
 };
+
+// Generate weekly PCP data for the current week and previous weeks
+export const generateWeeklyPCPData = (currentWeekStart: Date, currentWeekPCP: number, historicalData: Map<string, number> = new Map()): WeeklyPCPData[] => {
+  const weeklyData: WeeklyPCPData[] = [];
+  
+  // Track weeks we've already added to avoid duplicates
+  const addedWeekKeys = new Set<string>();
+  
+  // Generate data for previous three weeks
+  for (let i = 3; i >= 0; i--) {
+    // Calculate the week start date
+    const weekDate = new Date(currentWeekStart);
+    if (i > 0) {
+      weekDate.setDate(currentWeekStart.getDate() - (7 * i));
+    }
+    
+    const startDate = getWeekStartDate(weekDate);
+    const endDate = getWeekEndDate(startDate);
+    const dateStr = formatDateRange(startDate, endDate);
+    
+    // Check if this week is already added
+    const weekKey = startDate.toISOString().split('T')[0];
+    if (addedWeekKeys.has(weekKey)) {
+      continue;
+    }
+    addedWeekKeys.add(weekKey);
+    
+    // Calculate percentage
+    let percentage;
+    if (i === 0) {
+      // Current week
+      percentage = currentWeekPCP;
+    } else {
+      // Check if we have historical data for this week
+      percentage = historicalData.get(weekKey);
+      if (percentage === undefined) {
+        // Generate a random percentage between 30 and 95 for previous weeks if no historical data
+        percentage = Math.floor(Math.random() * (95 - 30 + 1)) + 30;
+      }
+    }
+    
+    weeklyData.push({
+      week: dateStr,
+      percentage,
+      date: new Date(startDate),
+      isCurrentWeek: i === 0
+    });
+  }
+  
+  return weeklyData;
+};
+
+// Store historical PCP data by week start date
+export const storeHistoricalPCPData = (
+  historicalData: Map<string, number>, 
+  weekStart: Date, 
+  percentage: number
+): Map<string, number> => {
+  const weekKey = getWeekStartDate(weekStart).toISOString().split('T')[0];
+  historicalData.set(weekKey, percentage);
+  return historicalData;
+};
