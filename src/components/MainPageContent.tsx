@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Task } from "@/types";
@@ -8,12 +7,14 @@ import TaskForm from "@/components/TaskForm";
 import WeekNavigation from "@/components/WeekNavigation";
 import { Button } from "@/components/ui/button";
 import { calculatePCP, getPreviousWeekDates, getNextWeekDates } from "@/utils/pcp";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useWeeklyData } from "@/hooks/useWeeklyData";
+import RegistryDialog from "@/components/RegistryDialog";
 
 const MainPageContent = () => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   
   const {
     weekStartDate,
@@ -85,7 +86,16 @@ const MainPageContent = () => {
     <>
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold">Planejamento Semanal</h2>
-        <Button onClick={() => setIsFormOpen(true)}>Nova Tarefa</Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="bg-primary text-white hover:bg-primary/90"
+            onClick={() => setIsRegistryOpen(true)}
+          >
+            Cadastros
+          </Button>
+          <Button onClick={() => setIsFormOpen(true)}>Nova Tarefa</Button>
+        </div>
       </div>
       
       {/* Week Navigation */}
@@ -111,6 +121,11 @@ const MainPageContent = () => {
         onTaskCreate={handleTaskCreate} 
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
+      />
+
+      <RegistryDialog 
+        isOpen={isRegistryOpen} 
+        onOpenChange={setIsRegistryOpen} 
       />
     </>
   );
