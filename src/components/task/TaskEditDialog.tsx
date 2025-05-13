@@ -17,9 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Task, DayOfWeek } from "@/types";
+import { Task, DayOfWeek, TaskStatus } from "@/types";
 import { useRegistry } from "@/context/RegistryContext";
 import { dayNameMap } from "@/utils/pcp";
+import { toast } from "@/components/ui/use-toast";
 
 interface TaskEditDialogProps {
   task: Task;
@@ -65,13 +66,13 @@ const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
           status.status !== "not_done") {
         return {
           ...status,
-          status: isNowPlanned ? "planned" : "not_planned",
+          status: isNowPlanned ? "planned" : "not_planned" as TaskStatus,
         };
       }
       return status;
     });
     
-    onTaskUpdate({
+    const updatedTask = {
       ...task,
       sector,
       description,
@@ -82,6 +83,12 @@ const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
       cable,
       plannedDays,
       dailyStatus: updatedDailyStatus,
+    };
+    
+    onTaskUpdate(updatedTask);
+    toast({
+      title: "Tarefa atualizada",
+      description: "As alterações foram salvas com sucesso."
     });
     
     onOpenChange(false);
