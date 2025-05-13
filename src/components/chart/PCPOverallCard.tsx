@@ -8,18 +8,24 @@ interface PCPOverallCardProps {
 }
 
 const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
+  const getCardHighlightClass = (percentage: number): string => {
+    if (percentage >= 80) return "card-highlight card-highlight-good";
+    if (percentage >= 60) return "card-highlight card-highlight-medium";
+    return "card-highlight card-highlight-bad";
+  };
+
   return (
-    <Card className="col-span-1 shadow-sm">
+    <Card className={`col-span-1 shadow-sm bg-[#E0E2EC] ${getCardHighlightClass(data.percentage)}`}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl">PCP Geral da Semana</CardTitle>
+        <CardTitle className="text-xl text-[#081C2C]">PCP Geral da Semana</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col justify-center items-center">
-          <div className="text-5xl font-bold mb-2">
+          <div className="text-5xl font-bold mb-2 text-[#081C2C]">
             {Math.round(data.percentage)}%
           </div>
           <PCPProgress data={data} />
-          <div className="text-sm text-gray-500 mt-2">
+          <div className="text-sm text-gray-600 mt-2">
             {data.completedTasks} de {data.totalTasks} tarefas concluídas
           </div>
         </div>

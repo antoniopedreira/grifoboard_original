@@ -27,7 +27,12 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
         <span />
       )}
       
-      <Button variant="ghost" size="sm" onClick={onEditClick}>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={onEditClick}
+        className="hover:bg-[#EEEBEB] text-[#081C2C]"
+      >
         <Pencil className="mr-1 h-4 w-4" /> Editar
       </Button>
     </div>

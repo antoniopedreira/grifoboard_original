@@ -8,32 +8,32 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 212 36% 10%; /* #081C2C */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 20% 90%;  /* #E0E2EC */
+    --card-foreground: 212 36% 10%; /* #081C2C */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 212 36% 10%; /* #081C2C */
 
-    --primary: 215 100% 30%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 212 36% 10%; /* #081C2C */
+    --primary-foreground: 210 40% 98%; /* white text on primary */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 350 10% 93%; /* #EEEBEB */
+    --secondary-foreground: 212 36% 10%; /* #081C2C */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 20% 90%; /* #E0E2EC */
+    --muted-foreground: 212 36% 18%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 350 10% 93%; /* #EEEBEB */
+    --accent-foreground: 212 36% 10%; /* #081C2C */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 215 100% 30%;
+    --border: 220 20% 90%; /* #E0E2EC */
+    --input: 220 20% 90%; /* #E0E2EC */
+    --ring: 212 36% 10%; /* #081C2C */
 
     --radius: 0.5rem;
 
@@ -89,7 +89,32 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gray-50 text-foreground;
     font-family: 'Inter', sans-serif;
   }
+}
+
+/* Custom classes for the new design */
+.card-highlight {
+  @apply border-l-4;
+}
+
+.card-highlight-good {
+  @apply border-l-green-500;
+}
+
+.card-highlight-medium {
+  @apply border-l-yellow-500;
+}
+
+.card-highlight-bad {
+  @apply border-l-red-500;
+}
+
+.task-card {
+  @apply bg-white border border-[#E0E2EC] rounded-lg shadow-sm hover:shadow-md transition-shadow;
+}
+
+.hover-effect {
+  @apply hover:bg-[#EEEBEB] transition-colors;
 }
