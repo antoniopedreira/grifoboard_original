@@ -7,6 +7,8 @@ export const generateMockTasks = (weekStart?: Date): Task[] => {
   const disciplines = ["Civil", "Elétrica", "Hidráulica", "Arquitetura"];
   const teams = ["Equipe A", "Equipe B", "Equipe C"];
   const responsibles = ["João Silva", "Maria Oliveira", "Carlos Santos"];
+  const executors = ["Pedro Alves", "Ana Costa", "Felipe Souza", "Juliana Lima"];
+  const cables = ["Cabo A1", "Cabo B2", "Cabo C3", "Cabo D4", "Cabo E5"];
   
   const mockTasks: Task[] = [];
   
@@ -15,6 +17,8 @@ export const generateMockTasks = (weekStart?: Date): Task[] => {
     const discipline = disciplines[Math.floor(Math.random() * disciplines.length)];
     const team = teams[Math.floor(Math.random() * teams.length)];
     const responsible = responsibles[Math.floor(Math.random() * responsibles.length)];
+    const executor = executors[Math.floor(Math.random() * executors.length)];
+    const cable = cables[Math.floor(Math.random() * cables.length)];
     
     // Randomly select which days are planned
     const allDays: DayOfWeek[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -54,6 +58,8 @@ export const generateMockTasks = (weekStart?: Date): Task[] => {
       discipline,
       team,
       responsible,
+      executor,
+      cable,
       plannedDays,
       dailyStatus,
       isFullyCompleted: false,
