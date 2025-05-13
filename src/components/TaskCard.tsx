@@ -3,8 +3,6 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { DayOfWeek, Task, TaskStatus } from "@/types";
 import { dayNameMap, getStatusColor } from "@/utils/pcp";
 import { 
@@ -53,9 +51,6 @@ const standardCauses = [
 ];
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [causeText, setCauseText] = useState(task.causeIfNotDone || "");
-
   const handleStatusChange = (day: DayOfWeek, newStatus: TaskStatus) => {
     const updatedDailyStatus = task.dailyStatus.map(status => 
       status.day === day ? { ...status, status: newStatus } : status
@@ -76,16 +71,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
     });
   };
 
-  const handleCauseSave = () => {
-    onTaskUpdate({
-      ...task,
-      causeIfNotDone: causeText
-    });
-    setIsDialogOpen(false);
-  };
-
   const handleCauseSelect = (cause: string) => {
-    setCauseText(cause);
     onTaskUpdate({
       ...task,
       causeIfNotDone: cause
@@ -186,29 +172,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate }) => {
       <CardFooter className="pt-2">
         <div className="w-full flex justify-between items-center">
           {task.completionStatus !== "completed" ? (
-            <div className="flex gap-2">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-xs text-red-500">
-                    {task.causeIfNotDone ? "Editar causa" : "Adicionar causa"}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Justificativa de Não Execução</DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4 space-y-4">
-                    <Textarea 
-                      value={causeText} 
-                      onChange={(e) => setCauseText(e.target.value)}
-                      placeholder="Informe o motivo da não execução..."
-                      className="min-h-[100px]"
-                    />
-                    <Button onClick={handleCauseSave}>Salvar</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
+            <div className="flex flex-col gap-2 flex-grow">
+              {task.causeIfNotDone && (
+                <div className="text-xs text-red-500">
+                  <span className="font-semibold">Causa: </span>
+                  <span>{task.causeIfNotDone}</span>
+                </div>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="text-xs">

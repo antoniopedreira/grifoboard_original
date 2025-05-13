@@ -99,6 +99,9 @@ const PCPChart: React.FC<PCPChartProps> = ({ pcpData, weeklyData }) => {
 
       {/* Weekly PCP Chart */}
       <Card className="col-span-1 shadow-sm">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-lg">PCP por Semana</CardTitle>
+        </CardHeader>
         <PCPBarChart weeklyData={weeklyData} />
       </Card>
     </div>
