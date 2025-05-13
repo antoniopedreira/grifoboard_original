@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Task } from "@/types";
 import TaskFilters from "./task/TaskFilters";
 import TaskGrid from "./task/TaskGrid";
-import { useToast } from "./ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskListProps {
   tasks: Task[];
