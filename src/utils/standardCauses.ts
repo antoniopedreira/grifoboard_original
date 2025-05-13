@@ -1,0 +1,33 @@
+
+// Standard causes list for not completed tasks
+export const standardCauses = [
+  "Absenteísmo",
+  "Chuva",
+  "Equipe produzindo abaixo do planejado",
+  "Equipe trabalhando em outra obra",
+  "Erro no planejamento",
+  "Falta de comunicação",
+  "Falta de equipamento",
+  "Falta de liberação dos espaços",
+  "Falta de mão de abra (atraso na contratação)",
+  "Falta de mão de obra",
+  "Falta de material",
+  "Falta de planejamento de compra",
+  "Falta de projeto",
+  "Indefinição Engenharia",
+  "Material distribuido em quant. Insuficiente",
+  "Material incorreto",
+  "Material solicitado em qt insuficiente",
+  "Mau dimensionamento da equipe",
+  "Modificação de projeto",
+  "Monitoramento de quant. de material em estoque",
+  "Mudança do plano de ataque",
+  "Pacote de trabalho grande",
+  "Predecessora concluída fora de prazo",
+  "Presença de água",
+  "Quebra/Manutenção de equipamento",
+  "Relocação da mão de obra",
+  "Retrabalho",
+  "Sem disponibilidade",
+  "Vento"
+];
