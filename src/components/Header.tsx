@@ -3,13 +3,23 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getCurrentWeekDates } from "@/utils/pcp";
+import TaskForm from "@/components/TaskForm";
+import RegistryDialog from "@/components/RegistryDialog";
+import { Task } from "@/types";
 
 const Header = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const { start, end } = getCurrentWeekDates();
   
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+  
+  const handleTaskCreate = (task: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
+    // Este é apenas um esboço - a implementação real estaria no componente pai
+    console.log("Task created:", task);
   };
   
   return (
@@ -23,7 +33,7 @@ const Header = () => {
         </div>
         
         <div className="flex gap-2">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog open={isAboutOpen} onOpenChange={setIsAboutOpen}>
             <DialogTrigger asChild>
               <Button variant="secondary">Sobre</Button>
             </DialogTrigger>
@@ -44,11 +54,36 @@ const Header = () => {
               </div>
             </DialogContent>
           </Dialog>
-          <Button variant="outline" className="bg-white/20 hover:bg-white/30">
+
+          <Button 
+            variant="outline" 
+            className="bg-white/20 hover:bg-white/30"
+            onClick={() => setIsRegistryOpen(true)}
+          >
+            Cadastros
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="bg-white/20 hover:bg-white/30"
+            onClick={() => setIsTaskFormOpen(true)}
+          >
             Nova Tarefa
           </Button>
         </div>
       </div>
+
+      {/* Modais */}
+      <TaskForm 
+        isOpen={isTaskFormOpen} 
+        onOpenChange={setIsTaskFormOpen} 
+        onTaskCreate={handleTaskCreate} 
+      />
+
+      <RegistryDialog 
+        isOpen={isRegistryOpen} 
+        onOpenChange={setIsRegistryOpen} 
+      />
     </header>
   );
 };

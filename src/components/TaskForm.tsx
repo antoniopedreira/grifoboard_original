@@ -9,11 +9,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DayOfWeek, Task } from "@/types";
 import { dayNameMap } from "@/utils/pcp";
+import { useRegistry } from "@/context/RegistryContext";
 
 interface TaskFormProps {
   onTaskCreate: (task: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => void;
@@ -22,8 +22,9 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange }) => {
+  const { sectors, disciplines, teams, responsibles } = useRegistry();
+  
   const [sector, setSector] = useState("");
-  const [item, setItem] = useState("");
   const [description, setDescription] = useState("");
   const [discipline, setDiscipline] = useState("");
   const [team, setTeam] = useState("");
@@ -42,18 +43,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
   const handleSubmit = () => {
     onTaskCreate({
       sector,
-      item,
+      item: "", // Mantemos o campo no objeto, mas não o exibimos mais na interface
       description,
       discipline,
       team,
       responsible,
       plannedDays,
-      completionStatus, // Add the completion status to the task
+      completionStatus,
     });
     
     // Reset form fields
     setSector("");
-    setItem("");
     setDescription("");
     setDiscipline("");
     setTeam("");
@@ -74,11 +74,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
     );
   };
   
-  const sectorOptions = ["Fundação", "Alvenaria", "Estrutura", "Acabamento", "Instalações"];
-  const disciplineOptions = ["Civil", "Elétrica", "Hidráulica", "Arquitetura"];
-  const teamOptions = ["Equipe A", "Equipe B", "Equipe C"];
-  const responsibleOptions = ["João Silva", "Maria Oliveira", "Carlos Santos"];
-  
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -87,30 +82,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="sector">Setor</Label>
-              <Select value={sector} onValueChange={setSector}>
-                <SelectTrigger id="sector">
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sectorOptions.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="item">Item</Label>
-              <Input
-                id="item"
-                value={item}
-                onChange={(e) => setItem(e.target.value)}
-                placeholder="Código ou número do item"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="sector">Setor</Label>
+            <Select value={sector} onValueChange={setSector}>
+              <SelectTrigger id="sector">
+                <SelectValue placeholder="Selecione o setor" />
+              </SelectTrigger>
+              <SelectContent>
+                {sectors.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
@@ -131,7 +114,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                   <SelectValue placeholder="Selecione a disciplina" />
                 </SelectTrigger>
                 <SelectContent>
-                  {disciplineOptions.map(option => (
+                  {disciplines.map(option => (
                     <SelectItem key={option} value={option}>{option}</SelectItem>
                   ))}
                 </SelectContent>
@@ -145,7 +128,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                   <SelectValue placeholder="Selecione a equipe" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teamOptions.map(option => (
+                  {teams.map(option => (
                     <SelectItem key={option} value={option}>{option}</SelectItem>
                   ))}
                 </SelectContent>
@@ -160,7 +143,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                 <SelectValue placeholder="Selecione o responsável" />
               </SelectTrigger>
               <SelectContent>
-                {responsibleOptions.map(option => (
+                {responsibles.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))}
               </SelectContent>
