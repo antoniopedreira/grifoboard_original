@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Bar,
 } from "recharts";
 import { CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -26,7 +27,7 @@ interface PCPBarChartProps {
 
 const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
   const chartData = weeklyData.map(item => ({
-    name: format(item.date, "dd/MM", { locale: ptBR }),
+    name: format(new Date(item.date), "dd/MM", { locale: ptBR }),
     value: item.percentage,
     isCurrentWeek: item.isCurrentWeek
   }));

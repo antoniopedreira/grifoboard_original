@@ -113,7 +113,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({
                       href="#" 
                       onClick={(e) => {
                         e.preventDefault();
-                        onPageChange(page as number);
+                        onPageChange(Number(page));
                       }}
                       isActive={currentPage === page}
                     >
