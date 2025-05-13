@@ -1,4 +1,5 @@
 
+import React from "react";
 import TaskCard from "../TaskCard";
 import { Task } from "@/types";
 import { 
@@ -7,7 +8,8 @@ import {
   PaginationItem, 
   PaginationLink, 
   PaginationNext, 
-  PaginationPrevious 
+  PaginationPrevious,
+  PaginationEllipsis
 } from "@/components/ui/pagination";
 
 interface TaskGridProps {
@@ -105,7 +107,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({
               {getPageNumbers().map((page, index) => (
                 page === "ellipsis" ? (
                   <PaginationItem key={`ellipsis-${index}`}>
-                    <span className="flex h-9 w-9 items-center justify-center">...</span>
+                    <PaginationEllipsis />
                   </PaginationItem>
                 ) : (
                   <PaginationItem key={`page-${page}`}>

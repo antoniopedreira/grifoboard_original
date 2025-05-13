@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Task } from "@/types";
 import TaskFilters from "./task/TaskFilters";
 import TaskGrid from "./task/TaskGrid";
@@ -17,6 +17,11 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const { toast } = useToast();
   
+  // Reset to page 1 when tasks are updated
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tasks.length]);
+  
   const handleTaskUpdate = (updatedTask: Task) => {
     onTaskUpdate(updatedTask);
     
@@ -30,24 +35,28 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
   };
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredTasks.length / TASKS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / TASKS_PER_PAGE));
   const startIndex = (currentPage - 1) * TASKS_PER_PAGE;
   const endIndex = Math.min(startIndex + TASKS_PER_PAGE, filteredTasks.length);
   const currentTasks = filteredTasks.slice(startIndex, endIndex);
   
   const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    
     setCurrentPage(page);
     window.scrollTo(0, 0); // Scroll to top when changing pages
+  };
+  
+  const handleFiltersChange = (filtered: Task[]) => {
+    setFilteredTasks(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   return (
     <div className="w-full">
       <TaskFilters 
         tasks={tasks} 
-        onFiltersChange={(filtered) => {
-          setFilteredTasks(filtered);
-          setCurrentPage(1); // Reset to first page when filters change
-        }} 
+        onFiltersChange={handleFiltersChange}
       />
       
       <TaskGrid 
