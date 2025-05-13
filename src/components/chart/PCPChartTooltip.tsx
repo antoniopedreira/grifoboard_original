@@ -1,15 +1,9 @@
 
 import React from "react";
+import { TooltipProps } from "recharts";
 
-interface PCPChartTooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    value: number;
-    payload: {
-      name: string;
-    };
-  }>;
-}
+// Using the recharts TooltipProps type to ensure compatibility
+type PCPChartTooltipProps = TooltipProps<number, string>;
 
 const PCPChartTooltip: React.FC<PCPChartTooltipProps> = ({ active, payload }) => {
   if (!active || !payload || payload.length === 0) return null;

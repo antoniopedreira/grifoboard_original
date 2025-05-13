@@ -57,7 +57,7 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                 tick={{ fontSize: 10 }}
                 width={35}
               />
-              <Tooltip content={(props) => <PCPChartTooltip {...props} />} />
+              <Tooltip content={<PCPChartTooltip />} />
               <PCPChartBars chartData={chartData} colors={chartColors} />
             </BarChart>
           </ResponsiveContainer>
