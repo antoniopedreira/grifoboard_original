@@ -13,8 +13,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSector, setFilterSector] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
-  const [filterExecutor, setFilterExecutor] = useState("all");  // New filter
-  const [filterCable, setFilterCable] = useState("all");       // New filter
+  const [filterExecutor, setFilterExecutor] = useState("all");
+  const [filterCable, setFilterCable] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   
   // Extract unique values for filters
@@ -48,6 +48,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
   return (
     <div className="flex flex-wrap gap-4 mb-6">
       <div className="flex-1 min-w-[200px]">
+        <div className="text-xs text-gray-500 mb-1">Busca</div>
         <Input
           placeholder="Buscar tarefas..."
           value={searchTerm}
@@ -57,6 +58,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
       </div>
       
       <div className="w-full sm:w-auto">
+        <div className="text-xs text-gray-500 mb-1">Status</div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Status" />
@@ -70,12 +72,13 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
       </div>
       
       <div className="w-full sm:w-auto">
+        <div className="text-xs text-gray-500 mb-1">Setor</div>
         <Select value={filterSector} onValueChange={setFilterSector}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Setor" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os setores</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {sectors.map(sector => (
               <SelectItem key={sector} value={sector}>{sector}</SelectItem>
             ))}
@@ -84,12 +87,13 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
       </div>
       
       <div className="w-full sm:w-auto">
+        <div className="text-xs text-gray-500 mb-1">Responsável</div>
         <Select value={filterResponsible} onValueChange={setFilterResponsible}>
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Responsável" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os responsáveis</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {responsibles.map(responsible => (
               <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
             ))}
@@ -98,12 +102,13 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
       </div>
 
       <div className="w-full sm:w-auto">
+        <div className="text-xs text-gray-500 mb-1">Executante</div>
         <Select value={filterExecutor} onValueChange={setFilterExecutor}>
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Executante" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os executantes</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {executors.map(executor => (
               <SelectItem key={executor} value={executor}>{executor}</SelectItem>
             ))}
@@ -112,12 +117,13 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
       </div>
 
       <div className="w-full sm:w-auto">
+        <div className="text-xs text-gray-500 mb-1">Cabo</div>
         <Select value={filterCable} onValueChange={setFilterCable}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Cabo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os cabos</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {cables.map(cable => (
               <SelectItem key={cable} value={cable}>{cable}</SelectItem>
             ))}

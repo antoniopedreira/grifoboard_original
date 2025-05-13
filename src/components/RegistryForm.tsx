@@ -21,8 +21,8 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
   const [newDiscipline, setNewDiscipline] = useState("");
   const [newTeam, setNewTeam] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
-  const [newExecutor, setNewExecutor] = useState("");  // New state
-  const [newCable, setNewCable] = useState("");        // New state
+  const [newExecutor, setNewExecutor] = useState("");
+  const [newCable, setNewCable] = useState("");
 
   const handleSubmit = (type: string) => {
     let value = "";
@@ -71,13 +71,13 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
 
   return (
     <Tabs defaultValue="sector" className="w-full">
-      <TabsList className="grid grid-cols-6 mb-4">
-        <TabsTrigger value="sector">Setor</TabsTrigger>
-        <TabsTrigger value="discipline">Disciplina</TabsTrigger>
-        <TabsTrigger value="team">Equipe</TabsTrigger>
-        <TabsTrigger value="responsible">Responsável</TabsTrigger>
-        <TabsTrigger value="executor">Executante</TabsTrigger>
-        <TabsTrigger value="cable">Cabo</TabsTrigger>
+      <TabsList className="grid grid-cols-6 mb-4 w-full">
+        <TabsTrigger value="sector" className="text-xs sm:text-sm">Setor</TabsTrigger>
+        <TabsTrigger value="discipline" className="text-xs sm:text-sm">Disciplina</TabsTrigger>
+        <TabsTrigger value="team" className="text-xs sm:text-sm">Equipe</TabsTrigger>
+        <TabsTrigger value="responsible" className="text-xs sm:text-sm">Responsável</TabsTrigger>
+        <TabsTrigger value="executor" className="text-xs sm:text-sm">Executante</TabsTrigger>
+        <TabsTrigger value="cable" className="text-xs sm:text-sm">Cabo</TabsTrigger>
       </TabsList>
       
       <TabsContent value="sector" className="space-y-4">

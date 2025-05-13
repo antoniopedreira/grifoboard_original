@@ -16,16 +16,10 @@ interface CausesDropdownProps {
 const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentCause }) => {
   return (
     <div className="flex flex-col gap-2 flex-grow">
-      {currentCause && (
-        <div className="text-xs text-red-500">
-          <span className="font-semibold">Causa: </span>
-          <span>{currentCause}</span>
-        </div>
-      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="text-xs">
-            Causas Padrão
+          <Button variant="outline" size="sm" className="text-xs text-left justify-between">
+            {currentCause || "Causas Padrão"}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="max-h-[200px] overflow-y-auto">
@@ -39,6 +33,13 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+      
+      {currentCause && (
+        <div className="text-xs text-red-500 hidden">
+          <span className="font-semibold">Causa: </span>
+          <span>{currentCause}</span>
+        </div>
+      )}
     </div>
   );
 };
