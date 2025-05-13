@@ -8,10 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 interface TaskListProps {
   tasks: Task[];
   onTaskUpdate: (updatedTask: Task) => void;
+  onTaskDelete: (taskId: string) => void;
   selectedCause: string | null;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, selectedCause }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, onTaskDelete, selectedCause }) => {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
   const { toast } = useToast();
   
@@ -48,7 +49,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, selectedCause 
       
       <TaskGrid 
         tasks={filteredTasks} 
-        onTaskUpdate={handleTaskUpdate} 
+        onTaskUpdate={handleTaskUpdate}
+        onTaskDelete={onTaskDelete}
       />
     </div>
   );

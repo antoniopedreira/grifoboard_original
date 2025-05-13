@@ -132,6 +132,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
     if (onTaskDelete) {
       onTaskDelete(task.id);
       setIsDeleteDialogOpen(false);
+      setIsEditDialogOpen(false);
       
       toast({
         title: "Tarefa excluída",
@@ -351,7 +352,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
             <Button 
               variant="destructive" 
               onClick={() => {
-                setIsEditDialogOpen(false);
                 setIsDeleteDialogOpen(true);
               }}
             >

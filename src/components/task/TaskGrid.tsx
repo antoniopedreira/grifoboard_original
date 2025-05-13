@@ -5,9 +5,10 @@ import { Task } from "@/types";
 interface TaskGridProps {
   tasks: Task[];
   onTaskUpdate: (updatedTask: Task) => void;
+  onTaskDelete?: (taskId: string) => void;
 }
 
-const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate }) => {
+const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete }) => {
   if (tasks.length === 0) {
     return (
       <div className="text-center py-10 border rounded-lg bg-gray-50">
@@ -23,6 +24,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate }) => {
           key={task.id}
           task={task}
           onTaskUpdate={onTaskUpdate}
+          onTaskDelete={onTaskDelete}
         />
       ))}
     </div>
