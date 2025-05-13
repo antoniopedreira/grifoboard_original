@@ -55,39 +55,9 @@ export function useWeeklyData() {
     }
     
     // Generate weekly PCP data with consistent historical values
-    // We need to show 3 previous weeks and the current week
-    const previousWeeks: WeeklyPCPData[] = [];
-    
-    // Add the previous 3 weeks
-    for (let i = 3; i > 0; i--) {
-      const prevDate = new Date(weekStartDate);
-      prevDate.setDate(weekStartDate.getDate() - (7 * i));
-      
-      const prevWeekKey = prevDate.toISOString().split('T')[0];
-      // If we don't have historical data for this week, use current week's PCP
-      if (!historicalDataRef.current.has(prevWeekKey)) {
-        // Generate a consistent value for previous weeks
-        const value = Math.round(Math.random() * 30) + 60; // Generate a value between 60-90
-        historicalDataRef.current.set(prevWeekKey, value);
-      }
-      
-      previousWeeks.push({
-        week: `Week -${i}`,
-        percentage: historicalDataRef.current.get(prevWeekKey) || currentWeekPCP,
-        date: prevDate,
-        isCurrentWeek: false
-      });
-    }
-    
-    // Add current week
-    previousWeeks.push({
-      week: "Current Week",
-      percentage: historicalDataRef.current.get(weekKey) || currentWeekPCP,
-      date: new Date(weekStartDate),
-      isCurrentWeek: true
-    });
-    
-    setWeeklyPCPData(previousWeeks);
+    setWeeklyPCPData(
+      generateWeeklyPCPData(weekStartDate, historicalDataRef.current.get(weekKey) || currentWeekPCP, historicalDataRef.current)
+    );
   }, [weekStartDate]);
   
   const updateHistoricalDataAndCharts = (updatedTasks: Task[]) => {
@@ -105,39 +75,9 @@ export function useWeeklyData() {
     historicalDataRef.current.set(weekKey, currentWeekPCP);
     
     // Update weekly data to match the current week's actual PCP
-    // We need to show 3 previous weeks and the current week
-    const previousWeeks: WeeklyPCPData[] = [];
-    
-    // Add the previous 3 weeks
-    for (let i = 3; i > 0; i--) {
-      const prevDate = new Date(weekStartDate);
-      prevDate.setDate(weekStartDate.getDate() - (7 * i));
-      
-      const prevWeekKey = prevDate.toISOString().split('T')[0];
-      // If we don't have historical data for this week, use current week's PCP
-      if (!historicalDataRef.current.has(prevWeekKey)) {
-        // Generate a consistent value for previous weeks
-        const value = Math.round(Math.random() * 30) + 60; // Generate a value between 60-90
-        historicalDataRef.current.set(prevWeekKey, value);
-      }
-      
-      previousWeeks.push({
-        week: `Week -${i}`,
-        percentage: historicalDataRef.current.get(prevWeekKey) || currentWeekPCP,
-        date: prevDate,
-        isCurrentWeek: false
-      });
-    }
-    
-    // Add current week
-    previousWeeks.push({
-      week: "Current Week",
-      percentage: currentWeekPCP,
-      date: new Date(weekStartDate),
-      isCurrentWeek: true
-    });
-    
-    setWeeklyPCPData(previousWeeks);
+    setWeeklyPCPData(
+      generateWeeklyPCPData(weekStartDate, currentWeekPCP, historicalDataRef.current)
+    );
   };
   
   return {
