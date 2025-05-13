@@ -13,14 +13,11 @@ export const {
   getWeekStartDate,
   getPreviousWeekDates,
   getNextWeekDates,
-  formatDateRange,
-  formatDateToDisplay
+  formatDateRange
 } = dateUtils;
 
 // Re-export text utilities
 export const {
-  formatSectorName,
-  truncateText,
   dayNameMap,
   getFullDayName,
   getStatusColor
