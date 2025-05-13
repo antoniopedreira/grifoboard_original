@@ -1,26 +1,32 @@
 
-// This file now just re-exports everything from the pcp directory
+// This file re-exports everything from the pcp directory
 // to maintain backward compatibility
 
-// Instead of re-exporting everything, let's import and re-export specifically
-// to avoid naming conflicts
+// Import all modules to selectively re-export
 import * as dateUtils from './pcp/dateUtils';
 import * as textUtils from './pcp/textUtils';
 import * as pcpCalculator from './pcp/pcpCalculator';
 import * as mockDataGenerator from './pcp/mockDataGenerator';
 
-// Re-export everything individually
+// Re-export date utilities
 export const {
   getWeekStartDate,
   getPreviousWeekDates,
+  getNextWeekDates,
+  formatDateRange,
   formatDateToDisplay
 } = dateUtils;
 
+// Re-export text utilities
 export const {
   formatSectorName,
-  truncateText
+  truncateText,
+  dayNameMap,
+  getFullDayName,
+  getStatusColor
 } = textUtils;
 
+// Re-export calculator utilities
 export const {
   calculatePCP,
   storeHistoricalPCPData,
@@ -28,6 +34,7 @@ export const {
   generateWeeklyPCPData
 } = pcpCalculator;
 
+// Re-export mock data generator
 export const {
   generateMockTasks
 } = mockDataGenerator;
