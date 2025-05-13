@@ -18,6 +18,8 @@ export interface Task {
   discipline: string;
   team: string;
   responsible: string;
+  executor: string; // New field: Executante
+  cable: string;    // New field: Cabo
   plannedDays: DayOfWeek[];
   dailyStatus: DailyStatus[];
   isFullyCompleted: boolean;

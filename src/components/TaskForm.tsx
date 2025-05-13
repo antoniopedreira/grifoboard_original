@@ -22,13 +22,15 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange }) => {
-  const { sectors, disciplines, teams, responsibles } = useRegistry();
+  const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
   
   const [sector, setSector] = useState("");
   const [description, setDescription] = useState("");
   const [discipline, setDiscipline] = useState("");
   const [team, setTeam] = useState("");
   const [responsible, setResponsible] = useState("");
+  const [executor, setExecutor] = useState("");  // New state for executor
+  const [cable, setCable] = useState("");        // New state for cable
   const [plannedDays, setPlannedDays] = useState<DayOfWeek[]>([]);
   const [completionStatus, setCompletionStatus] = useState<"completed" | "not_completed">("not_completed");
   
@@ -48,6 +50,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
       discipline,
       team,
       responsible,
+      executor,  // New field
+      cable,     // New field
       plannedDays,
       completionStatus,
     });
@@ -58,6 +62,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
     setDiscipline("");
     setTeam("");
     setResponsible("");
+    setExecutor("");  // Reset executor
+    setCable("");     // Reset cable
     setPlannedDays([]);
     setCompletionStatus("not_completed");
     
@@ -136,14 +142,44 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
             </div>
           </div>
           
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="responsible">Responsável</Label>
+              <Select value={responsible} onValueChange={setResponsible}>
+                <SelectTrigger id="responsible">
+                  <SelectValue placeholder="Selecione o responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {responsibles.map(option => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="executor">Executante</Label>
+              <Select value={executor} onValueChange={setExecutor}>
+                <SelectTrigger id="executor">
+                  <SelectValue placeholder="Selecione o executante" />
+                </SelectTrigger>
+                <SelectContent>
+                  {executors.map(option => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
           <div className="space-y-2">
-            <Label htmlFor="responsible">Responsável</Label>
-            <Select value={responsible} onValueChange={setResponsible}>
-              <SelectTrigger id="responsible">
-                <SelectValue placeholder="Selecione o responsável" />
+            <Label htmlFor="cable">Cabo</Label>
+            <Select value={cable} onValueChange={setCable}>
+              <SelectTrigger id="cable">
+                <SelectValue placeholder="Selecione o cabo" />
               </SelectTrigger>
               <SelectContent>
-                {responsibles.map(option => (
+                {cables.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))}
               </SelectContent>

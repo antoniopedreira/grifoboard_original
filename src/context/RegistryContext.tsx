@@ -6,6 +6,8 @@ interface RegistryContextType {
   disciplines: string[];
   teams: string[];
   responsibles: string[];
+  executors: string[];   // New field: Executantes
+  cables: string[];      // New field: Cabos
   addRegistry: (type: string, value: string) => void;
 }
 
@@ -13,6 +15,8 @@ const defaultSectors = ["Fundação", "Alvenaria", "Estrutura", "Acabamento", "I
 const defaultDisciplines = ["Civil", "Elétrica", "Hidráulica", "Arquitetura"];
 const defaultTeams = ["Equipe A", "Equipe B", "Equipe C"];
 const defaultResponsibles = ["João Silva", "Maria Oliveira", "Carlos Santos"];
+const defaultExecutors = ["Pedro Alves", "Ana Costa", "Lucas Ferreira"];  // Default executors
+const defaultCables = ["Cabo A", "Cabo B", "Cabo C"];  // Default cables
 
 const RegistryContext = createContext<RegistryContextType | undefined>(undefined);
 
@@ -21,6 +25,8 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [disciplines, setDisciplines] = useState<string[]>(defaultDisciplines);
   const [teams, setTeams] = useState<string[]>(defaultTeams);
   const [responsibles, setResponsibles] = useState<string[]>(defaultResponsibles);
+  const [executors, setExecutors] = useState<string[]>(defaultExecutors);  // New state
+  const [cables, setCables] = useState<string[]>(defaultCables);  // New state
 
   const addRegistry = (type: string, value: string) => {
     if (value.trim() === "") return;
@@ -46,11 +52,29 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           setResponsibles([...responsibles, value]);
         }
         break;
+      case "executor":
+        if (!executors.includes(value)) {
+          setExecutors([...executors, value]);
+        }
+        break;
+      case "cable":
+        if (!cables.includes(value)) {
+          setCables([...cables, value]);
+        }
+        break;
     }
   };
 
   return (
-    <RegistryContext.Provider value={{ sectors, disciplines, teams, responsibles, addRegistry }}>
+    <RegistryContext.Provider value={{ 
+      sectors, 
+      disciplines, 
+      teams, 
+      responsibles, 
+      executors, 
+      cables, 
+      addRegistry 
+    }}>
       {children}
     </RegistryContext.Provider>
   );

@@ -13,11 +13,15 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSector, setFilterSector] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
+  const [filterExecutor, setFilterExecutor] = useState("all");  // New filter
+  const [filterCable, setFilterCable] = useState("all");       // New filter
   const [filterStatus, setFilterStatus] = useState("all");
   
-  // Extract unique sectors and responsibles for filters
+  // Extract unique values for filters
   const sectors = Array.from(new Set(tasks.map(task => task.sector)));
   const responsibles = Array.from(new Set(tasks.map(task => task.responsible)));
+  const executors = Array.from(new Set(tasks.map(task => task.executor).filter(Boolean)));
+  const cables = Array.from(new Set(tasks.map(task => task.cable).filter(Boolean)));
 
   // Apply filters whenever filter values change
   useEffect(() => {
@@ -29,19 +33,21 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
         
       const matchesSector = filterSector === "all" || task.sector === filterSector;
       const matchesResponsible = filterResponsible === "all" || task.responsible === filterResponsible;
+      const matchesExecutor = filterExecutor === "all" || task.executor === filterExecutor;
+      const matchesCable = filterCable === "all" || task.cable === filterCable;
       const matchesStatus = filterStatus === "all" || 
                           (filterStatus === "completed" && task.completionStatus === "completed") ||
                           (filterStatus === "not_completed" && task.completionStatus === "not_completed");
       
-      return matchesSearch && matchesSector && matchesResponsible && matchesStatus;
+      return matchesSearch && matchesSector && matchesResponsible && matchesExecutor && matchesCable && matchesStatus;
     });
 
     onFiltersChange(filteredTasks);
-  }, [searchTerm, filterSector, filterResponsible, filterStatus, tasks, onFiltersChange]);
+  }, [searchTerm, filterSector, filterResponsible, filterExecutor, filterCable, filterStatus, tasks, onFiltersChange]);
   
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <div className="flex-1">
+    <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex-1 min-w-[200px]">
         <Input
           placeholder="Buscar tarefas..."
           value={searchTerm}
@@ -50,9 +56,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
         />
       </div>
       
-      <div className="w-full md:w-40">
+      <div className="w-full sm:w-auto">
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger>
+          <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -63,10 +69,10 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
         </Select>
       </div>
       
-      <div className="w-full md:w-52">
+      <div className="w-full sm:w-auto">
         <Select value={filterSector} onValueChange={setFilterSector}>
-          <SelectTrigger>
-            <SelectValue placeholder="Filtrar por setor" />
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Setor" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os setores</SelectItem>
@@ -77,15 +83,43 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange }) => 
         </Select>
       </div>
       
-      <div className="w-full md:w-52">
+      <div className="w-full sm:w-auto">
         <Select value={filterResponsible} onValueChange={setFilterResponsible}>
-          <SelectTrigger>
-            <SelectValue placeholder="Filtrar por responsável" />
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Responsável" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os responsáveis</SelectItem>
             {responsibles.map(responsible => (
               <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="w-full sm:w-auto">
+        <Select value={filterExecutor} onValueChange={setFilterExecutor}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Executante" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os executantes</SelectItem>
+            {executors.map(executor => (
+              <SelectItem key={executor} value={executor}>{executor}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="w-full sm:w-auto">
+        <Select value={filterCable} onValueChange={setFilterCable}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Cabo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os cabos</SelectItem>
+            {cables.map(cable => (
+              <SelectItem key={cable} value={cable}>{cable}</SelectItem>
             ))}
           </SelectContent>
         </Select>

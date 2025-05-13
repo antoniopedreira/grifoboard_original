@@ -21,6 +21,8 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
   const [newDiscipline, setNewDiscipline] = useState("");
   const [newTeam, setNewTeam] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
+  const [newExecutor, setNewExecutor] = useState("");  // New state
+  const [newCable, setNewCable] = useState("");        // New state
 
   const handleSubmit = (type: string) => {
     let value = "";
@@ -42,6 +44,14 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         value = newResponsible.trim();
         setNewResponsible("");
         break;
+      case "executor":
+        value = newExecutor.trim();
+        setNewExecutor("");
+        break;
+      case "cable":
+        value = newCable.trim();
+        setNewCable("");
+        break;
     }
     
     if (value) {
@@ -61,11 +71,13 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
 
   return (
     <Tabs defaultValue="sector" className="w-full">
-      <TabsList className="grid grid-cols-4 mb-4">
+      <TabsList className="grid grid-cols-6 mb-4">
         <TabsTrigger value="sector">Setor</TabsTrigger>
         <TabsTrigger value="discipline">Disciplina</TabsTrigger>
         <TabsTrigger value="team">Equipe</TabsTrigger>
         <TabsTrigger value="responsible">Responsável</TabsTrigger>
+        <TabsTrigger value="executor">Executante</TabsTrigger>
+        <TabsTrigger value="cable">Cabo</TabsTrigger>
       </TabsList>
       
       <TabsContent value="sector" className="space-y-4">
@@ -129,6 +141,38 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         
         <div className="flex justify-end">
           <Button onClick={() => handleSubmit("responsible")}>Adicionar Responsável</Button>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="executor" className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="new-executor">Novo Executante</Label>
+          <Input
+            id="new-executor"
+            value={newExecutor}
+            onChange={(e) => setNewExecutor(e.target.value)}
+            placeholder="Digite o nome do executante"
+          />
+        </div>
+        
+        <div className="flex justify-end">
+          <Button onClick={() => handleSubmit("executor")}>Adicionar Executante</Button>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="cable" className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="new-cable">Novo Cabo</Label>
+          <Input
+            id="new-cable"
+            value={newCable}
+            onChange={(e) => setNewCable(e.target.value)}
+            placeholder="Digite o tipo de cabo"
+          />
+        </div>
+        
+        <div className="flex justify-end">
+          <Button onClick={() => handleSubmit("cable")}>Adicionar Cabo</Button>
         </div>
       </TabsContent>
     </Tabs>

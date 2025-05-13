@@ -6,13 +6,17 @@ interface TaskDetailsProps {
   discipline: string;
   team: string;
   responsible: string;
+  executor: string;  // New field
+  cable: string;     // New field
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
   sector,
   discipline,
   team,
-  responsible
+  responsible,
+  executor,
+  cable
 }) => {
   return (
     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -31,6 +35,14 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       <div className="flex flex-col">
         <span className="text-gray-500">Responsável</span>
         <span>{responsible}</span>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-gray-500">Executante</span>
+        <span>{executor}</span>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-gray-500">Cabo</span>
+        <span>{cable}</span>
       </div>
     </div>
   );
