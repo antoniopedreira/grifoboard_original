@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Task } from "@/types";
 import { Tarefa } from "@/types/supabase";
 import { calculatePCP } from "@/utils/pcp";
@@ -36,26 +36,25 @@ export const useTaskManager = (weekStartDate: Date) => {
   const [weeklyPCPData, setWeeklyPCPData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Carregar tarefas quando a obra ativa mudar ou a data da semana mudar
-  useEffect(() => {
-    if (session.obraAtiva) {
-      loadTasks();
-    }
-  }, [session.obraAtiva, weekStartDate]);
+  // Função para calcular dados do PCP com base nas tarefas
+  const calculatePCPData = useCallback((tasksList: Task[]) => {
+    const pcpData = calculatePCP(tasksList);
+    setWeeklyPCPData([pcpData]);
+    return pcpData;
+  }, []);
 
-  const loadTasks = async () => {
+  // Função para carregar tarefas do Supabase
+  const loadTasks = useCallback(async () => {
     if (!session.obraAtiva) return;
     
     setIsLoading(true);
     try {
       const tarefas = await tarefasService.listarTarefas(session.obraAtiva.id);
-      // Converter Tarefas para Tasks antes de atualizar o estado
       const convertedTasks = tarefas.map(convertTarefaToTask);
       setTasks(convertedTasks);
       
       // Calcular dados do PCP para o gráfico semanal
-      const pcpData = calculatePCP(convertedTasks);
-      setWeeklyPCPData([pcpData]);
+      calculatePCPData(convertedTasks);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar tarefas",
@@ -65,9 +64,17 @@ export const useTaskManager = (weekStartDate: Date) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session.obraAtiva, toast, calculatePCPData]);
   
-  const handleTaskUpdate = async (updatedTask: Task) => {
+  // Carregar tarefas quando a obra ativa mudar ou a data da semana mudar
+  useEffect(() => {
+    if (session.obraAtiva) {
+      loadTasks();
+    }
+  }, [session.obraAtiva, weekStartDate, loadTasks]);
+
+  // Função para atualizar uma tarefa
+  const handleTaskUpdate = useCallback(async (updatedTask: Task) => {
     try {
       // Extrair apenas os campos necessários para atualizar no Supabase
       const { id, ...taskUpdate } = updatedTask;
@@ -80,23 +87,26 @@ export const useTaskManager = (weekStartDate: Date) => {
       setTasks(updatedTasks);
       
       // Atualizar dados do PCP
-      const pcpData = calculatePCP(updatedTasks);
-      setWeeklyPCPData([pcpData]);
+      calculatePCPData(updatedTasks);
       
       toast({
         title: "Tarefa atualizada",
         description: "As alterações foram salvas com sucesso.",
       });
+      
+      return updatedTask;
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar tarefa",
         description: error.message,
         variant: "destructive",
       });
+      throw error;
     }
-  };
+  }, [tasks, toast, calculatePCPData]);
 
-  const handleTaskDelete = async (taskId: string) => {
+  // Função para excluir uma tarefa
+  const handleTaskDelete = useCallback(async (taskId: string) => {
     try {
       await tarefasService.excluirTarefa(taskId);
       
@@ -105,23 +115,26 @@ export const useTaskManager = (weekStartDate: Date) => {
       setTasks(updatedTasks);
       
       // Atualizar dados do PCP
-      const pcpData = calculatePCP(updatedTasks);
-      setWeeklyPCPData([pcpData]);
+      calculatePCPData(updatedTasks);
       
       toast({
         title: "Tarefa excluída",
         description: "A tarefa foi removida com sucesso.",
       });
+      
+      return true;
     } catch (error: any) {
       toast({
         title: "Erro ao excluir tarefa",
         description: error.message,
         variant: "destructive",
       });
+      return false;
     }
-  };
+  }, [tasks, toast, calculatePCPData]);
   
-  const handleTaskCreate = async (newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
+  // Função para criar uma nova tarefa
+  const handleTaskCreate = useCallback(async (newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
     try {
       if (!session.obraAtiva) {
         throw new Error("Nenhuma obra ativa selecionada");
@@ -138,23 +151,25 @@ export const useTaskManager = (weekStartDate: Date) => {
       setTasks(updatedTasks);
       
       // Atualizar dados do PCP
-      const pcpData = calculatePCP(updatedTasks);
-      setWeeklyPCPData([pcpData]);
+      calculatePCPData(updatedTasks);
       
       toast({
         title: "Tarefa criada",
         description: "Nova tarefa adicionada com sucesso.",
       });
+      
+      return novaTask;
     } catch (error: any) {
       toast({
         title: "Erro ao criar tarefa",
         description: error.message,
         variant: "destructive",
       });
+      throw error;
     }
-  };
+  }, [session.obraAtiva, tasks, toast, calculatePCPData]);
   
-  // Calcular PCP
+  // Calcular PCP atual
   const pcpData = calculatePCP(tasks);
   
   return {
@@ -162,6 +177,7 @@ export const useTaskManager = (weekStartDate: Date) => {
     isLoading,
     pcpData,
     weeklyPCPData,
+    loadTasks,
     handleTaskUpdate,
     handleTaskDelete,
     handleTaskCreate
