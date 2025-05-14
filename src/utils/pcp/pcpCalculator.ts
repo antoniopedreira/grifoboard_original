@@ -25,12 +25,12 @@ export const calculatePCP = (tasks: Task[], previousWeekPercentage?: number): PC
   const totalTasks = tasksWithPlannedDays.length;
   const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   
-  // Calculate variation using the correct formula: (current - previous) / previous * 100
+  // Calculate variation percentage: (current - previous) / previous * 100
   let variation = 0;
   if (previousWeekPercentage && previousWeekPercentage > 0) {
     variation = ((percentage - previousWeekPercentage) / previousWeekPercentage) * 100;
-    // Round to 1 decimal place
-    variation = Math.round(variation * 10) / 10;
+    // Round to 1 decimal place for display purposes
+    variation = parseFloat(variation.toFixed(1));
   }
 
   // By sector

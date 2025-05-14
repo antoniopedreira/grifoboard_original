@@ -9,7 +9,7 @@ interface PCPOverallCardProps {
 }
 
 const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
-  // Get variation directly from the data prop (no need to calculate it here anymore)
+  // Get variation directly from the data prop
   const variation = data.variation || 0;
   const isPositive = variation >= 0;
   const hasPreviousData = data.previousWeekPercentage !== undefined && data.previousWeekPercentage > 0;
@@ -29,7 +29,6 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
             {data.completedTasks} de {data.totalTasks} tarefas concluídas
           </div>
           
-          {/* Variation indicator with improved handling */}
           {hasPreviousData ? (
             <div className={`flex items-center mt-1 text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {isPositive ? (

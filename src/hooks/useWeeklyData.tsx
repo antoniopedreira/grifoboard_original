@@ -15,7 +15,6 @@ export function useWeeklyData() {
   const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
   
   // Store historical PCP data for consistency when navigating between weeks
-  // Now store both percentage and variation as an object
   const historicalDataRef = useRef<Map<string, { percentage: number, variation: number }>>(new Map());
   
   // Store tasks by week start date
