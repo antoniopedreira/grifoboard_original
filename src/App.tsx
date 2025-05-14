@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
@@ -21,6 +21,19 @@ const queryClient = new QueryClient({
   }
 });
 
+// Componente de layout para controlar onde o cabeçalho aparece
+const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/auth';
+
+  return (
+    <>
+      {!isAuthPage && <Header />}
+      {children}
+    </>
+  );
+};
+
 function App() {
   const [selectedObraId, setSelectedObraId] = useState<string | null>(null);
   
@@ -33,13 +46,14 @@ function App() {
       <AuthProvider>
         <RegistryProvider>
           <Router>
-            <Header />
-            <Routes>
-              <Route path="/" element={<Index onObraSelect={handleObraSelect} />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppLayout>
+              <Routes>
+                <Route path="/" element={<Index onObraSelect={handleObraSelect} />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AppLayout>
           </Router>
           <Toaster />
         </RegistryProvider>
