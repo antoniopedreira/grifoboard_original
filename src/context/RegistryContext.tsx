@@ -6,21 +6,27 @@ interface RegistryContextType {
   disciplines: string[];
   teams: string[];
   responsibles: string[];
-  executors: string[];   
-  cables: string[];      
+  executors: string[];   // New field: Executantes
+  cables: string[];      // New field: Cabos
   addRegistry: (type: string, value: string) => void;
 }
 
-// Removing all default values and starting with empty arrays
+const defaultSectors = ["Fundação", "Alvenaria", "Estrutura", "Acabamento", "Instalações"];
+const defaultDisciplines = ["Civil", "Elétrica", "Hidráulica", "Arquitetura"];
+const defaultTeams = ["Equipe A", "Equipe B", "Equipe C"];
+const defaultResponsibles = ["João Silva", "Maria Oliveira", "Carlos Santos"];
+const defaultExecutors = ["Pedro Alves", "Ana Costa", "Lucas Ferreira"];  // Default executors
+const defaultCables = ["Cabo A", "Cabo B", "Cabo C"];  // Default cables
+
 const RegistryContext = createContext<RegistryContextType | undefined>(undefined);
 
 export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [sectors, setSectors] = useState<string[]>([]);
-  const [disciplines, setDisciplines] = useState<string[]>([]);
-  const [teams, setTeams] = useState<string[]>([]);
-  const [responsibles, setResponsibles] = useState<string[]>([]);
-  const [executors, setExecutors] = useState<string[]>([]);
-  const [cables, setCables] = useState<string[]>([]);
+  const [sectors, setSectors] = useState<string[]>(defaultSectors);
+  const [disciplines, setDisciplines] = useState<string[]>(defaultDisciplines);
+  const [teams, setTeams] = useState<string[]>(defaultTeams);
+  const [responsibles, setResponsibles] = useState<string[]>(defaultResponsibles);
+  const [executors, setExecutors] = useState<string[]>(defaultExecutors);  // New state
+  const [cables, setCables] = useState<string[]>(defaultCables);  // New state
 
   const addRegistry = (type: string, value: string) => {
     if (value.trim() === "") return;

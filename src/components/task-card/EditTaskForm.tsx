@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2, CalendarIcon } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -12,20 +12,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { dayNameMap, getWeekStartDate } from "@/utils/pcp";
+import { dayNameMap } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
-import { cn } from "@/lib/utils";
 
 interface EditTaskFormProps {
   editFormData: any;
-  onEditFormChange: (field: string, value: string | Date) => void;
+  onEditFormChange: (field: string, value: string) => void;
   onDayToggle: (day: DayOfWeek) => void;
   onDelete: () => void;
   onSave: () => void;
@@ -43,47 +35,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 }) => {
   const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
 
-  // Handle date selection and ensure it's the start of a week (Monday)
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      const weekStart = getWeekStartDate(date);
-      onEditFormChange("weekStartDate", weekStart);
-    }
-  };
-
   return (
     <div className="grid gap-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="edit-week-start-date">Semana</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="edit-week-start-date"
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !editFormData.weekStartDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {editFormData.weekStartDate ? format(new Date(editFormData.weekStartDate), "dd/MM/yyyy") : <span>Selecione a data inicial da semana</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={editFormData.weekStartDate ? new Date(editFormData.weekStartDate) : undefined}
-              onSelect={handleDateSelect}
-              initialFocus
-              className="p-3 pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
-        <p className="text-xs text-muted-foreground">
-          Sempre será ajustado para o início da semana (segunda-feira)
-        </p>
-      </div>
-      
       <div className="space-y-2">
         <Label htmlFor="edit-sector">Setor</Label>
         <Select 
@@ -94,15 +47,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             <SelectValue placeholder="Selecione o setor" />
           </SelectTrigger>
           <SelectContent>
-            {sectors.length > 0 ? (
-              sectors.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))
-            ) : (
-              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                <p>Nenhum setor cadastrado</p>
-              </div>
-            )}
+            {sectors.map(option => (
+              <SelectItem key={option} value={option}>{option}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -128,15 +75,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione a disciplina" />
             </SelectTrigger>
             <SelectContent>
-              {disciplines.length > 0 ? (
-                disciplines.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  <p>Nenhuma disciplina cadastrada</p>
-                </div>
-              )}
+              {disciplines.map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -151,15 +92,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione a equipe" />
             </SelectTrigger>
             <SelectContent>
-              {teams.length > 0 ? (
-                teams.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  <p>Nenhuma equipe cadastrada</p>
-                </div>
-              )}
+              {teams.map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -176,15 +111,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o responsável" />
             </SelectTrigger>
             <SelectContent>
-              {responsibles.length > 0 ? (
-                responsibles.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  <p>Nenhum responsável cadastrado</p>
-                </div>
-              )}
+              {responsibles.map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -199,15 +128,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o executante" />
             </SelectTrigger>
             <SelectContent>
-              {executors.length > 0 ? (
-                executors.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  <p>Nenhum executante cadastrado</p>
-                </div>
-              )}
+              {executors.map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -223,15 +146,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             <SelectValue placeholder="Selecione o cabo" />
           </SelectTrigger>
           <SelectContent>
-            {cables.length > 0 ? (
-              cables.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))
-            ) : (
-              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                <p>Nenhum cabo cadastrado</p>
-              </div>
-            )}
+            {cables.map(option => (
+              <SelectItem key={option} value={option}>{option}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
