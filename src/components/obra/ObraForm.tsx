@@ -19,6 +19,7 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
   const [localizacao, setLocalizacao] = useState('');
   const [dataInicio, setDataInicio] = useState('');
   const [status, setStatus] = useState('em_andamento');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const resetForm = () => {
@@ -26,6 +27,7 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
     setLocalizacao('');
     setDataInicio('');
     setStatus('em_andamento');
+    setIsSubmitting(false);
   };
   
   const isFormValid = () => {
@@ -33,6 +35,10 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
   };
 
   const handleCreateObra = async () => {
+    if (!isFormValid()) return;
+    
+    setIsSubmitting(true);
+    
     try {
       const novaObra = {
         nome_obra: nomeObra,
@@ -52,16 +58,25 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
       resetForm();
       onObraCriada();
     } catch (error: any) {
+      console.error("Erro ao criar obra:", error);
+      
       toast({
         title: "Erro ao criar obra",
-        description: error.message,
+        description: error.message || "Ocorreu um erro ao criar a obra. Por favor, tente novamente.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        onClose();
+        resetForm();
+      }
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Nova Obra</DialogTitle>
@@ -113,9 +128,15 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
           </div>
         </div>
         
-        <div className="flex justify-end">
-          <Button onClick={handleCreateObra} disabled={!isFormValid()}>
-            Criar Obra
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleCreateObra} 
+            disabled={!isFormValid() || isSubmitting}
+          >
+            {isSubmitting ? 'Criando...' : 'Criar Obra'}
           </Button>
         </div>
       </DialogContent>
