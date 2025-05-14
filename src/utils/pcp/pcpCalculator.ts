@@ -1,13 +1,18 @@
 
 import { PCPBreakdown, Task, WeeklyPCPData } from "../../types";
 
-export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
+export const calculatePCP = (tasks: Task[], previousWeekPercentage?: number): PCPBreakdown => {
   // Filter only tasks that have planned days
   const tasksWithPlannedDays = tasks.filter(task => task.plannedDays.length > 0);
   
   if (tasksWithPlannedDays.length === 0) {
     return {
-      overall: { completedTasks: 0, totalTasks: 0, percentage: 0 },
+      overall: { 
+        completedTasks: 0, 
+        totalTasks: 0, 
+        percentage: 0,
+        previousWeekPercentage: previousWeekPercentage || 0 
+      },
       bySector: {},
       byResponsible: {},
       byDiscipline: {}
@@ -62,7 +67,12 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   });
 
   return {
-    overall: { completedTasks, totalTasks, percentage },
+    overall: { 
+      completedTasks, 
+      totalTasks, 
+      percentage,
+      previousWeekPercentage: previousWeekPercentage || 0
+    },
     bySector,
     byResponsible,
     byDiscipline
