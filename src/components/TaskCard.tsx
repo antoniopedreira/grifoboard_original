@@ -34,6 +34,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
       cable: task.cable || "",
       plannedDays: task.plannedDays,
       causeIfNotDone: task.causeIfNotDone,
+      weekStartDate: task.weekStartDate,
     }
   );
 
@@ -86,7 +87,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
     }));
   };
 
+  const handleWeekDateChange = (date: Date) => {
+    setEditFormData(prev => ({
+      ...prev,
+      weekStartDate: date
+    }));
+  };
+
   const handleSaveEdit = () => {
+    // Make sure we have a week date
+    if (!editFormData.weekStartDate) {
+      toast({
+        title: "Data da semana requerida",
+        description: "Por favor, selecione a data de início da semana (segunda-feira).",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const updatedTask: Task = {
       ...task,
       ...editFormData,
@@ -119,7 +137,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
       editFormData.sector?.trim() !== "" &&
       editFormData.description?.trim() !== "" &&
       editFormData.responsible?.trim() !== "" &&
-      editFormData.plannedDays.length > 0
+      editFormData.plannedDays.length > 0 &&
+      editFormData.weekStartDate !== undefined
     );
   };
 
@@ -170,6 +189,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
         onDelete={() => setIsDeleteDialogOpen(true)}
         onSave={handleSaveEdit}
         isFormValid={isFormValid}
+        onWeekDateChange={handleWeekDateChange}
       />
 
       {/* Delete Confirmation Dialog */}

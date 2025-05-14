@@ -7,6 +7,11 @@ import { tarefasService } from "@/services/tarefaService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
+// Format ISO date to YYYY-MM-DD
+export const formatDateToISO = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
 // Função auxiliar para converter Tarefa para Task
 export const convertTarefaToTask = (tarefa: Tarefa): Task => {
   const task: Task = {
@@ -71,12 +76,30 @@ export const useTaskManager = (weekStartDate: Date) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [weeklyPCPData, setWeeklyPCPData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
   // Função para calcular dados do PCP com base nas tarefas
   const calculatePCPData = useCallback((tasksList: Task[]) => {
     const pcpData = calculatePCP(tasksList);
     setWeeklyPCPData([pcpData]);
     return pcpData;
+  }, []);
+
+  // Filter tasks based on week start date
+  const filterTasksByWeek = useCallback((allTasks: Task[], startDate: Date) => {
+    // Format the week start date for comparison (YYYY-MM-DD)
+    const weekStartDateStr = formatDateToISO(startDate);
+    
+    return allTasks.filter(task => {
+      // If task has no weekStartDate, skip it
+      if (!task.weekStartDate) return false;
+      
+      // Format the task's week start date for comparison
+      const taskWeekStartStr = formatDateToISO(task.weekStartDate);
+      
+      // Match tasks where the week start date is the same as the selected week
+      return taskWeekStartStr === weekStartDateStr;
+    });
   }, []);
 
   // Função para carregar tarefas do Supabase
@@ -92,8 +115,12 @@ export const useTaskManager = (weekStartDate: Date) => {
       const convertedTasks = tarefas.map(convertTarefaToTask);
       setTasks(convertedTasks);
       
-      // Calcular dados do PCP para o gráfico semanal
-      calculatePCPData(convertedTasks);
+      // Filter tasks for the current week
+      const weekFilteredTasks = filterTasksByWeek(convertedTasks, weekStartDate);
+      setFilteredTasks(weekFilteredTasks);
+      
+      // Calcular dados do PCP para o gráfico semanal com as tarefas filtradas
+      calculatePCPData(weekFilteredTasks);
     } catch (error: any) {
       console.error("Error loading tasks:", error);
       toast({
@@ -104,7 +131,7 @@ export const useTaskManager = (weekStartDate: Date) => {
     } finally {
       setIsLoading(false);
     }
-  }, [session.obraAtiva, toast, calculatePCPData]);
+  }, [session.obraAtiva, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
   
   // Carregar tarefas quando a obra ativa mudar ou a data da semana mudar
   useEffect(() => {
@@ -112,6 +139,13 @@ export const useTaskManager = (weekStartDate: Date) => {
       loadTasks();
     }
   }, [session.obraAtiva, weekStartDate, loadTasks]);
+
+  // Quando a semana muda, atualizar a lista filtrada
+  useEffect(() => {
+    setFilteredTasks(filterTasksByWeek(tasks, weekStartDate));
+    // Recalculate PCP data for the filtered tasks
+    calculatePCPData(filterTasksByWeek(tasks, weekStartDate));
+  }, [weekStartDate, tasks, filterTasksByWeek, calculatePCPData]);
 
   // Função para atualizar uma tarefa
   const handleTaskUpdate = useCallback(async (updatedTask: Task) => {
@@ -127,7 +161,9 @@ export const useTaskManager = (weekStartDate: Date) => {
         executante: updatedTask.executor,
         cabo: updatedTask.cable,
         percentual_executado: updatedTask.isFullyCompleted ? 1 : 0,
-        causa_nao_execucao: updatedTask.causeIfNotDone
+        causa_nao_execucao: updatedTask.causeIfNotDone,
+        // Convert Date to string format for database
+        semana: updatedTask.weekStartDate ? formatDateToISO(updatedTask.weekStartDate) : undefined
       };
       
       // Update day status fields
@@ -169,8 +205,10 @@ export const useTaskManager = (weekStartDate: Date) => {
       );
       setTasks(updatedTasks);
       
-      // Atualizar dados do PCP
-      calculatePCPData(updatedTasks);
+      // Update filtered tasks and PCP data
+      const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
+      setFilteredTasks(updatedFilteredTasks);
+      calculatePCPData(updatedFilteredTasks);
       
       toast({
         title: "Tarefa atualizada",
@@ -187,7 +225,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       });
       throw error;
     }
-  }, [tasks, toast, calculatePCPData]);
+  }, [tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
   
   // Função para excluir uma tarefa
   const handleTaskDelete = useCallback(async (taskId: string) => {
@@ -198,8 +236,10 @@ export const useTaskManager = (weekStartDate: Date) => {
       const updatedTasks = tasks.filter(task => task.id !== taskId);
       setTasks(updatedTasks);
       
-      // Atualizar dados do PCP
-      calculatePCPData(updatedTasks);
+      // Update filtered tasks and PCP data
+      const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
+      setFilteredTasks(updatedFilteredTasks);
+      calculatePCPData(updatedFilteredTasks);
       
       toast({
         title: "Tarefa excluída",
@@ -216,13 +256,18 @@ export const useTaskManager = (weekStartDate: Date) => {
       });
       return false;
     }
-  }, [tasks, toast, calculatePCPData]);
+  }, [tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
   
   // Função para criar uma nova tarefa
   const handleTaskCreate = useCallback(async (newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
     try {
       if (!session.obraAtiva) {
         throw new Error("Nenhuma obra ativa selecionada");
+      }
+      
+      // Ensure we have a week start date
+      if (!newTaskData.weekStartDate) {
+        throw new Error("Data de início da semana (segunda-feira) é obrigatória");
       }
       
       // Initialize the new Tarefa object with required fields
@@ -236,7 +281,8 @@ export const useTaskManager = (weekStartDate: Date) => {
         responsavel: newTaskData.responsible,
         executante: newTaskData.executor,
         cabo: newTaskData.cable,
-        semana: newTaskData.weekStartDate ? newTaskData.weekStartDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        // Store the date in ISO format (YYYY-MM-DD)
+        semana: formatDateToISO(newTaskData.weekStartDate),
         percentual_executado: 0,
         causa_nao_execucao: newTaskData.causeIfNotDone,
         seg: null,
@@ -277,8 +323,10 @@ export const useTaskManager = (weekStartDate: Date) => {
       const updatedTasks = [novaTask, ...tasks];
       setTasks(updatedTasks);
       
-      // Atualizar dados do PCP
-      calculatePCPData(updatedTasks);
+      // Update filtered tasks and PCP data
+      const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
+      setFilteredTasks(updatedFilteredTasks);
+      calculatePCPData(updatedFilteredTasks);
       
       toast({
         title: "Tarefa criada",
@@ -295,13 +343,14 @@ export const useTaskManager = (weekStartDate: Date) => {
       });
       throw error;
     }
-  }, [session.obraAtiva, tasks, toast, calculatePCPData]);
+  }, [session.obraAtiva, tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
   
-  // Calcular PCP atual
-  const pcpData = calculatePCP(tasks);
+  // Calcular PCP atual baseado nas tarefas filtradas da semana
+  const pcpData = calculatePCP(filteredTasks);
   
   return {
-    tasks,
+    tasks: filteredTasks, // Return filtered tasks instead of all tasks
+    allTasks: tasks,      // Keep all tasks for reference
     isLoading,
     pcpData,
     weeklyPCPData,

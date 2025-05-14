@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, CalendarIcon } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -12,8 +12,16 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { dayNameMap } from "@/utils/pcp";
+import { dayNameMap, getWeekStartDate } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface EditTaskFormProps {
   editFormData: any;
@@ -23,6 +31,7 @@ interface EditTaskFormProps {
   onSave: () => void;
   isFormValid: () => boolean;
   task: any;
+  onWeekDateChange: (date: Date) => void;
 }
 
 const EditTaskForm: React.FC<EditTaskFormProps> = ({
@@ -31,7 +40,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   onDayToggle,
   onDelete,
   onSave,
-  isFormValid
+  isFormValid,
+  onWeekDateChange
 }) => {
   const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
 
@@ -44,11 +54,52 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
     responsible: editFormData?.responsible || "",
     executor: editFormData?.executor || "",
     cable: editFormData?.cable || "",
-    plannedDays: editFormData?.plannedDays || []
+    plannedDays: editFormData?.plannedDays || [],
+    weekStartDate: editFormData?.weekStartDate
   };
 
   return (
     <div className="grid gap-4 py-4">
+      {/* Week start date picker */}
+      <div className="space-y-2">
+        <Label htmlFor="edit-weekStartDate">Semana (Segunda-feira)</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="edit-weekStartDate"
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !safeEditFormData.weekStartDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {safeEditFormData.weekStartDate ? 
+                format(safeEditFormData.weekStartDate, "dd/MM/yyyy") : 
+                <span>Selecionar data</span>
+              }
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={safeEditFormData.weekStartDate}
+              onSelect={(date) => {
+                // Force selection to be Monday by finding the Monday of the selected date's week
+                if (date) {
+                  const mondayDate = getWeekStartDate(date);
+                  onWeekDateChange(mondayDate);
+                }
+              }}
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+        <p className="text-sm text-muted-foreground">
+          A tarefa será exibida apenas na semana selecionada.
+        </p>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="edit-sector">Setor</Label>
         <Select 

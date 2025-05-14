@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import TaskForm from "@/components/TaskForm";
 import WeekNavigation from "@/components/WeekNavigation";
 import RegistryDialog from "@/components/RegistryDialog";
-import { getPreviousWeekDates, getNextWeekDates } from "@/utils/pcp";
+import { getPreviousWeekDates, getNextWeekDates, getWeekStartDate } from "@/utils/pcp";
 import { useToast } from "@/hooks/use-toast";
 import { useTaskManager } from "@/hooks/useTaskManager";
 import MainHeader from "@/components/MainHeader";
@@ -16,7 +16,8 @@ const MainPageContent = () => {
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
   
-  const [weekStartDate, setWeekStartDate] = useState(new Date());
+  // Initialize with the current week's Monday
+  const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
   const [weekEndDate, setWeekEndDate] = useState(new Date());
 
   // Calcular data de fim da semana quando a data de início mudar
@@ -110,6 +111,7 @@ const MainPageContent = () => {
         onTaskCreate={handleTaskCreate} 
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
+        currentWeekStartDate={weekStartDate}
       />
 
       <RegistryDialog 

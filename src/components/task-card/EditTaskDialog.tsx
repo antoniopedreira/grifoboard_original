@@ -18,6 +18,7 @@ interface EditTaskDialogProps {
   onDelete: () => void;
   onSave: () => void;
   isFormValid: () => boolean;
+  onWeekDateChange: (date: Date) => void;
 }
 
 const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
@@ -29,7 +30,8 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
   onDayToggle,
   onDelete,
   onSave,
-  isFormValid
+  isFormValid,
+  onWeekDateChange
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -46,6 +48,7 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
           onDelete={onDelete}
           onSave={onSave}
           isFormValid={isFormValid}
+          onWeekDateChange={onWeekDateChange}
         />
       </DialogContent>
     </Dialog>

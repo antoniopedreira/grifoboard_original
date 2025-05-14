@@ -1,13 +1,30 @@
-
 export type DayOfWeek = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
-export type TaskStatus = "planned" | "completed" | "not_done" | "not_planned";
+export type TaskStatus = "planned" | "completed" | "not_done";
 
-export interface DailyStatus {
+export interface DayStatus {
   day: DayOfWeek;
   status: TaskStatus;
 }
 
+export interface PCPData {
+  planned: number;
+  completed: number;
+  not_done: number;
+  overall: {
+    percentage: number;
+    status: TaskStatus;
+  };
+}
+
+export interface WeeklyPCPData {
+  week: string;
+  percentage: number;
+  date: Date;
+  isCurrentWeek: boolean;
+}
+
+// Adicionar a propriedade weekStartDate à interface Task
 export interface Task {
   id: string;
   sector: string;
@@ -16,31 +33,11 @@ export interface Task {
   discipline: string;
   team: string;
   responsible: string;
-  executor: string; // New field: Executante
-  cable: string;    // New field: Cabo
+  executor?: string;
+  cable?: string;
   plannedDays: DayOfWeek[];
-  dailyStatus: DailyStatus[];
+  dailyStatus: DayStatus[];
   isFullyCompleted: boolean;
   causeIfNotDone?: string;
-  weekStartDate?: Date; // The start of the week this task belongs to
-}
-
-export interface PCPData {
-  completedTasks: number;
-  totalTasks: number;
-  percentage: number;
-}
-
-export interface PCPBreakdown {
-  overall: PCPData;
-  bySector: Record<string, PCPData>;
-  byResponsible: Record<string, PCPData>;
-  byDiscipline: Record<string, PCPData>;
-}
-
-export interface WeeklyPCPData {
-  week: string;
-  percentage: number;
-  date: Date; // For sorting purposes
-  isCurrentWeek?: boolean; // Flag to highlight current week
+  weekStartDate?: Date;
 }

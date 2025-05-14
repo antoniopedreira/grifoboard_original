@@ -9,21 +9,30 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DayOfWeek, Task } from "@/types";
-import { dayNameMap } from "@/utils/pcp";
+import { dayNameMap, getWeekStartDate } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
 import { toast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface TaskFormProps {
   onTaskCreate: (task: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  currentWeekStartDate?: Date;
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange, currentWeekStartDate }) => {
   const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
   
   const [sector, setSector] = useState("");
@@ -35,6 +44,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
   const [cable, setCable] = useState("");
   const [plannedDays, setPlannedDays] = useState<DayOfWeek[]>([]);
   
+  // Default to current week's Monday if no date is provided
+  const [weekStartDate, setWeekStartDate] = useState<Date | undefined>(
+    currentWeekStartDate || getWeekStartDate(new Date())
+  );
+  
   const handleDayToggle = (day: DayOfWeek) => {
     setPlannedDays(prev => 
       prev.includes(day)
@@ -44,6 +58,16 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
   };
   
   const handleSubmit = () => {
+    // Ensure we have a valid week start date
+    if (!weekStartDate) {
+      toast({
+        title: "Data da semana requerida",
+        description: "Por favor, selecione a data de início da semana (segunda-feira).",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     onTaskCreate({
       sector,
       item: "",
@@ -54,6 +78,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
       executor,
       cable,
       plannedDays,
+      weekStartDate, // Add weekStartDate to the task
     });
     
     // Reset form fields
@@ -65,6 +90,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
     setExecutor("");
     setCable("");
     setPlannedDays([]);
+    setWeekStartDate(currentWeekStartDate || getWeekStartDate(new Date()));
     
     // Close the dialog
     onOpenChange(false);
@@ -75,7 +101,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
       sector.trim() !== "" &&
       description.trim() !== "" &&
       responsible.trim() !== "" &&
-      plannedDays.length > 0
+      plannedDays.length > 0 &&
+      weekStartDate !== undefined
     );
   };
   
@@ -95,6 +122,42 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
+          {/* Week start date picker */}
+          <div className="space-y-2">
+            <Label htmlFor="weekStartDate">Semana (Segunda-feira)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="weekStartDate"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !weekStartDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {weekStartDate ? format(weekStartDate, "dd/MM/yyyy") : <span>Selecionar data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={weekStartDate}
+                  onSelect={(date) => {
+                    // Force selection to be Monday by finding the Monday of the selected date's week
+                    if (date) {
+                      setWeekStartDate(getWeekStartDate(date));
+                    }
+                  }}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-sm text-muted-foreground">
+              A tarefa será exibida apenas na semana selecionada.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="sector">Setor</Label>
             <Select value={sector} onValueChange={setSector}>
