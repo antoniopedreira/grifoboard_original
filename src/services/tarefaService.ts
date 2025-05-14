@@ -22,15 +22,18 @@ export const tarefasService = {
       status: tarefa.plannedDays.includes(day as any) ? "planned" : "not_planned"
     }));
 
+    // Create the new task object with correct field names for Supabase
     const novaTarefa = {
       ...tarefa,
       id: uuidv4(),
       obra_id,
-      dailyStatus: allDays,
-      isFullyCompleted: false,
-      completionStatus: tarefa.completionStatus || "not_completed",
-      weekStartDate: new Date().toISOString()
+      dailystatus: allDays, // lowercase 's' to match database column name
+      isfullycompleted: false, // lowercase to match database column name
+      completionstatus: tarefa.completionStatus || "not_completed", // lowercase 's' to match database column name
+      weekstartdate: new Date().toISOString() // lowercase to match database column name
     };
+
+    console.log("Creating new task with data:", novaTarefa);
 
     const { data, error } = await supabase
       .from('tarefas')
@@ -38,14 +41,32 @@ export const tarefasService = {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating task:", error);
+      throw error;
+    }
     return data;
   },
 
   async atualizarTarefa(id: string, tarefa: Partial<Task>): Promise<void> {
+    // Convert camelCase fields to lowercase for database compatibility
+    const dbTarefa: any = {};
+    
+    if (tarefa.dailyStatus) dbTarefa.dailystatus = tarefa.dailyStatus;
+    if (tarefa.isFullyCompleted !== undefined) dbTarefa.isfullycompleted = tarefa.isFullyCompleted;
+    if (tarefa.completionStatus) dbTarefa.completionstatus = tarefa.completionStatus;
+    if (tarefa.weekStartDate) dbTarefa.weekstartdate = tarefa.weekStartDate;
+    
+    // Copy remaining fields as is
+    Object.keys(tarefa).forEach(key => {
+      if (!['dailyStatus', 'isFullyCompleted', 'completionStatus', 'weekStartDate'].includes(key)) {
+        dbTarefa[key] = tarefa[key as keyof typeof tarefa];
+      }
+    });
+
     const { error } = await supabase
       .from('tarefas')
-      .update(tarefa)
+      .update(dbTarefa)
       .eq('id', id);
     
     if (error) throw error;

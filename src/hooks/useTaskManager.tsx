@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Task } from "@/types";
 import { Tarefa } from "@/types/supabase";
@@ -19,12 +18,12 @@ export const convertTarefaToTask = (tarefa: Tarefa): Task => {
     responsible: tarefa.responsible,
     executor: tarefa.executor,
     cable: tarefa.cable,
-    plannedDays: tarefa.plannedDays,
-    dailyStatus: tarefa.dailyStatus,
-    isFullyCompleted: tarefa.isFullyCompleted,
-    completionStatus: tarefa.completionStatus,
-    causeIfNotDone: tarefa.causeIfNotDone,
-    weekStartDate: tarefa.weekStartDate
+    plannedDays: tarefa.planneddays || [], // lowercase to match database
+    dailyStatus: tarefa.dailystatus || [], // lowercase to match database
+    isFullyCompleted: tarefa.isfullycompleted || false, // lowercase to match database
+    completionStatus: tarefa.completionstatus || "not_completed", // lowercase to match database
+    causeIfNotDone: tarefa.causeifnotdone,
+    weekStartDate: tarefa.weekstartdate // lowercase to match database
   };
   return task;
 };
@@ -104,7 +103,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       throw error;
     }
   }, [tasks, toast, calculatePCPData]);
-
+  
   // Função para excluir uma tarefa
   const handleTaskDelete = useCallback(async (taskId: string) => {
     try {
