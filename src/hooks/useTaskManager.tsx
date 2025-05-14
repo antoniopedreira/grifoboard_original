@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useCallback } from "react";
-import { Task } from "@/types";
+import { Task, DayOfWeek, TaskCompletionStatus } from "@/types";
 import { Tarefa } from "@/types/supabase";
 import { calculatePCP } from "@/utils/pcp";
 import { tarefasService } from "@/services/tarefaService";
@@ -18,12 +19,15 @@ export const convertTarefaToTask = (tarefa: Tarefa): Task => {
     responsible: tarefa.responsible,
     executor: tarefa.executor,
     cable: tarefa.cable,
-    plannedDays: tarefa.planneddays || [], // lowercase to match database
-    dailyStatus: tarefa.dailystatus || [], // lowercase to match database
-    isFullyCompleted: tarefa.isfullycompleted || false, // lowercase to match database
-    completionStatus: tarefa.completionstatus || "not_completed", // lowercase to match database
+    // Convert string[] to DayOfWeek[]
+    plannedDays: (tarefa.planneddays || []).map(day => day as DayOfWeek),
+    dailyStatus: tarefa.dailystatus || [], 
+    isFullyCompleted: tarefa.isfullycompleted || false,
+    // Convert string to TaskCompletionStatus
+    completionStatus: (tarefa.completionstatus || "not_completed") as TaskCompletionStatus,
     causeIfNotDone: tarefa.causeifnotdone,
-    weekStartDate: tarefa.weekstartdate // lowercase to match database
+    // Convert string to Date
+    weekStartDate: tarefa.weekstartdate ? new Date(tarefa.weekstartdate) : undefined
   };
   return task;
 };
