@@ -22,7 +22,7 @@ const RegistryDialog: React.FC<RegistryDialogProps> = ({ isOpen, onOpenChange })
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>Cadastros</DialogTitle>
         </DialogHeader>

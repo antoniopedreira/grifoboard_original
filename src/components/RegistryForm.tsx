@@ -71,13 +71,13 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
 
   return (
     <Tabs defaultValue="sector" className="w-full">
-      <TabsList className="grid grid-cols-6 mb-4 w-full">
-        <TabsTrigger value="sector" className="text-xs sm:text-sm">Setor</TabsTrigger>
-        <TabsTrigger value="discipline" className="text-xs sm:text-sm">Disciplina</TabsTrigger>
-        <TabsTrigger value="team" className="text-xs sm:text-sm">Equipe</TabsTrigger>
-        <TabsTrigger value="responsible" className="text-xs sm:text-sm">Responsável</TabsTrigger>
-        <TabsTrigger value="executor" className="text-xs sm:text-sm">Executante</TabsTrigger>
-        <TabsTrigger value="cable" className="text-xs sm:text-sm">Cabo</TabsTrigger>
+      <TabsList className="flex flex-wrap mb-4 w-full">
+        <TabsTrigger value="sector" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Setor</TabsTrigger>
+        <TabsTrigger value="discipline" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Disciplina</TabsTrigger>
+        <TabsTrigger value="team" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Equipe</TabsTrigger>
+        <TabsTrigger value="responsible" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Resp.</TabsTrigger>
+        <TabsTrigger value="executor" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Exec.</TabsTrigger>
+        <TabsTrigger value="cable" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Cabo</TabsTrigger>
       </TabsList>
       
       <TabsContent value="sector" className="space-y-4">
