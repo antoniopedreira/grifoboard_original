@@ -25,7 +25,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
     onTaskUpdate(updatedTask);
     
     // Show a toast notification when a task is updated
-    if (updatedTask.completionStatus === "completed") {
+    if (updatedTask.isFullyCompleted) {
       toast({
         title: "Tarefa concluída",
         description: updatedTask.description,

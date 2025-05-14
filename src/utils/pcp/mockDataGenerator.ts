@@ -47,8 +47,8 @@ export const generateMockTasks = (weekStart?: Date): Task[] => {
       }
     });
     
-    // Randomly assign completionStatus
-    const completionStatus = Math.random() > 0.5 ? "completed" : "not_completed";
+    // Randomly determine if task is fully completed
+    const isFullyCompleted = Math.random() > 0.5;
     
     mockTasks.push({
       id: `task-${i}`,
@@ -62,9 +62,8 @@ export const generateMockTasks = (weekStart?: Date): Task[] => {
       cable,
       plannedDays,
       dailyStatus,
-      isFullyCompleted: false,
-      completionStatus,
-      causeIfNotDone: completionStatus === "completed" ? undefined : "Falta de material",
+      isFullyCompleted,
+      causeIfNotDone: isFullyCompleted ? undefined : "Falta de material",
       weekStartDate: weekStart ? new Date(weekStart) : undefined
     });
   }

@@ -14,8 +14,8 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
     };
   }
 
-  // Overall PCP - based on completionStatus
-  const completedTasks = tasksWithPlannedDays.filter(task => task.completionStatus === "completed").length;
+  // Overall PCP - based on isFullyCompleted flag
+  const completedTasks = tasksWithPlannedDays.filter(task => task.isFullyCompleted).length;
   const totalTasks = tasksWithPlannedDays.length;
   const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
@@ -25,7 +25,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   
   sectors.forEach(sector => {
     const sectorTasks = tasksWithPlannedDays.filter(task => task.sector === sector);
-    const sectorCompletedTasks = sectorTasks.filter(task => task.completionStatus === "completed").length;
+    const sectorCompletedTasks = sectorTasks.filter(task => task.isFullyCompleted).length;
     bySector[sector] = {
       completedTasks: sectorCompletedTasks,
       totalTasks: sectorTasks.length,
@@ -39,7 +39,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   
   responsibles.forEach(responsible => {
     const responsibleTasks = tasksWithPlannedDays.filter(task => task.responsible === responsible);
-    const responsibleCompletedTasks = responsibleTasks.filter(task => task.completionStatus === "completed").length;
+    const responsibleCompletedTasks = responsibleTasks.filter(task => task.isFullyCompleted).length;
     byResponsible[responsible] = {
       completedTasks: responsibleCompletedTasks,
       totalTasks: responsibleTasks.length,
@@ -53,7 +53,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   
   disciplines.forEach(discipline => {
     const disciplineTasks = tasksWithPlannedDays.filter(task => task.discipline === discipline);
-    const disciplineCompletedTasks = disciplineTasks.filter(task => task.completionStatus === "completed").length;
+    const disciplineCompletedTasks = disciplineTasks.filter(task => task.isFullyCompleted).length;
     byDiscipline[discipline] = {
       completedTasks: disciplineCompletedTasks,
       totalTasks: disciplineTasks.length,

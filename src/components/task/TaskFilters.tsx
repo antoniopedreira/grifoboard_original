@@ -37,8 +37,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
       const matchesExecutor = filterExecutor === "all" || task.executor === filterExecutor;
       const matchesCable = filterCable === "all" || task.cable === filterCable;
       const matchesStatus = filterStatus === "all" || 
-                          (filterStatus === "completed" && task.completionStatus === "completed") ||
-                          (filterStatus === "not_completed" && task.completionStatus === "not_completed");
+                          (filterStatus === "completed" && task.isFullyCompleted) ||
+                          (filterStatus === "not_completed" && !task.isFullyCompleted);
       
       return matchesSearch && matchesSector && matchesResponsible && matchesExecutor && matchesCable && matchesStatus;
     });
