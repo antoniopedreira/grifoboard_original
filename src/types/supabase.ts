@@ -1,4 +1,6 @@
 
+import { Task } from "@/types";
+
 export interface Obra {
   id: string;
   nome_obra: string;
@@ -9,7 +11,8 @@ export interface Obra {
   created_at: string;
 }
 
-export interface Tarefa extends Task {
+export interface Tarefa extends Omit<Task, 'id'> {
+  id: string;
   obra_id: string;
 }
 

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Task } from "@/types";
+import { Tarefa } from "@/types/supabase";
 import TaskList from "@/components/TaskList";
 import PCPChart from "@/components/PCPChart";
 import TaskForm from "@/components/TaskForm";
@@ -11,6 +12,28 @@ import { useToast } from "@/hooks/use-toast";
 import RegistryDialog from "@/components/RegistryDialog";
 import { useAuth } from "@/context/AuthContext";
 import { tarefasService } from "@/services/tarefaService";
+
+// Função auxiliar para converter Tarefa para Task
+const convertTarefaToTask = (tarefa: Tarefa): Task => {
+  const task: Task = {
+    id: tarefa.id,
+    sector: tarefa.sector,
+    item: tarefa.item,
+    description: tarefa.description,
+    discipline: tarefa.discipline,
+    team: tarefa.team,
+    responsible: tarefa.responsible,
+    executor: tarefa.executor,
+    cable: tarefa.cable,
+    plannedDays: tarefa.plannedDays,
+    dailyStatus: tarefa.dailyStatus,
+    isFullyCompleted: tarefa.isFullyCompleted,
+    completionStatus: tarefa.completionStatus,
+    causeIfNotDone: tarefa.causeIfNotDone,
+    weekStartDate: tarefa.weekStartDate
+  };
+  return task;
+};
 
 const MainPageContent = () => {
   const { toast } = useToast();
@@ -45,10 +68,12 @@ const MainPageContent = () => {
     setIsLoading(true);
     try {
       const tarefas = await tarefasService.listarTarefas(session.obraAtiva.id);
-      setTasks(tarefas);
+      // Converter Tarefas para Tasks antes de atualizar o estado
+      const convertedTasks = tarefas.map(convertTarefaToTask);
+      setTasks(convertedTasks);
       
       // Calcular dados do PCP para o gráfico semanal
-      const pcpData = calculatePCP(tarefas);
+      const pcpData = calculatePCP(convertedTasks);
       setWeeklyPCPData([pcpData]);
     } catch (error: any) {
       toast({
@@ -63,7 +88,9 @@ const MainPageContent = () => {
   
   const handleTaskUpdate = async (updatedTask: Task) => {
     try {
-      await tarefasService.atualizarTarefa(updatedTask.id, updatedTask);
+      // Extrair apenas os campos necessários para atualizar no Supabase
+      const { id, ...taskUpdate } = updatedTask;
+      await tarefasService.atualizarTarefa(id, taskUpdate);
       
       // Atualizar a tarefa localmente
       const updatedTasks = tasks.map(task => 
@@ -139,8 +166,11 @@ const MainPageContent = () => {
       // Criar tarefa no Supabase
       const novaTarefa = await tarefasService.criarTarefa(newTaskData, session.obraAtiva.id);
       
+      // Converter a tarefa para Task antes de adicionar à lista local
+      const novaTask = convertTarefaToTask(novaTarefa);
+      
       // Adicionar a nova tarefa à lista local
-      const updatedTasks = [novaTarefa, ...tasks];
+      const updatedTasks = [novaTask, ...tasks];
       setTasks(updatedTasks);
       
       // Atualizar dados do PCP

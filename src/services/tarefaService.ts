@@ -42,16 +42,13 @@ export const tarefasService = {
     return data;
   },
 
-  async atualizarTarefa(id: string, tarefa: Partial<Tarefa>): Promise<Tarefa> {
-    const { data, error } = await supabase
+  async atualizarTarefa(id: string, tarefa: Partial<Task>): Promise<void> {
+    const { error } = await supabase
       .from('tarefas')
       .update(tarefa)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
     
     if (error) throw error;
-    return data;
   },
 
   async excluirTarefa(id: string): Promise<void> {

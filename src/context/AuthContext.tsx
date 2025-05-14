@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '@/lib/supabase';
 import { Obra, UserSession } from '@/types/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   session: UserSession;
@@ -20,11 +21,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<UserSession>({ user: null, obraAtiva: null });
   const [isLoading, setIsLoading] = useState(true);
 
+  // Função auxiliar para converter User do Supabase para o formato do UserSession
+  const mapUser = (user: User | null): UserSession['user'] => {
+    if (!user) return null;
+    return {
+      id: user.id,
+      email: user.email || '',
+    };
+  };
+
   useEffect(() => {
     // Verificar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setSession({ user: session.user, obraAtiva: null });
+        setSession({ user: mapUser(session.user), obraAtiva: null });
       }
       setIsLoading(false);
     });
@@ -32,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Ouvir mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setSession({ user: session?.user || null, obraAtiva: null });
+        setSession({ user: mapUser(session?.user || null), obraAtiva: null });
         setIsLoading(false);
       }
     );
