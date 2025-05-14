@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
+import Header from "@/components/Header";
 import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
@@ -32,6 +33,7 @@ function App() {
       <AuthProvider>
         <RegistryProvider>
           <Router>
+            <Header />
             <Routes>
               <Route path="/" element={<Index onObraSelect={handleObraSelect} />} />
               <Route path="/auth" element={<Auth />} />
