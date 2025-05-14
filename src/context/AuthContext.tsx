@@ -13,7 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setObraAtiva: (obra: Obra | null) => void;
-  setUserSession: (session: UserSession | null) => UserSession | null;
+  setUserSession: (session: UserSession | null) => void; // Fixed return type to void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       await supabase.auth.signOut();
-      setSession({ user: null, obraAtiva: null });
+      setUserSession({ user: null, obraAtiva: null }); // Fixed: using setUserSession instead of non-existent setSession
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
