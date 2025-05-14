@@ -9,7 +9,104 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      obras: {
+        Row: {
+          created_at: string
+          data_inicio: string
+          id: string
+          localizacao: string
+          nome_obra: string
+          status: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_inicio: string
+          id?: string
+          localizacao: string
+          nome_obra: string
+          status: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          data_inicio?: string
+          id?: string
+          localizacao?: string
+          nome_obra?: string
+          status?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
+      tarefas: {
+        Row: {
+          cable: string | null
+          causeifnotdone: string | null
+          completionstatus: string
+          created_at: string
+          dailystatus: Json
+          description: string
+          discipline: string
+          executor: string | null
+          id: string
+          isfullycompleted: boolean
+          item: string
+          obra_id: string
+          planneddays: string[]
+          responsible: string
+          sector: string
+          team: string
+          weekstartdate: string | null
+        }
+        Insert: {
+          cable?: string | null
+          causeifnotdone?: string | null
+          completionstatus?: string
+          created_at?: string
+          dailystatus: Json
+          description: string
+          discipline: string
+          executor?: string | null
+          id?: string
+          isfullycompleted?: boolean
+          item: string
+          obra_id: string
+          planneddays: string[]
+          responsible: string
+          sector: string
+          team: string
+          weekstartdate?: string | null
+        }
+        Update: {
+          cable?: string | null
+          causeifnotdone?: string | null
+          completionstatus?: string
+          created_at?: string
+          dailystatus?: Json
+          description?: string
+          discipline?: string
+          executor?: string | null
+          id?: string
+          isfullycompleted?: boolean
+          item?: string
+          obra_id?: string
+          planneddays?: string[]
+          responsible?: string
+          sector?: string
+          team?: string
+          weekstartdate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
