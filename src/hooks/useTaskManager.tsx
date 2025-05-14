@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Task, DayOfWeek } from "@/types";
+import { Task, DayOfWeek, TaskStatus } from "@/types";
 import { Tarefa } from "@/types/supabase";
 import { calculatePCP } from "@/utils/pcp";
 import { tarefasService } from "@/services/tarefaService";
@@ -46,10 +46,18 @@ export const convertTarefaToTask = (tarefa: Tarefa): Task => {
       task.plannedDays.push(dayOfWeek);
       
       // Add day status to dailyStatus array
+      let status: TaskStatus;
+      if (dayStatus === 'Executada') {
+        status = 'completed';
+      } else if (dayStatus === 'Não Feita') {
+        status = 'not_done';
+      } else {
+        status = 'planned';
+      }
+      
       task.dailyStatus.push({
         day: dayOfWeek,
-        status: dayStatus === 'Executada' ? 'done' : 
-                dayStatus === 'Não Feita' ? 'notDone' : 'planned'
+        status
       });
     }
   });
@@ -137,10 +145,18 @@ export const useTaskManager = (weekStartDate: Date) => {
         updatedTask.dailyStatus.forEach(dailyStatus => {
           const dbField = daysMapping[dailyStatus.day];
           if (dbField) {
-            const status = 
-              dailyStatus.status === 'done' ? 'Executada' :
-              dailyStatus.status === 'notDone' ? 'Não Feita' : 'Planejada';
-            tarefaToUpdate[dbField as keyof Tarefa] = status as any;
+            let status = '';
+            
+            if (dailyStatus.status === 'completed') {
+              status = 'Executada';
+            } else if (dailyStatus.status === 'not_done') {
+              status = 'Não Feita';
+            } else if (dailyStatus.status === 'planned') {
+              status = 'Planejada';
+            }
+            
+            // Type assertion to handle dynamic field assignments
+            (tarefaToUpdate as any)[dbField] = status;
           }
         });
       }
@@ -209,7 +225,7 @@ export const useTaskManager = (weekStartDate: Date) => {
         throw new Error("Nenhuma obra ativa selecionada");
       }
       
-      // Convert Task to Tarefa format for database
+      // Initialize the new Tarefa object with required fields
       const novaTarefa: Omit<Tarefa, 'id' | 'created_at'> = {
         obra_id: session.obraAtiva.id,
         setor: newTaskData.sector,
@@ -222,7 +238,14 @@ export const useTaskManager = (weekStartDate: Date) => {
         cabo: newTaskData.cable,
         semana: newTaskData.weekStartDate ? newTaskData.weekStartDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         percentual_executado: 0,
-        causa_nao_execucao: newTaskData.causeIfNotDone
+        causa_nao_execucao: newTaskData.causeIfNotDone,
+        seg: null,
+        ter: null,
+        qua: null,
+        qui: null,
+        sex: null,
+        sab: null,
+        dom: null
       };
       
       // Set day status based on plannedDays
@@ -236,16 +259,11 @@ export const useTaskManager = (weekStartDate: Date) => {
         'sun': 'dom'
       };
       
-      // Initialize all days as null
-      (Object.keys(dayMapping) as DayOfWeek[]).forEach(day => {
-        const dbField = dayMapping[day];
-        novaTarefa[dbField] = null as any;
-      });
-      
       // Set planned days
       newTaskData.plannedDays.forEach(day => {
         const dbField = dayMapping[day];
-        novaTarefa[dbField] = 'Planejada' as any;
+        // Type assertion to handle dynamic field assignments
+        (novaTarefa as any)[dbField] = 'Planejada';
       });
       
       console.log("Creating task with data:", novaTarefa);
