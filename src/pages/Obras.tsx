@@ -21,7 +21,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const [obras, setObras] = useState<Obra[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { userSession, setUserSession } = useAuth();
+  const { userSession, setObraAtiva } = useAuth();
   const { setSelectedObraId } = useRegistry();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -58,20 +58,15 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
 
   const handleSelectObra = async (obra: Obra) => {
     try {
-      if (userSession) {
-        setUserSession({
-          ...userSession,
-          obraAtiva: obra
-        });
-        
-        // Set the selected obra ID for registry context
-        setSelectedObraId(obra.id);
-        
-        // Call the onObraSelect prop
-        onObraSelect(obra);
-        
-        navigate("/");
-      }
+      setObraAtiva(obra);
+      
+      // Set the selected obra ID for registry context
+      setSelectedObraId(obra.id);
+      
+      // Call the onObraSelect prop
+      onObraSelect(obra);
+      
+      navigate("/");
     } catch (error: any) {
       console.error('Error selecting obra:', error);
       toast({
@@ -92,10 +87,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
       
       // If the active obra was deleted, clear it
       if (userSession?.obraAtiva?.id === id) {
-        setUserSession(prev => prev ? {
-          ...prev,
-          obraAtiva: null
-        } : null);
+        setObraAtiva(null);
         
         // Clear selected obra ID
         setSelectedObraId(null);

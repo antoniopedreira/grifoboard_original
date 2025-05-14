@@ -6,19 +6,21 @@ import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
+  userSession: UserSession;
   session: UserSession;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setObraAtiva: (obra: Obra | null) => void;
+  setUserSession: (session: UserSession | null) => UserSession | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
-  const [session, setSession] = useState<UserSession>({ user: null, obraAtiva: null });
+  const [userSession, setUserSession] = useState<UserSession>({ user: null, obraAtiva: null });
   const [isLoading, setIsLoading] = useState(true);
 
   // Função auxiliar para converter User do Supabase para o formato do UserSession
@@ -34,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Verificar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setSession({ user: mapUser(session.user), obraAtiva: null });
+        setUserSession({ user: mapUser(session.user), obraAtiva: null });
       }
       setIsLoading(false);
     });
@@ -42,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Ouvir mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setSession({ user: mapUser(session?.user || null), obraAtiva: null });
+        setUserSession({ user: mapUser(session?.user || null), obraAtiva: null });
         setIsLoading(false);
       }
     );
@@ -52,18 +54,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Recuperar obra ativa do localStorage ao iniciar
   useEffect(() => {
-    if (session.user) {
-      const savedObra = localStorage.getItem(`obraAtiva_${session.user.id}`);
+    if (userSession.user) {
+      const savedObra = localStorage.getItem(`obraAtiva_${userSession.user.id}`);
       if (savedObra) {
         try {
           const obra = JSON.parse(savedObra);
-          setSession(prev => ({ ...prev, obraAtiva: obra }));
+          setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
         } catch (e) {
-          localStorage.removeItem(`obraAtiva_${session.user.id}`);
+          localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
         }
       }
     }
-  }, [session.user]);
+  }, [userSession.user]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -132,23 +134,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setObraAtiva = (obra: Obra | null) => {
-    setSession(prev => ({ ...prev, obraAtiva: obra }));
+    setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
     
     // Salvar obra ativa no localStorage
-    if (session.user && obra) {
-      localStorage.setItem(`obraAtiva_${session.user.id}`, JSON.stringify(obra));
-    } else if (session.user) {
-      localStorage.removeItem(`obraAtiva_${session.user.id}`);
+    if (userSession.user && obra) {
+      localStorage.setItem(`obraAtiva_${userSession.user.id}`, JSON.stringify(obra));
+    } else if (userSession.user) {
+      localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
     }
   };
 
   const value = {
-    session,
+    userSession,
+    session: userSession, // Alias for backward compatibility
     isLoading,
     signIn,
     signUp,
     signOut,
-    setObraAtiva
+    setObraAtiva,
+    setUserSession
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

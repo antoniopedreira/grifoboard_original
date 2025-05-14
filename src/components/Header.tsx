@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 
 const Header = () => {
-  const { session, signOut, setObraAtiva } = useAuth();
+  const { userSession, signOut, setObraAtiva } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -19,9 +19,9 @@ const Header = () => {
               <NavLink to="/">PCP Manager</NavLink>
             </h1>
 
-            {session.user && (
+            {userSession.user && (
               <nav className="hidden md:flex space-x-4">
-                {session.obraAtiva && (
+                {userSession.obraAtiva && (
                   <NavLink 
                     to="/" 
                     className={({isActive}) => 
@@ -43,18 +43,18 @@ const Header = () => {
             )}
           </div>
 
-          {session.user ? (
+          {userSession.user ? (
             <div className="flex items-center space-x-4">
-              {session.obraAtiva && (
+              {userSession.obraAtiva && (
                 <div className="hidden md:block">
                   <div className="text-sm text-muted-foreground">Obra ativa:</div>
-                  <div className="font-medium">{session.obraAtiva.nome_obra}</div>
+                  <div className="font-medium">{userSession.obraAtiva.nome_obra}</div>
                 </div>
               )}
               <Button variant="outline" onClick={handleSignOut}>
                 Sair
               </Button>
-              {session.obraAtiva && (
+              {userSession.obraAtiva && (
                 <Button 
                   variant="secondary" 
                   onClick={() => setObraAtiva(null)}
