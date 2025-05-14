@@ -13,7 +13,7 @@ export const obrasService = {
     return data || [];
   },
 
-  async criarObra(obra: Omit<Obra, 'id' | 'created_at'>): Promise<Obra> {
+  async criarObra(obra: Omit<Obra, 'id' | 'usuario_id' | 'created_at'>): Promise<Obra> {
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
     
