@@ -1,19 +1,13 @@
 
 import { PCPBreakdown, Task, WeeklyPCPData } from "../../types";
 
-export const calculatePCP = (tasks: Task[], previousWeekPercentage?: number): PCPBreakdown => {
+export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   // Filter only tasks that have planned days
   const tasksWithPlannedDays = tasks.filter(task => task.plannedDays.length > 0);
   
   if (tasksWithPlannedDays.length === 0) {
     return {
-      overall: { 
-        completedTasks: 0, 
-        totalTasks: 0, 
-        percentage: 0,
-        previousWeekPercentage: previousWeekPercentage || 0,
-        variation: 0 
-      },
+      overall: { completedTasks: 0, totalTasks: 0, percentage: 0 },
       bySector: {},
       byResponsible: {},
       byDiscipline: {}
@@ -24,14 +18,6 @@ export const calculatePCP = (tasks: Task[], previousWeekPercentage?: number): PC
   const completedTasks = tasksWithPlannedDays.filter(task => task.completionStatus === "completed").length;
   const totalTasks = tasksWithPlannedDays.length;
   const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-  
-  // Calculate variation percentage: (current - previous) / previous * 100
-  let variation = 0;
-  if (previousWeekPercentage && previousWeekPercentage > 0) {
-    variation = ((percentage - previousWeekPercentage) / previousWeekPercentage) * 100;
-    // Round to 1 decimal place for display purposes
-    variation = parseFloat(variation.toFixed(1));
-  }
 
   // By sector
   const sectors = Array.from(new Set(tasksWithPlannedDays.map(task => task.sector)));
@@ -76,13 +62,7 @@ export const calculatePCP = (tasks: Task[], previousWeekPercentage?: number): PC
   });
 
   return {
-    overall: { 
-      completedTasks, 
-      totalTasks, 
-      percentage,
-      previousWeekPercentage: previousWeekPercentage || 0,
-      variation
-    },
+    overall: { completedTasks, totalTasks, percentage },
     bySector,
     byResponsible,
     byDiscipline
@@ -91,13 +71,12 @@ export const calculatePCP = (tasks: Task[], previousWeekPercentage?: number): PC
 
 // Store historical PCP data by week start date
 export const storeHistoricalPCPData = (
-  historicalData: Map<string, { percentage: number, variation: number }>, 
+  historicalData: Map<string, number>, 
   weekStart: Date, 
-  percentage: number,
-  variation: number
-): Map<string, { percentage: number, variation: number }> => {
+  percentage: number
+): Map<string, number> => {
   const weekKey = new Date(weekStart).toISOString().split('T')[0];
-  historicalData.set(weekKey, { percentage, variation });
+  historicalData.set(weekKey, percentage);
   return historicalData;
 };
 
@@ -105,7 +84,7 @@ export const storeHistoricalPCPData = (
 export const generateWeeklyPCPData = (
   currentWeekStart: Date,
   currentWeekPCP: number,
-  historicalData: Map<string, { percentage: number, variation: number }>
+  historicalData: Map<string, number>
 ): WeeklyPCPData[] => {
   const result: WeeklyPCPData[] = [];
   
@@ -117,9 +96,9 @@ export const generateWeeklyPCPData = (
     const weekKey = weekStart.toISOString().split('T')[0];
     
     // Get stored PCP value or use current week's PCP as fallback for the current week
-    const storedData = historicalData.get(weekKey);
     const pcpValue = i === 0 ? currentWeekPCP : 
-                    (storedData ? storedData.percentage : Math.round(Math.random() * 100));
+                    (historicalData.get(weekKey) !== undefined ? 
+                    historicalData.get(weekKey)! : Math.round(Math.random() * 100));
     
     // Add to results
     result.push({

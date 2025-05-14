@@ -32,8 +32,6 @@ export interface PCPData {
   completedTasks: number;
   totalTasks: number;
   percentage: number;
-  previousWeekPercentage?: number; // Previous week percentage
-  variation?: number;              // Calculated variation percentage
 }
 
 export interface PCPBreakdown {

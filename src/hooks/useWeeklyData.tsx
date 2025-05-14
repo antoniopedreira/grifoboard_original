@@ -15,7 +15,7 @@ export function useWeeklyData() {
   const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
   
   // Store historical PCP data for consistency when navigating between weeks
-  const historicalDataRef = useRef<Map<string, { percentage: number, variation: number }>>(new Map());
+  const historicalDataRef = useRef<Map<string, number>>(new Map());
   
   // Store tasks by week start date
   const weeklyTasksRef = useRef<Map<string, Task[]>>(new Map());
@@ -32,35 +32,23 @@ export function useWeeklyData() {
       const weekKey = weekStart.toISOString().split('T')[0];
       
       // Try to get stored PCP value for this week
-      let pcpValue: number;
-      const storedData = historicalDataRef.current.get(weekKey);
+      let pcpValue = historicalDataRef.current.get(weekKey);
       
-      if (storedData) {
-        pcpValue = storedData.percentage;
-      } else {
-        // For past weeks without data, generate mock tasks and calculate PCP for this week
+      // If no stored value, generate mock tasks and calculate PCP for this week
+      if (pcpValue === undefined) {
+        // For past weeks without data, generate mock tasks with some values to ensure visibility
         const weekTasks = generateMockTasks(weekStart);
         weeklyTasksRef.current.set(weekKey, weekTasks);
         
-        // Get previous week for comparison when calculating variation
-        const prevWeekStart = new Date(weekStart);
-        prevWeekStart.setDate(weekStart.getDate() - 7);
-        const prevWeekKey = prevWeekStart.toISOString().split('T')[0];
-        const prevWeekData = historicalDataRef.current.get(prevWeekKey);
-        const previousWeekPCP = prevWeekData ? prevWeekData.percentage : undefined;
-        
-        // Calculate PCP including the variation
-        const pcpData = calculatePCP(weekTasks, previousWeekPCP);
+        // Calculate PCP or use a default value to ensure bars are visible for testing
+        const pcpData = calculatePCP(weekTasks);
         pcpValue = Math.round(pcpData.overall.percentage);
         
         // Ensure we have at least some percentage (for testing visibility)
         if (pcpValue < 30) pcpValue = 30 + Math.round(Math.random() * 50);
         
-        // Store both percentage and variation
-        historicalDataRef.current.set(weekKey, { 
-          percentage: pcpValue, 
-          variation: pcpData.overall.variation || 0 
-        });
+        // Store for future use
+        historicalDataRef.current.set(weekKey, pcpValue);
       }
       
       // Add to results - ensure we have some value for visual testing
@@ -86,13 +74,6 @@ export function useWeeklyData() {
     // Get weekly key for storage
     const weekKey = weekStartDate.toISOString().split('T')[0];
     
-    // Get previous week key for comparison
-    const prevWeekStart = new Date(weekStartDate);
-    prevWeekStart.setDate(weekStartDate.getDate() - 7);
-    const prevWeekKey = prevWeekStart.toISOString().split('T')[0];
-    const prevWeekData = historicalDataRef.current.get(prevWeekKey);
-    const previousWeekPCP = prevWeekData ? prevWeekData.percentage : undefined;
-    
     // Check if we already have tasks for this week
     let currentWeekTasks: Task[];
     if (weeklyTasksRef.current.has(weekKey)) {
@@ -107,18 +88,15 @@ export function useWeeklyData() {
     // Update current tasks state
     setTasks(currentWeekTasks);
     
-    // Calculate PCP for the current week's tasks, passing previous week percentage
-    const pcpData = calculatePCP(currentWeekTasks, previousWeekPCP);
+    // Calculate PCP for the current week's tasks
+    const pcpData = calculatePCP(currentWeekTasks);
     let currentWeekPCP = Math.round(pcpData.overall.percentage);
     
     // Ensure we have some percentage for visualization testing
     if (currentWeekPCP < 20) currentWeekPCP = 20 + Math.round(Math.random() * 60);
     
-    // Store the current week's PCP and variation in historical data
-    historicalDataRef.current.set(weekKey, { 
-      percentage: currentWeekPCP,
-      variation: pcpData.overall.variation || 0
-    });
+    // Store the current week's PCP in historical data
+    historicalDataRef.current.set(weekKey, currentWeekPCP);
     
     // Generate weekly PCP data with current week and 3 previous
     setWeeklyPCPData(generateWeeklyPCPData(weekStartDate));
@@ -128,25 +106,15 @@ export function useWeeklyData() {
     // Get weekly key for storage
     const weekKey = weekStartDate.toISOString().split('T')[0];
     
-    // Get previous week key for comparison
-    const prevWeekStart = new Date(weekStartDate);
-    prevWeekStart.setDate(weekStartDate.getDate() - 7);
-    const prevWeekKey = prevWeekStart.toISOString().split('T')[0];
-    const prevWeekData = historicalDataRef.current.get(prevWeekKey);
-    const previousWeekPCP = prevWeekData ? prevWeekData.percentage : undefined;
-    
     // Update tasks in storage
     weeklyTasksRef.current.set(weekKey, updatedTasks);
     
-    // Recalculate PCP with previous week percentage
-    const newPcpData = calculatePCP(updatedTasks, previousWeekPCP);
+    // Recalculate PCP
+    const newPcpData = calculatePCP(updatedTasks);
     const currentWeekPCP = Math.round(newPcpData.overall.percentage);
     
-    // Update historical data for current week with both percentage and variation
-    historicalDataRef.current.set(weekKey, { 
-      percentage: currentWeekPCP,
-      variation: newPcpData.overall.variation || 0
-    });
+    // Update historical data for current week
+    historicalDataRef.current.set(weekKey, currentWeekPCP);
     
     // Update weekly data with new PCP values
     setWeeklyPCPData(generateWeeklyPCPData(weekStartDate));
