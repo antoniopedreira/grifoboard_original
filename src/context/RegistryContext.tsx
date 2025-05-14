@@ -1,5 +1,8 @@
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { registrosService } from "@/services/registroService";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface RegistryContextType {
   sectors: string[];
@@ -8,54 +11,72 @@ interface RegistryContextType {
   responsibles: string[];
   executors: string[];   
   cables: string[];      
-  addRegistry: (type: string, value: string) => void;
+  addRegistry: (type: string, value: string) => Promise<void>;
+  isLoading: boolean;
+  isSaving: boolean;
+  selectedObraId: string | null;
+  setSelectedObraId: (id: string | null) => void;
 }
 
-// Removing all default values and starting with empty arrays
 const RegistryContext = createContext<RegistryContextType | undefined>(undefined);
 
 export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [sectors, setSectors] = useState<string[]>([]);
-  const [disciplines, setDisciplines] = useState<string[]>([]);
-  const [teams, setTeams] = useState<string[]>([]);
-  const [responsibles, setResponsibles] = useState<string[]>([]);
-  const [executors, setExecutors] = useState<string[]>([]);
-  const [cables, setCables] = useState<string[]>([]);
-
-  const addRegistry = (type: string, value: string) => {
+  const [selectedObraId, setSelectedObraId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Using React Query to fetch registry items
+  const { 
+    data: registryItems = [], 
+    isLoading 
+  } = useQuery({
+    queryKey: ['registros', selectedObraId],
+    queryFn: async () => {
+      if (!selectedObraId) return [];
+      return registrosService.listarRegistros(selectedObraId);
+    },
+    enabled: !!selectedObraId
+  });
+  
+  // Group registry items by type
+  const sectors = registryItems.filter(item => item.tipo === 'sector').map(item => item.valor);
+  const disciplines = registryItems.filter(item => item.tipo === 'discipline').map(item => item.valor);
+  const teams = registryItems.filter(item => item.tipo === 'team').map(item => item.valor);
+  const responsibles = registryItems.filter(item => item.tipo === 'responsible').map(item => item.valor);
+  const executors = registryItems.filter(item => item.tipo === 'executor').map(item => item.valor);
+  const cables = registryItems.filter(item => item.tipo === 'cable').map(item => item.valor);
+  
+  // Mutation to add new registry items
+  const addRegistryMutation = useMutation({
+    mutationFn: async ({ type, value }: { type: string; value: string }) => {
+      if (!selectedObraId) throw new Error('No obra selected');
+      
+      await registrosService.criarRegistro({
+        obra_id: selectedObraId,
+        tipo: type,
+        valor: value
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registros', selectedObraId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao adicionar cadastro",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Function to add new registry items
+  const addRegistry = async (type: string, value: string) => {
     if (value.trim() === "") return;
 
-    switch(type) {
-      case "sector":
-        if (!sectors.includes(value)) {
-          setSectors([...sectors, value]);
-        }
-        break;
-      case "discipline":
-        if (!disciplines.includes(value)) {
-          setDisciplines([...disciplines, value]);
-        }
-        break;
-      case "team":
-        if (!teams.includes(value)) {
-          setTeams([...teams, value]);
-        }
-        break;
-      case "responsible":
-        if (!responsibles.includes(value)) {
-          setResponsibles([...responsibles, value]);
-        }
-        break;
-      case "executor":
-        if (!executors.includes(value)) {
-          setExecutors([...executors, value]);
-        }
-        break;
-      case "cable":
-        if (!cables.includes(value)) {
-          setCables([...cables, value]);
-        }
-        break;
+    try {
+      await addRegistryMutation.mutateAsync({ type, value });
+    } catch (error) {
+      // Error is handled by the mutation
     }
   };
 
@@ -67,7 +88,11 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       responsibles, 
       executors, 
       cables, 
-      addRegistry 
+      addRegistry,
+      isLoading,
+      isSaving: addRegistryMutation.isPending,
+      selectedObraId,
+      setSelectedObraId
     }}>
       {children}
     </RegistryContext.Provider>

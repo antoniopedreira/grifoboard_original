@@ -1,38 +1,50 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Header from "@/components/Header";
-import MainPageContent from "@/components/MainPageContent";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { UserSession } from "@/types/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useRegistry } from "@/context/RegistryContext";
+import MainPageContent from "@/components/MainPageContent";
+import { Obra } from "@/types/supabase";
 
-const Index = () => {
-  const { session } = useAuth();
+interface IndexProps {
+  onObraSelect: (obra: Obra) => void;
+}
+
+const Index = ({ onObraSelect }: IndexProps) => {
+  const { userSession } = useAuth();
   const navigate = useNavigate();
+  const { setSelectedObraId } = useRegistry();
 
+  // If there's no user, redirect to auth page
   useEffect(() => {
-    if (!session.user) {
-      // Redireciona para a página de autenticação se não estiver logado
-      navigate('/auth');
-    } else if (!session.obraAtiva) {
-      // Redireciona para a seleção de obras se não tiver uma obra ativa
-      navigate('/obras');
+    if (!userSession?.user) {
+      navigate("/auth");
     }
-  }, [session, navigate]);
+  }, [userSession, navigate]);
 
-  // Só renderiza a página principal se o usuário estiver logado e com uma obra ativa
-  if (!session.user || !session.obraAtiva) {
-    return null;
+  // Set the selected obra ID when an obra is selected or active
+  useEffect(() => {
+    if (userSession?.obraAtiva) {
+      setSelectedObraId(userSession.obraAtiva.id);
+      onObraSelect(userSession.obraAtiva);
+    } else {
+      setSelectedObraId(null);
+    }
+  }, [userSession?.obraAtiva, setSelectedObraId, onObraSelect]);
+
+  // If there's no active obra, redirect to obras page
+  useEffect(() => {
+    if (userSession?.user && !userSession.obraAtiva) {
+      navigate("/obras");
+    }
+  }, [userSession, navigate]);
+
+  if (!userSession?.user || !userSession.obraAtiva) {
+    return null; // Rendering will be handled by the useEffect navigation
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-6">
-        <MainPageContent />
-      </main>
-    </div>
-  );
+  return <MainPageContent />;
 };
 
 export default Index;

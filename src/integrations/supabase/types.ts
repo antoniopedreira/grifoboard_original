@@ -39,6 +39,38 @@ export type Database = {
         }
         Relationships: []
       }
+      registros: {
+        Row: {
+          created_at: string
+          id: string
+          obra_id: string
+          tipo: string
+          valor: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          obra_id: string
+          tipo: string
+          valor: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          obra_id?: string
+          tipo?: string
+          valor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registros_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           cabo: string

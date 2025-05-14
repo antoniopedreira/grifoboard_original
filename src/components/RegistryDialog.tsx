@@ -14,10 +14,10 @@ interface RegistryDialogProps {
 }
 
 const RegistryDialog: React.FC<RegistryDialogProps> = ({ isOpen, onOpenChange }) => {
-  const { addRegistry } = useRegistry();
+  const { addRegistry, isSaving } = useRegistry();
 
-  const handleRegistryCreate = (type: string, value: string) => {
-    addRegistry(type, value);
+  const handleRegistryCreate = async (type: string, value: string) => {
+    await addRegistry(type, value);
   };
 
   return (
@@ -26,7 +26,11 @@ const RegistryDialog: React.FC<RegistryDialogProps> = ({ isOpen, onOpenChange })
         <DialogHeader>
           <DialogTitle>Cadastros</DialogTitle>
         </DialogHeader>
-        <RegistryForm onClose={() => onOpenChange(false)} onRegistryCreate={handleRegistryCreate} />
+        <RegistryForm 
+          onClose={() => onOpenChange(false)} 
+          onRegistryCreate={handleRegistryCreate}
+          isSaving={isSaving}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -10,21 +10,25 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { useRegistry } from "@/context/RegistryContext";
+import { Loader2 } from "lucide-react";
 
 interface RegistryFormProps {
   onClose: () => void;
-  onRegistryCreate: (type: string, value: string) => void;
+  onRegistryCreate: (type: string, value: string) => Promise<void>;
+  isSaving: boolean;
 }
 
-const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }) => {
+const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, isSaving }) => {
   const [newSector, setNewSector] = useState("");
   const [newDiscipline, setNewDiscipline] = useState("");
   const [newTeam, setNewTeam] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
   const [newExecutor, setNewExecutor] = useState("");
   const [newCable, setNewCable] = useState("");
+  const { sectors, disciplines, teams, responsibles, executors, cables, isLoading } = useRegistry();
 
-  const handleSubmit = (type: string) => {
+  const handleSubmit = async (type: string) => {
     let value = "";
     
     switch(type) {
@@ -55,11 +59,15 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
     }
     
     if (value) {
-      onRegistryCreate(type, value);
-      toast({
-        title: "Cadastro adicionado",
-        description: `${value} foi adicionado com sucesso.`,
-      });
+      try {
+        await onRegistryCreate(type, value);
+        toast({
+          title: "Cadastro adicionado",
+          description: `${value} foi adicionado com sucesso.`,
+        });
+      } catch (error) {
+        // Error is handled by the context
+      }
     } else {
       toast({
         title: "Erro no cadastro",
@@ -69,15 +77,39 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
     }
   };
 
+  // Display existing items count
+  const renderItemsCount = (items: string[]) => {
+    if (isLoading) return <span className="text-xs text-muted-foreground">Carregando...</span>;
+    return <span className="text-xs text-muted-foreground">{items.length} itens</span>;
+  };
+
   return (
     <Tabs defaultValue="sector" className="w-full">
       <TabsList className="flex flex-wrap mb-4 w-full">
-        <TabsTrigger value="sector" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Setor</TabsTrigger>
-        <TabsTrigger value="discipline" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Disciplina</TabsTrigger>
-        <TabsTrigger value="team" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Equipe</TabsTrigger>
-        <TabsTrigger value="responsible" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Resp.</TabsTrigger>
-        <TabsTrigger value="executor" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Exec.</TabsTrigger>
-        <TabsTrigger value="cable" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">Cabo</TabsTrigger>
+        <TabsTrigger value="sector" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">
+          Setor
+          <div className="ml-1">{renderItemsCount(sectors)}</div>
+        </TabsTrigger>
+        <TabsTrigger value="discipline" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">
+          Disciplina
+          <div className="ml-1">{renderItemsCount(disciplines)}</div>
+        </TabsTrigger>
+        <TabsTrigger value="team" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">
+          Equipe
+          <div className="ml-1">{renderItemsCount(teams)}</div>
+        </TabsTrigger>
+        <TabsTrigger value="responsible" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">
+          Resp.
+          <div className="ml-1">{renderItemsCount(responsibles)}</div>
+        </TabsTrigger>
+        <TabsTrigger value="executor" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">
+          Exec.
+          <div className="ml-1">{renderItemsCount(executors)}</div>
+        </TabsTrigger>
+        <TabsTrigger value="cable" className="flex-1 px-1 py-1.5 text-xs min-w-[70px]">
+          Cabo
+          <div className="ml-1">{renderItemsCount(cables)}</div>
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="sector" className="space-y-4">
@@ -92,7 +124,19 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         </div>
         
         <div className="flex justify-end">
-          <Button onClick={() => handleSubmit("sector")}>Adicionar Setor</Button>
+          <Button 
+            onClick={() => handleSubmit("sector")} 
+            disabled={isSaving || newSector.trim() === ""}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Adicionar Setor"
+            )}
+          </Button>
         </div>
       </TabsContent>
       
@@ -108,7 +152,19 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         </div>
         
         <div className="flex justify-end">
-          <Button onClick={() => handleSubmit("discipline")}>Adicionar Disciplina</Button>
+          <Button 
+            onClick={() => handleSubmit("discipline")} 
+            disabled={isSaving || newDiscipline.trim() === ""}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Adicionar Disciplina"
+            )}
+          </Button>
         </div>
       </TabsContent>
       
@@ -124,7 +180,19 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         </div>
         
         <div className="flex justify-end">
-          <Button onClick={() => handleSubmit("team")}>Adicionar Equipe</Button>
+          <Button 
+            onClick={() => handleSubmit("team")} 
+            disabled={isSaving || newTeam.trim() === ""}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Adicionar Equipe"
+            )}
+          </Button>
         </div>
       </TabsContent>
       
@@ -140,7 +208,19 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         </div>
         
         <div className="flex justify-end">
-          <Button onClick={() => handleSubmit("responsible")}>Adicionar Responsável</Button>
+          <Button 
+            onClick={() => handleSubmit("responsible")} 
+            disabled={isSaving || newResponsible.trim() === ""}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Adicionar Responsável"
+            )}
+          </Button>
         </div>
       </TabsContent>
       
@@ -156,7 +236,19 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         </div>
         
         <div className="flex justify-end">
-          <Button onClick={() => handleSubmit("executor")}>Adicionar Executante</Button>
+          <Button 
+            onClick={() => handleSubmit("executor")} 
+            disabled={isSaving || newExecutor.trim() === ""}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Adicionar Executante"
+            )}
+          </Button>
         </div>
       </TabsContent>
       
@@ -172,7 +264,19 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate }
         </div>
         
         <div className="flex justify-end">
-          <Button onClick={() => handleSubmit("cable")}>Adicionar Cabo</Button>
+          <Button 
+            onClick={() => handleSubmit("cable")} 
+            disabled={isSaving || newCable.trim() === ""}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Adicionar Cabo"
+            )}
+          </Button>
         </div>
       </TabsContent>
     </Tabs>
