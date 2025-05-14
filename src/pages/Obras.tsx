@@ -11,7 +11,6 @@ import { Plus } from 'lucide-react';
 import ObrasList from '@/components/obra/ObrasList';
 import ObraForm from '@/components/obra/ObraForm';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/Header';
 
 interface ObrasPageProps {
   onObraSelect: (obra: Obra) => void;
@@ -121,28 +120,24 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header />
-      
-      <div className="flex-1 container max-w-7xl py-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle>Minhas Obras</CardTitle>
-            <Button onClick={() => setIsFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Nova Obra
-            </Button>
-          </CardHeader>
-          
-          <CardContent>
-            <ObrasList 
-              obras={obras} 
-              isLoading={isLoading} 
-              onSelectObra={handleSelectObra}
-              onDeleteObra={handleDeleteObra}
-            />
-          </CardContent>
-        </Card>
-      </div>
+    <div className="flex-1 container max-w-7xl py-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle>Minhas Obras</CardTitle>
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nova Obra
+          </Button>
+        </CardHeader>
+        
+        <CardContent>
+          <ObrasList 
+            obras={obras} 
+            isLoading={isLoading} 
+            onSelectObra={handleSelectObra}
+            onDeleteObra={handleDeleteObra}
+          />
+        </CardContent>
+      </Card>
       
       <ObraForm 
         isOpen={isFormOpen} 
