@@ -16,7 +16,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <h1 className="text-2xl font-bold text-primary">
-              <NavLink to="/">PCP Manager</NavLink>
+              <NavLink to="/">GrifoBoard</NavLink>
             </h1>
 
             {userSession.user && (
