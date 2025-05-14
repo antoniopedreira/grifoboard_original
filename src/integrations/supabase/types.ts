@@ -43,7 +43,6 @@ export type Database = {
         Row: {
           cable: string | null
           causeifnotdone: string | null
-          completionstatus: string
           created_at: string
           dailystatus: Json
           description: string
@@ -62,7 +61,6 @@ export type Database = {
         Insert: {
           cable?: string | null
           causeifnotdone?: string | null
-          completionstatus?: string
           created_at?: string
           dailystatus: Json
           description: string
@@ -81,7 +79,6 @@ export type Database = {
         Update: {
           cable?: string | null
           causeifnotdone?: string | null
-          completionstatus?: string
           created_at?: string
           dailystatus?: Json
           description?: string
