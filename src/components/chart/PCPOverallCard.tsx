@@ -12,6 +12,7 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
   // Get variation directly from the data prop (no need to calculate it here anymore)
   const variation = data.variation || 0;
   const isPositive = variation >= 0;
+  const hasPreviousData = data.previousWeekPercentage !== undefined && data.previousWeekPercentage > 0;
   
   return (
     <Card className="col-span-1 shadow-sm">
@@ -28,17 +29,23 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
             {data.completedTasks} de {data.totalTasks} tarefas concluídas
           </div>
           
-          {/* Variation indicator - now using the stored value */}
-          <div className={`flex items-center mt-1 text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositive ? (
-              <ArrowUp size={14} className="mr-1" />
-            ) : (
-              <ArrowDown size={14} className="mr-1" />
-            )}
-            <span>
-              {isPositive ? '+' : ''}{variation.toFixed(1)}% em relação à semana anterior
-            </span>
-          </div>
+          {/* Variation indicator with improved handling */}
+          {hasPreviousData ? (
+            <div className={`flex items-center mt-1 text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              {isPositive ? (
+                <ArrowUp size={14} className="mr-1" />
+              ) : (
+                <ArrowDown size={14} className="mr-1" />
+              )}
+              <span>
+                {isPositive ? '+' : ''}{variation.toFixed(1)}% em relação à semana anterior
+              </span>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500 mt-1">
+              Sem dado anterior
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
