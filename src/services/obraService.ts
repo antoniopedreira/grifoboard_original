@@ -9,7 +9,10 @@ export const obrasService = {
       .select('*')
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error listing obras:", error);
+      throw error;
+    }
     return data || [];
   },
 
@@ -31,7 +34,10 @@ export const obrasService = {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating obra:", error);
+      throw error;
+    }
     return data;
   },
 
@@ -43,7 +49,10 @@ export const obrasService = {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating obra:", error);
+      throw error;
+    }
     return data;
   },
 
@@ -53,6 +62,9 @@ export const obrasService = {
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error deleting obra:", error);
+      throw error;
+    }
   }
 };

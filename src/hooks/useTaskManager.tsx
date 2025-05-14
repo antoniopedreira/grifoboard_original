@@ -50,13 +50,17 @@ export const useTaskManager = (weekStartDate: Date) => {
     
     setIsLoading(true);
     try {
+      console.log("Loading tasks for obra:", session.obraAtiva.id);
       const tarefas = await tarefasService.listarTarefas(session.obraAtiva.id);
+      console.log("Tasks loaded:", tarefas);
+      
       const convertedTasks = tarefas.map(convertTarefaToTask);
       setTasks(convertedTasks);
       
       // Calcular dados do PCP para o gráfico semanal
       calculatePCPData(convertedTasks);
     } catch (error: any) {
+      console.error("Error loading tasks:", error);
       toast({
         title: "Erro ao carregar tarefas",
         description: error.message,
@@ -97,6 +101,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       
       return updatedTask;
     } catch (error: any) {
+      console.error("Error updating task:", error);
       toast({
         title: "Erro ao atualizar tarefa",
         description: error.message,
@@ -125,6 +130,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       
       return true;
     } catch (error: any) {
+      console.error("Error deleting task:", error);
       toast({
         title: "Erro ao excluir tarefa",
         description: error.message,
@@ -141,6 +147,7 @@ export const useTaskManager = (weekStartDate: Date) => {
         throw new Error("Nenhuma obra ativa selecionada");
       }
       
+      console.log("Creating task with data:", newTaskData);
       // Criar tarefa no Supabase
       const novaTarefa = await tarefasService.criarTarefa(newTaskData, session.obraAtiva.id);
       
@@ -161,6 +168,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       
       return novaTask;
     } catch (error: any) {
+      console.error("Error creating task:", error);
       toast({
         title: "Erro ao criar tarefa",
         description: error.message,
