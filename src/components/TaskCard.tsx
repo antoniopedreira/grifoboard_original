@@ -33,7 +33,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
       executor: task.executor || "",
       cable: task.cable || "",
       plannedDays: task.plannedDays,
-      completionStatus: task.completionStatus,
       causeIfNotDone: task.causeIfNotDone,
     }
   );
@@ -50,11 +49,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
   };
 
   const handleCompletionStatusChange = () => {
-    const newCompletionStatus = task.completionStatus === "completed" ? "not_completed" : "completed";
-    
     onTaskUpdate({
       ...task,
-      completionStatus: newCompletionStatus,
+      isFullyCompleted: !task.isFullyCompleted,
     });
   };
 
@@ -154,7 +151,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
         
         <CardFooter className="pt-2">
           <TaskFooter 
-            isCompleted={task.completionStatus === "completed"}
+            isCompleted={task.isFullyCompleted}
             currentCause={task.causeIfNotDone}
             onCauseSelect={handleCauseSelect}
             onEditClick={handleEditClick}

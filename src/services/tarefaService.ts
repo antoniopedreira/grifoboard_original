@@ -29,7 +29,6 @@ export const tarefasService = {
       obra_id,
       dailystatus: allDays, // lowercase 's' to match database column name
       isfullycompleted: false, // lowercase to match database column name
-      completionstatus: tarefa.completionStatus || "not_completed", // lowercase 's' to match database column name
       weekstartdate: new Date().toISOString() // lowercase to match database column name
     };
 
@@ -54,12 +53,11 @@ export const tarefasService = {
     
     if (tarefa.dailyStatus) dbTarefa.dailystatus = tarefa.dailyStatus;
     if (tarefa.isFullyCompleted !== undefined) dbTarefa.isfullycompleted = tarefa.isFullyCompleted;
-    if (tarefa.completionStatus) dbTarefa.completionstatus = tarefa.completionStatus;
     if (tarefa.weekStartDate) dbTarefa.weekstartdate = tarefa.weekStartDate;
     
     // Copy remaining fields as is
     Object.keys(tarefa).forEach(key => {
-      if (!['dailyStatus', 'isFullyCompleted', 'completionStatus', 'weekStartDate'].includes(key)) {
+      if (!['dailyStatus', 'isFullyCompleted', 'weekStartDate'].includes(key)) {
         dbTarefa[key] = tarefa[key as keyof typeof tarefa];
       }
     });

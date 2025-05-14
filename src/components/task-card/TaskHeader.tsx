@@ -16,14 +16,14 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({ task, onCompletionStatusChange 
       </div>
       <Badge 
         className={`cursor-pointer ${
-          task.completionStatus === "completed" 
+          task.isFullyCompleted 
             ? "bg-green-500 hover:bg-green-600" 
             : "text-orange-500 border-orange-500 hover:bg-orange-100"
         }`}
-        variant={task.completionStatus === "completed" ? "default" : "outline"}
+        variant={task.isFullyCompleted ? "default" : "outline"}
         onClick={onCompletionStatusChange}
       >
-        {task.completionStatus === "completed" ? "Concluída" : "Não Concluída"}
+        {task.isFullyCompleted ? "Concluída" : "Não Concluída"}
       </Badge>
     </div>
   );

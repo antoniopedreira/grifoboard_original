@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Task, DayOfWeek, TaskCompletionStatus } from "@/types";
+import { Task, DayOfWeek } from "@/types";
 import { Tarefa } from "@/types/supabase";
 import { calculatePCP } from "@/utils/pcp";
 import { tarefasService } from "@/services/tarefaService";
@@ -23,8 +23,6 @@ export const convertTarefaToTask = (tarefa: Tarefa): Task => {
     plannedDays: (tarefa.planneddays || []).map(day => day as DayOfWeek),
     dailyStatus: tarefa.dailystatus || [], 
     isFullyCompleted: tarefa.isfullycompleted || false,
-    // Convert string to TaskCompletionStatus
-    completionStatus: (tarefa.completionstatus || "not_completed") as TaskCompletionStatus,
     causeIfNotDone: tarefa.causeifnotdone,
     // Convert string to Date
     weekStartDate: tarefa.weekstartdate ? new Date(tarefa.weekstartdate) : undefined

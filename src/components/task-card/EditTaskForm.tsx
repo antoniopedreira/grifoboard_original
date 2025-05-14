@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import { Task, DayOfWeek } from "@/types";
+import { DayOfWeek } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,13 +16,13 @@ import { dayNameMap } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
 
 interface EditTaskFormProps {
-  task: Task;
-  editFormData: Omit<Task, "id" | "isFullyCompleted" | "dailyStatus">;
+  editFormData: any;
   onEditFormChange: (field: string, value: string) => void;
   onDayToggle: (day: DayOfWeek) => void;
   onDelete: () => void;
   onSave: () => void;
   isFormValid: () => boolean;
+  task: any;
 }
 
 const EditTaskForm: React.FC<EditTaskFormProps> = ({

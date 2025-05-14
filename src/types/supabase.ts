@@ -25,7 +25,6 @@ export interface Tarefa {
   planneddays: string[]; // lowercase to match database column name
   dailystatus: any[]; // lowercase to match database column name
   isfullycompleted: boolean; // lowercase to match database column name
-  completionstatus: string; // lowercase to match database column name
   causeifnotdone?: string; // lowercase to match database column name
   weekstartdate?: string; // lowercase to match database column name
   created_at: string;
