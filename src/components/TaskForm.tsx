@@ -9,13 +9,27 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger, 
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { DayOfWeek, Task } from "@/types";
-import { dayNameMap } from "@/utils/pcp";
+import { dayNameMap, getWeekStartDate } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface TaskFormProps {
   onTaskCreate: (task: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => void;
@@ -33,6 +47,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
   const [responsible, setResponsible] = useState("");
   const [executor, setExecutor] = useState("");
   const [cable, setCable] = useState("");
+  const [weekStartDate, setWeekStartDate] = useState<Date>(getWeekStartDate(new Date()));
   const [plannedDays, setPlannedDays] = useState<DayOfWeek[]>([]);
   
   const handleDayToggle = (day: DayOfWeek) => {
@@ -54,6 +69,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
       executor,
       cable,
       plannedDays,
+      weekStartDate,
     });
     
     // Reset form fields
@@ -65,6 +81,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
     setExecutor("");
     setCable("");
     setPlannedDays([]);
+    setWeekStartDate(getWeekStartDate(new Date()));
     
     // Close the dialog
     onOpenChange(false);
@@ -87,6 +104,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
     });
   };
   
+  // Handle date selection and ensure it's the start of a week (Monday)
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      const weekStart = getWeekStartDate(date);
+      setWeekStartDate(weekStart);
+    }
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -95,6 +120,37 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="week-start-date">Semana</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="week-start-date"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !weekStartDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {weekStartDate ? format(weekStartDate, "dd/MM/yyyy") : <span>Selecione a data inicial da semana</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={weekStartDate}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">
+              Sempre será ajustado para o início da semana (segunda-feira)
+            </p>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="sector">Setor</Label>
             <Select value={sector} onValueChange={setSector}>

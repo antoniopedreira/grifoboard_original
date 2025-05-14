@@ -90,10 +90,23 @@ export const useTaskManager = (weekStartDate: Date) => {
       console.log("Tasks loaded:", tarefas);
       
       const convertedTasks = tarefas.map(convertTarefaToTask);
-      setTasks(convertedTasks);
+      
+      // Filter tasks to only show tasks for the selected week
+      const weekDateString = weekStartDate.toISOString().split('T')[0];
+      const filteredTasks = convertedTasks.filter(task => {
+        // If the task has a weekStartDate, compare it to the selected week
+        if (task.weekStartDate) {
+          const taskWeekDateString = task.weekStartDate.toISOString().split('T')[0];
+          return taskWeekDateString === weekDateString;
+        }
+        return false;
+      });
+      
+      console.log("Filtered tasks for week:", weekDateString, filteredTasks);
+      setTasks(filteredTasks);
       
       // Calcular dados do PCP para o gráfico semanal
-      calculatePCPData(convertedTasks);
+      calculatePCPData(filteredTasks);
     } catch (error: any) {
       console.error("Error loading tasks:", error);
       toast({
@@ -104,7 +117,7 @@ export const useTaskManager = (weekStartDate: Date) => {
     } finally {
       setIsLoading(false);
     }
-  }, [session.obraAtiva, toast, calculatePCPData]);
+  }, [session.obraAtiva, toast, calculatePCPData, weekStartDate]);
   
   // Carregar tarefas quando a obra ativa mudar ou a data da semana mudar
   useEffect(() => {
@@ -129,6 +142,11 @@ export const useTaskManager = (weekStartDate: Date) => {
         percentual_executado: updatedTask.isFullyCompleted ? 1 : 0,
         causa_nao_execucao: updatedTask.causeIfNotDone
       };
+      
+      // Update week start date if provided
+      if (updatedTask.weekStartDate) {
+        tarefaToUpdate.semana = updatedTask.weekStartDate.toISOString().split('T')[0];
+      }
       
       // Update day status fields
       if (updatedTask.dailyStatus && updatedTask.dailyStatus.length > 0) {
@@ -225,6 +243,9 @@ export const useTaskManager = (weekStartDate: Date) => {
         throw new Error("Nenhuma obra ativa selecionada");
       }
       
+      // Ensure weekStartDate is set, or use the current week
+      const taskWeekStartDate = newTaskData.weekStartDate || weekStartDate;
+      
       // Initialize the new Tarefa object with required fields
       const novaTarefa: Omit<Tarefa, 'id' | 'created_at'> = {
         obra_id: session.obraAtiva.id,
@@ -236,7 +257,7 @@ export const useTaskManager = (weekStartDate: Date) => {
         responsavel: newTaskData.responsible,
         executante: newTaskData.executor,
         cabo: newTaskData.cable,
-        semana: newTaskData.weekStartDate ? newTaskData.weekStartDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        semana: taskWeekStartDate.toISOString().split('T')[0],
         percentual_executado: 0,
         causa_nao_execucao: newTaskData.causeIfNotDone,
         seg: null,
@@ -273,12 +294,22 @@ export const useTaskManager = (weekStartDate: Date) => {
       // Converter a tarefa para Task antes de adicionar à lista local
       const novaTask = convertTarefaToTask(createdTarefa);
       
-      // Adicionar a nova tarefa à lista local
-      const updatedTasks = [novaTask, ...tasks];
-      setTasks(updatedTasks);
-      
-      // Atualizar dados do PCP
-      calculatePCPData(updatedTasks);
+      // Only add to the current tasks list if the weekStartDate matches
+      if (taskWeekStartDate.toISOString().split('T')[0] === weekStartDate.toISOString().split('T')[0]) {
+        // Adicionar a nova tarefa à lista local
+        const updatedTasks = [novaTask, ...tasks];
+        setTasks(updatedTasks);
+        
+        // Atualizar dados do PCP
+        calculatePCPData(updatedTasks);
+      } else {
+        // If the task is for a different week, we don't add it to the current list
+        // but we should notify the user that the task was created for a different week
+        toast({
+          title: "Tarefa criada para outra semana",
+          description: `A tarefa foi adicionada para a semana de ${taskWeekStartDate.toLocaleDateString()}.`,
+        });
+      }
       
       toast({
         title: "Tarefa criada",
@@ -295,7 +326,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       });
       throw error;
     }
-  }, [session.obraAtiva, tasks, toast, calculatePCPData]);
+  }, [session.obraAtiva, tasks, toast, calculatePCPData, weekStartDate]);
   
   // Calcular PCP atual
   const pcpData = calculatePCP(tasks);

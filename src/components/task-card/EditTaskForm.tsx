@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, CalendarIcon } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -12,12 +12,20 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { dayNameMap } from "@/utils/pcp";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { dayNameMap, getWeekStartDate } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
+import { cn } from "@/lib/utils";
 
 interface EditTaskFormProps {
   editFormData: any;
-  onEditFormChange: (field: string, value: string) => void;
+  onEditFormChange: (field: string, value: string | Date) => void;
   onDayToggle: (day: DayOfWeek) => void;
   onDelete: () => void;
   onSave: () => void;
@@ -35,8 +43,47 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 }) => {
   const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
 
+  // Handle date selection and ensure it's the start of a week (Monday)
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      const weekStart = getWeekStartDate(date);
+      onEditFormChange("weekStartDate", weekStart);
+    }
+  };
+
   return (
     <div className="grid gap-4 py-4">
+      <div className="space-y-2">
+        <Label htmlFor="edit-week-start-date">Semana</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="edit-week-start-date"
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !editFormData.weekStartDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {editFormData.weekStartDate ? format(new Date(editFormData.weekStartDate), "dd/MM/yyyy") : <span>Selecione a data inicial da semana</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={editFormData.weekStartDate ? new Date(editFormData.weekStartDate) : undefined}
+              onSelect={handleDateSelect}
+              initialFocus
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+        <p className="text-xs text-muted-foreground">
+          Sempre será ajustado para o início da semana (segunda-feira)
+        </p>
+      </div>
+      
       <div className="space-y-2">
         <Label htmlFor="edit-sector">Setor</Label>
         <Select 
