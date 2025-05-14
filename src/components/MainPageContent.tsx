@@ -72,7 +72,7 @@ const MainPageContent = () => {
   };
   
   return (
-    <>
+    <div className="container mx-auto max-w-7xl px-4 py-6">
       {/* Header com título e botões */}
       <MainHeader 
         onNewTaskClick={() => setIsFormOpen(true)}
@@ -118,7 +118,7 @@ const MainPageContent = () => {
         isOpen={isRegistryOpen} 
         onOpenChange={setIsRegistryOpen} 
       />
-    </>
+    </div>
   );
 };
 

@@ -59,7 +59,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   };
 
   return (
-    <div className="grid gap-5 py-4">
+    <div className="grid gap-5 py-4 max-h-[70vh] overflow-y-auto px-1">
       {/* Week start date picker - full width */}
       <div className="space-y-2 w-full">
         <Label htmlFor="edit-weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
@@ -260,7 +260,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
       {/* Planned days - centered */}
       <div className="space-y-3 w-full">
         <Label className="font-medium">Dias Planejados</Label>
-        <div className="flex flex-wrap justify-center gap-3 mt-2">
+        <div className="flex flex-wrap justify-center gap-4 mt-2">
           {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
             <div key={day} className="flex items-center space-x-2">
               <Checkbox
@@ -274,7 +274,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-between pt-5">
+      <div className="flex justify-between pt-5 sticky bottom-0 bg-background">
         <Button 
           variant="destructive" 
           onClick={onDelete}

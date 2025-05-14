@@ -116,8 +116,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-6">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] p-6 max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
           <DialogTitle className="text-xl font-semibold">Nova Tarefa</DialogTitle>
         </DialogHeader>
         
@@ -307,7 +307,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
           {/* Planned days - centered */}
           <div className="space-y-3 w-full">
             <Label className="font-medium">Dias Planejados</Label>
-            <div className="flex flex-wrap justify-center gap-3 mt-2">
+            <div className="flex flex-wrap justify-center gap-4 mt-2">
               {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
                 <div key={day} className="flex items-center space-x-2">
                   <Checkbox
@@ -322,7 +322,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
           </div>
         </div>
         
-        <div className="flex justify-end mt-6">
+        <div className="flex justify-end mt-6 sticky bottom-0 pt-4 bg-background">
           <Button onClick={handleSubmit} disabled={!isFormValid()}>
             Adicionar Tarefa
           </Button>
