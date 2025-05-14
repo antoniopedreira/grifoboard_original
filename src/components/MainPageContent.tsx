@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+
+import { useState, useEffect } from "react";
 import { Task } from "@/types";
 import TaskList from "@/components/TaskList";
 import PCPChart from "@/components/PCPChart";
@@ -8,59 +8,113 @@ import WeekNavigation from "@/components/WeekNavigation";
 import { Button } from "@/components/ui/button";
 import { calculatePCP, getPreviousWeekDates, getNextWeekDates } from "@/utils/pcp";
 import { useToast } from "@/hooks/use-toast";
-import { useWeeklyData } from "@/hooks/useWeeklyData";
 import RegistryDialog from "@/components/RegistryDialog";
+import { useAuth } from "@/context/AuthContext";
+import { tarefasService } from "@/services/tarefaService";
 
 const MainPageContent = () => {
   const { toast } = useToast();
+  const { session } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
   
-  const {
-    weekStartDate,
-    setWeekStartDate,
-    weekEndDate,
-    tasks,
-    setTasks,
-    weeklyPCPData,
-    updateHistoricalDataAndCharts
-  } = useWeeklyData();
-  
-  const pcpData = calculatePCP(tasks);
-  
-  const handleTaskUpdate = (updatedTask: Task) => {
-    // Update the task
-    const updatedTasks = tasks.map(task => 
-      task.id === updatedTask.id ? updatedTask : task
-    );
-    setTasks(updatedTasks);
+  const [weekStartDate, setWeekStartDate] = useState(new Date());
+  const [weekEndDate, setWeekEndDate] = useState(new Date());
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [weeklyPCPData, setWeeklyPCPData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Carregar tarefas quando a obra ativa mudar ou a data da semana mudar
+  useEffect(() => {
+    if (session.obraAtiva) {
+      loadTasks();
+    }
+  }, [session.obraAtiva, weekStartDate]);
+
+  // Calcular data de fim da semana quando a data de início mudar
+  useEffect(() => {
+    const endDate = new Date(weekStartDate);
+    endDate.setDate(endDate.getDate() + 6);
+    setWeekEndDate(endDate);
+  }, [weekStartDate]);
+
+  const loadTasks = async () => {
+    if (!session.obraAtiva) return;
     
-    // Update charts with consistent historical data
-    updateHistoricalDataAndCharts(updatedTasks);
-    
-    toast({
-      title: "Tarefa atualizada",
-      description: "As alterações foram salvas com sucesso.",
-    });
+    setIsLoading(true);
+    try {
+      const tarefas = await tarefasService.listarTarefas(session.obraAtiva.id);
+      setTasks(tarefas);
+      
+      // Calcular dados do PCP para o gráfico semanal
+      const pcpData = calculatePCP(tarefas);
+      setWeeklyPCPData([pcpData]);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar tarefas",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleTaskUpdate = async (updatedTask: Task) => {
+    try {
+      await tarefasService.atualizarTarefa(updatedTask.id, updatedTask);
+      
+      // Atualizar a tarefa localmente
+      const updatedTasks = tasks.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      );
+      setTasks(updatedTasks);
+      
+      // Atualizar dados do PCP
+      const pcpData = calculatePCP(updatedTasks);
+      setWeeklyPCPData([pcpData]);
+      
+      toast({
+        title: "Tarefa atualizada",
+        description: "As alterações foram salvas com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar tarefa",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleTaskDelete = (taskId: string) => {
-    // Remove the task
-    const updatedTasks = tasks.filter(task => task.id !== taskId);
-    setTasks(updatedTasks);
-    
-    // Update charts with consistent historical data
-    updateHistoricalDataAndCharts(updatedTasks);
-    
-    toast({
-      title: "Tarefa excluída",
-      description: "A tarefa foi removida com sucesso.",
-    });
+  const handleTaskDelete = async (taskId: string) => {
+    try {
+      await tarefasService.excluirTarefa(taskId);
+      
+      // Remover a tarefa localmente
+      const updatedTasks = tasks.filter(task => task.id !== taskId);
+      setTasks(updatedTasks);
+      
+      // Atualizar dados do PCP
+      const pcpData = calculatePCP(updatedTasks);
+      setWeeklyPCPData([pcpData]);
+      
+      toast({
+        title: "Tarefa excluída",
+        description: "A tarefa foi removida com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir tarefa",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
   
   const handleCauseSelect = (cause: string) => {
-    // If user clicks the same cause, clear the filter
+    // Se user clicks the same cause, clear the filter
     if (selectedCause === cause) {
       setSelectedCause(null);
       toast({
@@ -76,32 +130,34 @@ const MainPageContent = () => {
     }
   };
   
-  const handleTaskCreate = (newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
-    const allDays: Task["dailyStatus"] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map(day => ({
-      day: day as any,
-      status: newTaskData.plannedDays.includes(day as any) ? "planned" : "not_planned"
-    }));
-    
-    const newTask: Task = {
-      id: uuidv4(),
-      ...newTaskData,
-      dailyStatus: allDays,
-      isFullyCompleted: false,
-      completionStatus: newTaskData.completionStatus || "not_completed",
-      weekStartDate: new Date(weekStartDate) 
-    };
-    
-    // Add the new task
-    const updatedTasks = [newTask, ...tasks];
-    setTasks(updatedTasks);
-    
-    // Update charts with consistent historical data
-    updateHistoricalDataAndCharts(updatedTasks);
-    
-    toast({
-      title: "Tarefa criada",
-      description: "Nova tarefa adicionada com sucesso.",
-    });
+  const handleTaskCreate = async (newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
+    try {
+      if (!session.obraAtiva) {
+        throw new Error("Nenhuma obra ativa selecionada");
+      }
+      
+      // Criar tarefa no Supabase
+      const novaTarefa = await tarefasService.criarTarefa(newTaskData, session.obraAtiva.id);
+      
+      // Adicionar a nova tarefa à lista local
+      const updatedTasks = [novaTarefa, ...tasks];
+      setTasks(updatedTasks);
+      
+      // Atualizar dados do PCP
+      const pcpData = calculatePCP(updatedTasks);
+      setWeeklyPCPData([pcpData]);
+      
+      toast({
+        title: "Tarefa criada",
+        description: "Nova tarefa adicionada com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar tarefa",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
   
   const navigateToPreviousWeek = () => {
@@ -116,10 +172,14 @@ const MainPageContent = () => {
     setSelectedCause(null); // Clear filter when changing week
   };
   
+  const pcpData = calculatePCP(tasks);
+  
   return (
     <>
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Planejamento Semanal</h2>
+        <h2 className="text-2xl font-bold">
+          {session.obraAtiva ? `Tarefas - ${session.obraAtiva.nome_obra}` : 'Planejamento Semanal'}
+        </h2>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -164,12 +224,18 @@ const MainPageContent = () => {
         </div>
       )}
       
-      <TaskList 
-        tasks={tasks} 
-        onTaskUpdate={handleTaskUpdate} 
-        onTaskDelete={handleTaskDelete}
-        selectedCause={selectedCause}
-      />
+      {isLoading ? (
+        <div className="text-center py-10">
+          <p>Carregando tarefas...</p>
+        </div>
+      ) : (
+        <TaskList 
+          tasks={tasks} 
+          onTaskUpdate={handleTaskUpdate} 
+          onTaskDelete={handleTaskDelete}
+          selectedCause={selectedCause}
+        />
+      )}
       
       <TaskForm 
         onTaskCreate={handleTaskCreate} 
