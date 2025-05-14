@@ -6,8 +6,8 @@ interface TaskDetailsProps {
   discipline: string;
   team: string;
   responsible: string;
-  executor: string;  // New field
-  cable: string;     // New field
+  executor: string;
+  cable: string;
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
@@ -19,30 +19,30 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   cable
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-2 text-sm">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm mb-4">
       <div className="flex flex-col">
-        <span className="text-gray-500">Setor</span>
-        <span>{sector}</span>
+        <span className="text-gray-500 font-medium">Setor</span>
+        <span className="truncate">{sector}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500">Disciplina</span>
-        <span>{discipline}</span>
+        <span className="text-gray-500 font-medium">Disciplina</span>
+        <span className="truncate">{discipline}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500">Equipe</span>
-        <span>{team}</span>
+        <span className="text-gray-500 font-medium">Equipe</span>
+        <span className="truncate">{team}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500">Responsável</span>
-        <span>{responsible}</span>
+        <span className="text-gray-500 font-medium">Responsável</span>
+        <span className="truncate">{responsible}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500">Executante</span>
-        <span>{executor}</span>
+        <span className="text-gray-500 font-medium">Executante</span>
+        <span className="truncate">{executor}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500">Cabo</span>
-        <span>{cable}</span>
+        <span className="text-gray-500 font-medium">Cabo</span>
+        <span className="truncate">{cable}</span>
       </div>
     </div>
   );

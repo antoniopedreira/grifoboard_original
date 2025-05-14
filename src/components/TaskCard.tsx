@@ -145,14 +145,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
   return (
     <>
       <Card className="w-full bg-white shadow-sm hover:shadow-md transition-shadow">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 pt-4 px-4">
           <TaskHeader 
             task={task} 
             onCompletionStatusChange={handleCompletionStatusChange} 
           />
         </CardHeader>
         
-        <CardContent className="pb-2">
+        <CardContent className="px-4 pb-2">
           <TaskDetails 
             sector={task.sector}
             discipline={task.discipline}
@@ -168,7 +168,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
           />
         </CardContent>
         
-        <CardFooter className="pt-2">
+        <CardFooter className="px-4 pt-2 pb-4">
           <TaskFooter 
             isCompleted={task.isFullyCompleted}
             currentCause={task.causeIfNotDone}

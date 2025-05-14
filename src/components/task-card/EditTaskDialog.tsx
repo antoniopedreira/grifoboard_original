@@ -35,9 +35,9 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] p-6">
         <DialogHeader>
-          <DialogTitle>Editar Tarefa</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Editar Tarefa</DialogTitle>
         </DialogHeader>
         
         <EditTaskForm

@@ -59,10 +59,10 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   };
 
   return (
-    <div className="grid gap-4 py-4">
-      {/* Week start date picker */}
-      <div className="space-y-2">
-        <Label htmlFor="edit-weekStartDate">Semana (Segunda-feira)</Label>
+    <div className="grid gap-5 py-4">
+      {/* Week start date picker - full width */}
+      <div className="space-y-2 w-full">
+        <Label htmlFor="edit-weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -100,8 +100,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="edit-sector">Setor</Label>
+      {/* Sector - full width */}
+      <div className="space-y-2 w-full">
+        <Label htmlFor="edit-sector" className="font-medium">Setor</Label>
         <Select 
           value={safeEditFormData.sector} 
           onValueChange={(value) => onEditFormChange("sector", value)}
@@ -123,8 +124,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </Select>
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="edit-description">Descrição</Label>
+      {/* Description - full width */}
+      <div className="space-y-2 w-full">
+        <Label htmlFor="edit-description" className="font-medium">Descrição</Label>
         <Input
           id="edit-description"
           value={safeEditFormData.description}
@@ -133,9 +135,10 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         />
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
+      {/* Two columns layout for discipline and team */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="edit-discipline">Disciplina</Label>
+          <Label htmlFor="edit-discipline" className="font-medium">Disciplina</Label>
           <Select 
             value={safeEditFormData.discipline} 
             onValueChange={(value) => onEditFormChange("discipline", value)}
@@ -158,7 +161,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="edit-team">Equipe</Label>
+          <Label htmlFor="edit-team" className="font-medium">Equipe</Label>
           <Select 
             value={safeEditFormData.team} 
             onValueChange={(value) => onEditFormChange("team", value)}
@@ -181,9 +184,10 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
+      {/* Two columns layout for responsible and executor */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="edit-responsible">Responsável</Label>
+          <Label htmlFor="edit-responsible" className="font-medium">Responsável</Label>
           <Select 
             value={safeEditFormData.responsible} 
             onValueChange={(value) => onEditFormChange("responsible", value)}
@@ -206,7 +210,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="edit-executor">Executante</Label>
+          <Label htmlFor="edit-executor" className="font-medium">Executante</Label>
           <Select 
             value={safeEditFormData.executor} 
             onValueChange={(value) => onEditFormChange("executor", value)}
@@ -229,8 +233,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </div>
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="edit-cable">Cabo</Label>
+      {/* Cable - full width */}
+      <div className="space-y-2 w-full">
+        <Label htmlFor="edit-cable" className="font-medium">Cabo</Label>
         <Select 
           value={safeEditFormData.cable} 
           onValueChange={(value) => onEditFormChange("cable", value)}
@@ -252,9 +257,10 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </Select>
       </div>
       
-      <div className="space-y-2">
-        <Label>Dias Planejados</Label>
-        <div className="flex flex-wrap gap-4">
+      {/* Planned days - centered */}
+      <div className="space-y-3 w-full">
+        <Label className="font-medium">Dias Planejados</Label>
+        <div className="flex flex-wrap justify-center gap-3 mt-2">
           {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
             <div key={day} className="flex items-center space-x-2">
               <Checkbox
@@ -268,7 +274,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-between pt-3">
+      <div className="flex justify-between pt-5">
         <Button 
           variant="destructive" 
           onClick={onDelete}

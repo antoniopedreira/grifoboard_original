@@ -78,7 +78,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
       executor,
       cable,
       plannedDays,
-      weekStartDate, // Add weekStartDate to the task
+      weekStartDate,
     });
     
     // Reset form fields
@@ -116,15 +116,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] p-6">
         <DialogHeader>
-          <DialogTitle>Nova Tarefa</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Nova Tarefa</DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          {/* Week start date picker */}
-          <div className="space-y-2">
-            <Label htmlFor="weekStartDate">Semana (Segunda-feira)</Label>
+        <div className="grid gap-5 py-4">
+          {/* Week start date picker - full width */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -158,8 +158,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="sector">Setor</Label>
+          {/* Setor - full width */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="sector" className="font-medium">Setor</Label>
             <Select value={sector} onValueChange={setSector}>
               <SelectTrigger id="sector">
                 <SelectValue placeholder="Selecione o setor" />
@@ -185,8 +186,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+          {/* Description - full width */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="description" className="font-medium">Descrição</Label>
             <Input
               id="description"
               value={description}
@@ -195,9 +197,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          {/* Two columns layout for discipline and team */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="discipline">Disciplina</Label>
+              <Label htmlFor="discipline" className="font-medium">Disciplina</Label>
               <Select value={discipline} onValueChange={setDiscipline}>
                 <SelectTrigger id="discipline">
                   <SelectValue placeholder="Selecione a disciplina" />
@@ -217,7 +220,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="team">Equipe</Label>
+              <Label htmlFor="team" className="font-medium">Equipe</Label>
               <Select value={team} onValueChange={setTeam}>
                 <SelectTrigger id="team">
                   <SelectValue placeholder="Selecione a equipe" />
@@ -237,9 +240,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          {/* Two columns layout for responsible and executor */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="responsible">Responsável</Label>
+              <Label htmlFor="responsible" className="font-medium">Responsável</Label>
               <Select value={responsible} onValueChange={setResponsible}>
                 <SelectTrigger id="responsible">
                   <SelectValue placeholder="Selecione o responsável" />
@@ -259,7 +263,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="executor">Executante</Label>
+              <Label htmlFor="executor" className="font-medium">Executante</Label>
               <Select value={executor} onValueChange={setExecutor}>
                 <SelectTrigger id="executor">
                   <SelectValue placeholder="Selecione o executante" />
@@ -279,8 +283,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="cable">Cabo</Label>
+          {/* Cable - full width */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="cable" className="font-medium">Cabo</Label>
             <Select value={cable} onValueChange={setCable}>
               <SelectTrigger id="cable">
                 <SelectValue placeholder="Selecione o cabo" />
@@ -299,9 +304,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label>Dias Planejados</Label>
-            <div className="flex flex-wrap gap-4">
+          {/* Planned days - centered */}
+          <div className="space-y-3 w-full">
+            <Label className="font-medium">Dias Planejados</Label>
+            <div className="flex flex-wrap justify-center gap-3 mt-2">
               {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
                 <div key={day} className="flex items-center space-x-2">
                   <Checkbox
@@ -316,7 +322,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
           </div>
         </div>
         
-        <div className="flex justify-end">
+        <div className="flex justify-end mt-6">
           <Button onClick={handleSubmit} disabled={!isFormValid()}>
             Adicionar Tarefa
           </Button>
