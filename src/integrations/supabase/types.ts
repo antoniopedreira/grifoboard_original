@@ -11,88 +11,103 @@ export type Database = {
     Tables: {
       obras: {
         Row: {
-          created_at: string
-          data_inicio: string
+          created_at: string | null
+          data_inicio: string | null
           id: string
-          localizacao: string
+          localizacao: string | null
           nome_obra: string
-          status: string
-          usuario_id: string
+          status: string | null
+          usuario_id: string | null
         }
         Insert: {
-          created_at?: string
-          data_inicio: string
+          created_at?: string | null
+          data_inicio?: string | null
           id?: string
-          localizacao: string
+          localizacao?: string | null
           nome_obra: string
-          status: string
-          usuario_id: string
+          status?: string | null
+          usuario_id?: string | null
         }
         Update: {
-          created_at?: string
-          data_inicio?: string
+          created_at?: string | null
+          data_inicio?: string | null
           id?: string
-          localizacao?: string
+          localizacao?: string | null
           nome_obra?: string
-          status?: string
-          usuario_id?: string
+          status?: string | null
+          usuario_id?: string | null
         }
         Relationships: []
       }
       tarefas: {
         Row: {
-          cable: string | null
-          causeifnotdone: string | null
-          created_at: string
-          dailystatus: Json
-          description: string
-          discipline: string
-          executor: string | null
+          cabo: string
+          causa_nao_execucao: string | null
+          created_at: string | null
+          descricao: string
+          disciplina: string
+          dom: string | null
+          equipe: string
+          executante: string
           id: string
-          isfullycompleted: boolean
           item: string
-          obra_id: string
-          planneddays: string[]
-          responsible: string
-          sector: string
-          team: string
-          weekstartdate: string | null
+          obra_id: string | null
+          percentual_executado: number | null
+          qua: string | null
+          qui: string | null
+          responsavel: string
+          sab: string | null
+          seg: string | null
+          semana: string
+          setor: string
+          sex: string | null
+          ter: string | null
         }
         Insert: {
-          cable?: string | null
-          causeifnotdone?: string | null
-          created_at?: string
-          dailystatus: Json
-          description: string
-          discipline: string
-          executor?: string | null
+          cabo: string
+          causa_nao_execucao?: string | null
+          created_at?: string | null
+          descricao: string
+          disciplina: string
+          dom?: string | null
+          equipe: string
+          executante: string
           id?: string
-          isfullycompleted?: boolean
           item: string
-          obra_id: string
-          planneddays: string[]
-          responsible: string
-          sector: string
-          team: string
-          weekstartdate?: string | null
+          obra_id?: string | null
+          percentual_executado?: number | null
+          qua?: string | null
+          qui?: string | null
+          responsavel: string
+          sab?: string | null
+          seg?: string | null
+          semana: string
+          setor: string
+          sex?: string | null
+          ter?: string | null
         }
         Update: {
-          cable?: string | null
-          causeifnotdone?: string | null
-          created_at?: string
-          dailystatus?: Json
-          description?: string
-          discipline?: string
-          executor?: string | null
+          cabo?: string
+          causa_nao_execucao?: string | null
+          created_at?: string | null
+          descricao?: string
+          disciplina?: string
+          dom?: string | null
+          equipe?: string
+          executante?: string
           id?: string
-          isfullycompleted?: boolean
           item?: string
-          obra_id?: string
-          planneddays?: string[]
-          responsible?: string
-          sector?: string
-          team?: string
-          weekstartdate?: string | null
+          obra_id?: string | null
+          percentual_executado?: number | null
+          qua?: string | null
+          qui?: string | null
+          responsavel?: string
+          sab?: string | null
+          seg?: string | null
+          semana?: string
+          setor?: string
+          sex?: string | null
+          ter?: string | null
         }
         Relationships: [
           {
@@ -103,6 +118,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      usuarios: {
+        Row: {
+          email: string | null
+          id: string
+          nome: string | null
+        }
+        Insert: {
+          email?: string | null
+          id: string
+          nome?: string | null
+        }
+        Update: {
+          email?: string | null
+          id?: string
+          nome?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

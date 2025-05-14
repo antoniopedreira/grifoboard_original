@@ -1,6 +1,4 @@
 
-import { Task } from "@/types";
-
 export interface Obra {
   id: string;
   nome_obra: string;
@@ -14,19 +12,24 @@ export interface Obra {
 export interface Tarefa {
   id: string;
   obra_id: string;
-  sector: string;
+  setor: string;
   item: string;
-  description: string;
-  discipline: string;
-  team: string;
-  responsible: string;
-  executor?: string;
-  cable?: string;
-  planneddays: string[]; // lowercase to match database column name
-  dailystatus: any[]; // lowercase to match database column name
-  isfullycompleted: boolean; // lowercase to match database column name
-  causeifnotdone?: string; // lowercase to match database column name
-  weekstartdate?: string; // lowercase to match database column name
+  descricao: string;
+  disciplina: string;
+  equipe: string;
+  responsavel: string;
+  executante: string;
+  cabo: string;
+  semana: string;
+  seg: string;
+  ter: string;
+  qua: string;
+  qui: string;
+  sex: string;
+  sab: string;
+  dom: string;
+  percentual_executado: number;
+  causa_nao_execucao?: string;
   created_at: string;
 }
 
