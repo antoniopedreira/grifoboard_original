@@ -116,9 +116,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
 
   const isFormValid = () => {
     return (
-      editFormData.sector.trim() !== "" &&
-      editFormData.description.trim() !== "" &&
-      editFormData.responsible.trim() !== "" &&
+      editFormData.sector?.trim() !== "" &&
+      editFormData.description?.trim() !== "" &&
+      editFormData.responsible?.trim() !== "" &&
       editFormData.plannedDays.length > 0
     );
   };

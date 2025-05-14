@@ -35,12 +35,24 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 }) => {
   const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
 
+  // Ensure we have valid data to work with
+  const safeEditFormData = {
+    sector: editFormData?.sector || "",
+    description: editFormData?.description || "",
+    discipline: editFormData?.discipline || "",
+    team: editFormData?.team || "",
+    responsible: editFormData?.responsible || "",
+    executor: editFormData?.executor || "",
+    cable: editFormData?.cable || "",
+    plannedDays: editFormData?.plannedDays || []
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="space-y-2">
         <Label htmlFor="edit-sector">Setor</Label>
         <Select 
-          value={editFormData.sector} 
+          value={safeEditFormData.sector} 
           onValueChange={(value) => onEditFormChange("sector", value)}
         >
           <SelectTrigger id="edit-sector">
@@ -64,7 +76,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         <Label htmlFor="edit-description">Descrição</Label>
         <Input
           id="edit-description"
-          value={editFormData.description}
+          value={safeEditFormData.description}
           onChange={(e) => onEditFormChange("description", e.target.value)}
           placeholder="Descrição da tarefa"
         />
@@ -74,7 +86,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         <div className="space-y-2">
           <Label htmlFor="edit-discipline">Disciplina</Label>
           <Select 
-            value={editFormData.discipline} 
+            value={safeEditFormData.discipline} 
             onValueChange={(value) => onEditFormChange("discipline", value)}
           >
             <SelectTrigger id="edit-discipline">
@@ -97,7 +109,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         <div className="space-y-2">
           <Label htmlFor="edit-team">Equipe</Label>
           <Select 
-            value={editFormData.team} 
+            value={safeEditFormData.team} 
             onValueChange={(value) => onEditFormChange("team", value)}
           >
             <SelectTrigger id="edit-team">
@@ -122,7 +134,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         <div className="space-y-2">
           <Label htmlFor="edit-responsible">Responsável</Label>
           <Select 
-            value={editFormData.responsible} 
+            value={safeEditFormData.responsible} 
             onValueChange={(value) => onEditFormChange("responsible", value)}
           >
             <SelectTrigger id="edit-responsible">
@@ -145,7 +157,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         <div className="space-y-2">
           <Label htmlFor="edit-executor">Executante</Label>
           <Select 
-            value={editFormData.executor || ""} 
+            value={safeEditFormData.executor} 
             onValueChange={(value) => onEditFormChange("executor", value)}
           >
             <SelectTrigger id="edit-executor">
@@ -169,7 +181,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
       <div className="space-y-2">
         <Label htmlFor="edit-cable">Cabo</Label>
         <Select 
-          value={editFormData.cable || ""} 
+          value={safeEditFormData.cable} 
           onValueChange={(value) => onEditFormChange("cable", value)}
         >
           <SelectTrigger id="edit-cable">
@@ -196,7 +208,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             <div key={day} className="flex items-center space-x-2">
               <Checkbox
                 id={`edit-day-${day}`}
-                checked={editFormData.plannedDays.includes(day as DayOfWeek)}
+                checked={safeEditFormData.plannedDays.includes(day as DayOfWeek)}
                 onCheckedChange={() => onDayToggle(day as DayOfWeek)}
               />
               <Label htmlFor={`edit-day-${day}`} className="cursor-pointer">{name}</Label>
