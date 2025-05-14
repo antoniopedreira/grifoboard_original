@@ -9,11 +9,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DayOfWeek, Task } from "@/types";
 import { dayNameMap } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
+import { toast } from "@/hooks/use-toast";
 
 interface TaskFormProps {
   onTaskCreate: (task: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => void;
@@ -44,7 +46,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
   const handleSubmit = () => {
     onTaskCreate({
       sector,
-      item: "", // Mantemos o campo no objeto, mas não o exibimos mais na interface
+      item: "",
       description,
       discipline,
       team,
@@ -77,6 +79,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
     );
   };
   
+  const handleOpenRegistryDialog = () => {
+    toast({
+      title: "Cadastros vazios",
+      description: "Adicione itens aos cadastros através do botão 'Cadastro' na página principal.",
+      variant: "destructive",
+    });
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -92,9 +102,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                 <SelectValue placeholder="Selecione o setor" />
               </SelectTrigger>
               <SelectContent>
-                {sectors.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
+                {sectors.length > 0 ? (
+                  sectors.map(option => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                    <p>Nenhum setor cadastrado</p>
+                    <Button 
+                      variant="link" 
+                      className="mt-2 p-0 h-auto text-primary"
+                      onClick={handleOpenRegistryDialog}
+                    >
+                      Adicione através do botão "Cadastro"
+                    </Button>
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -117,9 +140,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                   <SelectValue placeholder="Selecione a disciplina" />
                 </SelectTrigger>
                 <SelectContent>
-                  {disciplines.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
+                  {disciplines.length > 0 ? (
+                    disciplines.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      <p>Nenhuma disciplina cadastrada</p>
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -131,9 +160,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                   <SelectValue placeholder="Selecione a equipe" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teams.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
+                  {teams.length > 0 ? (
+                    teams.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      <p>Nenhuma equipe cadastrada</p>
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -147,9 +182,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  {responsibles.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
+                  {responsibles.length > 0 ? (
+                    responsibles.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      <p>Nenhum responsável cadastrado</p>
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -161,9 +202,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                   <SelectValue placeholder="Selecione o executante" />
                 </SelectTrigger>
                 <SelectContent>
-                  {executors.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
+                  {executors.length > 0 ? (
+                    executors.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      <p>Nenhum executante cadastrado</p>
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -176,9 +223,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange 
                 <SelectValue placeholder="Selecione o cabo" />
               </SelectTrigger>
               <SelectContent>
-                {cables.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
+                {cables.length > 0 ? (
+                  cables.map(option => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                    <p>Nenhum cabo cadastrado</p>
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
