@@ -43,7 +43,7 @@ export const generateMockTasks = (weekStart?: Date): Task[] => {
         }
         return { day, status };
       } else {
-        return { day, status: "not_planned" };
+        return { day, status: "not_planned" as TaskStatus };
       }
     });
     
@@ -90,7 +90,8 @@ export const generateMockWeeklyData = (currentWeekStart: Date, weeksToGenerate: 
     weeklyData.push({
       week: dateStr,
       percentage,
-      date: new Date(startDate)
+      date: new Date(startDate),
+      isCurrentWeek: i === 0
     });
   }
   

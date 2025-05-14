@@ -1,6 +1,7 @@
+
 export type DayOfWeek = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
-export type TaskStatus = "planned" | "completed" | "not_done";
+export type TaskStatus = "planned" | "completed" | "not_done" | "not_planned";
 
 export interface DayStatus {
   day: DayOfWeek;
@@ -8,13 +9,16 @@ export interface DayStatus {
 }
 
 export interface PCPData {
-  planned: number;
-  completed: number;
-  not_done: number;
-  overall: {
-    percentage: number;
-    status: TaskStatus;
-  };
+  completedTasks: number;
+  totalTasks: number;
+  percentage: number;
+}
+
+export interface PCPBreakdown {
+  overall: PCPData;
+  bySector: Record<string, PCPData>;
+  byResponsible: Record<string, PCPData>;
+  byDiscipline: Record<string, PCPData>;
 }
 
 export interface WeeklyPCPData {
@@ -24,7 +28,6 @@ export interface WeeklyPCPData {
   isCurrentWeek: boolean;
 }
 
-// Adicionar a propriedade weekStartDate à interface Task
 export interface Task {
   id: string;
   sector: string;
