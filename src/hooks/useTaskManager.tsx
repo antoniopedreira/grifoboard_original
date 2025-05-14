@@ -11,22 +11,49 @@ import { useAuth } from "@/context/AuthContext";
 export const convertTarefaToTask = (tarefa: Tarefa): Task => {
   const task: Task = {
     id: tarefa.id,
-    sector: tarefa.sector,
+    sector: tarefa.setor,
     item: tarefa.item,
-    description: tarefa.description,
-    discipline: tarefa.discipline,
-    team: tarefa.team,
-    responsible: tarefa.responsible,
-    executor: tarefa.executor,
-    cable: tarefa.cable,
-    // Convert string[] to DayOfWeek[]
-    plannedDays: (tarefa.planneddays || []).map(day => day as DayOfWeek),
-    dailyStatus: tarefa.dailystatus || [], 
-    isFullyCompleted: tarefa.isfullycompleted || false,
-    causeIfNotDone: tarefa.causeifnotdone,
+    description: tarefa.descricao,
+    discipline: tarefa.disciplina,
+    team: tarefa.equipe,
+    responsible: tarefa.responsavel,
+    executor: tarefa.executante,
+    cable: tarefa.cabo,
+    // Convert daily status fields to plannedDays array
+    plannedDays: [],
+    dailyStatus: [], 
+    isFullyCompleted: tarefa.percentual_executado === 1,
+    causeIfNotDone: tarefa.causa_nao_execucao,
     // Convert string to Date
-    weekStartDate: tarefa.weekstartdate ? new Date(tarefa.weekstartdate) : undefined
+    weekStartDate: tarefa.semana ? new Date(tarefa.semana) : undefined
   };
+  
+  // Process daily status from individual day fields
+  const daysMapping: Record<string, DayOfWeek> = {
+    'seg': 'mon',
+    'ter': 'tue',
+    'qua': 'wed',
+    'qui': 'thu',
+    'sex': 'fri',
+    'sab': 'sat',
+    'dom': 'sun'
+  };
+  
+  // Add days to plannedDays if they exist in the tarefa
+  Object.entries(daysMapping).forEach(([dbField, dayOfWeek]) => {
+    const dayStatus = tarefa[dbField as keyof Tarefa];
+    if (dayStatus === 'Planejada' || dayStatus === 'Executada' || dayStatus === 'Não Feita') {
+      task.plannedDays.push(dayOfWeek);
+      
+      // Add day status to dailyStatus array
+      task.dailyStatus.push({
+        day: dayOfWeek,
+        status: dayStatus === 'Executada' ? 'done' : 
+                dayStatus === 'Não Feita' ? 'notDone' : 'planned'
+      });
+    }
+  });
+  
   return task;
 };
 
@@ -81,9 +108,44 @@ export const useTaskManager = (weekStartDate: Date) => {
   // Função para atualizar uma tarefa
   const handleTaskUpdate = useCallback(async (updatedTask: Task) => {
     try {
-      // Extrair apenas os campos necessários para atualizar no Supabase
-      const { id, ...taskUpdate } = updatedTask;
-      await tarefasService.atualizarTarefa(id, taskUpdate);
+      // Converter Task para Tarefa
+      const tarefaToUpdate: Partial<Tarefa> = {
+        setor: updatedTask.sector,
+        item: updatedTask.item,
+        descricao: updatedTask.description,
+        disciplina: updatedTask.discipline,
+        equipe: updatedTask.team,
+        responsavel: updatedTask.responsible,
+        executante: updatedTask.executor,
+        cabo: updatedTask.cable,
+        percentual_executado: updatedTask.isFullyCompleted ? 1 : 0,
+        causa_nao_execucao: updatedTask.causeIfNotDone
+      };
+      
+      // Update day status fields
+      if (updatedTask.dailyStatus && updatedTask.dailyStatus.length > 0) {
+        const daysMapping: Record<DayOfWeek, string> = {
+          'mon': 'seg',
+          'tue': 'ter',
+          'wed': 'qua',
+          'thu': 'qui',
+          'fri': 'sex',
+          'sat': 'sab',
+          'sun': 'dom'
+        };
+        
+        updatedTask.dailyStatus.forEach(dailyStatus => {
+          const dbField = daysMapping[dailyStatus.day];
+          if (dbField) {
+            const status = 
+              dailyStatus.status === 'done' ? 'Executada' :
+              dailyStatus.status === 'notDone' ? 'Não Feita' : 'Planejada';
+            tarefaToUpdate[dbField as keyof Tarefa] = status as any;
+          }
+        });
+      }
+      
+      await tarefasService.atualizarTarefa(updatedTask.id, tarefaToUpdate);
       
       // Atualizar a tarefa localmente
       const updatedTasks = tasks.map(task => 
@@ -147,12 +209,51 @@ export const useTaskManager = (weekStartDate: Date) => {
         throw new Error("Nenhuma obra ativa selecionada");
       }
       
-      console.log("Creating task with data:", newTaskData);
+      // Convert Task to Tarefa format for database
+      const novaTarefa: Omit<Tarefa, 'id' | 'created_at'> = {
+        obra_id: session.obraAtiva.id,
+        setor: newTaskData.sector,
+        item: newTaskData.item,
+        descricao: newTaskData.description,
+        disciplina: newTaskData.discipline,
+        equipe: newTaskData.team,
+        responsavel: newTaskData.responsible,
+        executante: newTaskData.executor,
+        cabo: newTaskData.cable,
+        semana: newTaskData.weekStartDate ? newTaskData.weekStartDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        percentual_executado: 0,
+        causa_nao_execucao: newTaskData.causeIfNotDone
+      };
+      
+      // Set day status based on plannedDays
+      const dayMapping: Record<DayOfWeek, keyof Omit<Tarefa, 'id' | 'created_at'>> = {
+        'mon': 'seg',
+        'tue': 'ter',
+        'wed': 'qua',
+        'thu': 'qui',
+        'fri': 'sex',
+        'sat': 'sab',
+        'sun': 'dom'
+      };
+      
+      // Initialize all days as null
+      (Object.keys(dayMapping) as DayOfWeek[]).forEach(day => {
+        const dbField = dayMapping[day];
+        novaTarefa[dbField] = null as any;
+      });
+      
+      // Set planned days
+      newTaskData.plannedDays.forEach(day => {
+        const dbField = dayMapping[day];
+        novaTarefa[dbField] = 'Planejada' as any;
+      });
+      
+      console.log("Creating task with data:", novaTarefa);
       // Criar tarefa no Supabase
-      const novaTarefa = await tarefasService.criarTarefa(newTaskData, session.obraAtiva.id);
+      const createdTarefa = await tarefasService.criarTarefa(novaTarefa);
       
       // Converter a tarefa para Task antes de adicionar à lista local
-      const novaTask = convertTarefaToTask(novaTarefa);
+      const novaTask = convertTarefaToTask(createdTarefa);
       
       // Adicionar a nova tarefa à lista local
       const updatedTasks = [novaTask, ...tasks];
