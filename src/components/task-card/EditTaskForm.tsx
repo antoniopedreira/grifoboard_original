@@ -47,9 +47,15 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             <SelectValue placeholder="Selecione o setor" />
           </SelectTrigger>
           <SelectContent>
-            {sectors.map(option => (
-              <SelectItem key={option} value={option}>{option}</SelectItem>
-            ))}
+            {sectors.length > 0 ? (
+              sectors.map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))
+            ) : (
+              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                <p>Nenhum setor cadastrado</p>
+              </div>
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -75,9 +81,15 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione a disciplina" />
             </SelectTrigger>
             <SelectContent>
-              {disciplines.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
+              {disciplines.length > 0 ? (
+                disciplines.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  <p>Nenhuma disciplina cadastrada</p>
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -92,9 +104,15 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione a equipe" />
             </SelectTrigger>
             <SelectContent>
-              {teams.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
+              {teams.length > 0 ? (
+                teams.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  <p>Nenhuma equipe cadastrada</p>
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -111,9 +129,15 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o responsável" />
             </SelectTrigger>
             <SelectContent>
-              {responsibles.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
+              {responsibles.length > 0 ? (
+                responsibles.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  <p>Nenhum responsável cadastrado</p>
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -128,9 +152,15 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o executante" />
             </SelectTrigger>
             <SelectContent>
-              {executors.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
+              {executors.length > 0 ? (
+                executors.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  <p>Nenhum executante cadastrado</p>
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -146,9 +176,15 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             <SelectValue placeholder="Selecione o cabo" />
           </SelectTrigger>
           <SelectContent>
-            {cables.map(option => (
-              <SelectItem key={option} value={option}>{option}</SelectItem>
-            ))}
+            {cables.length > 0 ? (
+              cables.map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))
+            ) : (
+              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                <p>Nenhum cabo cadastrado</p>
+              </div>
+            )}
           </SelectContent>
         </Select>
       </div>
