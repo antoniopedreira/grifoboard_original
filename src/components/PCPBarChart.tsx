@@ -32,10 +32,10 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
     isCurrentWeek: item.isCurrentWeek
   }));
 
-  // Chart colors - more elegant with theme variables
+  // Chart colors
   const chartColors = {
-    standard: "hsl(var(--primary) / 0.6)",   // Semi-transparent primary color
-    highlighted: "hsl(var(--primary))" // Full primary color for current week
+    standard: "#38BDF8",   // Standard blue color for all bars
+    highlighted: "#0EA5E9" // Highlighted color for current week
   };
 
   return (
@@ -52,26 +52,23 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
             <BarChart 
               data={chartData} 
               margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-              barSize={36}
-              barGap={2}
+              barSize={36} // Aumentado a largura das barras
+              barGap={2}   // Gap between bars
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.15} stroke="var(--border)" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
               <XAxis 
                 dataKey="name" 
-                tick={{ fontSize: 10, fill: "var(--foreground)" }} 
+                tick={{ fontSize: 10 }} 
                 tickLine={false}
-                axisLine={{ stroke: "var(--border)", opacity: 0.3 }}
-                dy={5}
               />
               <YAxis
                 tickFormatter={(value) => `${value}%`}
                 domain={[0, 100]}
-                tick={{ fontSize: 10, fill: "var(--foreground)" }}
+                tick={{ fontSize: 10 }}
                 tickCount={5}
                 width={35}
                 axisLine={false}
                 tickLine={false}
-                dx={-5}
               />
               <Tooltip content={<PCPChartTooltip />} />
               <PCPChartBars chartData={chartData} colors={chartColors} />

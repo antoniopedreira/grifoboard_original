@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
-import { ThemeProvider } from "@/context/ThemeContext";
 import Header from "@/components/Header";
 import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
@@ -48,19 +47,17 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RegistryProvider>
-          <ThemeProvider>
-            <Router>
-              <AppLayout>
-                <Routes>
-                  <Route path="/" element={<Index onObraSelect={handleObraSelect} />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </AppLayout>
-            </Router>
-            <Toaster />
-          </ThemeProvider>
+          <Router>
+            <AppLayout>
+              <Routes>
+                <Route path="/" element={<Index onObraSelect={handleObraSelect} />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AppLayout>
+          </Router>
+          <Toaster />
         </RegistryProvider>
       </AuthProvider>
     </QueryClientProvider>

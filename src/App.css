@@ -1,13 +1,8 @@
-
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-}
-
-.app-container {
-  transition: background-color 300ms ease, color 300ms ease;
 }
 
 .logo {
@@ -16,11 +11,9 @@
   will-change: filter;
   transition: filter 300ms;
 }
-
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
-
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -42,72 +35,8 @@
 
 .card {
   padding: 2em;
-  border-radius: 1rem;
-  transition: all 300ms ease-in-out;
-}
-
-.card:hover {
-  transform: translateY(-2px);
 }
 
 .read-the-docs {
   color: #888;
-}
-
-/* Elegant form elements */
-input, select, textarea {
-  transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-
-input:focus, select:focus, textarea:focus {
-  box-shadow: 0 0 0 2px rgba(135, 99, 40, 0.3);
-}
-
-/* Elegant transitions for all buttons */
-button {
-  transition: background 150ms ease, 
-              transform 150ms ease,
-              box-shadow 150ms ease;
-}
-
-button:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: hsl(214, 58%, 12%);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: hsl(38, 54%, 30%);
-  border-radius: 4px;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(38, 54%, 40%);
-}
-
-/* Light mode scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(210, 20%, 96%);
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(38, 40%, 70%);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(38, 40%, 60%);
 }
