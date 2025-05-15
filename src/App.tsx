@@ -8,7 +8,6 @@ import Header from "@/components/Header";
 import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
-import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/NotFound";
 import { useState } from 'react';
 import { Obra } from './types/supabase';
@@ -73,7 +72,6 @@ function App() {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
-                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>
