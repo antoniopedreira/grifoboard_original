@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
-import { LayoutList, LogOut, Settings } from "lucide-react";
+import { LayoutList, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -97,7 +97,7 @@ const CustomSidebar = () => {
             <div className="flex h-full w-full flex-col">
               <div className="flex grow flex-col gap-4">
                 <ScrollArea className="h-16 grow p-2">
-                  <div className={cn("flex w-full flex-col gap-1")}>
+                  <div className={cn("flex w-full flex-col gap-1 pt-10")}>
                     <Button
                       variant="ghost"
                       className={cn(
@@ -117,18 +117,6 @@ const CustomSidebar = () => {
                 </ScrollArea>
               </div>
               <div className="flex flex-col p-2">
-                <Button
-                  variant="ghost"
-                  className="mt-auto flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start"
-                  onClick={() => navigate("/obras")}
-                >
-                  <Settings className="h-4 w-4 shrink-0" />{" "}
-                  <motion.li variants={variants}>
-                    {!isCollapsed && (
-                      <p className="ml-2 text-sm font-medium">Mudar Obra</p>
-                    )}
-                  </motion.li>
-                </Button>
                 <div>
                   <DropdownMenu>
                     <DropdownMenuTrigger className="w-full" asChild>

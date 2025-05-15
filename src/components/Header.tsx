@@ -9,10 +9,6 @@ const Header = () => {
   const location = useLocation();
   const isTasksPage = location.pathname === "/tarefas";
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
   const handleMudarObra = () => {
     setObraAtiva(null);
     navigate("/obras");
@@ -43,10 +39,6 @@ const Header = () => {
                   Mudar Obra
                 </Button>
               )}
-              
-              <Button variant="outline" onClick={handleSignOut}>
-                Sair
-              </Button>
             </div>
           )}
         </div>
