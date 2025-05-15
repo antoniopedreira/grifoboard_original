@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import ObraForm from "@/components/obra/ObraForm";
-import { obrasService } from "@/services/obraService"; // Fixed: using obrasService instead of obraService
+import { obrasService } from "@/services/obraService"; 
 import { useAuth } from "@/context/AuthContext";
 import { Obra } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [obras, setObras] = useState<Obra[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { setObraAtiva, userSession } = useAuth(); // Fixed: using setObraAtiva instead of setSessionObra
+  const { setObraAtiva, userSession } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -57,7 +57,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
     try {
       await setObraAtiva(obra);
       onObraSelect(obra);
-      // Redirect to dashboard instead of tarefas
+      // Redirect to dashboard 
       navigate("/dashboard");
     } catch (error: any) {
       toast({
@@ -87,7 +87,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
   };
 
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-6">
+    <div className="max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Obras</h1>
         <Button onClick={() => setIsFormOpen(true)}>
@@ -100,7 +100,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
         obras={obras} 
         isLoading={isLoading} 
         onSelectObra={handleObraSelect} 
-        onDeleteObra={async (id, e) => {
+        onDeleteObra={async (id) => {
           try {
             await obrasService.excluirObra(id);
             fetchObras();

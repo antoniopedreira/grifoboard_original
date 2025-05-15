@@ -38,18 +38,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex flex-1 w-full">
         {!isAuthPage && !isObrasPage && <CustomSidebar />}
         
-        <main className="flex-1 overflow-hidden">
-          {!isAuthPage && !isObrasPage ? (
-            <ScrollArea className="h-[calc(100vh-65px)]">
-              <div className="container mx-auto px-4 py-6">
-                {children}
-              </div>
-            </ScrollArea>
-          ) : (
-            <div className="container mx-auto px-4 py-6">
-              {children}
-            </div>
-          )}
+        <main className="flex-1">
+          <div className="container mx-auto px-4 py-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>
