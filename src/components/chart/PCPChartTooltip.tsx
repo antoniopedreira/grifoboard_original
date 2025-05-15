@@ -1,22 +1,20 @@
 
 import React from "react";
-import { TooltipProps } from "recharts";
 
-// Using the recharts TooltipProps type to ensure compatibility
-type PCPChartTooltipProps = TooltipProps<number, string>;
+const PCPChartTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || !payload.length) {
+    return null;
+  }
 
-const PCPChartTooltip: React.FC<PCPChartTooltipProps> = ({ active, payload }) => {
-  if (!active || !payload || payload.length === 0) return null;
-  
-  const data = payload[0];
+  const data = payload[0].payload;
+
   return (
-    <div className="rounded-lg border bg-background p-2 shadow-sm">
-      <div className="font-medium">{data.payload.name}</div>
-      <div className="text-sm text-muted-foreground">
-        PCP: {data.value}%
-      </div>
+    <div className="bg-white shadow-lg rounded-md p-2 border border-gray-200">
+      <p className="font-medium text-sm">{label || data.name}</p>
+      <p className="text-blue-500 font-bold">{`${Math.round(data.value)}%`}</p>
+      {data.isCurrentWeek && <p className="text-xs text-gray-500">Semana Atual</p>}
     </div>
   );
 };
 
-export default PCPChartTooltip;
+export default React.memo(PCPChartTooltip);

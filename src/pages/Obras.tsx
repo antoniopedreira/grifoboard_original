@@ -68,7 +68,8 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
       // Call the onObraSelect prop
       onObraSelect(obra);
       
-      navigate("/tarefas");
+      // Navigate to dashboard instead of tarefas
+      navigate("/dashboard");
     } catch (error: any) {
       console.error('Error selecting obra:', error);
       toast({

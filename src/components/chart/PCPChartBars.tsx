@@ -14,7 +14,7 @@ interface PCPChartBarsProps {
   };
 }
 
-const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
+const PCPChartBars: React.FC<PCPChartBarsProps> = React.memo(({ chartData, colors }) => {
   return (
     <Bar 
       dataKey="value" 
@@ -34,6 +34,8 @@ const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
       ))}
     </Bar>
   );
-};
+});
+
+PCPChartBars.displayName = "PCPChartBars";
 
 export default PCPChartBars;
