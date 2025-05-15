@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { Obra } from './types/supabase';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,11 +38,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {!isAuthPage && !isObrasPage ? (
           <SidebarProvider>
             <AppSidebar />
-            <main className="flex-1">
-              <div className="container mx-auto px-4 py-6">
-                <SidebarTrigger className="mb-4" />
-                {children}
-              </div>
+            <main className="flex-1 overflow-hidden">
+              <ScrollArea className="h-[calc(100vh-65px)]">
+                <div className="container mx-auto px-4 py-6">
+                  <SidebarTrigger className="mb-4" />
+                  {children}
+                </div>
+              </ScrollArea>
             </main>
           </SidebarProvider>
         ) : (

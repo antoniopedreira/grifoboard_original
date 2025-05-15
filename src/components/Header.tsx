@@ -1,11 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Header = () => {
   const { userSession, signOut, setObraAtiva } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isTasksPage = location.pathname === "/tarefas";
 
   const handleSignOut = async () => {
     await signOut();
@@ -26,7 +28,7 @@ const Header = () => {
 
           {userSession.user && (
             <div className="flex items-center space-x-4">
-              {userSession.obraAtiva && (
+              {userSession.obraAtiva && isTasksPage && (
                 <div className="hidden md:block">
                   <div className="text-sm text-muted-foreground">Obra ativa:</div>
                   <div className="font-medium">{userSession.obraAtiva.nome_obra}</div>
