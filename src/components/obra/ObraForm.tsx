@@ -79,7 +79,7 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
       }
     }}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+        <DialogHeader className="sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between">
             <DialogTitle>Nova Obra</DialogTitle>
             <DialogClose className="rounded-full hover:bg-muted w-7 h-7 flex items-center justify-center focus:outline-none">
