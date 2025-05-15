@@ -3,7 +3,9 @@ import { SignInCard } from '@/components/ui/sign-in-card';
 
 const Auth = () => {
   return (
-    <SignInCard />
+    <div className="w-screen h-screen overflow-hidden">
+      <SignInCard />
+    </div>
   );
 };
 
