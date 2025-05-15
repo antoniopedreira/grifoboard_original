@@ -1,67 +1,53 @@
 
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect } from "react";
+import { useLocation, Outlet } from "react-router-dom";
+import Header from "@/components/Header";
 import { Toaster } from "@/components/ui/toaster";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
-import Header from "@/components/Header";
-import Auth from "@/pages/Auth";
-import Index from "@/pages/Index";
-import Obras from "@/pages/Obras";
-import NotFound from "@/pages/NotFound";
-import { useState } from 'react';
-import { Obra } from './types/supabase';
+import { useAuth } from "@/context/AuthContext";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false
+const App = () => {
+  const location = useLocation();
+  
+  // Verificar se há um tema salvo e aplicar no carregamento inicial
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
     }
-  }
-});
+  }, []);
 
-// Componente de layout para controlar onde o cabeçalho aparece
+  return (
+    <AuthProvider>
+      <RegistryProvider>
+        <AppLayout>
+          <Outlet />
+        </AppLayout>
+        <Toaster />
+      </RegistryProvider>
+    </AuthProvider>
+  );
+};
+
+// Layout component to manage header visibility
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const { userSession } = useAuth();
   const isAuthPage = location.pathname === '/auth';
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
       {!isAuthPage && <Header />}
-      <main className="flex-1">
+      <main className="flex-1 container mx-auto px-4 py-6 md:py-8">
         {children}
       </main>
     </div>
   );
 };
-
-function App() {
-  const [selectedObraId, setSelectedObraId] = useState<string | null>(null);
-  
-  const handleObraSelect = (obra: Obra) => {
-    setSelectedObraId(obra.id);
-  };
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RegistryProvider>
-          <Router>
-            <AppLayout>
-              <Routes>
-                <Route path="/" element={<Index onObraSelect={handleObraSelect} />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppLayout>
-          </Router>
-          <Toaster />
-        </RegistryProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
 
 export default App;
