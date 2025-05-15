@@ -121,7 +121,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
         <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">Nova Tarefa</DialogTitle>
-            <DialogClose className="rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <DialogClose className="rounded-full hover:bg-muted w-7 h-7 flex items-center justify-center focus:outline-none">
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </DialogClose>
@@ -176,7 +176,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </p>
           </div>
 
-          {/* Two columns layout for sector and cable */}
+          {/* Two columns layout for sector and discipline */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Setor */}
             <div className="space-y-2">
@@ -206,6 +206,30 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
               </Select>
             </div>
             
+            {/* Disciplina */}
+            <div className="space-y-2">
+              <Label htmlFor="discipline" className="font-medium">Disciplina</Label>
+              <Select value={discipline} onValueChange={setDiscipline}>
+                <SelectTrigger id="discipline">
+                  <SelectValue placeholder="Selecione a disciplina" />
+                </SelectTrigger>
+                <SelectContent>
+                  {disciplines.length > 0 ? (
+                    disciplines.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      <p>Nenhuma disciplina cadastrada</p>
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Two columns layout for cable and team */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Cabo */}
             <div className="space-y-2">
               <Label htmlFor="cable" className="font-medium">Cabo</Label>
@@ -226,30 +250,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          {/* Two columns layout for discipline and team */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="discipline" className="font-medium">Disciplina</Label>
-              <Select value={discipline} onValueChange={setDiscipline}>
-                <SelectTrigger id="discipline">
-                  <SelectValue placeholder="Selecione a disciplina" />
-                </SelectTrigger>
-                <SelectContent>
-                  {disciplines.length > 0 ? (
-                    disciplines.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhuma disciplina cadastrada</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
             
+            {/* Equipe */}
             <div className="space-y-2">
               <Label htmlFor="team" className="font-medium">Equipe</Label>
               <Select value={team} onValueChange={setTeam}>

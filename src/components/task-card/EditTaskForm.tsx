@@ -111,7 +111,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </p>
       </div>
 
-      {/* Two columns layout for sector and cable */}
+      {/* Two columns layout for sector and discipline */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Setor */}
         <div className="space-y-2">
@@ -137,6 +137,33 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
           </Select>
         </div>
         
+        {/* Disciplina */}
+        <div className="space-y-2">
+          <Label htmlFor="edit-discipline" className="font-medium">Disciplina</Label>
+          <Select 
+            value={safeEditFormData.discipline} 
+            onValueChange={(value) => onEditFormChange("discipline", value)}
+          >
+            <SelectTrigger id="edit-discipline">
+              <SelectValue placeholder="Selecione a disciplina" />
+            </SelectTrigger>
+            <SelectContent>
+              {disciplines.length > 0 ? (
+                disciplines.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  <p>Nenhuma disciplina cadastrada</p>
+                </div>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      {/* Two columns layout for cable and team */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Cabo */}
         <div className="space-y-2">
           <Label htmlFor="edit-cable" className="font-medium">Cabo</Label>
@@ -160,33 +187,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             </SelectContent>
           </Select>
         </div>
-      </div>
-      
-      {/* Two columns layout for discipline and team */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="edit-discipline" className="font-medium">Disciplina</Label>
-          <Select 
-            value={safeEditFormData.discipline} 
-            onValueChange={(value) => onEditFormChange("discipline", value)}
-          >
-            <SelectTrigger id="edit-discipline">
-              <SelectValue placeholder="Selecione a disciplina" />
-            </SelectTrigger>
-            <SelectContent>
-              {disciplines.length > 0 ? (
-                disciplines.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  <p>Nenhuma disciplina cadastrada</p>
-                </div>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
         
+        {/* Equipe */}
         <div className="space-y-2">
           <Label htmlFor="edit-team" className="font-medium">Equipe</Label>
           <Select 
