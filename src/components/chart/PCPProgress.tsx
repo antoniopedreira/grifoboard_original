@@ -13,7 +13,7 @@ const PCPProgress: React.FC<PCPProgressProps> = ({ data, label }) => {
   // Determine color based on percentage
   let progressColor = "bg-red-500";
   if (percentage >= 80) {
-    progressColor = "bg-green-600";
+    progressColor = "bg-green-500";
   } else if (percentage >= 60) {
     progressColor = "bg-yellow-500";
   } else if (percentage >= 40) {
@@ -22,7 +22,7 @@ const PCPProgress: React.FC<PCPProgressProps> = ({ data, label }) => {
   
   return (
     <div className="w-full">
-      {label && <div className="flex justify-between mb-1.5">
+      {label && <div className="flex justify-between mb-1">
         <span className="text-sm font-medium">{label}</span>
         <span className="text-sm font-medium">{percentage}%</span>
       </div>}
@@ -30,7 +30,7 @@ const PCPProgress: React.FC<PCPProgressProps> = ({ data, label }) => {
         <div className="w-full">
           <Progress 
             value={percentage} 
-            className={`h-2.5 ${progressColor} dark:${progressColor}/90`} 
+            className={`h-2 ${progressColor}`} 
           />
         </div>
         <span className="text-sm font-medium w-12 text-right">

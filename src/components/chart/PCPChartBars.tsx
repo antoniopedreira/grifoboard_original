@@ -18,7 +18,7 @@ const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
   return (
     <Bar 
       dataKey="value" 
-      radius={[8, 8, 0, 0]} 
+      radius={[4, 4, 0, 0]} 
       fillOpacity={1}
       isAnimationActive={false}
       name="PCP"
@@ -27,8 +27,8 @@ const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
       {chartData.map((entry, index) => (
         <Cell 
           key={`cell-${index}`} 
-          fill={entry.isCurrentWeek ? "#876328" : "#9e804e"} 
-          stroke={entry.isCurrentWeek ? "#a37c33" : ""}
+          fill={entry.isCurrentWeek ? colors.highlighted : colors.standard} 
+          stroke={entry.isCurrentWeek ? "#0284C7" : ""}
           strokeWidth={entry.isCurrentWeek ? 1 : 0}
         />
       ))}

@@ -34,8 +34,8 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
 
   // Chart colors
   const chartColors = {
-    standard: "#9e804e",   // Standard gold color for all bars
-    highlighted: "#876328" // Highlighted color for current week
+    standard: "#38BDF8",   // Standard blue color for all bars
+    highlighted: "#0EA5E9" // Highlighted color for current week
   };
 
   return (
@@ -44,11 +44,7 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
         <ChartContainer
           config={{
             value: {
-              label: "PCP (%)",
-              theme: {
-                light: "#9e804e",
-                dark: "#876328"
-              }
+              label: "PCP (%)"
             }
           }}
         >
@@ -57,26 +53,22 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
               data={chartData} 
               margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
               barSize={36} // Aumentado a largura das barras
-              barGap={4}   // Gap between bars
+              barGap={2}   // Gap between bars
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
               <XAxis 
                 dataKey="name" 
-                tick={{ fontSize: 11 }} 
+                tick={{ fontSize: 10 }} 
                 tickLine={false}
-                stroke="currentColor"
-                opacity={0.7}
               />
               <YAxis
                 tickFormatter={(value) => `${value}%`}
                 domain={[0, 100]}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 10 }}
                 tickCount={5}
                 width={35}
                 axisLine={false}
                 tickLine={false}
-                stroke="currentColor"
-                opacity={0.7}
               />
               <Tooltip content={<PCPChartTooltip />} />
               <PCPChartBars chartData={chartData} colors={chartColors} />
