@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import ObraForm from "@/components/obra/ObraForm";
-import { obraService } from "@/services/obraService";
+import { obrasService } from "@/services/obraService"; // Fixed: using obrasService instead of obraService
 import { useAuth } from "@/context/AuthContext";
 import { Obra } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [obras, setObras] = useState<Obra[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { setSessionObra, userSession } = useAuth();
+  const { setObraAtiva, userSession } = useAuth(); // Fixed: using setObraAtiva instead of setSessionObra
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,7 +39,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
   const fetchObras = async () => {
     setIsLoading(true);
     try {
-      const obras = await obraService.listarObras();
+      const obras = await obrasService.listarObras();
       setObras(obras);
     } catch (error: any) {
       console.error("Error fetching obras:", error);
@@ -55,7 +55,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
 
   const handleObraSelect = async (obra: Obra) => {
     try {
-      await setSessionObra(obra);
+      await setObraAtiva(obra);
       onObraSelect(obra);
       // Redirect to dashboard instead of tarefas
       navigate("/dashboard");
@@ -70,7 +70,7 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
 
   const handleObraCreate = async (formData: Omit<Obra, "id" | "created_at" | "usuario_id">) => {
     try {
-      await obraService.criarObra(formData);
+      await obrasService.criarObra(formData);
       setIsFormOpen(false);
       fetchObras();
       toast({
@@ -99,8 +99,23 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
       <ObrasList 
         obras={obras} 
         isLoading={isLoading} 
-        onObraSelect={handleObraSelect} 
-        onDataChange={fetchObras}
+        onSelectObra={handleObraSelect} 
+        onDeleteObra={async (id, e) => {
+          try {
+            await obrasService.excluirObra(id);
+            fetchObras();
+            toast({
+              title: "Obra excluída",
+              description: "A obra foi excluída com sucesso.",
+            });
+          } catch (error: any) {
+            toast({
+              title: "Erro ao excluir obra",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
+        }}
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -108,7 +123,11 @@ const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
           <DialogHeader>
             <DialogTitle>Nova Obra</DialogTitle>
           </DialogHeader>
-          <ObraForm onSubmit={handleObraCreate} />
+          <ObraForm 
+            isOpen={isFormOpen}
+            onClose={() => setIsFormOpen(false)}
+            onObraCriada={fetchObras}
+          />
         </DialogContent>
       </Dialog>
     </div>
