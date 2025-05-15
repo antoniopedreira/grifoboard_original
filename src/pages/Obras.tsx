@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import ObrasList from '@/components/obra/ObrasList';
 import ObraForm from '@/components/obra/ObraForm';
+import ObraEditForm from '@/components/obra/ObraEditForm';
 import { useToast } from '@/hooks/use-toast';
 
 interface ObrasPageProps {
@@ -20,6 +21,8 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const [obras, setObras] = useState<Obra[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [selectedObraForEdit, setSelectedObraForEdit] = useState<Obra | null>(null);
   const { userSession, setObraAtiva } = useAuth();
   const { setSelectedObraId } = useRegistry();
   const navigate = useNavigate();
@@ -106,10 +109,33 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
     }
   };
 
+  const handleEditObra = (obra: Obra, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedObraForEdit(obra);
+    setIsEditFormOpen(true);
+  };
+
   const handleObraCriada = async () => {
     try {
       const obrasData = await obrasService.listarObras();
       setObras(obrasData);
+    } catch (error) {
+      console.error('Error refreshing obras list:', error);
+    }
+  };
+
+  const handleObraAtualizada = async () => {
+    try {
+      const obrasData = await obrasService.listarObras();
+      setObras(obrasData);
+      
+      // If the updated obra is the active one, update it in context
+      if (selectedObraForEdit && userSession?.obraAtiva?.id === selectedObraForEdit.id) {
+        const updatedObra = obrasData.find(o => o.id === selectedObraForEdit.id);
+        if (updatedObra) {
+          setObraAtiva(updatedObra);
+        }
+      }
     } catch (error) {
       console.error('Error refreshing obras list:', error);
     }
@@ -135,6 +161,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
             isLoading={isLoading} 
             onSelectObra={handleSelectObra}
             onDeleteObra={handleDeleteObra}
+            onEditObra={handleEditObra}
           />
         </CardContent>
       </Card>
@@ -143,6 +170,16 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
         isOpen={isFormOpen} 
         onClose={() => setIsFormOpen(false)} 
         onObraCriada={handleObraCriada} 
+      />
+      
+      <ObraEditForm
+        isOpen={isEditFormOpen}
+        onClose={() => {
+          setIsEditFormOpen(false);
+          setSelectedObraForEdit(null);
+        }}
+        onObraAtualizada={handleObraAtualizada}
+        obra={selectedObraForEdit}
       />
     </div>
   );

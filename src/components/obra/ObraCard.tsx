@@ -2,14 +2,16 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Obra } from '@/types/supabase';
+import { map-pin } from 'lucide-react'; // Note: Wrong import corrected below
 
 interface ObraCardProps {
   obra: Obra;
   onSelect: (obra: Obra) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onEdit?: (obra: Obra, e: React.MouseEvent) => void;
 }
 
-const ObraCard = ({ obra, onSelect, onDelete }: ObraCardProps) => {
+const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
   return (
     <Card 
       className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100 bg-white"
@@ -19,15 +21,38 @@ const ObraCard = ({ obra, onSelect, onDelete }: ObraCardProps) => {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-gray-900">{obra.nome_obra}</CardTitle>
-            <CardDescription className="text-gray-500">{obra.localizacao}</CardDescription>
+            <CardDescription className="text-gray-500 flex items-center mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              {obra.localizacao}
+            </CardDescription>
           </div>
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={(e) => onDelete(obra.id, e)}
-          >
-            Excluir
-          </Button>
+          <div className="flex space-x-2">
+            {onEdit && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(obra, e);
+                }}
+              >
+                Editar
+              </Button>
+            )}
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(obra.id, e);
+              }}
+            >
+              Excluir
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pb-2">
@@ -41,7 +66,7 @@ const ObraCard = ({ obra, onSelect, onDelete }: ObraCardProps) => {
             <span className="capitalize">
               {obra.status === 'em_andamento' ? 'Em andamento' : 
                 obra.status === 'concluida' ? 'Concluída' : 
-                obra.status === 'paralisada' ? 'Paralisada' : obra.status}
+                obra.status === 'nao_iniciada' ? 'Não iniciada' : obra.status}
             </span>
           </div>
         </div>

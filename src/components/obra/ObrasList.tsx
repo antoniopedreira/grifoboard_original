@@ -8,9 +8,10 @@ interface ObrasListProps {
   isLoading: boolean;
   onSelectObra: (obra: Obra) => void;
   onDeleteObra: (id: string, e: React.MouseEvent) => void;
+  onEditObra?: (obra: Obra, e: React.MouseEvent) => void;
 }
 
-const ObrasList = ({ obras, isLoading, onSelectObra, onDeleteObra }: ObrasListProps) => {
+const ObrasList = ({ obras, isLoading, onSelectObra, onDeleteObra, onEditObra }: ObrasListProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8 text-gray-500">
@@ -35,6 +36,7 @@ const ObrasList = ({ obras, isLoading, onSelectObra, onDeleteObra }: ObrasListPr
           obra={obra} 
           onSelect={onSelectObra} 
           onDelete={onDeleteObra}
+          onEdit={onEditObra}
         />
       ))}
     </div>

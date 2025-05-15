@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,20 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { obrasService } from '@/services/obraService';
 import { useToast } from '@/hooks/use-toast';
+import { Obra } from '@/types/supabase';
 
-interface ObraFormProps {
+interface ObraEditFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onObraCriada: () => void;
+  onObraAtualizada: () => void;
+  obra: Obra | null;
 }
 
-const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
+const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormProps) => {
   const [nomeObra, setNomeObra] = useState('');
   const [localizacao, setLocalizacao] = useState('');
   const [dataInicio, setDataInicio] = useState('');
   const [status, setStatus] = useState('em_andamento');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (obra) {
+      setNomeObra(obra.nome_obra || '');
+      setLocalizacao(obra.localizacao || '');
+      setDataInicio(obra.data_inicio ? obra.data_inicio.split('T')[0] : '');
+      setStatus(obra.status || 'em_andamento');
+    }
+  }, [obra]);
 
   const resetForm = () => {
     setNomeObra('');
@@ -34,35 +45,35 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
     return nomeObra.trim() !== '' && localizacao.trim() !== '' && dataInicio !== '';
   };
 
-  const handleCreateObra = async () => {
-    if (!isFormValid()) return;
+  const handleUpdateObra = async () => {
+    if (!isFormValid() || !obra) return;
     
     setIsSubmitting(true);
     
     try {
-      const novaObra = {
+      const obraAtualizada = {
         nome_obra: nomeObra,
         localizacao,
         data_inicio: dataInicio,
         status
       };
       
-      await obrasService.criarObra(novaObra);
+      await obrasService.atualizarObra(obra.id, obraAtualizada);
       
       toast({
-        title: "Obra criada",
-        description: "A obra foi criada com sucesso!",
+        title: "Obra atualizada",
+        description: "A obra foi atualizada com sucesso!",
       });
       
       onClose();
       resetForm();
-      onObraCriada();
+      onObraAtualizada();
     } catch (error: any) {
-      console.error("Erro ao criar obra:", error);
+      console.error("Erro ao atualizar obra:", error);
       
       toast({
-        title: "Erro ao criar obra",
-        description: error.message || "Ocorreu um erro ao criar a obra. Por favor, tente novamente.",
+        title: "Erro ao atualizar obra",
+        description: error.message || "Ocorreu um erro ao atualizar a obra. Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -79,7 +90,7 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
     }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Nova Obra</DialogTitle>
+          <DialogTitle>Editar Obra</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
@@ -133,10 +144,10 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
             Cancelar
           </Button>
           <Button 
-            onClick={handleCreateObra} 
+            onClick={handleUpdateObra} 
             disabled={!isFormValid() || isSubmitting}
           >
-            {isSubmitting ? 'Criando...' : 'Criar Obra'}
+            {isSubmitting ? 'Atualizando...' : 'Atualizar Obra'}
           </Button>
         </div>
       </DialogContent>
@@ -144,4 +155,4 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
   );
 };
 
-export default ObraForm;
+export default ObraEditForm;
