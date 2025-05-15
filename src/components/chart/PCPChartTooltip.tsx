@@ -10,16 +10,11 @@ const PCPChartTooltip: React.FC<PCPChartTooltipProps> = ({ active, payload }) =>
   
   const data = payload[0];
   return (
-    <div className="rounded-lg border bg-background p-3 shadow-sm">
-      <div className="font-medium mb-1">{data.payload.name}</div>
+    <div className="rounded-lg border bg-background p-2 shadow-sm">
+      <div className="font-medium">{data.payload.name}</div>
       <div className="text-sm text-muted-foreground">
-        PCP: <span className="font-semibold">{data.value}%</span>
+        PCP: {data.value}%
       </div>
-      {data.payload.isCurrentWeek && (
-        <div className="text-xs text-primary mt-1">
-          Semana atual
-        </div>
-      )}
     </div>
   );
 };

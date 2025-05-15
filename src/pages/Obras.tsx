@@ -1,135 +1,186 @@
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import ObrasList from "@/components/obra/ObrasList";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState } from "react";
-import ObraForm from "@/components/obra/ObraForm";
-import { obrasService } from "@/services/obraService"; 
-import { useAuth } from "@/context/AuthContext";
-import { Obra } from "@/types/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { obrasService } from '@/services/obraService';
+import { Obra } from '@/types/supabase';
+import { useAuth } from '@/context/AuthContext';
+import { useRegistry } from '@/context/RegistryContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import ObrasList from '@/components/obra/ObrasList';
+import ObraForm from '@/components/obra/ObraForm';
+import ObraEditForm from '@/components/obra/ObraEditForm';
+import { useToast } from '@/hooks/use-toast';
 
-interface ObrasProps {
+interface ObrasPageProps {
   onObraSelect: (obra: Obra) => void;
 }
 
-const Obras: React.FC<ObrasProps> = ({ onObraSelect }) => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
+const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const [obras, setObras] = useState<Obra[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { setObraAtiva, userSession } = useAuth();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [selectedObraForEdit, setSelectedObraForEdit] = useState<Obra | null>(null);
+  const { userSession, setObraAtiva } = useAuth();
+  const { setSelectedObraId } = useRegistry();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Load obras on component mount
+  // If there's no user, redirect to auth page
   useEffect(() => {
-    fetchObras();
-  }, []);
-
-  // Redirect to login if user is not logged in
-  useEffect(() => {
-    if (!userSession.user) {
+    if (!userSession?.user) {
       navigate("/auth");
     }
-  }, [userSession.user, navigate]);
+  }, [userSession, navigate]);
 
-  const fetchObras = async () => {
-    setIsLoading(true);
-    try {
-      const obras = await obrasService.listarObras();
-      setObras(obras);
-    } catch (error: any) {
-      console.error("Error fetching obras:", error);
-      toast({
-        title: "Erro ao carregar obras",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Fetch obras
+  useEffect(() => {
+    const fetchObras = async () => {
+      try {
+        const obrasData = await obrasService.listarObras();
+        setObras(obrasData);
+      } catch (error: any) {
+        console.error('Error fetching obras:', error);
+        toast({
+          title: 'Erro ao buscar obras',
+          description: error.message || "Ocorreu um erro ao buscar as obras.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleObraSelect = async (obra: Obra) => {
-    try {
-      await setObraAtiva(obra);
-      onObraSelect(obra);
-      // Redirect to dashboard 
-      navigate("/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Erro ao selecionar obra",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleObraCreate = async (formData: Omit<Obra, "id" | "created_at" | "usuario_id">) => {
-    try {
-      await obrasService.criarObra(formData);
-      setIsFormOpen(false);
+    if (userSession?.user) {
       fetchObras();
-      toast({
-        title: "Obra criada",
-        description: "A obra foi criada com sucesso.",
-      });
+    }
+  }, [userSession?.user, toast]);
+
+  const handleSelectObra = async (obra: Obra) => {
+    try {
+      setObraAtiva(obra);
+      
+      // Set the selected obra ID for registry context
+      setSelectedObraId(obra.id);
+      
+      // Call the onObraSelect prop
+      onObraSelect(obra);
+      
+      navigate("/tarefas");
     } catch (error: any) {
+      console.error('Error selecting obra:', error);
       toast({
-        title: "Erro ao criar obra",
-        description: error.message,
+        title: 'Erro ao selecionar obra',
+        description: error.message || "Ocorreu um erro ao selecionar a obra.",
         variant: "destructive",
       });
     }
   };
+
+  const handleDeleteObra = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      await obrasService.excluirObra(id);
+      
+      setObras(prevObras => prevObras.filter(obra => obra.id !== id));
+      
+      // If the active obra was deleted, clear it
+      if (userSession?.obraAtiva?.id === id) {
+        setObraAtiva(null);
+        
+        // Clear selected obra ID
+        setSelectedObraId(null);
+      }
+      
+      toast({
+        title: 'Obra excluída',
+        description: "A obra foi excluída com sucesso!",
+      });
+    } catch (error: any) {
+      console.error('Error deleting obra:', error);
+      toast({
+        title: 'Erro ao excluir obra',
+        description: error.message || "Ocorreu um erro ao excluir a obra.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditObra = (obra: Obra, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedObraForEdit(obra);
+    setIsEditFormOpen(true);
+  };
+
+  const handleObraCriada = async () => {
+    try {
+      const obrasData = await obrasService.listarObras();
+      setObras(obrasData);
+    } catch (error) {
+      console.error('Error refreshing obras list:', error);
+    }
+  };
+
+  const handleObraAtualizada = async () => {
+    try {
+      const obrasData = await obrasService.listarObras();
+      setObras(obrasData);
+      
+      // If the updated obra is the active one, update it in context
+      if (selectedObraForEdit && userSession?.obraAtiva?.id === selectedObraForEdit.id) {
+        const updatedObra = obrasData.find(o => o.id === selectedObraForEdit.id);
+        if (updatedObra) {
+          setObraAtiva(updatedObra);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing obras list:', error);
+    }
+  };
+
+  if (!userSession?.user) {
+    return null; // Rendering will be handled by the useEffect navigation
+  }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Obras</h1>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Obra
-        </Button>
-      </div>
-
-      <ObrasList 
-        obras={obras} 
-        isLoading={isLoading} 
-        onSelectObra={handleObraSelect} 
-        onDeleteObra={async (id) => {
-          try {
-            await obrasService.excluirObra(id);
-            fetchObras();
-            toast({
-              title: "Obra excluída",
-              description: "A obra foi excluída com sucesso.",
-            });
-          } catch (error: any) {
-            toast({
-              title: "Erro ao excluir obra",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
-        }}
-      />
-
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nova Obra</DialogTitle>
-          </DialogHeader>
-          <ObraForm 
-            isOpen={isFormOpen}
-            onClose={() => setIsFormOpen(false)}
-            onObraCriada={fetchObras}
+    <div className="flex-1 container max-w-7xl py-4 bg-background">
+      <Card className="bg-white border border-gray-100 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-gray-900">Minhas Obras</CardTitle>
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nova Obra
+          </Button>
+        </CardHeader>
+        
+        <CardContent>
+          <ObrasList 
+            obras={obras} 
+            isLoading={isLoading} 
+            onSelectObra={handleSelectObra}
+            onDeleteObra={handleDeleteObra}
+            onEditObra={handleEditObra}
           />
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
+      
+      <ObraForm 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        onObraCriada={handleObraCriada} 
+      />
+      
+      <ObraEditForm
+        isOpen={isEditFormOpen}
+        onClose={() => {
+          setIsEditFormOpen(false);
+          setSelectedObraForEdit(null);
+        }}
+        onObraAtualizada={handleObraAtualizada}
+        obra={selectedObraForEdit}
+      />
     </div>
   );
 };

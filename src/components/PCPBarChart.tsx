@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { CardContent } from "@/components/ui/card";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChartContainer } from "@/components/ui/chart";
 import PCPChartTooltip from "./chart/PCPChartTooltip";
@@ -26,9 +26,8 @@ interface PCPBarChartProps {
 
 const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
   // Create data array for the chart with formatted dates
-  // Added validation to check if date is valid before formatting
   const chartData = weeklyData.map(item => ({
-    name: isValid(item.date) ? format(item.date, "dd/MM", { locale: ptBR }) : "Invalid date",
+    name: format(item.date, "dd/MM", { locale: ptBR }),
     value: item.percentage,
     isCurrentWeek: item.isCurrentWeek
   }));
