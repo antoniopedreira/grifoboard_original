@@ -1,7 +1,13 @@
 
 import React from "react";
 
-const PCPChartTooltip = ({ active, payload, label }: any) => {
+interface PCPChartTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const PCPChartTooltip: React.FC<PCPChartTooltipProps> = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) {
     return null;
   }
