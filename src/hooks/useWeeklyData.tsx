@@ -26,7 +26,8 @@ export function useWeeklyData() {
     
     // Add data for 3 previous weeks and current week
     for (let i = 3; i >= 0; i--) {
-      const weekStart = new Date(currentWeekStart);
+      // Create a proper clone of the date to avoid mutation issues
+      const weekStart = new Date(currentWeekStart.getTime());
       weekStart.setDate(currentWeekStart.getDate() - (7 * i));
       
       const weekKey = weekStart.toISOString().split('T')[0];
@@ -51,11 +52,11 @@ export function useWeeklyData() {
         historicalDataRef.current.set(weekKey, pcpValue);
       }
       
-      // Add to results - ensure we have some value for visual testing
+      // Add to results with valid date object
       result.push({
         week: `Week ${i+1}`,
         percentage: pcpValue,
-        date: weekStart,
+        date: new Date(weekStart.getTime()), // Ensure we're passing a valid date object
         isCurrentWeek: i === 0  // Current week is at i=0
       });
     }
@@ -66,7 +67,7 @@ export function useWeeklyData() {
   // Initialize tasks and weekly data when component mounts or week changes
   useEffect(() => {
     // Set end date based on start date
-    const endDate = new Date(weekStartDate);
+    const endDate = new Date(weekStartDate.getTime()); // Create a proper clone
     endDate.setDate(weekStartDate.getDate() + 6);
     endDate.setHours(23, 59, 59, 999);
     setWeekEndDate(endDate);
