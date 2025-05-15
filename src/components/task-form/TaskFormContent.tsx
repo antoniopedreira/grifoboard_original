@@ -4,11 +4,13 @@ import { DayOfWeek } from "@/types";
 import { useRegistry } from "@/context/RegistryContext";
 import { useToast } from "@/hooks/use-toast";
 import { getWeekStartDate } from "@/utils/pcp";
+import { Button } from "@/components/ui/button";
 
 import TaskDescriptionInput from "./TaskDescriptionInput";
 import WeekDatePicker from "./WeekDatePicker";
 import RegistrySelect from "./RegistrySelect";
 import PlannedDaysSelector from "./PlannedDaysSelector";
+import TaskFormFooter from "./TaskFormFooter";
 
 interface TaskFormContentProps {
   onTaskCreate: (taskData: any) => void;
@@ -183,12 +185,11 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
         </div>
       </div>
       
-      {/* Form footer with submit button */}
-      <div className="flex justify-end p-6 sticky bottom-0 bg-background border-t mt-auto">
-        <Button onClick={handleSubmit} disabled={!isFormValid()}>
-          Adicionar Tarefa
-        </Button>
-      </div>
+      {/* Form footer with submit button - Using TaskFormFooter component */}
+      <TaskFormFooter 
+        onSubmit={handleSubmit} 
+        isFormValid={isFormValid()} 
+      />
     </>
   );
 };

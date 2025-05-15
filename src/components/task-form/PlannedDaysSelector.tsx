@@ -14,10 +14,11 @@ const PlannedDaysSelector: React.FC<PlannedDaysSelectorProps> = ({
   setPlannedDays 
 }) => {
   const handleDayToggle = (day: DayOfWeek) => {
-    setPlannedDays(prev => 
-      prev.includes(day)
-        ? prev.filter(d => d !== day)
-        : [...prev, day]
+    // Corrected type handling to ensure we return DayOfWeek[] explicitly
+    setPlannedDays(
+      plannedDays.includes(day)
+        ? plannedDays.filter(d => d !== day)
+        : [...plannedDays, day]
     );
   };
 
