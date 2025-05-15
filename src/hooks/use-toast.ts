@@ -155,6 +155,7 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
+  // Ensure React is properly imported at the top of the file
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {

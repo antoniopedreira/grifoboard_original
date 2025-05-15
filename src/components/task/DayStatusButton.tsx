@@ -25,7 +25,7 @@ const DayStatusButton: React.FC<DayStatusButtonProps> = ({ day, status, isPlanne
       planned: "completed",
       completed: "not_done",
       not_done: "planned",
-      not_planned: "planned" // Added this to fix the TypeScript error
+      not_planned: "planned"
     };
     onStatusChange(day, nextStatus[status]);
   };

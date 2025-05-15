@@ -1,8 +1,9 @@
+
 import { Obra, Tarefa } from "./supabase";
 
 export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
-export type TaskStatus = 'planned' | 'completed' | 'not_done';
+export type TaskStatus = 'planned' | 'completed' | 'not_done' | 'not_planned';
 
 export interface DailyStatus {
   day: DayOfWeek;
