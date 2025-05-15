@@ -65,7 +65,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
       // Call the onObraSelect prop
       onObraSelect(obra);
       
-      navigate("/");
+      navigate("/tarefas");
     } catch (error: any) {
       console.error('Error selecting obra:', error);
       toast({

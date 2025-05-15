@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
@@ -11,6 +11,8 @@ import Obras from "@/pages/Obras";
 import NotFound from "@/pages/NotFound";
 import { useState } from 'react';
 import { Obra } from './types/supabase';
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/AppSidebar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,9 +31,24 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-background' : ''}`}>
       {!isAuthPage && <Header />}
-      <main className="flex-1">
-        {children}
-      </main>
+      <div className="flex flex-1 w-full">
+        {!isAuthPage && (
+          <SidebarProvider>
+            <AppSidebar />
+            <main className="flex-1">
+              <div className="container mx-auto px-4 py-6">
+                <SidebarTrigger className="mb-4" />
+                {children}
+              </div>
+            </main>
+          </SidebarProvider>
+        )}
+        {isAuthPage && (
+          <main className="flex-1">
+            {children}
+          </main>
+        )}
+      </div>
     </div>
   );
 };
@@ -50,9 +67,10 @@ function App() {
           <Router>
             <AppLayout>
               <Routes>
-                <Route path="/" element={<Index onObraSelect={handleObraSelect} />} />
+                <Route path="/" element={<Navigate to="/obras" replace />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>

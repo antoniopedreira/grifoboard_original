@@ -1,11 +1,10 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserSession } from "@/types/supabase";
+import { Obra } from "@/types/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useRegistry } from "@/context/RegistryContext";
 import MainPageContent from "@/components/MainPageContent";
-import { Obra } from "@/types/supabase";
 
 interface IndexProps {
   onObraSelect: (obra: Obra) => void;
