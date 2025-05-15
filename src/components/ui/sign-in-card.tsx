@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff as EyeClosed, ArrowRight } from 'lucide-react';
@@ -62,9 +61,9 @@ export function SignInCard() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#021C2F] relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center">
       {/* Background gradient effect - ocupando toda a tela */}
-      <div className="fixed inset-0 bg-gradient-to-b from-purple-500/40 via-purple-700/50 to-[#021C2F] w-screen h-screen" />
+      <div className="fixed inset-0 bg-gradient-to-b from-[#141E30] to-[#243B55] w-screen h-screen" />
       
       {/* Subtle noise texture overlay */}
       <div className="fixed inset-0 opacity-[0.03] mix-blend-soft-light w-screen h-screen" 
@@ -75,9 +74,9 @@ export function SignInCard() {
       />
 
       {/* Top radial glow */}
-      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 w-[120vw] h-[60vh] rounded-b-[50%] bg-purple-400/20 blur-[80px]" />
+      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 w-[120vw] h-[60vh] rounded-b-[50%] bg-[#243B55]/20 blur-[80px]" />
       <motion.div 
-        className="fixed top-0 left-1/2 transform -translate-x-1/2 w-[100vw] h-[60vh] rounded-b-full bg-purple-300/20 blur-[60px]"
+        className="fixed top-0 left-1/2 transform -translate-x-1/2 w-[100vw] h-[60vh] rounded-b-full bg-[#243B55]/20 blur-[60px]"
         animate={{ 
           opacity: [0.15, 0.3, 0.15],
           scale: [0.98, 1.02, 0.98]
@@ -89,7 +88,7 @@ export function SignInCard() {
         }}
       />
       <motion.div 
-        className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-[90vw] h-[90vh] rounded-t-full bg-purple-400/20 blur-[60px]"
+        className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-[90vw] h-[90vh] rounded-t-full bg-[#141E30]/30 blur-[60px]"
         animate={{ 
           opacity: [0.3, 0.5, 0.3],
           scale: [1, 1.1, 1]
@@ -102,9 +101,9 @@ export function SignInCard() {
         }}
       />
 
-      {/* Animated glow spots */}
-      <div className="fixed left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40" />
-      <div className="fixed right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40" />
+      {/* Animated glow spots - adjusted colors */}
+      <div className="fixed left-1/4 top-1/4 w-96 h-96 bg-[#243B55]/20 rounded-full blur-[100px] animate-pulse opacity-40" />
+      <div className="fixed right-1/4 bottom-1/4 w-96 h-96 bg-[#141E30]/20 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
