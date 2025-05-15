@@ -11,7 +11,7 @@ interface TaskGridProps {
 const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete }) => {
   if (tasks.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 border rounded-lg bg-gray-50">
+      <div className="flex items-center justify-center py-12 px-4 border rounded-lg bg-white border-gray-100">
         <p className="text-gray-500 text-lg">Nenhuma tarefa encontrada</p>
       </div>
     );

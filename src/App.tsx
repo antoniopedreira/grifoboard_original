@@ -27,7 +27,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const isAuthPage = location.pathname === '/auth';
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-background' : ''}`}>
       {!isAuthPage && <Header />}
       <main className="flex-1">
         {children}

@@ -18,15 +18,16 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
     <div className="flex flex-col gap-2 flex-grow">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="text-xs text-left justify-between">
+          <Button variant="outline" size="sm" className="text-xs text-left justify-between text-gray-700 border-gray-200">
             {currentCause || "Causas Padrão"}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="max-h-[200px] overflow-y-auto">
+        <DropdownMenuContent className="max-h-[200px] overflow-y-auto bg-white">
           {standardCauses.map(cause => (
             <DropdownMenuItem 
               key={cause} 
               onClick={() => onCauseSelect(cause)}
+              className="text-gray-800 hover:bg-gray-50"
             >
               {cause}
             </DropdownMenuItem>

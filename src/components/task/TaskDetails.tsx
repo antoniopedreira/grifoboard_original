@@ -22,27 +22,27 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
     <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm mb-4">
       <div className="flex flex-col">
         <span className="text-gray-500 font-medium">Setor</span>
-        <span className="truncate">{sector}</span>
+        <span className="truncate text-gray-800">{sector}</span>
       </div>
       <div className="flex flex-col">
         <span className="text-gray-500 font-medium">Disciplina</span>
-        <span className="truncate">{discipline}</span>
+        <span className="truncate text-gray-800">{discipline}</span>
       </div>
       <div className="flex flex-col">
         <span className="text-gray-500 font-medium">Equipe</span>
-        <span className="truncate">{team}</span>
+        <span className="truncate text-gray-800">{team}</span>
       </div>
       <div className="flex flex-col">
         <span className="text-gray-500 font-medium">Responsável</span>
-        <span className="truncate">{responsible}</span>
+        <span className="truncate text-gray-800">{responsible}</span>
       </div>
       <div className="flex flex-col">
         <span className="text-gray-500 font-medium">Executante</span>
-        <span className="truncate">{executor}</span>
+        <span className="truncate text-gray-800">{executor}</span>
       </div>
       <div className="flex flex-col">
         <span className="text-gray-500 font-medium">Cabo</span>
-        <span className="truncate">{cable}</span>
+        <span className="truncate text-gray-800">{cable}</span>
       </div>
     </div>
   );

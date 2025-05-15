@@ -12,14 +12,14 @@ interface ObraCardProps {
 const ObraCard = ({ obra, onSelect, onDelete }: ObraCardProps) => {
   return (
     <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow"
+      className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100 bg-white"
       onClick={() => onSelect(obra)}
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle>{obra.nome_obra}</CardTitle>
-            <CardDescription>{obra.localizacao}</CardDescription>
+            <CardTitle className="text-gray-900">{obra.nome_obra}</CardTitle>
+            <CardDescription className="text-gray-500">{obra.localizacao}</CardDescription>
           </div>
           <Button 
             variant="destructive" 
@@ -31,13 +31,13 @@ const ObraCard = ({ obra, onSelect, onDelete }: ObraCardProps) => {
         </div>
       </CardHeader>
       <CardContent className="pb-2">
-        <div className="text-sm">
+        <div className="text-sm text-gray-700">
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Início:</span>
+            <span className="text-gray-500">Início:</span>
             <span>{new Date(obra.data_inicio).toLocaleDateString()}</span>
           </div>
           <div className="flex justify-between items-center mt-1">
-            <span className="text-muted-foreground">Status:</span>
+            <span className="text-gray-500">Status:</span>
             <span className="capitalize">
               {obra.status === 'em_andamento' ? 'Em andamento' : 
                 obra.status === 'concluida' ? 'Concluída' : 
@@ -49,7 +49,7 @@ const ObraCard = ({ obra, onSelect, onDelete }: ObraCardProps) => {
       <CardFooter>
         <Button 
           variant="outline" 
-          className="w-full"
+          className="w-full text-gray-700 border-gray-200 hover:bg-gray-50"
           onClick={(e) => {
             e.stopPropagation();
             onSelect(obra);

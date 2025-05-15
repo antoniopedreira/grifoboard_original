@@ -13,7 +13,7 @@ interface ObrasListProps {
 const ObrasList = ({ obras, isLoading, onSelectObra, onDeleteObra }: ObrasListProps) => {
   if (isLoading) {
     return (
-      <div className="flex justify-center py-8">
+      <div className="flex justify-center py-8 text-gray-500">
         <p>Carregando...</p>
       </div>
     );
@@ -21,8 +21,8 @@ const ObrasList = ({ obras, isLoading, onSelectObra, onDeleteObra }: ObrasListPr
 
   if (obras.length === 0) {
     return (
-      <Card className="text-center p-8">
-        <p className="text-muted-foreground">Nenhuma obra encontrada. Crie uma nova obra para começar!</p>
+      <Card className="text-center p-8 bg-white border border-gray-100">
+        <p className="text-gray-500">Nenhuma obra encontrada. Crie uma nova obra para começar!</p>
       </Card>
     );
   }

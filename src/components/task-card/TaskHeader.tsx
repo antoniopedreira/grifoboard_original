@@ -11,7 +11,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({ task, onCompletionStatusChange 
   return (
     <div className="flex justify-between">
       <div>
-        <h3 className="font-semibold">{task.description}</h3>
+        <h3 className="font-semibold text-gray-900">{task.description}</h3>
         <p className="text-sm text-gray-500">{task.item}</p>
       </div>
       <Badge 

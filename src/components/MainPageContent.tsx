@@ -72,7 +72,7 @@ const MainPageContent = () => {
   };
   
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-6">
+    <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
       {/* Header com título e botões */}
       <MainHeader 
         onNewTaskClick={() => setIsFormOpen(true)}

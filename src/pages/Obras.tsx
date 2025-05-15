@@ -120,10 +120,10 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   }
 
   return (
-    <div className="flex-1 container max-w-7xl py-4">
-      <Card>
+    <div className="flex-1 container max-w-7xl py-4 bg-background">
+      <Card className="bg-white border border-gray-100 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle>Minhas Obras</CardTitle>
+          <CardTitle className="text-gray-900">Minhas Obras</CardTitle>
           <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Nova Obra
           </Button>
