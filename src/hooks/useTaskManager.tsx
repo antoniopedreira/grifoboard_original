@@ -1,8 +1,7 @@
-
-import { useState, useEffect, useCallback } from "react";
-import { Task, DayOfWeek, TaskStatus } from "@/types";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Task, DayOfWeek, TaskStatus, PCPBreakdown, WeeklyPCPData } from "@/types";
 import { Tarefa } from "@/types/supabase";
-import { calculatePCP } from "@/utils/pcp";
+import { calculatePCP, generateWeeklyPCPData, storeHistoricalPCPData } from "@/utils/pcp";
 import { tarefasService } from "@/services/tarefaService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -74,16 +73,88 @@ export const useTaskManager = (weekStartDate: Date) => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [weeklyPCPData, setWeeklyPCPData] = useState<any[]>([]);
+  const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
+  const [historicalPCPData, setHistoricalPCPData] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
-  // Função para calcular dados do PCP com base nas tarefas
-  const calculatePCPData = useCallback((tasksList: Task[]) => {
-    const pcpData = calculatePCP(tasksList);
-    setWeeklyPCPData([pcpData]);
+  // Enhanced PCP data calculation to include team, executor, and cable
+  const calculateEnhancedPCP = useCallback((tasksList: Task[]) => {
+    // Call the standard PCP calculation
+    const standardPCP = calculatePCP(tasksList);
+    
+    // Create extended PCP data with additional breakdowns
+    const pcpData: PCPBreakdown = {
+      ...standardPCP,
+      // Add new categories
+      byTeam: {},
+      byExecutor: {},
+      byCable: {}
+    };
+    
+    // Calculate by Team
+    const tasksWithPlannedDays = tasksList.filter(task => task.plannedDays.length > 0);
+    const teams = Array.from(new Set(tasksWithPlannedDays.map(task => task.team)));
+    teams.forEach(team => {
+      const teamTasks = tasksWithPlannedDays.filter(task => task.team === team);
+      const teamCompletedTasks = teamTasks.filter(task => task.isFullyCompleted).length;
+      pcpData.byTeam[team] = {
+        completedTasks: teamCompletedTasks,
+        totalTasks: teamTasks.length,
+        percentage: (teamCompletedTasks / teamTasks.length) * 100
+      };
+    });
+    
+    // Calculate by Executor
+    const executors = Array.from(new Set(tasksWithPlannedDays.map(task => task.executor)));
+    executors.forEach(executor => {
+      const executorTasks = tasksWithPlannedDays.filter(task => task.executor === executor);
+      const executorCompletedTasks = executorTasks.filter(task => task.isFullyCompleted).length;
+      pcpData.byExecutor[executor] = {
+        completedTasks: executorCompletedTasks,
+        totalTasks: executorTasks.length,
+        percentage: (executorCompletedTasks / executorTasks.length) * 100
+      };
+    });
+    
+    // Calculate by Cable
+    const cables = Array.from(new Set(tasksWithPlannedDays.map(task => task.cable)));
+    cables.forEach(cable => {
+      const cableTasks = tasksWithPlannedDays.filter(task => task.cable === cable);
+      const cableCompletedTasks = cableTasks.filter(task => task.isFullyCompleted).length;
+      pcpData.byCable[cable] = {
+        completedTasks: cableCompletedTasks,
+        totalTasks: cableTasks.length,
+        percentage: (cableCompletedTasks / cableTasks.length) * 100
+      };
+    });
+    
     return pcpData;
   }, []);
+
+  // Function to calculate weekly PCP data for the dashboard
+  const calculateWeeklyPCPData = useCallback((tasksList: Task[], currentWeekStart: Date) => {
+    const pcpData = calculateEnhancedPCP(tasksList);
+    const currentWeekPCP = pcpData.overall.percentage;
+    
+    // Store historical data
+    const updatedHistoricalData = storeHistoricalPCPData(
+      historicalPCPData,
+      currentWeekStart,
+      currentWeekPCP
+    );
+    setHistoricalPCPData(updatedHistoricalData);
+    
+    // Generate weekly data
+    const weeklyData = generateWeeklyPCPData(
+      currentWeekStart,
+      currentWeekPCP,
+      updatedHistoricalData
+    );
+    setWeeklyPCPData(weeklyData);
+    
+    return pcpData;
+  }, [calculateEnhancedPCP, historicalPCPData]);
 
   // Filter tasks based on week start date
   const filterTasksByWeek = useCallback((allTasks: Task[], startDate: Date) => {
@@ -119,8 +190,8 @@ export const useTaskManager = (weekStartDate: Date) => {
       const weekFilteredTasks = filterTasksByWeek(convertedTasks, weekStartDate);
       setFilteredTasks(weekFilteredTasks);
       
-      // Calcular dados do PCP para o gráfico semanal com as tarefas filtradas
-      calculatePCPData(weekFilteredTasks);
+      // Calculate enhanced PCP data with weekly metrics
+      calculateWeeklyPCPData(weekFilteredTasks, weekStartDate);
     } catch (error: any) {
       console.error("Error loading tasks:", error);
       toast({
@@ -131,7 +202,7 @@ export const useTaskManager = (weekStartDate: Date) => {
     } finally {
       setIsLoading(false);
     }
-  }, [session.obraAtiva, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
+  }, [session.obraAtiva, toast, calculateWeeklyPCPData, filterTasksByWeek, weekStartDate]);
   
   // Carregar tarefas quando a obra ativa mudar ou a data da semana mudar
   useEffect(() => {
@@ -142,10 +213,13 @@ export const useTaskManager = (weekStartDate: Date) => {
 
   // Quando a semana muda, atualizar a lista filtrada
   useEffect(() => {
-    setFilteredTasks(filterTasksByWeek(tasks, weekStartDate));
-    // Recalculate PCP data for the filtered tasks
-    calculatePCPData(filterTasksByWeek(tasks, weekStartDate));
-  }, [weekStartDate, tasks, filterTasksByWeek, calculatePCPData]);
+    if (tasks.length > 0) {
+      const filteredTasksList = filterTasksByWeek(tasks, weekStartDate);
+      setFilteredTasks(filteredTasksList);
+      // Recalculate PCP data for the filtered tasks
+      calculateWeeklyPCPData(filteredTasksList, weekStartDate);
+    }
+  }, [weekStartDate, tasks, filterTasksByWeek, calculateWeeklyPCPData]);
 
   // Função para atualizar uma tarefa
   const handleTaskUpdate = useCallback(async (updatedTask: Task) => {
@@ -208,7 +282,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       // Update filtered tasks and PCP data
       const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
       setFilteredTasks(updatedFilteredTasks);
-      calculatePCPData(updatedFilteredTasks);
+      calculateWeeklyPCPData(updatedFilteredTasks, weekStartDate);
       
       toast({
         title: "Tarefa atualizada",
@@ -225,7 +299,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       });
       throw error;
     }
-  }, [tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
+  }, [tasks, toast, calculateWeeklyPCPData, filterTasksByWeek, weekStartDate]);
   
   // Função para excluir uma tarefa
   const handleTaskDelete = useCallback(async (taskId: string) => {
@@ -239,7 +313,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       // Update filtered tasks and PCP data
       const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
       setFilteredTasks(updatedFilteredTasks);
-      calculatePCPData(updatedFilteredTasks);
+      calculateWeeklyPCPData(updatedFilteredTasks, weekStartDate);
       
       toast({
         title: "Tarefa excluída",
@@ -256,7 +330,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       });
       return false;
     }
-  }, [tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
+  }, [tasks, toast, calculateWeeklyPCPData, filterTasksByWeek, weekStartDate]);
   
   // Função para criar uma nova tarefa
   const handleTaskCreate = useCallback(async (newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted">) => {
@@ -326,7 +400,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       // Update filtered tasks and PCP data
       const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
       setFilteredTasks(updatedFilteredTasks);
-      calculatePCPData(updatedFilteredTasks);
+      calculateWeeklyPCPData(updatedFilteredTasks, weekStartDate);
       
       toast({
         title: "Tarefa criada",
@@ -343,10 +417,10 @@ export const useTaskManager = (weekStartDate: Date) => {
       });
       throw error;
     }
-  }, [session.obraAtiva, tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
+  }, [session.obraAtiva, tasks, toast, calculateWeeklyPCPData, filterTasksByWeek, weekStartDate]);
   
-  // Calcular PCP atual baseado nas tarefas filtradas da semana
-  const pcpData = calculatePCP(filteredTasks);
+  // Calculate the enhanced PCP data for the current filtered tasks
+  const pcpData = useMemo(() => calculateEnhancedPCP(filteredTasks), [filteredTasks, calculateEnhancedPCP]);
   
   return {
     tasks: filteredTasks, // Return filtered tasks instead of all tasks

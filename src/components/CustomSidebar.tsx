@@ -2,9 +2,9 @@
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
-import { LayoutList, LogOut } from "lucide-react";
+import { LayoutDashboard, LayoutList, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +63,7 @@ const staggerVariants = {
 const CustomSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { userSession, signOut } = useAuth();
 
   // Extract the first letter for the avatar fallback
@@ -75,6 +76,11 @@ const CustomSidebar = () => {
   if (!userSession?.obraAtiva) {
     return null;
   }
+
+  // Check current active route
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   return (
     <motion.div
@@ -98,11 +104,29 @@ const CustomSidebar = () => {
               <div className="flex grow flex-col gap-4">
                 <ScrollArea className="h-16 grow p-2">
                   <div className={cn("flex w-full flex-col gap-1 pt-10")}>
+                    {/* Dashboard Button */}
                     <Button
                       variant="ghost"
                       className={cn(
                         "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start",
-                        "bg-muted text-blue-600"
+                        isActive("/dashboard") && "bg-muted text-blue-600"
+                      )}
+                      onClick={() => navigate("/dashboard")}
+                    >
+                      <LayoutDashboard className="h-4 w-4" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                          <p className="ml-2 text-sm font-medium">Dashboard</p>
+                        )}
+                      </motion.li>
+                    </Button>
+
+                    {/* Tasks Button */}
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start mt-2",
+                        isActive("/tarefas") && "bg-muted text-blue-600"
                       )}
                       onClick={() => navigate("/tarefas")}
                     >

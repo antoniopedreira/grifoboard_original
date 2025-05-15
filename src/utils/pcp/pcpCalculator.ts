@@ -10,7 +10,10 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
       overall: { completedTasks: 0, totalTasks: 0, percentage: 0 },
       bySector: {},
       byResponsible: {},
-      byDiscipline: {}
+      byDiscipline: {},
+      byTeam: {},
+      byExecutor: {},
+      byCable: {}
     };
   }
 
@@ -60,12 +63,59 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
       percentage: (disciplineCompletedTasks / disciplineTasks.length) * 100
     };
   });
+  
+  // New calculations for the dashboard
+  
+  // By team
+  const teams = Array.from(new Set(tasksWithPlannedDays.map(task => task.team)));
+  const byTeam: Record<string, { completedTasks: number; totalTasks: number; percentage: number }> = {};
+  
+  teams.forEach(team => {
+    const teamTasks = tasksWithPlannedDays.filter(task => task.team === team);
+    const teamCompletedTasks = teamTasks.filter(task => task.isFullyCompleted).length;
+    byTeam[team] = {
+      completedTasks: teamCompletedTasks,
+      totalTasks: teamTasks.length,
+      percentage: (teamCompletedTasks / teamTasks.length) * 100
+    };
+  });
+  
+  // By executor
+  const executors = Array.from(new Set(tasksWithPlannedDays.map(task => task.executor)));
+  const byExecutor: Record<string, { completedTasks: number; totalTasks: number; percentage: number }> = {};
+  
+  executors.forEach(executor => {
+    const executorTasks = tasksWithPlannedDays.filter(task => task.executor === executor);
+    const executorCompletedTasks = executorTasks.filter(task => task.isFullyCompleted).length;
+    byExecutor[executor] = {
+      completedTasks: executorCompletedTasks,
+      totalTasks: executorTasks.length,
+      percentage: (executorCompletedTasks / executorTasks.length) * 100
+    };
+  });
+  
+  // By cable
+  const cables = Array.from(new Set(tasksWithPlannedDays.map(task => task.cable)));
+  const byCable: Record<string, { completedTasks: number; totalTasks: number; percentage: number }> = {};
+  
+  cables.forEach(cable => {
+    const cableTasks = tasksWithPlannedDays.filter(task => task.cable === cable);
+    const cableCompletedTasks = cableTasks.filter(task => task.isFullyCompleted).length;
+    byCable[cable] = {
+      completedTasks: cableCompletedTasks,
+      totalTasks: cableTasks.length,
+      percentage: (cableCompletedTasks / cableTasks.length) * 100
+    };
+  });
 
   return {
     overall: { completedTasks, totalTasks, percentage },
     bySector,
     byResponsible,
-    byDiscipline
+    byDiscipline,
+    byTeam,
+    byExecutor,
+    byCable
   };
 };
 
@@ -76,8 +126,9 @@ export const storeHistoricalPCPData = (
   percentage: number
 ): Map<string, number> => {
   const weekKey = new Date(weekStart).toISOString().split('T')[0];
-  historicalData.set(weekKey, percentage);
-  return historicalData;
+  const newHistoricalData = new Map(historicalData);
+  newHistoricalData.set(weekKey, percentage);
+  return newHistoricalData;
 };
 
 // Generate weekly PCP data including the previous weeks
@@ -95,10 +146,11 @@ export const generateWeeklyPCPData = (
     
     const weekKey = weekStart.toISOString().split('T')[0];
     
-    // Get stored PCP value or use current week's PCP as fallback for the current week
+    // Get stored PCP value or generate a random one (for demo/testing purposes)
     const pcpValue = i === 0 ? currentWeekPCP : 
-                    (historicalData.get(weekKey) !== undefined ? 
-                    historicalData.get(weekKey)! : Math.round(Math.random() * 100));
+                   historicalData.has(weekKey) ? 
+                   historicalData.get(weekKey)! : 
+                   Math.round(Math.random() * 70) + 10; // Random between 10-80%
     
     // Add to results
     result.push({
