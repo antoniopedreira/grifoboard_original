@@ -32,9 +32,9 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
     isCurrentWeek: item.isCurrentWeek
   }));
 
-  // Chart colors
+  // Chart colors - more elegant with theme variables
   const chartColors = {
-    standard: "hsl(var(--primary) / 0.7)",   // Semi-transparent primary color
+    standard: "hsl(var(--primary) / 0.6)",   // Semi-transparent primary color
     highlighted: "hsl(var(--primary))" // Full primary color for current week
   };
 
@@ -55,12 +55,13 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
               barSize={36}
               barGap={2}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.15} stroke="var(--border)" />
               <XAxis 
                 dataKey="name" 
                 tick={{ fontSize: 10, fill: "var(--foreground)" }} 
                 tickLine={false}
-                stroke="var(--border)"
+                axisLine={{ stroke: "var(--border)", opacity: 0.3 }}
+                dy={5}
               />
               <YAxis
                 tickFormatter={(value) => `${value}%`}
@@ -70,7 +71,7 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                 width={35}
                 axisLine={false}
                 tickLine={false}
-                stroke="var(--border)"
+                dx={-5}
               />
               <Tooltip content={<PCPChartTooltip />} />
               <PCPChartBars chartData={chartData} colors={chartColors} />

@@ -7,7 +7,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    /* Light mode colors - refined for elegance */
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -16,7 +17,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 215 100% 30%;
+    --primary: 38 54% 34%; /* Gold color for consistency */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -33,18 +34,18 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 215 100% 30%;
+    --ring: 38 54% 34%; /* Gold ring for focus states */
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 210 40% 96%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 38 54% 34%;
+    --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 38 54% 34%;
 
     /* Status colors */
     --status-completed: 142 76% 36%;
@@ -53,23 +54,24 @@
   }
 
   .dark {
+    /* Dark mode colors - more refined and elegant */
     --background: 214 58% 10%; /* #021C2F */
     --foreground: 0 0% 93%; /* #EEEDED */
 
-    --card: 214 58% 8%;
+    --card: 214 60% 7%;
     --card-foreground: 0 0% 93%;
 
-    --popover: 214 58% 8%;
+    --popover: 214 60% 7%;
     --popover-foreground: 0 0% 93%;
 
-    --primary: 38 54% 34%; /* #876328 */
+    --primary: 38 54% 39%; /* #876328 - slightly brighter */
     --primary-foreground: 0 0% 93%;
 
     --secondary: 214 58% 15%;
     --secondary-foreground: 0 0% 93%;
 
     --muted: 214 58% 15%;
-    --muted-foreground: 217 10% 70%;
+    --muted-foreground: 217 10% 73%;
 
     --accent: 214 58% 15%;
     --accent-foreground: 0 0% 93%;
@@ -77,23 +79,23 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 93%;
 
-    --border: 214 58% 15%;
-    --input: 214 58% 15%;
-    --ring: 38 54% 34%;
+    --border: 214 58% 17%; /* Slightly lighter border for definition */
+    --input: 214 58% 17%;
+    --ring: 38 54% 39%;
 
-    --sidebar-background: 214 58% 8%;
+    --sidebar-background: 214 60% 7%;
     --sidebar-foreground: 0 0% 93%;
-    --sidebar-primary: 38 54% 34%;
+    --sidebar-primary: 38 54% 39%;
     --sidebar-primary-foreground: 0 0% 93%;
     --sidebar-accent: 214 58% 15%;
     --sidebar-accent-foreground: 0 0% 93%;
-    --sidebar-border: 214 58% 15%;
-    --sidebar-ring: 38 54% 34%;
+    --sidebar-border: 214 58% 17%;
+    --sidebar-ring: 38 54% 39%;
 
-    /* Status colors in dark mode */
-    --status-completed: 142 70% 25%;
-    --status-planned: 217 70% 40%;
-    --status-not-done: 0 70% 40%;
+    /* Status colors in dark mode - more elegant */
+    --status-completed: 142 70% 35%;
+    --status-planned: 217 70% 45%;
+    --status-not-done: 0 70% 45%;
   }
 }
 
@@ -103,7 +105,20 @@
   }
 
   body {
-    @apply bg-background text-foreground transition-colors duration-200;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-family: 'Inter', sans-serif;
+  }
+
+  /* Additional elegant styles */
+  .glass-effect {
+    @apply backdrop-blur-sm bg-background/60 border border-white/10;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  .elegant-shadow {
+    @apply shadow-[0_4px_20px_-2px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.4)];
   }
 }

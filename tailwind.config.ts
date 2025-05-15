@@ -85,18 +85,55 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0'
+					},
+					'100%': {
+						opacity: '1'
+					}
+				},
+				'fade-out': {
+					'0%': {
+						opacity: '1'
+					},
+					'100%': {
+						opacity: '0'
+					}
+				},
+				'pulse-subtle': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.8'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'fade-out': 'fade-out 0.3s ease-out',
+				'pulse-subtle': 'pulse-subtle 2s infinite ease-in-out'
 			},
 			boxShadow: {
 				'card-dark': '0 4px 12px rgba(0, 0, 0, 0.3)',
+				'glass': '0 8px 32px rgba(0, 0, 0, 0.1)',
+				'inner-sm': 'inset 0 1px 2px rgba(0, 0, 0, 0.1)'
 			},
 			fontFamily: {
 				sans: ['Inter', 'sans-serif'],
 			},
+			transitionProperty: {
+				'height': 'height',
+				'spacing': 'margin, padding',
+			},
+			transitionTimingFunction: {
+				'bounce-in': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+				'bounce-out': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
