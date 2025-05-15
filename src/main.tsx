@@ -1,5 +1,6 @@
 
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 
@@ -10,7 +11,11 @@ if (rootElement) {
   container.className = "app-container max-w-[1200px] mx-auto px-4";
   rootElement.appendChild(container);
   
-  createRoot(container).render(<App />);
+  createRoot(container).render(
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  );
 } else {
   console.error("Root element not found");
 }

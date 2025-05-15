@@ -7,13 +7,13 @@ import { useEffect, useState } from "react";
 
 const Header = () => {
   const { userSession, signOut, setObraAtiva } = useAuth();
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark"); // Iniciar com tema escuro
 
   // Função para alternar entre os modos claro/escuro
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
-    document.documentElement.classList.toggle("dark");
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
     localStorage.setItem("theme", newTheme);
   };
 
@@ -28,6 +28,10 @@ const Header = () => {
     } else if (prefersDark) {
       setTheme("dark");
       document.documentElement.classList.add("dark");
+    } else {
+      // Se não houver preferência, usar tema escuro por padrão
+      setTheme("dark");
+      document.documentElement.classList.add("dark");
     }
   }, []);
 
@@ -36,22 +40,12 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-background border-b border-border shadow-sm">
+    <header className="bg-background border-b border-border shadow-md dark:shadow-elegant">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
-            <h1 className="text-2xl font-bold text-primary flex items-center">
-              <img 
-                src="/logo-light.png" 
-                alt="GrifoBoard" 
-                className="h-8 mr-2 hidden dark:block" 
-              />
-              <img 
-                src="/logo-dark.png" 
-                alt="GrifoBoard" 
-                className="h-8 mr-2 block dark:hidden" 
-              />
-              <NavLink to="/">GrifoBoard</NavLink>
+            <h1 className="text-2xl md:text-3xl font-bold text-primary-gold flex items-center">
+              <span className="mr-2">GrifoBoard</span>
             </h1>
 
             {userSession.user && (
@@ -60,7 +54,7 @@ const Header = () => {
                   <NavLink 
                     to="/" 
                     className={({isActive}) => 
-                      isActive ? "font-medium text-primary" : "text-foreground/80 hover:text-primary"
+                      isActive ? "font-medium text-primary-gold" : "text-foreground/80 hover:text-primary-gold transition-colors duration-200"
                     }
                   >
                     Tarefas
@@ -69,7 +63,7 @@ const Header = () => {
                 <NavLink 
                   to="/obras" 
                   className={({isActive}) => 
-                    isActive ? "font-medium text-primary" : "text-foreground/80 hover:text-primary"
+                    isActive ? "font-medium text-primary-gold" : "text-foreground/80 hover:text-primary-gold transition-colors duration-200"
                   }
                 >
                   Obras
@@ -83,7 +77,7 @@ const Header = () => {
               variant="ghost" 
               size="icon" 
               onClick={toggleTheme}
-              className="rounded-full"
+              className="rounded-full hover:bg-secondary/50 transition-colors duration-200"
             >
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
               <span className="sr-only">Toggle theme</span>
@@ -97,20 +91,28 @@ const Header = () => {
                     <div className="font-medium">{userSession.obraAtiva.nome_obra}</div>
                   </div>
                 )}
-                <Button variant="outline" onClick={handleSignOut}>
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  className="rounded-2xl border-primary-gold text-primary-gold hover:bg-primary-gold/10 transition-all duration-200"
+                >
                   Sair
                 </Button>
                 {userSession.obraAtiva && (
                   <Button 
                     variant="secondary" 
                     onClick={() => setObraAtiva(null)}
+                    className="rounded-2xl bg-primary-gold text-white hover:bg-primary-gold/80 transition-all duration-200"
                   >
                     Mudar Obra
                   </Button>
                 )}
               </div>
             ) : (
-              <Button asChild>
+              <Button 
+                asChild
+                className="rounded-2xl bg-primary-gold text-white hover:bg-primary-gold/80 transition-all duration-200"
+              >
                 <NavLink to="/auth">Entrar</NavLink>
               </Button>
             )}
