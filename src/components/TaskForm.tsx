@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -118,7 +117,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden">
         <DialogHeader className="sticky top-0 bg-background z-10 p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">Nova Tarefa</DialogTitle>
@@ -129,8 +128,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
           </div>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 p-6 pt-4">
-          <div className="grid gap-5 py-2 pr-4">
+        <div className="overflow-y-auto p-6 pt-4 max-h-[calc(90vh-140px)]">
+          <div className="grid gap-5 py-2">
             {/* Description - first position */}
             <div className="space-y-2 w-full">
               <Label htmlFor="description" className="font-medium">Descrição</Label>
@@ -335,9 +334,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
         
-        <div className="flex justify-end p-6 border-t mt-auto bg-background">
+        <div className="flex justify-end p-6 sticky bottom-0 bg-background border-t mt-auto">
           <Button onClick={handleSubmit} disabled={!isFormValid()}>
             Adicionar Tarefa
           </Button>
