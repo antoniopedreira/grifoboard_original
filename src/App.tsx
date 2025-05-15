@@ -7,6 +7,7 @@ import { RegistryProvider } from "@/context/RegistryContext";
 import Header from "@/components/Header";
 import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
+import Dashboard from "@/pages/Dashboard";
 import Obras from "@/pages/Obras";
 import NotFound from "@/pages/NotFound";
 import { useState } from 'react';
@@ -71,6 +72,7 @@ function App() {
                 <Route path="/" element={<Navigate to="/obras" replace />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
