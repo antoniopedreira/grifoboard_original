@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CustomSidebar from '@/components/CustomSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,18 +67,20 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RegistryProvider>
-          <Router>
-            <AppLayout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/obras" replace />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppLayout>
-          </Router>
+          <SidebarProvider>
+            <Router>
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/obras" replace />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
+            </Router>
+          </SidebarProvider>
           <Toaster />
         </RegistryProvider>
       </AuthProvider>
