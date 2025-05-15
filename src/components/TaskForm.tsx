@@ -117,8 +117,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-6 max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
+      <DialogContent className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden">
+        <DialogHeader className="sticky top-0 bg-background z-10 p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">Nova Tarefa</DialogTitle>
             <DialogClose className="rounded-full hover:bg-muted w-7 h-7 flex items-center justify-center focus:outline-none">
@@ -128,213 +128,215 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
           </div>
         </DialogHeader>
         
-        <div className="grid gap-5 py-4">
-          {/* Description - first position */}
-          <div className="space-y-2 w-full">
-            <Label htmlFor="description" className="font-medium">Descrição</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descrição da tarefa"
-            />
-          </div>
-          
-          {/* Week start date picker */}
-          <div className="space-y-2 w-full">
-            <Label htmlFor="weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="weekStartDate"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !weekStartDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {weekStartDate ? format(weekStartDate, "dd/MM/yyyy") : <span>Selecionar data</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={weekStartDate}
-                  onSelect={(date) => {
-                    // Force selection to be Monday by finding the Monday of the selected date's week
-                    if (date) {
-                      setWeekStartDate(getWeekStartDate(date));
-                    }
-                  }}
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-            <p className="text-sm text-muted-foreground">
-              A tarefa será exibida apenas na semana selecionada.
-            </p>
-          </div>
-
-          {/* Two columns layout for sector and discipline */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Setor */}
-            <div className="space-y-2">
-              <Label htmlFor="sector" className="font-medium">Setor</Label>
-              <Select value={sector} onValueChange={setSector}>
-                <SelectTrigger id="sector">
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sectors.length > 0 ? (
-                    sectors.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum setor cadastrado</p>
-                      <Button 
-                        variant="link" 
-                        className="mt-2 p-0 h-auto text-primary"
-                        onClick={handleOpenRegistryDialog}
-                      >
-                        Adicione através do botão "Cadastro"
-                      </Button>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+        <div className="overflow-y-auto p-6 pt-4">
+          <div className="grid gap-5 py-2">
+            {/* Description - first position */}
+            <div className="space-y-2 w-full">
+              <Label htmlFor="description" className="font-medium">Descrição</Label>
+              <Input
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descrição da tarefa"
+              />
             </div>
             
-            {/* Disciplina */}
-            <div className="space-y-2">
-              <Label htmlFor="discipline" className="font-medium">Disciplina</Label>
-              <Select value={discipline} onValueChange={setDiscipline}>
-                <SelectTrigger id="discipline">
-                  <SelectValue placeholder="Selecione a disciplina" />
-                </SelectTrigger>
-                <SelectContent>
-                  {disciplines.length > 0 ? (
-                    disciplines.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhuma disciplina cadastrada</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Two columns layout for cable and team */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Cabo */}
-            <div className="space-y-2">
-              <Label htmlFor="cable" className="font-medium">Cabo</Label>
-              <Select value={cable} onValueChange={setCable}>
-                <SelectTrigger id="cable">
-                  <SelectValue placeholder="Selecione o cabo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cables.length > 0 ? (
-                    cables.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum cabo cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Equipe */}
-            <div className="space-y-2">
-              <Label htmlFor="team" className="font-medium">Equipe</Label>
-              <Select value={team} onValueChange={setTeam}>
-                <SelectTrigger id="team">
-                  <SelectValue placeholder="Selecione a equipe" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.length > 0 ? (
-                    teams.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhuma equipe cadastrada</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Two columns layout for responsible and executor */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="responsible" className="font-medium">Responsável</Label>
-              <Select value={responsible} onValueChange={setResponsible}>
-                <SelectTrigger id="responsible">
-                  <SelectValue placeholder="Selecione o responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  {responsibles.length > 0 ? (
-                    responsibles.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum responsável cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="executor" className="font-medium">Executante</Label>
-              <Select value={executor} onValueChange={setExecutor}>
-                <SelectTrigger id="executor">
-                  <SelectValue placeholder="Selecione o executante" />
-                </SelectTrigger>
-                <SelectContent>
-                  {executors.length > 0 ? (
-                    executors.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum executante cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Planned days - centered */}
-          <div className="space-y-3 w-full">
-            <Label className="font-medium">Dias Planejados</Label>
-            <div className="flex flex-wrap justify-center gap-4 mt-2">
-              {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
-                <div key={day} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`day-${day}`}
-                    checked={plannedDays.includes(day as DayOfWeek)}
-                    onCheckedChange={() => handleDayToggle(day as DayOfWeek)}
+            {/* Week start date picker */}
+            <div className="space-y-2 w-full">
+              <Label htmlFor="weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="weekStartDate"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !weekStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {weekStartDate ? format(weekStartDate, "dd/MM/yyyy") : <span>Selecionar data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={weekStartDate}
+                    onSelect={(date) => {
+                      // Force selection to be Monday by finding the Monday of the selected date's week
+                      if (date) {
+                        setWeekStartDate(getWeekStartDate(date));
+                      }
+                    }}
+                    className="p-3 pointer-events-auto"
                   />
-                  <Label htmlFor={`day-${day}`} className="cursor-pointer">{name}</Label>
-                </div>
-              ))}
+                </PopoverContent>
+              </Popover>
+              <p className="text-sm text-muted-foreground">
+                A tarefa será exibida apenas na semana selecionada.
+              </p>
+            </div>
+
+            {/* Two columns layout for sector and discipline */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Setor */}
+              <div className="space-y-2">
+                <Label htmlFor="sector" className="font-medium">Setor</Label>
+                <Select value={sector} onValueChange={setSector}>
+                  <SelectTrigger id="sector">
+                    <SelectValue placeholder="Selecione o setor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sectors.length > 0 ? (
+                      sectors.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        <p>Nenhum setor cadastrado</p>
+                        <Button 
+                          variant="link" 
+                          className="mt-2 p-0 h-auto text-primary"
+                          onClick={handleOpenRegistryDialog}
+                        >
+                          Adicione através do botão "Cadastro"
+                        </Button>
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Disciplina */}
+              <div className="space-y-2">
+                <Label htmlFor="discipline" className="font-medium">Disciplina</Label>
+                <Select value={discipline} onValueChange={setDiscipline}>
+                  <SelectTrigger id="discipline">
+                    <SelectValue placeholder="Selecione a disciplina" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {disciplines.length > 0 ? (
+                      disciplines.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        <p>Nenhuma disciplina cadastrada</p>
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Two columns layout for cable and team */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Cabo */}
+              <div className="space-y-2">
+                <Label htmlFor="cable" className="font-medium">Cabo</Label>
+                <Select value={cable} onValueChange={setCable}>
+                  <SelectTrigger id="cable">
+                    <SelectValue placeholder="Selecione o cabo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cables.length > 0 ? (
+                      cables.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        <p>Nenhum cabo cadastrado</p>
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Equipe */}
+              <div className="space-y-2">
+                <Label htmlFor="team" className="font-medium">Equipe</Label>
+                <Select value={team} onValueChange={setTeam}>
+                  <SelectTrigger id="team">
+                    <SelectValue placeholder="Selecione a equipe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.length > 0 ? (
+                      teams.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        <p>Nenhuma equipe cadastrada</p>
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Two columns layout for responsible and executor */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="responsible" className="font-medium">Responsável</Label>
+                <Select value={responsible} onValueChange={setResponsible}>
+                  <SelectTrigger id="responsible">
+                    <SelectValue placeholder="Selecione o responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {responsibles.length > 0 ? (
+                      responsibles.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        <p>Nenhum responsável cadastrado</p>
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="executor" className="font-medium">Executante</Label>
+                <Select value={executor} onValueChange={setExecutor}>
+                  <SelectTrigger id="executor">
+                    <SelectValue placeholder="Selecione o executante" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {executors.length > 0 ? (
+                      executors.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        <p>Nenhum executante cadastrado</p>
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Planned days - centered */}
+            <div className="space-y-3 w-full">
+              <Label className="font-medium">Dias Planejados</Label>
+              <div className="flex flex-wrap justify-center gap-4 mt-2">
+                {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
+                  <div key={day} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`day-${day}`}
+                      checked={plannedDays.includes(day as DayOfWeek)}
+                      onCheckedChange={() => handleDayToggle(day as DayOfWeek)}
+                    />
+                    <Label htmlFor={`day-${day}`} className="cursor-pointer">{name}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="flex justify-end mt-6 sticky bottom-0 pt-4 bg-background">
+        <div className="flex justify-end p-6 sticky bottom-0 bg-background border-t mt-auto">
           <Button onClick={handleSubmit} disabled={!isFormValid()}>
             Adicionar Tarefa
           </Button>
