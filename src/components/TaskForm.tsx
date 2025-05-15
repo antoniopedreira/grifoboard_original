@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { 
   Popover,
@@ -21,7 +22,7 @@ import { dayNameMap, getWeekStartDate } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
 import { toast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -118,11 +119,28 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] p-6 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
-          <DialogTitle className="text-xl font-semibold">Nova Tarefa</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl font-semibold">Nova Tarefa</DialogTitle>
+            <DialogClose className="rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
+          </div>
         </DialogHeader>
         
         <div className="grid gap-5 py-4">
-          {/* Week start date picker - full width */}
+          {/* Description - first position */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="description" className="font-medium">Descrição</Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descrição da tarefa"
+            />
+          </div>
+          
+          {/* Week start date picker */}
           <div className="space-y-2 w-full">
             <Label htmlFor="weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
             <Popover>
@@ -158,43 +176,56 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
             </p>
           </div>
 
-          {/* Setor - full width */}
-          <div className="space-y-2 w-full">
-            <Label htmlFor="sector" className="font-medium">Setor</Label>
-            <Select value={sector} onValueChange={setSector}>
-              <SelectTrigger id="sector">
-                <SelectValue placeholder="Selecione o setor" />
-              </SelectTrigger>
-              <SelectContent>
-                {sectors.length > 0 ? (
-                  sectors.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    <p>Nenhum setor cadastrado</p>
-                    <Button 
-                      variant="link" 
-                      className="mt-2 p-0 h-auto text-primary"
-                      onClick={handleOpenRegistryDialog}
-                    >
-                      Adicione através do botão "Cadastro"
-                    </Button>
-                  </div>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Description - full width */}
-          <div className="space-y-2 w-full">
-            <Label htmlFor="description" className="font-medium">Descrição</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descrição da tarefa"
-            />
+          {/* Two columns layout for sector and cable */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Setor */}
+            <div className="space-y-2">
+              <Label htmlFor="sector" className="font-medium">Setor</Label>
+              <Select value={sector} onValueChange={setSector}>
+                <SelectTrigger id="sector">
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sectors.length > 0 ? (
+                    sectors.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      <p>Nenhum setor cadastrado</p>
+                      <Button 
+                        variant="link" 
+                        className="mt-2 p-0 h-auto text-primary"
+                        onClick={handleOpenRegistryDialog}
+                      >
+                        Adicione através do botão "Cadastro"
+                      </Button>
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Cabo */}
+            <div className="space-y-2">
+              <Label htmlFor="cable" className="font-medium">Cabo</Label>
+              <Select value={cable} onValueChange={setCable}>
+                <SelectTrigger id="cable">
+                  <SelectValue placeholder="Selecione o cabo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cables.length > 0 ? (
+                    cables.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      <p>Nenhum cabo cadastrado</p>
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           {/* Two columns layout for discipline and team */}
@@ -281,27 +312,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          {/* Cable - full width */}
-          <div className="space-y-2 w-full">
-            <Label htmlFor="cable" className="font-medium">Cabo</Label>
-            <Select value={cable} onValueChange={setCable}>
-              <SelectTrigger id="cable">
-                <SelectValue placeholder="Selecione o cabo" />
-              </SelectTrigger>
-              <SelectContent>
-                {cables.length > 0 ? (
-                  cables.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    <p>Nenhum cabo cadastrado</p>
-                  </div>
-                )}
-              </SelectContent>
-            </Select>
           </div>
           
           {/* Planned days - centered */}

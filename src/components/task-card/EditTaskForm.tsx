@@ -60,6 +60,17 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 
   return (
     <div className="grid gap-5 py-4 max-h-[70vh] overflow-y-auto px-1">
+      {/* Description - first position */}
+      <div className="space-y-2 w-full">
+        <Label htmlFor="edit-description" className="font-medium">Descrição</Label>
+        <Input
+          id="edit-description"
+          value={safeEditFormData.description}
+          onChange={(e) => onEditFormChange("description", e.target.value)}
+          placeholder="Descrição da tarefa"
+        />
+      </div>
+
       {/* Week start date picker - full width */}
       <div className="space-y-2 w-full">
         <Label htmlFor="edit-weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
@@ -100,39 +111,55 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </p>
       </div>
 
-      {/* Sector - full width */}
-      <div className="space-y-2 w-full">
-        <Label htmlFor="edit-sector" className="font-medium">Setor</Label>
-        <Select 
-          value={safeEditFormData.sector} 
-          onValueChange={(value) => onEditFormChange("sector", value)}
-        >
-          <SelectTrigger id="edit-sector">
-            <SelectValue placeholder="Selecione o setor" />
-          </SelectTrigger>
-          <SelectContent>
-            {sectors.length > 0 ? (
-              sectors.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))
-            ) : (
-              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                <p>Nenhum setor cadastrado</p>
-              </div>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      {/* Description - full width */}
-      <div className="space-y-2 w-full">
-        <Label htmlFor="edit-description" className="font-medium">Descrição</Label>
-        <Input
-          id="edit-description"
-          value={safeEditFormData.description}
-          onChange={(e) => onEditFormChange("description", e.target.value)}
-          placeholder="Descrição da tarefa"
-        />
+      {/* Two columns layout for sector and cable */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Setor */}
+        <div className="space-y-2">
+          <Label htmlFor="edit-sector" className="font-medium">Setor</Label>
+          <Select 
+            value={safeEditFormData.sector} 
+            onValueChange={(value) => onEditFormChange("sector", value)}
+          >
+            <SelectTrigger id="edit-sector">
+              <SelectValue placeholder="Selecione o setor" />
+            </SelectTrigger>
+            <SelectContent>
+              {sectors.length > 0 ? (
+                sectors.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  <p>Nenhum setor cadastrado</p>
+                </div>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Cabo */}
+        <div className="space-y-2">
+          <Label htmlFor="edit-cable" className="font-medium">Cabo</Label>
+          <Select 
+            value={safeEditFormData.cable} 
+            onValueChange={(value) => onEditFormChange("cable", value)}
+          >
+            <SelectTrigger id="edit-cable">
+              <SelectValue placeholder="Selecione o cabo" />
+            </SelectTrigger>
+            <SelectContent>
+              {cables.length > 0 ? (
+                cables.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  <p>Nenhum cabo cadastrado</p>
+                </div>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       {/* Two columns layout for discipline and team */}
@@ -231,30 +258,6 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             </SelectContent>
           </Select>
         </div>
-      </div>
-      
-      {/* Cable - full width */}
-      <div className="space-y-2 w-full">
-        <Label htmlFor="edit-cable" className="font-medium">Cabo</Label>
-        <Select 
-          value={safeEditFormData.cable} 
-          onValueChange={(value) => onEditFormChange("cable", value)}
-        >
-          <SelectTrigger id="edit-cable">
-            <SelectValue placeholder="Selecione o cabo" />
-          </SelectTrigger>
-          <SelectContent>
-            {cables.length > 0 ? (
-              cables.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))
-            ) : (
-              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                <p>Nenhum cabo cadastrado</p>
-              </div>
-            )}
-          </SelectContent>
-        </Select>
       </div>
       
       {/* Planned days - centered */}
