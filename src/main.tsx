@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+// Add dark mode class to the root element
+document.documentElement.classList.add('dark');
+
 // Wrap the app in a container with max-width for better layout
 const rootElement = document.getElementById("root");
 if (rootElement) {
