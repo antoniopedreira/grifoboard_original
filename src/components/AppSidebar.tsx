@@ -17,6 +17,7 @@ export function AppSidebar() {
   const { userSession } = useAuth();
   const navigate = useNavigate();
 
+  // Only render the sidebar if there is an active work
   if (!userSession.user || !userSession.obraAtiva) {
     return null;
   }
@@ -30,7 +31,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/tarefas")}
                   tooltip="Tarefas"
                 >
                   <LayoutList />

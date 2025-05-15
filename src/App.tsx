@@ -23,16 +23,18 @@ const queryClient = new QueryClient({
   }
 });
 
-// Componente de layout para controlar onde o cabeçalho aparece
+// Component to determine if sidebar should be shown based on route
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/auth';
+  const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
 
   return (
     <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-background' : ''}`}>
       {!isAuthPage && <Header />}
+      
       <div className="flex flex-1 w-full">
-        {!isAuthPage && (
+        {!isAuthPage && !isObrasPage ? (
           <SidebarProvider>
             <AppSidebar />
             <main className="flex-1">
@@ -42,10 +44,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               </div>
             </main>
           </SidebarProvider>
-        )}
-        {isAuthPage && (
+        ) : (
           <main className="flex-1">
-            {children}
+            <div className="container mx-auto px-4 py-6">
+              {children}
+            </div>
           </main>
         )}
       </div>
