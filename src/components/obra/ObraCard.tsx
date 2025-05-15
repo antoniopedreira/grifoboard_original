@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Obra } from '@/types/supabase';
-import { MapPin } from 'lucide-react'; // Fixed import - use camelCase
+import { MapPin } from 'lucide-react';
 
 interface ObraCardProps {
   obra: Obra;
@@ -14,19 +14,19 @@ interface ObraCardProps {
 const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
   return (
     <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100 bg-white"
+      className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100 bg-white h-full flex flex-col"
       onClick={() => onSelect(obra)}
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-gray-900">{obra.nome_obra}</CardTitle>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-gray-900 truncate">{obra.nome_obra}</CardTitle>
             <CardDescription className="text-gray-500 flex items-center mt-1">
-              <MapPin className="mr-1 h-4 w-4" />
-              {obra.localizacao}
+              <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{obra.localizacao}</span>
             </CardDescription>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 flex-shrink-0 ml-2">
             {onEdit && (
               <Button 
                 variant="outline" 
@@ -52,7 +52,7 @@ const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-2 flex-1">
         <div className="text-sm text-gray-700">
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Início:</span>
@@ -68,7 +68,7 @@ const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="mt-auto">
         <Button 
           variant="outline" 
           className="w-full text-gray-700 border-gray-200 hover:bg-gray-50"

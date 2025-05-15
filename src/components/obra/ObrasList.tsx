@@ -31,13 +31,14 @@ const ObrasList = ({ obras, isLoading, onSelectObra, onDeleteObra, onEditObra }:
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {obras.map((obra) => (
-        <ObraCard 
-          key={obra.id} 
-          obra={obra} 
-          onSelect={onSelectObra} 
-          onDelete={onDeleteObra}
-          onEdit={onEditObra}
-        />
+        <div key={obra.id} className="h-full">
+          <ObraCard 
+            obra={obra} 
+            onSelect={onSelectObra} 
+            onDelete={onDeleteObra}
+            onEdit={onEditObra}
+          />
+        </div>
       ))}
     </div>
   );
