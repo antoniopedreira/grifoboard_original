@@ -128,7 +128,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
           </div>
         </DialogHeader>
         
-        <div className="overflow-y-auto p-6 pt-4">
+        <div className="overflow-y-auto p-6 pt-4 max-h-[calc(90vh-140px)]">
           <div className="grid gap-5 py-2">
             {/* Description - first position */}
             <div className="space-y-2 w-full">
