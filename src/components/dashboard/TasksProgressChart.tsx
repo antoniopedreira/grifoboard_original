@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { WeeklyPCPData } from "@/types";
 import { ChartContainer } from "@/components/ui/chart";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TasksProgressChartProps {
@@ -20,9 +20,23 @@ interface TasksProgressChartProps {
 }
 
 const TasksProgressChart = ({ weeklyPCPData }: TasksProgressChartProps) => {
-  // Format data for the chart with proper date formatting
+  // Format data for the chart with proper date formatting and validation
   const chartData = weeklyPCPData.map(week => {
-    const weekStartDate = new Date(week.date); // Use week.date instead of week.weekStartDate
+    // Ensure week.date is a valid Date object
+    const weekStartDate = week.date instanceof Date ? week.date : new Date(week.date);
+    
+    // Validate date before formatting
+    if (!isValid(weekStartDate)) {
+      console.warn("Invalid date detected in TasksProgressChart:", week.date);
+      // Use current date as fallback
+      const fallbackDate = new Date();
+      return {
+        ...week,
+        name: `Invalid-${week.week}`,
+        weekLabel: `Semana ${week.week}`,
+      };
+    }
+    
     return {
       ...week,
       name: format(weekStartDate, "dd/MM", { locale: ptBR }),
