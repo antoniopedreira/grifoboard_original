@@ -22,7 +22,8 @@ interface TasksProgressChartProps {
 const TasksProgressChart = ({ weeklyPCPData }: TasksProgressChartProps) => {
   // Format data for the chart with proper date formatting
   const chartData = weeklyPCPData.map(week => {
-    const weekStartDate = new Date(week.date); // Use week.date instead of week.weekStartDate
+    // Ensure week.date is a valid Date object before formatting
+    const weekStartDate = week.date instanceof Date ? week.date : new Date(week.date);
     return {
       ...week,
       name: format(weekStartDate, "dd/MM", { locale: ptBR }),

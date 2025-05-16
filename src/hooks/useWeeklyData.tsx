@@ -51,11 +51,14 @@ export function useWeeklyData() {
         historicalDataRef.current.set(weekKey, pcpValue);
       }
       
+      // Create a proper Date object for the week start date
+      const validWeekStart = new Date(weekStart);
+      
       // Add to results - ensure we have some value for visual testing
       result.push({
         week: `Week ${i+1}`,
         percentage: pcpValue,
-        date: weekStart,
+        date: validWeekStart,
         isCurrentWeek: i === 0  // Current week is at i=0
       });
     }
