@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { LayoutList } from "lucide-react";
+import { LayoutDashboard, LayoutList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function AppSidebar() {
@@ -36,6 +36,15 @@ export function AppSidebar() {
                 >
                   <LayoutList />
                   <span>Tarefas</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate("/tarefas?tab=dashboard")}
+                  tooltip="Dashboard"
+                >
+                  <LayoutDashboard />
+                  <span>Dashboard</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

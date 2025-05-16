@@ -4,12 +4,12 @@ import { PCPBreakdown, Task, WeeklyPCPData } from "@/types";
 import { useState } from "react";
 import TasksCompletionChart from "./TasksCompletionChart";
 import TasksByDisciplineChart from "./TasksByDisciplineChart";
-import DailyTasksChart from "./DailyTasksChart";
 import TasksProgressChart from "./TasksProgressChart";
 import TopPerformersChart from "./TopPerformersChart";
 import CauseAnalysisChart from "./CauseAnalysisChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartBar, ChartPie, Calendar } from "lucide-react";
+import { ChartBar, ChartPie } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DashboardContentProps {
   tasks: Task[];
@@ -18,13 +18,33 @@ interface DashboardContentProps {
   weekStartDate: Date;
 }
 
+// Performance filter options
+type PerformanceFilterType = 'responsaveis' | 'executantes' | 'equipes' | 'cabos';
+
 const DashboardContent: React.FC<DashboardContentProps> = ({
   tasks,
   pcpData,
   weeklyPCPData,
   weekStartDate,
 }) => {
-  const [dashboardView, setDashboardView] = useState<"general" | "performance" | "daily">("general");
+  const [dashboardView, setDashboardView] = useState<"general" | "performance">("general");
+  const [performanceFilter, setPerformanceFilter] = useState<PerformanceFilterType>("responsaveis");
+
+  // Get title based on current filter
+  const getPerformanceTitle = () => {
+    switch (performanceFilter) {
+      case 'responsaveis':
+        return 'Top Responsáveis';
+      case 'executantes':
+        return 'Top Executantes';
+      case 'equipes':
+        return 'Top Equipes';
+      case 'cabos':
+        return 'Top Cabos';
+      default:
+        return 'Top Responsáveis';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -42,10 +62,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <ChartBar className="h-4 w-4" />
             <span>Desempenho</span>
-          </TabsTrigger>
-          <TabsTrigger value="daily" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>Análise Diária</span>
           </TabsTrigger>
         </TabsList>
 
@@ -87,13 +103,30 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         {/* Desempenho */}
         <TabsContent value="performance" className="space-y-5">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Top Performers */}
+            {/* Top Performers with Filter */}
             <Card className="shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Top Responsáveis</CardTitle>
+              <CardHeader className="pb-2 flex flex-row justify-between items-center">
+                <CardTitle className="text-lg">{getPerformanceTitle()}</CardTitle>
+                <Select 
+                  value={performanceFilter} 
+                  onValueChange={(value) => setPerformanceFilter(value as PerformanceFilterType)}
+                >
+                  <SelectTrigger className="w-[180px] h-8">
+                    <SelectValue placeholder="Filtrar por" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="responsaveis">Responsáveis</SelectItem>
+                    <SelectItem value="executantes">Executantes</SelectItem>
+                    <SelectItem value="equipes">Equipes</SelectItem>
+                    <SelectItem value="cabos">Cabos</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent className="h-[350px]">
-                <TopPerformersChart tasks={tasks} />
+                <TopPerformersChart 
+                  tasks={tasks} 
+                  filterType={performanceFilter}
+                />
               </CardContent>
             </Card>
 
@@ -107,18 +140,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        {/* Análise Diária */}
-        <TabsContent value="daily">
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Distribuição Diária de Tarefas</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              <DailyTasksChart tasks={tasks} weekStartDate={weekStartDate} />
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -17,7 +17,7 @@ const TasksProgressChart: React.FC<TasksProgressChartProps> = ({ weeklyPCPData }
       // Check if the date is valid before formatting
       const dateValue = week.date instanceof Date ? week.date : new Date(week.date);
       const formattedDate = isValid(dateValue) ? 
-        format(dateValue, "dd/MM", { locale: ptBR }) : 
+        `Semana ${format(dateValue, "dd/MM", { locale: ptBR })}` : 
         `Semana ${Math.floor(Math.random() * 100)}`; // Fallback display name if date is invalid
       
       return {
@@ -62,7 +62,7 @@ const TasksProgressChart: React.FC<TasksProgressChartProps> = ({ weeklyPCPData }
             <YAxis domain={[0, 100]} />
             <Tooltip 
               formatter={(value) => [`${value}%`, ""]}
-              labelFormatter={(label) => `Semana: ${label}`}
+              labelFormatter={(label) => label}
             />
             <Legend />
             <Line

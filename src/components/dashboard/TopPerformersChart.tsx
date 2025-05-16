@@ -6,37 +6,54 @@ import { ChartContainer } from "@/components/ui/chart";
 
 interface TopPerformersChartProps {
   tasks: Task[];
+  filterType?: 'responsaveis' | 'executantes' | 'equipes' | 'cabos';
 }
 
-const TopPerformersChart: React.FC<TopPerformersChartProps> = ({ tasks }) => {
-  // Calculate performance by responsible person
+const TopPerformersChart: React.FC<TopPerformersChartProps> = ({ tasks, filterType = 'responsaveis' }) => {
+  // Calculate performance by the selected filter type
   const performanceData = useMemo(() => {
-    const responsibleStats: Record<string, { total: number; completed: number }> = {};
+    // Function to get the appropriate field value based on filterType
+    const getFieldValue = (task: Task): string => {
+      switch (filterType) {
+        case 'responsaveis':
+          return task.responsible || 'Não atribuído';
+        case 'executantes':
+          return task.executor || 'Não atribuído';
+        case 'equipes':
+          return task.team || 'Sem equipe';
+        case 'cabos':
+          return task.leader || 'Sem cabo';
+        default:
+          return task.responsible || 'Não atribuído';
+      }
+    };
+    
+    const stats: Record<string, { total: number; completed: number }> = {};
     
     tasks.forEach(task => {
-      if (!task.responsible) return;
+      const fieldValue = getFieldValue(task);
       
-      if (!responsibleStats[task.responsible]) {
-        responsibleStats[task.responsible] = { total: 0, completed: 0 };
+      if (!stats[fieldValue]) {
+        stats[fieldValue] = { total: 0, completed: 0 };
       }
       
-      responsibleStats[task.responsible].total += 1;
+      stats[fieldValue].total += 1;
       
       if (task.isFullyCompleted) {
-        responsibleStats[task.responsible].completed += 1;
+        stats[fieldValue].completed += 1;
       }
     });
     
     // Convert to array with completion rates
-    return Object.entries(responsibleStats)
-      .map(([name, stats]) => ({
+    return Object.entries(stats)
+      .map(([name, data]) => ({
         name,
-        rate: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
-        tasks: stats.total
+        rate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
+        tasks: data.total
       }))
       .sort((a, b) => b.rate - a.rate)
       .slice(0, 5); // Top 5
-  }, [tasks]);
+  }, [tasks, filterType]);
 
   return (
     <ChartContainer 
