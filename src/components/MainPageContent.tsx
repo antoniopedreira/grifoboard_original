@@ -35,7 +35,8 @@ const MainPageContent = () => {
     weeklyPCPData,
     handleTaskUpdate,
     handleTaskDelete,
-    handleTaskCreate
+    handleTaskCreate,
+    handleTaskDuplicate
   } = useTaskManager(weekStartDate);
   
   const handleCauseSelect = (cause: string) => {
@@ -103,6 +104,7 @@ const MainPageContent = () => {
         isLoading={isLoading}
         onTaskUpdate={handleTaskUpdate}
         onTaskDelete={handleTaskDelete}
+        onTaskDuplicate={handleTaskDuplicate}
         selectedCause={selectedCause}
       />
       
