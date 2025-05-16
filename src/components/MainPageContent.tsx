@@ -10,7 +10,11 @@ import MainHeader from "@/components/MainHeader";
 import PCPSection from "@/components/PCPSection";
 import TasksSection from "@/components/TasksSection";
 
-const MainPageContent = () => {
+interface MainPageContentProps {
+  initialTab?: "dashboard" | "tasks";
+}
+
+const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
