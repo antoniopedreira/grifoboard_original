@@ -7,7 +7,6 @@ import * as dateUtils from './pcp/dateUtils';
 import * as textUtils from './pcp/textUtils';
 import * as pcpCalculator from './pcp/pcpCalculator';
 import * as mockDataGenerator from './pcp/mockDataGenerator';
-import { isValid } from 'date-fns';
 
 // Re-export date utilities
 export const {
@@ -24,31 +23,13 @@ export const {
   getStatusColor
 } = textUtils;
 
-// Re-export calculator utilities with safe date handling
+// Re-export calculator utilities
 export const {
   calculatePCP,
   storeHistoricalPCPData,
+  // Only export this once
+  generateWeeklyPCPData
 } = pcpCalculator;
-
-// Re-export modified version of generateWeeklyPCPData with date validation
-export const generateWeeklyPCPData = (
-  currentWeekStart: Date,
-  currentWeekPCP?: number,
-  historicalData?: Map<string, number>
-) => {
-  // Validate the input date
-  if (!isValid(currentWeekStart)) {
-    console.warn("Invalid date passed to generateWeeklyPCPData:", currentWeekStart);
-    currentWeekStart = new Date(); // Use current date as fallback
-  }
-  
-  // Now call the original implementation with all parameters
-  return pcpCalculator.generateWeeklyPCPData(
-    currentWeekStart,
-    currentWeekPCP || 0,  // Use 0 as default if not provided
-    historicalData || new Map<string, number>()  // Use empty Map as default if not provided
-  );
-};
 
 // Re-export mock data generator
 export const {

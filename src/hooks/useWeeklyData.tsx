@@ -7,7 +7,6 @@ import {
   getWeekStartDate,
   getPreviousWeekDates
 } from "@/utils/pcp";
-import { isValid } from "date-fns";
 
 export function useWeeklyData() {
   const [weekStartDate, setWeekStartDate] = useState<Date>(getWeekStartDate(new Date()));
@@ -25,22 +24,10 @@ export function useWeeklyData() {
   const generateWeeklyPCPData = (currentWeekStart: Date): WeeklyPCPData[] => {
     const result: WeeklyPCPData[] = [];
     
-    // Validate input date
-    if (!isValid(currentWeekStart)) {
-      console.warn("Invalid currentWeekStart date provided to generateWeeklyPCPData:", currentWeekStart);
-      currentWeekStart = new Date(); // Use current date as fallback
-    }
-    
     // Add data for 3 previous weeks and current week
     for (let i = 3; i >= 0; i--) {
       const weekStart = new Date(currentWeekStart);
       weekStart.setDate(currentWeekStart.getDate() - (7 * i));
-      
-      // Validate the date again after calculation
-      if (!isValid(weekStart)) {
-        console.warn("Invalid weekStart date calculated:", weekStart);
-        weekStart.setTime(Date.now() - (7 * i * 24 * 60 * 60 * 1000)); // Use relative time from now as fallback
-      }
       
       const weekKey = weekStart.toISOString().split('T')[0];
       
@@ -68,7 +55,7 @@ export function useWeeklyData() {
       result.push({
         week: `Week ${i+1}`,
         percentage: pcpValue,
-        date: weekStart, // Ensure this is a valid Date object
+        date: weekStart,
         isCurrentWeek: i === 0  // Current week is at i=0
       });
     }
@@ -78,13 +65,6 @@ export function useWeeklyData() {
   
   // Initialize tasks and weekly data when component mounts or week changes
   useEffect(() => {
-    // Validate weekStartDate
-    if (!isValid(weekStartDate)) {
-      console.warn("Invalid weekStartDate in useWeeklyData:", weekStartDate);
-      setWeekStartDate(getWeekStartDate(new Date())); // Reset to valid date
-      return;
-    }
-    
     // Set end date based on start date
     const endDate = new Date(weekStartDate);
     endDate.setDate(weekStartDate.getDate() + 6);

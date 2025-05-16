@@ -8,12 +8,12 @@ interface MainHeaderProps {
 }
 
 const MainHeader: React.FC<MainHeaderProps> = ({ onNewTaskClick, onRegistryClick }) => {
-  const { userSession } = useAuth();
+  const { session } = useAuth();
 
   return (
     <div className="mb-6 flex justify-between items-center">
       <h2 className="text-2xl font-bold text-gray-900">
-        {userSession.obraAtiva ? `Tarefas - ${userSession.obraAtiva.nome_obra}` : 'Planejamento Semanal'}
+        {session.obraAtiva ? `Tarefas - ${session.obraAtiva.nome_obra}` : 'Planejamento Semanal'}
       </h2>
       <div className="flex gap-2">
         <Button 
