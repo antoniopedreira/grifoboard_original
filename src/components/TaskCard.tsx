@@ -1,14 +1,15 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { DayOfWeek, Task, TaskStatus } from "@/types";
+import { Task } from "@/types";
 import TaskDetails from "./task/TaskDetails";
 import TaskStatusDisplay from "./task/TaskStatusDisplay";
-import { useToast } from "@/hooks/use-toast";
 import TaskHeader from "./task-card/TaskHeader";
 import TaskFooter from "./task-card/TaskFooter";
 import EditTaskDialog from "./task-card/EditTaskDialog";
 import DeleteConfirmDialog from "./task-card/DeleteConfirmDialog";
+import { useTaskStatus } from "./task-card/useTaskStatus";
+import { useTaskActions } from "./task-card/useTaskActions";
+import { useTaskEditForm } from "./task-card/useTaskEditForm";
 
 interface TaskCardProps {
   task: Task;
@@ -23,130 +24,30 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onTaskDelete,
   onTaskDuplicate 
 }) => {
-  const { toast } = useToast();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // Use custom hooks to manage task state and actions
+  const { 
+    handleStatusChange, 
+    handleCompletionStatusChange, 
+    handleCauseSelect 
+  } = useTaskStatus(task, onTaskUpdate);
   
-  // Edit form state
-  const [editFormData, setEditFormData] = useState<Omit<Task, "id" | "isFullyCompleted" | "dailyStatus">>(
-    {
-      sector: task.sector,
-      item: task.item,
-      description: task.description,
-      discipline: task.discipline,
-      team: task.team,
-      responsible: task.responsible,
-      executor: task.executor || "",
-      cable: task.cable || "",
-      plannedDays: task.plannedDays,
-      causeIfNotDone: task.causeIfNotDone,
-      weekStartDate: task.weekStartDate,
-    }
-  );
-
-  const handleStatusChange = (day: DayOfWeek, newStatus: TaskStatus) => {
-    const updatedDailyStatus = task.dailyStatus.map(status => 
-      status.day === day ? { ...status, status: newStatus } : status
-    );
-
-    onTaskUpdate({
-      ...task,
-      dailyStatus: updatedDailyStatus,
-    });
-  };
-
-  const handleCompletionStatusChange = () => {
-    onTaskUpdate({
-      ...task,
-      isFullyCompleted: !task.isFullyCompleted,
-    });
-  };
-
-  const handleCauseSelect = (cause: string) => {
-    onTaskUpdate({
-      ...task,
-      causeIfNotDone: cause
-    });
-  };
-
-  const handleEditClick = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDayToggle = (day: DayOfWeek) => {
-    setEditFormData(prev => {
-      const updatedPlannedDays = prev.plannedDays.includes(day)
-        ? prev.plannedDays.filter(d => d !== day)
-        : [...prev.plannedDays, day];
-      
-      return {
-        ...prev,
-        plannedDays: updatedPlannedDays
-      };
-    });
-  };
-
-  const handleEditFormChange = (field: string, value: string) => {
-    setEditFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleWeekDateChange = (date: Date) => {
-    setEditFormData(prev => ({
-      ...prev,
-      weekStartDate: date
-    }));
-  };
-
-  const handleSaveEdit = () => {
-    // Make sure we have a week date
-    if (!editFormData.weekStartDate) {
-      toast({
-        title: "Data da semana requerida",
-        description: "Por favor, selecione a data de início da semana (segunda-feira).",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const updatedTask: Task = {
-      ...task,
-      ...editFormData,
-    };
-
-    onTaskUpdate(updatedTask);
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "Tarefa atualizada",
-      description: "As alterações foram salvas com sucesso.",
-    });
-  };
-
-  const handleDelete = () => {
-    if (onTaskDelete) {
-      onTaskDelete(task.id);
-      setIsDeleteDialogOpen(false);
-      setIsEditDialogOpen(false);
-      
-      toast({
-        title: "Tarefa excluída",
-        description: "A tarefa foi excluída com sucesso.",
-      });
-    }
-  };
-
-  const isFormValid = () => {
-    return (
-      editFormData.sector?.trim() !== "" &&
-      editFormData.description?.trim() !== "" &&
-      editFormData.responsible?.trim() !== "" &&
-      editFormData.plannedDays.length > 0 &&
-      editFormData.weekStartDate !== undefined
-    );
-  };
+  const { 
+    isEditDialogOpen, 
+    setIsEditDialogOpen, 
+    isDeleteDialogOpen, 
+    setIsDeleteDialogOpen, 
+    handleEditClick, 
+    handleSaveEdit, 
+    handleDelete 
+  } = useTaskActions(task, onTaskUpdate, onTaskDelete);
+  
+  const { 
+    editFormData, 
+    handleDayToggle, 
+    handleEditFormChange, 
+    handleWeekDateChange, 
+    isFormValid 
+  } = useTaskEditForm(task);
 
   return (
     <>
@@ -194,8 +95,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
         onEditFormChange={handleEditFormChange}
         onDayToggle={handleDayToggle}
         onDelete={() => setIsDeleteDialogOpen(true)}
-        onSave={handleSaveEdit}
-        isFormValid={isFormValid}
+        onSave={() => handleSaveEdit(editFormData)}
+        isFormValid={isFormValid()}
         onWeekDateChange={handleWeekDateChange}
       />
 
