@@ -2,6 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { Copy, Pencil } from "lucide-react";
 import CausesDropdown from "../task/CausesDropdown";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 
 interface TaskFooterProps {
   isCompleted: boolean;
@@ -21,24 +27,35 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
   return (
     <div className="w-full flex justify-between items-center">
       {!isCompleted ? (
-        <CausesDropdown 
-          onCauseSelect={onCauseSelect}
-          currentCause={currentCause}
-        />
+        <div className="flex-1 max-w-[60%]">
+          <CausesDropdown 
+            onCauseSelect={onCauseSelect}
+            currentCause={currentCause}
+          />
+        </div>
       ) : (
         <span />
       )}
       
       <div className="flex gap-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onDuplicateClick} 
-          className="text-gray-700 hover:bg-gray-100"
-          title="Duplicar tarefa"
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onDuplicateClick} 
+                className="text-gray-700 hover:bg-gray-100"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Duplicar tarefa</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
         <Button 
           variant="ghost" 
           size="sm" 
