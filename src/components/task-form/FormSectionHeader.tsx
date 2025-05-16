@@ -7,9 +7,6 @@ const FormSectionHeader: React.FC<FormSectionHeaderProps> = ({
   label,
   description
 }) => {
-  return <div className="space-y-2 w-full">
-      <Label className="font-medium">{label}</Label>
-      {description}
-    </div>;
+  return;
 };
 export default FormSectionHeader;
