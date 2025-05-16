@@ -106,13 +106,13 @@ const MainPageContent = () => {
         onValueChange={(value) => setActiveTab(value as "tarefas" | "dashboard")}
       >
         <TabsList className="mb-4">
-          <TabsTrigger value="tarefas" className="flex items-center gap-2">
-            <LayoutList className="h-4 w-4" />
-            <span>Tarefas</span>
-          </TabsTrigger>
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <LayoutDashboard className="h-4 w-4" />
             <span>Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger value="tarefas" className="flex items-center gap-2">
+            <LayoutList className="h-4 w-4" />
+            <span>Tarefas</span>
           </TabsTrigger>
         </TabsList>
         

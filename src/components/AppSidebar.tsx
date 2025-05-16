@@ -31,20 +31,20 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
-                  onClick={() => navigate("/tarefas")}
-                  tooltip="Tarefas"
-                >
-                  <LayoutList />
-                  <span>Tarefas</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
                   onClick={() => navigate("/tarefas?tab=dashboard")}
                   tooltip="Dashboard"
                 >
                   <LayoutDashboard />
                   <span>Dashboard</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate("/tarefas?tab=tarefas")}
+                  tooltip="Tarefas"
+                >
+                  <LayoutList />
+                  <span>Tarefas</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
