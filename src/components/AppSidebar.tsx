@@ -11,11 +11,16 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { LayoutDashboard, LayoutList } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export function AppSidebar() {
   const { userSession } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the current tab from URL query params
+  const queryParams = new URLSearchParams(location.search);
+  const currentTab = queryParams.get('tab') || 'dashboard';
 
   // Only render the sidebar if there is an active work
   if (!userSession.user || !userSession.obraAtiva) {
@@ -33,6 +38,7 @@ export function AppSidebar() {
                 <SidebarMenuButton 
                   onClick={() => navigate("/tarefas?tab=dashboard")}
                   tooltip="Dashboard"
+                  isActive={currentTab === 'dashboard'}
                 >
                   <LayoutDashboard />
                   <span>Dashboard</span>
@@ -42,6 +48,7 @@ export function AppSidebar() {
                 <SidebarMenuButton 
                   onClick={() => navigate("/tarefas?tab=tarefas")}
                   tooltip="Tarefas"
+                  isActive={currentTab === 'tarefas'}
                 >
                   <LayoutList />
                   <span>Tarefas</span>
