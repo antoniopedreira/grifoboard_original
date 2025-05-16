@@ -3,7 +3,6 @@ import { DayOfWeek } from "@/types";
 import { dayNameMap } from "@/utils/pcp";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlannedDaysSelectorProps {
@@ -28,13 +27,13 @@ const PlannedDaysSelector: React.FC<PlannedDaysSelectorProps> = ({
     <div className="space-y-3 w-full">
       <Label className="font-medium">Dias Planejados</Label>
       
-      {/* Using ScrollArea for mobile responsiveness if needed */}
+      {/* Fixed horizontal layout with scroll for smaller screens */}
       <ScrollArea className="w-full">
-        <div className="flex flex-wrap gap-2 sm:gap-4 py-2">
+        <div className="flex flex-nowrap gap-2 sm:gap-3 py-2 overflow-x-auto">
           {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
             <div 
               key={day} 
-              className="flex items-center min-w-[70px] pl-2 pr-3 py-1.5 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100"
+              className="flex items-center whitespace-nowrap pl-2 pr-3 py-1.5 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100"
               onClick={() => handleDayToggle(day as DayOfWeek)}
             >
               <Checkbox
