@@ -14,9 +14,15 @@ interface TaskCardProps {
   task: Task;
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete?: (taskId: string) => void;
+  onTaskDuplicate?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ 
+  task, 
+  onTaskUpdate, 
+  onTaskDelete,
+  onTaskDuplicate 
+}) => {
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -174,6 +180,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskUpdate, onTaskDelete })
             currentCause={task.causeIfNotDone}
             onCauseSelect={handleCauseSelect}
             onEditClick={handleEditClick}
+            onDuplicateClick={() => onTaskDuplicate?.(task)}
           />
         </CardFooter>
       </Card>

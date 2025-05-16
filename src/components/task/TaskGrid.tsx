@@ -6,9 +6,10 @@ interface TaskGridProps {
   tasks: Task[];
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete?: (taskId: string) => void;
+  onTaskDuplicate?: (task: Task) => void;
 }
 
-const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete }) => {
+const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, onTaskDuplicate }) => {
   if (tasks.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 px-4 border rounded-lg bg-white border-gray-100">
@@ -25,6 +26,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete }
           task={task}
           onTaskUpdate={onTaskUpdate}
           onTaskDelete={onTaskDelete}
+          onTaskDuplicate={onTaskDuplicate}
         />
       ))}
     </div>

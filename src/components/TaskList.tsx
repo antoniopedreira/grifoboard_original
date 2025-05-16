@@ -9,10 +9,17 @@ interface TaskListProps {
   tasks: Task[];
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete: (taskId: string) => void;
+  onTaskDuplicate: (task: Task) => void;
   selectedCause: string | null;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, onTaskDelete, selectedCause }) => {
+const TaskList: React.FC<TaskListProps> = ({ 
+  tasks, 
+  onTaskUpdate, 
+  onTaskDelete, 
+  onTaskDuplicate,
+  selectedCause 
+}) => {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
   const { toast } = useToast();
   
@@ -51,6 +58,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
         tasks={filteredTasks} 
         onTaskUpdate={handleTaskUpdate}
         onTaskDelete={onTaskDelete}
+        onTaskDuplicate={onTaskDuplicate}
       />
     </div>
   );

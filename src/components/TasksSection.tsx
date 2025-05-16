@@ -7,6 +7,7 @@ interface TasksSectionProps {
   isLoading: boolean;
   onTaskUpdate: (task: Task) => void;
   onTaskDelete: (taskId: string) => void;
+  onTaskDuplicate: (task: Task) => void;
   selectedCause: string | null;
 }
 
@@ -14,7 +15,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   tasks, 
   isLoading, 
   onTaskUpdate, 
-  onTaskDelete, 
+  onTaskDelete,
+  onTaskDuplicate,
   selectedCause 
 }) => {
   return (
@@ -28,6 +30,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
           tasks={tasks} 
           onTaskUpdate={onTaskUpdate} 
           onTaskDelete={onTaskDelete}
+          onTaskDuplicate={onTaskDuplicate}
           selectedCause={selectedCause}
         />
       )}

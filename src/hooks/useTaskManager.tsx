@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Task, DayOfWeek, TaskStatus } from "@/types";
 import { Tarefa } from "@/types/supabase";
@@ -345,6 +344,48 @@ export const useTaskManager = (weekStartDate: Date) => {
     }
   }, [session.obraAtiva, tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate]);
   
+  // New function to duplicate a task
+  const handleTaskDuplicate = useCallback(async (taskToDuplicate: Task) => {
+    try {
+      if (!session.obraAtiva) {
+        throw new Error("Nenhuma obra ativa selecionada");
+      }
+      
+      // Create new task data based on the existing task but without the id
+      const newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted"> = {
+        sector: taskToDuplicate.sector,
+        item: taskToDuplicate.item,
+        description: `${taskToDuplicate.description} (Cópia)`, // Add "(Cópia)" to indicate it's a duplicate
+        discipline: taskToDuplicate.discipline,
+        team: taskToDuplicate.team,
+        responsible: taskToDuplicate.responsible,
+        executor: taskToDuplicate.executor,
+        cable: taskToDuplicate.cable,
+        plannedDays: [...taskToDuplicate.plannedDays], // Copy planned days
+        weekStartDate: taskToDuplicate.weekStartDate, // Keep same week
+        causeIfNotDone: taskToDuplicate.causeIfNotDone,
+      };
+      
+      // Use the existing create function to make a new task
+      const createdTask = await handleTaskCreate(newTaskData);
+      
+      toast({
+        title: "Tarefa duplicada",
+        description: "Uma nova cópia da tarefa foi criada com sucesso.",
+      });
+      
+      return createdTask;
+    } catch (error: any) {
+      console.error("Error duplicating task:", error);
+      toast({
+        title: "Erro ao duplicar tarefa",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [session.obraAtiva, handleTaskCreate, toast]);
+  
   // Calcular PCP atual baseado nas tarefas filtradas da semana
   const pcpData = calculatePCP(filteredTasks);
   
@@ -357,6 +398,7 @@ export const useTaskManager = (weekStartDate: Date) => {
     loadTasks,
     handleTaskUpdate,
     handleTaskDelete,
-    handleTaskCreate
+    handleTaskCreate,
+    handleTaskDuplicate // Add the new function to the return object
   };
 };
