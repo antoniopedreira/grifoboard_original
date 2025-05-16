@@ -1,7 +1,6 @@
 
 import React, { useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Task } from "@/types";
 import { WeeklyPCPData } from "@/types";
 import { ChartContainer } from "@/components/ui/chart";
 import { format } from "date-fns";
