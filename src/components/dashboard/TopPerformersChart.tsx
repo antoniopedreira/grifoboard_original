@@ -22,7 +22,7 @@ const TopPerformersChart: React.FC<TopPerformersChartProps> = ({ tasks, filterTy
         case 'equipes':
           return task.team || 'Sem equipe';
         case 'cabos':
-          return task.leader || 'Sem cabo';
+          return task.cable || 'Sem cabo'; // Changed from task.leader to task.cable to match Task type
         default:
           return task.responsible || 'Não atribuído';
       }
