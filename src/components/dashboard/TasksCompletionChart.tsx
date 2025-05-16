@@ -19,35 +19,46 @@ const TasksCompletionChart: React.FC<TasksCompletionChartProps> = ({ tasks }) =>
   ];
 
   const COLORS = ["#10b981", "#f43f5e"];
+  
+  // Calculate percentage for display
+  const completionRate = tasks.length > 0 ? 
+    Math.round((completedTasks / tasks.length) * 100) : 0;
 
   return (
-    <ChartContainer
-      config={{
-        "Concluídas": { color: "#10b981" },
-        "Não Concluídas": { color: "#f43f5e" }
-      }}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value) => [`${value} tarefas`, ""]} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-    </ChartContainer>
+    <div className="h-full flex flex-col">
+      <div className="text-center mb-2">
+        <span className="text-2xl font-bold">{completionRate}%</span>
+        <p className="text-sm text-muted-foreground">Taxa de conclusão</p>
+      </div>
+      
+      <ChartContainer
+        config={{
+          "Concluídas": { color: "#10b981" },
+          "Não Concluídas": { color: "#f43f5e" }
+        }}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => [`${value} tarefas`, ""]} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    </div>
   );
 };
 

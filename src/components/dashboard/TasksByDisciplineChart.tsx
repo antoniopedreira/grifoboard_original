@@ -18,7 +18,10 @@ const TasksByDisciplineChart: React.FC<TasksByDisciplineChartProps> = ({ tasks }
       disciplineCounts[discipline] = (disciplineCounts[discipline] || 0) + 1;
     });
     
-    return Object.entries(disciplineCounts).map(([name, value]) => ({ name, value }));
+    // Convert to array and sort by count (descending)
+    return Object.entries(disciplineCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
   }, [tasks]);
 
   // Colors for disciplines
@@ -34,28 +37,35 @@ const TasksByDisciplineChart: React.FC<TasksByDisciplineChartProps> = ({ tasks }
   }, [disciplineData]);
 
   return (
-    <ChartContainer config={chartConfig}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={disciplineData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          >
-            {disciplineData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value) => [`${value} tarefas`, ""]} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-    </ChartContainer>
+    <div className="h-full flex flex-col">
+      <div className="text-center mb-2">
+        <span className="text-2xl font-bold">{disciplineData.length}</span>
+        <p className="text-sm text-muted-foreground">Disciplinas</p>
+      </div>
+      
+      <ChartContainer config={chartConfig}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={disciplineData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              {disciplineData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => [`${value} tarefas`, ""]} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    </div>
   );
 };
 

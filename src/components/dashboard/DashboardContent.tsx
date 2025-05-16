@@ -1,12 +1,15 @@
 
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PCPBreakdown, Task, WeeklyPCPData } from "@/types";
-import PCPBarChart from "../PCPBarChart";
-import PCPChart from "../PCPChart";
 import { useState } from "react";
 import TasksCompletionChart from "./TasksCompletionChart";
 import TasksByDisciplineChart from "./TasksByDisciplineChart";
 import DailyTasksChart from "./DailyTasksChart";
+import TasksProgressChart from "./TasksProgressChart";
+import TopPerformersChart from "./TopPerformersChart";
+import CauseAnalysisChart from "./CauseAnalysisChart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartBar, ChartPie, Calendar } from "lucide-react";
 
 interface DashboardContentProps {
   tasks: Task[];
@@ -21,57 +24,103 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   weeklyPCPData,
   weekStartDate,
 }) => {
-  const [selectedCause, setSelectedCause] = useState<string | null>(null);
-
-  const handleCauseSelect = (cause: string) => {
-    setSelectedCause(prevCause => prevCause === cause ? null : cause);
-  };
-
-  const clearCauseFilter = () => {
-    setSelectedCause(null);
-  };
+  const [dashboardView, setDashboardView] = useState<"general" | "performance" | "daily">("general");
 
   return (
     <div className="space-y-6">
-      {/* PCP Charts */}
-      <PCPChart 
-        pcpData={pcpData} 
-        weeklyData={weeklyPCPData}
-        tasks={tasks}
-        onCauseSelect={handleCauseSelect}
-      />
-      
-      {/* Weekly PCP Bar Chart */}
-      <Card className="p-4">
-        <h2 className="text-lg font-medium mb-2">Evolução Semanal do PCP</h2>
-        <PCPBarChart weeklyData={weeklyPCPData} />
-      </Card>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Tasks Completion Status */}
-        <Card className="p-4">
-          <h2 className="text-lg font-medium mb-2">Status de Conclusão das Tarefas</h2>
-          <div className="h-[300px]">
-            <TasksCompletionChart tasks={tasks} />
+      <Tabs 
+        defaultValue="general" 
+        className="w-full"
+        value={dashboardView}
+        onValueChange={(value) => setDashboardView(value as any)}
+      >
+        <TabsList className="mb-4 w-full justify-start">
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <ChartPie className="h-4 w-4" />
+            <span>Visão Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center gap-2">
+            <ChartBar className="h-4 w-4" />
+            <span>Desempenho</span>
+          </TabsTrigger>
+          <TabsTrigger value="daily" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <span>Análise Diária</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Visão Geral */}
+        <TabsContent value="general" className="space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* PCP Progress Chart */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Progresso do PCP</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <TasksProgressChart weeklyPCPData={weeklyPCPData} />
+              </CardContent>
+            </Card>
+
+            {/* Tasks Completion Status */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Status de Conclusão</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <TasksCompletionChart tasks={tasks} />
+              </CardContent>
+            </Card>
+            
+            {/* Tasks by Discipline */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Tarefas por Disciplina</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <TasksByDisciplineChart tasks={tasks} />
+              </CardContent>
+            </Card>
           </div>
-        </Card>
-        
-        {/* Tasks by Discipline */}
-        <Card className="p-4">
-          <h2 className="text-lg font-medium mb-2">Tarefas por Disciplina</h2>
-          <div className="h-[300px]">
-            <TasksByDisciplineChart tasks={tasks} />
+        </TabsContent>
+
+        {/* Desempenho */}
+        <TabsContent value="performance" className="space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Top Performers */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Top Responsáveis</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[350px]">
+                <TopPerformersChart tasks={tasks} />
+              </CardContent>
+            </Card>
+
+            {/* Cause Analysis */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Análise de Causas</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[350px]">
+                <CauseAnalysisChart tasks={tasks} />
+              </CardContent>
+            </Card>
           </div>
-        </Card>
-        
-        {/* Daily Tasks Distribution */}
-        <Card className="p-4 col-span-1 lg:col-span-2">
-          <h2 className="text-lg font-medium mb-2">Distribuição Diária de Tarefas</h2>
-          <div className="h-[300px]">
-            <DailyTasksChart tasks={tasks} weekStartDate={weekStartDate} />
-          </div>
-        </Card>
-      </div>
+        </TabsContent>
+
+        {/* Análise Diária */}
+        <TabsContent value="daily">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Distribuição Diária de Tarefas</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[400px]">
+              <DailyTasksChart tasks={tasks} weekStartDate={weekStartDate} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -59,30 +59,58 @@ const DailyTasksChart: React.FC<DailyTasksChartProps> = ({ tasks, weekStartDate 
     return data;
   }, [tasks, weekStartDate]);
 
+  // Calculate completion rate per day
+  const completionRates = useMemo(() => {
+    return dailyData.map(day => {
+      const planned = day.planejadas;
+      const completed = day.concluídas;
+      return {
+        day: day.date,
+        rate: planned > 0 ? Math.round((completed / planned) * 100) : 0
+      };
+    });
+  }, [dailyData]);
+
+  // Find the day with the highest completion rate
+  const bestDay = useMemo(() => {
+    return [...completionRates].sort((a, b) => b.rate - a.rate)[0];
+  }, [completionRates]);
+
   return (
-    <ChartContainer 
-      config={{
-        "planejadas": { color: "#3b82f6" },
-        "concluídas": { color: "#10b981" },
-        "não feitas": { color: "#f43f5e" }
-      }}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={dailyData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="planejadas" name="Planejadas" fill="#3b82f6" />
-          <Bar dataKey="concluídas" name="Concluídas" fill="#10b981" />
-          <Bar dataKey="não feitas" name="Não Feitas" fill="#f43f5e" />
-        </BarChart>
-      </ResponsiveContainer>
-    </ChartContainer>
+    <div className="h-full flex flex-col">
+      <div className="text-center mb-2">
+        {bestDay && (
+          <>
+            <span className="text-lg font-medium">Melhor dia: {bestDay.day}</span>
+            <p className="text-sm text-muted-foreground">{bestDay.rate}% de conclusão</p>
+          </>
+        )}
+      </div>
+      
+      <ChartContainer 
+        config={{
+          "planejadas": { color: "#3b82f6" },
+          "concluídas": { color: "#10b981" },
+          "não feitas": { color: "#f43f5e" }
+        }}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={dailyData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="planejadas" name="Planejadas" fill="#3b82f6" />
+            <Bar dataKey="concluídas" name="Concluídas" fill="#10b981" />
+            <Bar dataKey="não feitas" name="Não Feitas" fill="#f43f5e" />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    </div>
   );
 };
 
