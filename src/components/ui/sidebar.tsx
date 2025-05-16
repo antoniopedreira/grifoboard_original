@@ -199,16 +199,16 @@ export function SessionNavBar() {
   );
 }
 
-// Re-export necessary components from shadcn sidebar
-export {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
+// IMPORTANT: Remove these exports that cause the circular dependency
+// export {
+//   Sidebar,
+//   SidebarContent,
+//   SidebarGroup,
+//   SidebarGroupContent,
+//   SidebarGroupLabel,
+//   SidebarMenu,
+//   SidebarMenuButton,
+//   SidebarMenuItem,
+// } from "@/components/ui/sidebar"
 
 export default SessionNavBar;
