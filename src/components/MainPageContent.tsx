@@ -12,13 +12,19 @@ import TasksSection from "@/components/TasksSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardContent from "./dashboard/DashboardContent";
 import { LayoutDashboard, LayoutList } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 const MainPageContent = () => {
   const { toast } = useToast();
+  const location = useLocation();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"tarefas" | "dashboard">("tarefas");
+  
+  // Check if dashboard tab is active from URL query params
+  const queryParams = new URLSearchParams(location.search);
+  const defaultTab = queryParams.get('tab') === 'dashboard' ? 'dashboard' : 'tarefas';
+  const [activeTab, setActiveTab] = useState<"tarefas" | "dashboard">(defaultTab as any);
   
   // Initialize with the current week's Monday
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
