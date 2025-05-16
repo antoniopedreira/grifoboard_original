@@ -72,6 +72,7 @@ function App() {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
+                <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>

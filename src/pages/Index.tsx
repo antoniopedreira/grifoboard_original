@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Obra } from "@/types/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useRegistry } from "@/context/RegistryContext";
@@ -13,7 +13,11 @@ interface IndexProps {
 const Index = ({ onObraSelect }: IndexProps) => {
   const { userSession } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setSelectedObraId } = useRegistry();
+  
+  // Determine if we're in dashboard or tasks view
+  const isDashboard = location.pathname === "/dashboard";
 
   // If there's no user, redirect to auth page
   useEffect(() => {
@@ -43,7 +47,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
     return null; // Rendering will be handled by the useEffect navigation
   }
 
-  return <MainPageContent />;
+  return <MainPageContent initialTab={isDashboard ? "dashboard" : "tasks"} />;
 };
 
 export default Index;
