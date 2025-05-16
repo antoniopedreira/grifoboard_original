@@ -1,4 +1,3 @@
-
 import { DayOfWeek } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -29,7 +28,7 @@ interface EditTaskFormProps {
   onDayToggle: (day: DayOfWeek) => void;
   onDelete: () => void;
   onSave: () => void;
-  isFormValid: () => boolean;
+  isFormValid: boolean | (() => boolean);  // Updated to accept either boolean or function returning boolean
   task: any;
   onWeekDateChange: (date: Date) => void;
 }
@@ -44,6 +43,11 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   onWeekDateChange
 }) => {
   const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
+
+  // Helper function to evaluate isFormValid regardless of type
+  const checkFormValidity = () => {
+    return typeof isFormValid === 'function' ? isFormValid() : isFormValid;
+  };
 
   // Ensure we have valid data to work with
   const safeEditFormData = {
@@ -286,7 +290,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         >
           <Trash2 className="mr-1 h-4 w-4" /> Excluir
         </Button>
-        <Button onClick={onSave} disabled={!isFormValid()}>
+        <Button onClick={onSave} disabled={!checkFormValidity()}>
           Salvar Alterações
         </Button>
       </div>

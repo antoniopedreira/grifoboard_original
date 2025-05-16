@@ -96,7 +96,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         onDayToggle={handleDayToggle}
         onDelete={() => setIsDeleteDialogOpen(true)}
         onSave={() => handleSaveEdit(editFormData)}
-        isFormValid={isFormValid()}
+        isFormValid={isFormValid}
         onWeekDateChange={handleWeekDateChange}
       />
 

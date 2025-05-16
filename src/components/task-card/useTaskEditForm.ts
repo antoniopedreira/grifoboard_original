@@ -46,6 +46,7 @@ export const useTaskEditForm = (task: Task) => {
     }));
   };
 
+  // Changed from returning a boolean to returning a function that returns a boolean
   const isFormValid = () => {
     return (
       editFormData.sector?.trim() !== "" &&

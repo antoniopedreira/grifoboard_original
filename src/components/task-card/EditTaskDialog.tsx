@@ -19,7 +19,7 @@ interface EditTaskDialogProps {
   onDayToggle: (day: DayOfWeek) => void;
   onDelete: () => void;
   onSave: () => void;
-  isFormValid: () => boolean;
+  isFormValid: boolean | (() => boolean);  // Updated to accept either boolean or function returning boolean
   onWeekDateChange: (date: Date) => void;
 }
 
