@@ -7,6 +7,7 @@ import {
   getWeekStartDate,
   getPreviousWeekDates
 } from "@/utils/pcp";
+import { isValid } from "date-fns";
 
 export function useWeeklyData() {
   const [weekStartDate, setWeekStartDate] = useState<Date>(getWeekStartDate(new Date()));
@@ -28,6 +29,11 @@ export function useWeeklyData() {
     for (let i = 3; i >= 0; i--) {
       const weekStart = new Date(currentWeekStart);
       weekStart.setDate(currentWeekStart.getDate() - (7 * i));
+      
+      if (!isValid(weekStart)) {
+        console.warn("Invalid week start date detected, using current date");
+        weekStart.setTime(Date.now());
+      }
       
       const weekKey = weekStart.toISOString().split('T')[0];
       
@@ -52,7 +58,12 @@ export function useWeeklyData() {
       }
       
       // Create a proper Date object for the week start date
-      const validWeekStart = new Date(weekStart);
+      // Ensure it's a valid date or default to current date
+      let validWeekStart = new Date(weekStart);
+      if (!isValid(validWeekStart)) {
+        console.warn("Invalid date detected, using current date");
+        validWeekStart = new Date();
+      }
       
       // Add to results - ensure we have some value for visual testing
       result.push({
