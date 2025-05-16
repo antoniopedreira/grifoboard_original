@@ -31,15 +31,23 @@ export const {
 } = pcpCalculator;
 
 // Re-export modified version of generateWeeklyPCPData with date validation
-export const generateWeeklyPCPData = (currentWeekStart: Date) => {
+export const generateWeeklyPCPData = (
+  currentWeekStart: Date,
+  currentWeekPCP?: number,
+  historicalData?: Map<string, number>
+) => {
   // Validate the input date
   if (!isValid(currentWeekStart)) {
     console.warn("Invalid date passed to generateWeeklyPCPData:", currentWeekStart);
     currentWeekStart = new Date(); // Use current date as fallback
   }
   
-  // Now call the original implementation
-  return pcpCalculator.generateWeeklyPCPData(currentWeekStart);
+  // Now call the original implementation with all parameters
+  return pcpCalculator.generateWeeklyPCPData(
+    currentWeekStart,
+    currentWeekPCP || 0,  // Use 0 as default if not provided
+    historicalData || new Map<string, number>()  // Use empty Map as default if not provided
+  );
 };
 
 // Re-export mock data generator
