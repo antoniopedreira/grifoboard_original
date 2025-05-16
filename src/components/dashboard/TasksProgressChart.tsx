@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { WeeklyPCPData } from "@/types";
 import { ChartContainer } from "@/components/ui/chart";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TasksProgressChartProps {
@@ -13,12 +13,20 @@ interface TasksProgressChartProps {
 const TasksProgressChart: React.FC<TasksProgressChartProps> = ({ weeklyPCPData }) => {
   // Format data for the chart
   const chartData = useMemo(() => {
-    return weeklyPCPData.map(week => ({
-      name: format(new Date(week.date), "dd/MM", { locale: ptBR }),
-      pcp: week.percentage,
-      meta: 80, // Meta fixa de 80% para demonstração
-      isCurrentWeek: week.isCurrentWeek
-    }));
+    return weeklyPCPData.map(week => {
+      // Check if the date is valid before formatting
+      const dateValue = week.date instanceof Date ? week.date : new Date(week.date);
+      const formattedDate = isValid(dateValue) ? 
+        format(dateValue, "dd/MM", { locale: ptBR }) : 
+        `Semana ${Math.floor(Math.random() * 100)}`; // Fallback display name if date is invalid
+      
+      return {
+        name: formattedDate,
+        pcp: week.percentage,
+        meta: 80, // Meta fixa de 80% para demonstração
+        isCurrentWeek: week.isCurrentWeek
+      };
+    });
   }, [weeklyPCPData]);
 
   // Calculate current performance vs target
