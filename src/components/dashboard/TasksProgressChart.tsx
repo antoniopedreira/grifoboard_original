@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { WeeklyPCPData } from "@/types";
 import { ChartContainer } from "@/components/ui/chart";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TasksProgressChartProps {
@@ -20,21 +20,13 @@ interface TasksProgressChartProps {
 }
 
 const TasksProgressChart = ({ weeklyPCPData }: TasksProgressChartProps) => {
-  // Format data for the chart with proper date formatting and safety checks
+  // Format data for the chart with proper date formatting
   const chartData = weeklyPCPData.map(week => {
-    // Create a proper Date object and validate it
-    const weekDate = week.date instanceof Date ? week.date : new Date(week.date);
-    
-    // Use a default date if the date is invalid
-    const validDate = isValid(weekDate) ? weekDate : new Date();
-    
-    // Format the date
-    const formattedDate = format(validDate, "dd/MM", { locale: ptBR });
-    
+    const weekStartDate = new Date(week.date); // Use week.date instead of week.weekStartDate
     return {
       ...week,
-      name: formattedDate,
-      weekLabel: `Semana ${formattedDate}`,
+      name: format(weekStartDate, "dd/MM", { locale: ptBR }),
+      weekLabel: `Semana ${format(weekStartDate, "dd/MM", { locale: ptBR })}`,
     };
   });
 

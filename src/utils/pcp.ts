@@ -8,9 +8,6 @@ import * as textUtils from './pcp/textUtils';
 import * as pcpCalculator from './pcp/pcpCalculator';
 import * as mockDataGenerator from './pcp/mockDataGenerator';
 
-// Import date-fns functions for validation
-import { isValid } from 'date-fns';
-
 // Re-export date utilities
 export const {
   getWeekStartDate,
@@ -38,6 +35,3 @@ export const {
 export const {
   generateMockTasks
 } = mockDataGenerator;
-
-// Export date validation helper
-export { isValid };

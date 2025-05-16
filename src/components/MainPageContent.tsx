@@ -9,7 +9,9 @@ import { useTaskManager } from "@/hooks/useTaskManager";
 import MainHeader from "@/components/MainHeader";
 import PCPSection from "@/components/PCPSection";
 import TasksSection from "@/components/TasksSection";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardContent from "./dashboard/DashboardContent";
+import { LayoutDashboard, LayoutList } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 const MainPageContent = () => {
@@ -19,9 +21,10 @@ const MainPageContent = () => {
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
   
-  // Get the current tab from URL query params
+  // Check if dashboard tab is active from URL query params
   const queryParams = new URLSearchParams(location.search);
-  const activeTab = queryParams.get('tab') === 'tarefas' ? 'tarefas' : 'dashboard';
+  const defaultTab = queryParams.get('tab') === 'dashboard' ? 'dashboard' : 'tarefas';
+  const [activeTab, setActiveTab] = useState<"tarefas" | "dashboard">(defaultTab as any);
   
   // Initialize with the current week's Monday
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
@@ -95,39 +98,55 @@ const MainPageContent = () => {
         onNextWeek={navigateToNextWeek}
       />
 
-      {/* Content based on active tab */}
-      <div className="mt-6">
-        {activeTab === 'tarefas' ? (
-          <div className="space-y-6">
-            {/* PCP Section com gráficos e filtro ativo */}
-            <PCPSection 
-              pcpData={pcpData}
-              weeklyPCPData={weeklyPCPData}
-              tasks={tasks}
-              selectedCause={selectedCause}
-              onCauseSelect={handleCauseSelect}
-              onClearFilter={clearCauseFilter}
-            />
-            
-            {/* Tasks Section com lista de tarefas */}
-            <TasksSection 
-              tasks={tasks}
-              isLoading={isLoading}
-              onTaskUpdate={handleTaskUpdate}
-              onTaskDelete={handleTaskDelete}
-              onTaskDuplicate={handleTaskDuplicate}
-              selectedCause={selectedCause}
-            />
-          </div>
-        ) : (
+      {/* Tabs for navigation */}
+      <Tabs 
+        defaultValue="tarefas" 
+        className="mt-6"
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "tarefas" | "dashboard")}
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger value="tarefas" className="flex items-center gap-2">
+            <LayoutList className="h-4 w-4" />
+            <span>Tarefas</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="tarefas" className="space-y-6">
+          {/* PCP Section com gráficos e filtro ativo */}
+          <PCPSection 
+            pcpData={pcpData}
+            weeklyPCPData={weeklyPCPData}
+            tasks={tasks}
+            selectedCause={selectedCause}
+            onCauseSelect={handleCauseSelect}
+            onClearFilter={clearCauseFilter}
+          />
+          
+          {/* Tasks Section com lista de tarefas */}
+          <TasksSection 
+            tasks={tasks}
+            isLoading={isLoading}
+            onTaskUpdate={handleTaskUpdate}
+            onTaskDelete={handleTaskDelete}
+            onTaskDuplicate={handleTaskDuplicate}
+            selectedCause={selectedCause}
+          />
+        </TabsContent>
+        
+        <TabsContent value="dashboard">
           <DashboardContent 
             tasks={tasks}
             pcpData={pcpData}
             weeklyPCPData={weeklyPCPData}
             weekStartDate={weekStartDate}
           />
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
       
       {/* Dialogs */}
       <TaskForm 
