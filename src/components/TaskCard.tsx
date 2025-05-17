@@ -1,16 +1,15 @@
 
-import React from "react";
-import { Task, DayOfWeek, TaskStatus } from "@/types";
-import { motion } from "framer-motion";
-import { useTaskStatus } from "@/components/task-card/useTaskStatus";
-import { useTaskActions } from "@/components/task-card/useTaskActions";
-import TaskHeader from "@/components/task-card/TaskHeader";
-import TaskStatusDisplay from "@/components/task/TaskStatusDisplay";
-import TaskFooter from "@/components/task-card/TaskFooter";
-import EditTaskDialog from "@/components/task-card/EditTaskDialog";
-import DeleteConfirmDialog from "@/components/task-card/DeleteConfirmDialog";
-import { useTaskEditForm } from "@/components/task-card/useTaskEditForm";
-import { GlassCard } from "./ui/glass-card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Task } from "@/types";
+import TaskDetails from "./task/TaskDetails";
+import TaskStatusDisplay from "./task/TaskStatusDisplay";
+import TaskHeader from "./task-card/TaskHeader";
+import TaskFooter from "./task-card/TaskFooter";
+import EditTaskDialog from "./task-card/EditTaskDialog";
+import DeleteConfirmDialog from "./task-card/DeleteConfirmDialog";
+import { useTaskStatus } from "./task-card/useTaskStatus";
+import { useTaskActions } from "./task-card/useTaskActions";
+import { useTaskEditForm } from "./task-card/useTaskEditForm";
 
 interface TaskCardProps {
   task: Task;
@@ -19,87 +18,76 @@ interface TaskCardProps {
   onTaskDuplicate?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({
-  task,
-  onTaskUpdate,
+const TaskCard: React.FC<TaskCardProps> = ({ 
+  task, 
+  onTaskUpdate, 
   onTaskDelete,
-  onTaskDuplicate,
+  onTaskDuplicate 
 }) => {
-  // Custom hooks for task operations
-  const { handleStatusChange, handleCompletionStatusChange, handleCauseSelect } = useTaskStatus(task, onTaskUpdate);
+  // Use custom hooks to manage task state and actions
+  const { 
+    handleStatusChange, 
+    handleCompletionStatusChange, 
+    handleCauseSelect 
+  } = useTaskStatus(task, onTaskUpdate);
   
-  const {
-    isEditDialogOpen,
-    setIsEditDialogOpen,
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    handleEditClick,
-    handleSaveEdit,
-    handleDelete,
+  const { 
+    isEditDialogOpen, 
+    setIsEditDialogOpen, 
+    isDeleteDialogOpen, 
+    setIsDeleteDialogOpen, 
+    handleEditClick, 
+    handleSaveEdit, 
+    handleDelete 
   } = useTaskActions(task, onTaskUpdate, onTaskDelete);
   
-  const {
-    editFormData,
-    handleDayToggle,
-    handleEditFormChange,
-    handleWeekDateChange,
-    isFormValid,
+  const { 
+    editFormData, 
+    handleDayToggle, 
+    handleEditFormChange, 
+    handleWeekDateChange, 
+    isFormValid 
   } = useTaskEditForm(task);
-  
-  // Handle duplicate click
-  const handleDuplicateClick = () => {
-    if (onTaskDuplicate) {
-      onTaskDuplicate(task);
-    }
-  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-      className="h-full"
-    >
-      <GlassCard 
-        className={`flex flex-col h-full ${
-          task.isFullyCompleted 
-            ? "shadow-[0_0_15px_rgba(139,112,50,0.2)]" 
-            : ""
-        }`}
-      >
-        <div className="flex-1">
+    <>
+      <Card className="w-full bg-white shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="pb-2 pt-4 px-4">
           <TaskHeader 
             task={task} 
             onCompletionStatusChange={handleCompletionStatusChange} 
           />
-          
-          <div className="mt-3 text-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">Setor: {task.sector}</span>
-              <span className="text-xs text-muted-foreground">Equipe: {task.team}</span>
-            </div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs text-muted-foreground">Resp: {task.responsible}</span>
-              <span className="text-xs text-muted-foreground">{task.discipline}</span>
-            </div>
-          </div>
-          
-          <TaskStatusDisplay task={task} onStatusChange={handleStatusChange} />
-        </div>
+        </CardHeader>
         
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <TaskFooter
+        <CardContent className="px-4 pb-2">
+          <TaskDetails 
+            sector={task.sector}
+            discipline={task.discipline}
+            team={task.team}
+            responsible={task.responsible}
+            executor={task.executor || "Não definido"}
+            cable={task.cable || "Não definido"}
+          />
+          
+          <TaskStatusDisplay 
+            task={task}
+            onStatusChange={handleStatusChange}
+          />
+        </CardContent>
+        
+        <CardFooter className="px-4 pt-2 pb-4">
+          <TaskFooter 
             isCompleted={task.isFullyCompleted}
-            currentCause={task.causeIfNotDone || ""}
+            currentCause={task.causeIfNotDone}
             onCauseSelect={handleCauseSelect}
             onEditClick={handleEditClick}
-            onDuplicateClick={handleDuplicateClick}
+            onDuplicateClick={() => onTaskDuplicate?.(task)}
           />
-        </div>
-      </GlassCard>
-      
-      <EditTaskDialog 
+        </CardFooter>
+      </Card>
+
+      {/* Edit Dialog */}
+      <EditTaskDialog
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         task={task}
@@ -111,13 +99,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
         isFormValid={isFormValid}
         onWeekDateChange={handleWeekDateChange}
       />
-      
+
+      {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
       />
-    </motion.div>
+    </>
   );
 };
 
