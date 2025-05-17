@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CableChartProps {
   weekStartDate: Date;
@@ -88,17 +89,31 @@ const CableChart: React.FC<CableChartProps> = ({ weekStartDate }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Carregando dados...</p>
-      </div>
+      <Card className="w-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium">Tarefas por Cabo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500">Carregando dados...</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (chartData.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Nenhum dado de cabo disponível para esta semana</p>
-      </div>
+      <Card className="w-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium">Tarefas por Cabo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500">Nenhum dado de cabo disponível para esta semana</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -109,40 +124,47 @@ const CableChart: React.FC<CableChartProps> = ({ weekStartDate }) => {
   ];
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart
-        data={chartData}
-        layout="vertical"
-        margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-        <XAxis 
-          type="number"
-          domain={[0, 100]}
-          tickFormatter={(value) => `${value}%`}
-          tick={{ fontSize: 12 }}
-        />
-        <YAxis 
-          type="category" 
-          dataKey="name" 
-          width={70}
-          tick={{ fontSize: 12 }}
-        />
-        <Tooltip 
-          formatter={(value: number) => [`${value.toFixed(1)}%`, 'PCP']}
-          labelFormatter={(name) => `Cabo: ${name}`}
-        />
-        <Bar 
-          dataKey="value" 
-          name="PCP"
-          radius={[0, 4, 4, 0]}
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-medium">Tarefas por Cabo</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+            <XAxis 
+              type="number"
+              domain={[0, 100]}
+              tickFormatter={(value) => `${value}%`}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              type="category" 
+              dataKey="name" 
+              width={70}
+              tick={{ fontSize: 12 }}
+            />
+            <Tooltip 
+              formatter={(value: number) => [`${value.toFixed(1)}%`, 'PCP']}
+              labelFormatter={(name) => `Cabo: ${name}`}
+            />
+            <Bar 
+              dataKey="value" 
+              name="PCP"
+              radius={[0, 4, 4, 0]}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
   );
 };
 

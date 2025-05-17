@@ -6,11 +6,11 @@ import WeekNavigation from "@/components/WeekNavigation";
 import { getWeekStartDate } from "@/utils/pcp";
 import { useTaskManager } from "@/hooks/useTaskManager";
 import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
-import TaskDisciplineChart from "@/components/dashboard/TaskDisciplineChart";
-import PerformanceTrendChart from "@/components/dashboard/PerformanceTrendChart";
 import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
+import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
+import CableChart from "@/components/dashboard/CableChart";
 
 const DashboardContent = () => {
   const {
@@ -100,26 +100,24 @@ const DashboardContent = () => {
       
       {/* Dashboard Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Executor Task Distribution - New chart */}
+        {/* Executor Task Distribution */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
           <ExecutorChart weekStartDate={weekStartDate} />
         </div>
         
-        {/* Team Chart - New chart */}
+        {/* Team Chart */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
           <TeamChart weekStartDate={weekStartDate} />
         </div>
         
-        {/* Tasks by Discipline */}
+        {/* Responsible Chart - NEW */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Tarefas por Disciplina</h2>
-          <TaskDisciplineChart tasks={tasks} />
+          <ResponsibleChart weekStartDate={weekStartDate} />
         </div>
         
-        {/* Performance Trend */}
+        {/* Cable Chart - NEW */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Tendência de Desempenho</h2>
-          <PerformanceTrendChart weeklyPCPData={weeklyPCPData} />
+          <CableChart weekStartDate={weekStartDate} />
         </div>
       </div>
     </div>;
