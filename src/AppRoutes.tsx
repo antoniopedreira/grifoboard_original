@@ -7,9 +7,17 @@ import NotFound from "./pages/NotFound";
 import { useAuth } from "./context/AuthContext";
 import { SidebarTrigger } from "./components/ui/sidebar";
 import CustomSidebar from "./components/CustomSidebar";
+import { useState } from "react";
+import { Obra } from "./types/supabase";
 
 const AppRoutes = () => {
   const { session } = useAuth();
+  const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
+
+  // Handler for obra selection
+  const handleObraSelect = (obra: Obra | null) => {
+    setSelectedObra(obra);
+  };
 
   // Protected route component
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -43,7 +51,7 @@ const AppRoutes = () => {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Index />
+            <Index onObraSelect={handleObraSelect} />
           </ProtectedRoute>
         }
       />
@@ -51,7 +59,7 @@ const AppRoutes = () => {
         path="/tarefas"
         element={
           <ProtectedRoute>
-            <Index />
+            <Index onObraSelect={handleObraSelect} />
           </ProtectedRoute>
         }
       />
@@ -59,7 +67,7 @@ const AppRoutes = () => {
         path="/obras"
         element={
           <ProtectedRoute>
-            <Obras />
+            <Obras onObraSelect={handleObraSelect} />
           </ProtectedRoute>
         }
       />

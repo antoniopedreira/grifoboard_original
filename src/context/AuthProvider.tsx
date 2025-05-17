@@ -1,24 +1,32 @@
 
 import { useEffect, useState } from 'react';
-import { AuthContext } from './AuthContext';
+import { AuthContext, UserSession } from './AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Session, User } from '@supabase/supabase-js';
+import { Obra } from '@/types/supabase';
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-export interface UserSession {
-  user?: User;
-  obraAtiva?: { id: string; nome_obra: string } | null;
-}
-
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [userSession, setUserSession] = useState<UserSession | null>(null);
+  const [userSession, setUserSession] = useState<UserSession | null>({
+    user: null,
+    obraAtiva: null
+  });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Function to map Supabase User to our UserSession format
+  const mapUser = (user: User | null): UserSession['user'] => {
+    if (!user) return null;
+    return {
+      id: user.id,
+      email: user.email || '',
+    };
+  };
 
   useEffect(() => {
     // Get initial session
@@ -26,7 +34,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSession(session);
       if (session?.user) {
         setUserSession({
-          user: session.user,
+          user: mapUser(session.user),
           obraAtiva: null
         });
       }
@@ -39,18 +47,36 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session?.user) {
-        setUserSession({
-          user: session.user,
-          obraAtiva: userSession?.obraAtiva || null
-        });
+        setUserSession(prev => ({
+          user: mapUser(session.user),
+          obraAtiva: prev?.obraAtiva || null
+        }));
       } else {
-        setUserSession(null);
+        setUserSession({
+          user: null,
+          obraAtiva: null
+        });
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Recover active obra from localStorage
+  useEffect(() => {
+    if (userSession?.user) {
+      const savedObra = localStorage.getItem(`obraAtiva_${userSession.user.id}`);
+      if (savedObra) {
+        try {
+          const obra = JSON.parse(savedObra);
+          setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
+        } catch (e) {
+          localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
+        }
+      }
+    }
+  }, [userSession?.user]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -71,6 +97,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: error.message || 'Verifique suas credenciais e tente novamente',
         variant: 'destructive'
       });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -95,6 +122,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: error.message || 'Ocorreu um erro ao criar sua conta',
         variant: 'destructive'
       });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -104,7 +132,10 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
-      setUserSession(null);
+      setUserSession({
+        user: null,
+        obraAtiva: null
+      });
       toast({
         title: 'Logout realizado',
         description: 'Você saiu da sua conta com sucesso'
@@ -120,13 +151,20 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const setActiveObra = (obra: { id: string; nome_obra: string } | null) => {
+  const setObraAtiva = (obra: Obra | null) => {
     if (userSession) {
       const updatedSession = {
         ...userSession,
         obraAtiva: obra,
       };
       setUserSession(updatedSession);
+      
+      // Save to localStorage
+      if (userSession.user && obra) {
+        localStorage.setItem(`obraAtiva_${userSession.user.id}`, JSON.stringify(obra));
+      } else if (userSession.user) {
+        localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
+      }
       
       if (obra) {
         toast({
@@ -138,13 +176,14 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const value = {
-    session,
-    userSession,
-    loading,
+    userSession: userSession || { user: null, obraAtiva: null },
+    session: userSession || { user: null, obraAtiva: null },
+    isLoading: loading,
     signIn,
     signUp,
     signOut,
-    setActiveObra,
+    setObraAtiva,
+    setUserSession: (session: UserSession | null) => setUserSession(session),
   };
 
   return (
