@@ -29,7 +29,8 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCP
       try {
         dateStr = format(parseISO(item.date), "dd/MM", { locale: ptBR });
       } catch (e) {
-        dateStr = item.date.substring(0, 10); // Fallback to raw string
+        // Use first 10 characters if it's a string but not a valid date
+        dateStr = item.date.slice(0, 10);
       }
     }
     // Handle Date objects
