@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -7,9 +8,10 @@ import { useTaskManager } from "@/hooks/useTaskManager";
 import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
 import TaskDisciplineChart from "@/components/dashboard/TaskDisciplineChart";
 import PerformanceTrendChart from "@/components/dashboard/PerformanceTrendChart";
-import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
-import CableChart from "@/components/dashboard/CableChart";
+import ExecutorChart from "@/components/dashboard/ExecutorChart";
+import TeamChart from "@/components/dashboard/TeamChart";
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
+
 const DashboardContent = () => {
   const {
     toast
@@ -98,16 +100,14 @@ const DashboardContent = () => {
       
       {/* Dashboard Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Responsible Task Distribution - Updated to show week-specific data */}
+        {/* Executor Task Distribution - New chart */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Ranking de PCP por Reponsável</h2>
-          <ResponsibleChart weekStartDate={weekStartDate} />
+          <ExecutorChart weekStartDate={weekStartDate} />
         </div>
         
-        {/* Cable Chart - Added to show week-specific data */}
+        {/* Team Chart - New chart */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Ranking de PCP por Reponsável</h2>
-          <CableChart weekStartDate={weekStartDate} />
+          <TeamChart weekStartDate={weekStartDate} />
         </div>
         
         {/* Tasks by Discipline */}
