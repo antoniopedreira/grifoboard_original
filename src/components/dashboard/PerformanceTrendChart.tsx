@@ -29,8 +29,13 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCP
       try {
         dateStr = format(parseISO(item.date), "dd/MM", { locale: ptBR });
       } catch (e) {
-        // Make sure we're dealing with a string before using slice
-        dateStr = typeof item.date === 'string' ? item.date.slice(0, 10) : "Data inválida";
+        // Safe fallback when date parsing fails
+        if (typeof item.date === 'string') {
+          const dateValue = item.date.toString(); // Explicit conversion
+          dateStr = dateValue.substring(0, 10); // Now substring is called on a string
+        } else {
+          dateStr = "Data inválida";
+        }
       }
     }
     // Handle Date objects
