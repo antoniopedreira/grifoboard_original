@@ -106,7 +106,7 @@ const DashboardContent = () => {
         
         {/* Cable Chart - Added to show week-specific data */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Tarefas por Cabo</h2>
+          <h2 className="text-lg font-medium mb-4">Ranking de PCP por Reponsável</h2>
           <CableChart weekStartDate={weekStartDate} />
         </div>
         
