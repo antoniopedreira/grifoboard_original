@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import { WeeklyPCPData } from "@/types";
 import { 
   BarChart, 
   Bar, 
@@ -17,37 +16,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
 interface PerformanceTrendChartProps {
-  weeklyPCPData?: WeeklyPCPData[];
+  weeklyPCPData?: any[];
 }
 
-const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCPData }) => {
+const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { userSession } = useAuth();
   const obraId = userSession?.obraAtiva?.id;
 
   useEffect(() => {
-    if (weeklyPCPData && weeklyPCPData.length > 0) {
-      // Se houver dados semanais de PCP, use-os
-      const formattedData = weeklyPCPData.map((item) => {
-        const formattedDate = item.date && isValid(item.date) 
-          ? format(item.date, "dd/MM", { locale: ptBR }) 
-          : `Semana ${item.week}`;
-          
-        return {
-          name: formattedDate,
-          value: item.percentage,
-          isCurrentWeek: item.isCurrentWeek
-        };
-      });
-      
-      setChartData(formattedData);
-      setIsLoading(false);
-    } else {
-      // Caso contrário, busque dados da tabela resumo_execucao_semanal
-      fetchResumoExecucaoData();
-    }
-  }, [weeklyPCPData, obraId]);
+    fetchResumoExecucaoData();
+  }, [obraId]);
 
   const fetchResumoExecucaoData = async () => {
     if (!obraId) {
@@ -139,12 +119,12 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCP
           tickLine={false}
         />
         <Tooltip 
-          formatter={(value) => [`${value}%`, 'PCP']}
+          formatter={(value) => [`${value}%`, 'Progresso']}
           labelFormatter={(name) => `Semana: ${name}`}
         />
         <Bar 
           dataKey="value" 
-          name="PCP Semanal" 
+          name="Progresso Semanal" 
           radius={[4, 4, 0, 0]}
         >
           {chartData.map((entry, index) => (
