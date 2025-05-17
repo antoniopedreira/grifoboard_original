@@ -171,7 +171,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      resumo_execucao_semanal: {
+        Row: {
+          obra_id: string | null
+          percentual_concluido: number | null
+          semana: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

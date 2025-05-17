@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { WeeklyPCPData } from "@/types";
 import { 
   BarChart, 
@@ -13,25 +13,104 @@ import {
 } from "recharts";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 interface PerformanceTrendChartProps {
-  weeklyPCPData: WeeklyPCPData[];
+  weeklyPCPData?: WeeklyPCPData[];
 }
 
 const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCPData }) => {
-  // Transforme os dados para o formato esperado pelo gráfico
-  const chartData = weeklyPCPData.map((item) => {
-    // Ensure date is valid before formatting
-    const formattedDate = item.date && isValid(item.date) 
-      ? format(item.date, "dd/MM", { locale: ptBR }) 
-      : `Semana ${item.week}`;
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { userSession } = useAuth();
+  const obraId = userSession?.obraAtiva?.id;
+
+  useEffect(() => {
+    if (weeklyPCPData && weeklyPCPData.length > 0) {
+      // Se houver dados semanais de PCP, use-os
+      const formattedData = weeklyPCPData.map((item) => {
+        const formattedDate = item.date && isValid(item.date) 
+          ? format(item.date, "dd/MM", { locale: ptBR }) 
+          : `Semana ${item.week}`;
+          
+        return {
+          name: formattedDate,
+          value: item.percentage,
+          isCurrentWeek: item.isCurrentWeek
+        };
+      });
       
-    return {
-      name: formattedDate,
-      value: item.percentage,
-      isCurrentWeek: item.isCurrentWeek
-    };
-  });
+      setChartData(formattedData);
+      setIsLoading(false);
+    } else {
+      // Caso contrário, busque dados da tabela resumo_execucao_semanal
+      fetchResumoExecucaoData();
+    }
+  }, [weeklyPCPData, obraId]);
+
+  const fetchResumoExecucaoData = async () => {
+    if (!obraId) {
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('resumo_execucao_semanal')
+        .select('semana, percentual_concluido')
+        .eq('obra_id', obraId)
+        .order('semana', { ascending: true });
+      
+      if (error) {
+        console.error("Erro ao buscar dados de execução:", error);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const formattedData = data.map((item, index) => {
+          const date = item.semana ? new Date(item.semana) : null;
+          const formattedDate = date && isValid(date)
+            ? format(date, "dd/MM", { locale: ptBR })
+            : `Semana ${index + 1}`;
+            
+          return {
+            name: formattedDate,
+            value: item.percentual_concluido || 0,
+            isCurrentWeek: index === data.length - 1 // Assume que o último é a semana atual
+          };
+        });
+        
+        setChartData(formattedData);
+      } else {
+        setChartData([]);
+      }
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Erro ao processar dados de execução:", err);
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">Carregando dados...</p>
+      </div>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">Nenhum dado disponível</p>
+      </div>
+    );
+  }
 
   // Cores para barras normais e barras destacadas (semana atual)
   const barColors = {
@@ -61,7 +140,7 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCP
         />
         <Tooltip 
           formatter={(value) => [`${value}%`, 'PCP']}
-          labelFormatter={(name) => `Semana ${name}`}
+          labelFormatter={(name) => `Semana: ${name}`}
         />
         <Bar 
           dataKey="value" 
