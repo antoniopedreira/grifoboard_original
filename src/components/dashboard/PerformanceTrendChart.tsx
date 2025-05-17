@@ -19,17 +19,24 @@ interface PerformanceTrendChartProps {
 }
 
 const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCPData }) => {
-  // Transforme os dados para o formato esperado pelo gráfico
-  const chartData = weeklyPCPData.map((item) => ({
-    name: format(item.date, "dd/MM", { locale: ptBR }), // Formato dia/mês
-    value: item.percentage,
-    isCurrentWeek: item.isCurrentWeek
-  }));
+  // Transform data safely for the chart
+  const chartData = weeklyPCPData.map((item) => {
+    // Check if date is valid before formatting
+    const dateStr = item.date instanceof Date && !isNaN(item.date.getTime()) 
+      ? format(item.date, "dd/MM", { locale: ptBR })
+      : `Week ${item.week || ""}`;
 
-  // Cores para barras normais e barras destacadas (semana atual)
+    return {
+      name: dateStr,
+      value: item.percentage,
+      isCurrentWeek: item.isCurrentWeek
+    };
+  });
+
+  // Colors for bars
   const barColors = {
-    normal: "#38bdf8", // Azul claro
-    current: "#0284c7"  // Azul escuro para a semana atual
+    normal: "#38bdf8", // Light blue
+    current: "#0284c7"  // Dark blue for current week
   };
 
   return (
