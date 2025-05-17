@@ -24,8 +24,8 @@ export function useWeeklyData() {
   const generateWeeklyPCPData = (currentWeekStart: Date): WeeklyPCPData[] => {
     const result: WeeklyPCPData[] = [];
     
-    // Add data for 3 previous weeks and current week
-    for (let i = 3; i >= 0; i--) {
+    // Add data for 4 previous weeks
+    for (let i = 4; i >= 0; i--) {
       const weekStart = new Date(currentWeekStart);
       weekStart.setDate(currentWeekStart.getDate() - (7 * i));
       
@@ -98,7 +98,7 @@ export function useWeeklyData() {
     // Store the current week's PCP in historical data
     historicalDataRef.current.set(weekKey, currentWeekPCP);
     
-    // Generate weekly PCP data with current week and 3 previous
+    // Generate weekly PCP data with current week and previous weeks
     setWeeklyPCPData(generateWeeklyPCPData(weekStartDate));
   }, [weekStartDate]);
   

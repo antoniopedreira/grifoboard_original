@@ -9,6 +9,7 @@ import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
 import TaskDisciplineChart from "@/components/dashboard/TaskDisciplineChart";
 import PerformanceTrendChart from "@/components/dashboard/PerformanceTrendChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
+import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 
 const DashboardContent = () => {
   const { toast } = useToast();
@@ -99,9 +100,15 @@ const DashboardContent = () => {
         </div>
       </div>
       
+      {/* Progresso Semanal - Gráfico de barras com PCP por semana */}
+      <div className="border rounded-lg p-4 bg-white shadow-sm mt-6">
+        <h2 className="text-lg font-medium mb-4">Progresso Semanal</h2>
+        <PCPWeeklyChart weeklyData={weeklyPCPData} />
+      </div>
+      
       {/* Dashboard Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Responsible Task Distribution - New chart replacing Task Status */}
+        {/* Responsible Task Distribution */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
           <h2 className="text-lg font-medium mb-4">Tarefas por Responsável</h2>
           <ResponsibleChart tasks={tasks} />
@@ -109,7 +116,7 @@ const DashboardContent = () => {
         
         {/* Task Progress */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Progresso Semanal</h2>
+          <h2 className="text-lg font-medium mb-4">Progresso de Tarefas</h2>
           <TaskProgressChart pcpData={pcpData} />
         </div>
         

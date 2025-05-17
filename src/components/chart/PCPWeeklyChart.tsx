@@ -14,13 +14,13 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-interface PerformanceTrendChartProps {
-  weeklyPCPData: WeeklyPCPData[];
+interface PCPWeeklyChartProps {
+  weeklyData: WeeklyPCPData[];
 }
 
-const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCPData }) => {
+const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ weeklyData }) => {
   // Transforme os dados para o formato esperado pelo gráfico
-  const chartData = weeklyPCPData.map((item) => ({
+  const chartData = weeklyData.map((item) => ({
     name: format(item.date, "dd/MM", { locale: ptBR }), // Formato dia/mês
     value: item.percentage,
     isCurrentWeek: item.isCurrentWeek
@@ -54,7 +54,7 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCP
         />
         <Tooltip 
           formatter={(value) => [`${value}%`, 'PCP']}
-          labelFormatter={(name) => `Semana ${name}`}
+          labelFormatter={(name) => `Semana: ${name}`}
         />
         <Bar 
           dataKey="value" 
@@ -75,4 +75,4 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCP
   );
 };
 
-export default PerformanceTrendChart;
+export default PCPWeeklyChart;
