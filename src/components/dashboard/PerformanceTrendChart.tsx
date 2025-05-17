@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface PerformanceTrendChartProps {
@@ -19,46 +19,17 @@ interface PerformanceTrendChartProps {
 }
 
 const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCPData }) => {
-  // Transform data safely for the chart
-  const chartData = weeklyPCPData.map((item) => {
-    // Check if date is valid before formatting
-    let dateStr = "Semana";
-    
-    // Handle string dates (from Supabase)
-    if (typeof item.date === 'string') {
-      try {
-        dateStr = format(parseISO(item.date), "dd/MM", { locale: ptBR });
-      } catch (e) {
-        // Safe fallback when date parsing fails
-        if (typeof item.date === 'string') {
-          // Ensure we have a string and use a safe substring operation
-          const dateValue = String(item.date);
-          dateStr = dateValue.substring(0, 10);
-        } else {
-          dateStr = "Data inválida";
-        }
-      }
-    }
-    // Handle Date objects
-    else if (item.date instanceof Date && !isNaN(item.date.getTime())) {
-      dateStr = format(item.date, "dd/MM", { locale: ptBR });
-    }
-    // Use week as fallback
-    else if (item.week) {
-      dateStr = `Sem ${item.week}`;
-    }
+  // Transforme os dados para o formato esperado pelo gráfico
+  const chartData = weeklyPCPData.map((item) => ({
+    name: format(item.date, "dd/MM", { locale: ptBR }), // Formato dia/mês
+    value: item.percentage,
+    isCurrentWeek: item.isCurrentWeek
+  }));
 
-    return {
-      name: dateStr,
-      value: item.percentage,
-      isCurrentWeek: item.isCurrentWeek
-    };
-  });
-
-  // Colors for bars
+  // Cores para barras normais e barras destacadas (semana atual)
   const barColors = {
-    normal: "#38bdf8", // Light blue
-    current: "#0284c7"  // Dark blue for current week
+    normal: "#38bdf8", // Azul claro
+    current: "#0284c7"  // Azul escuro para a semana atual
   };
 
   return (
