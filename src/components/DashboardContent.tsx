@@ -9,6 +9,7 @@ import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
 import TaskDisciplineChart from "@/components/dashboard/TaskDisciplineChart";
 import PerformanceTrendChart from "@/components/dashboard/PerformanceTrendChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
+import CableChart from "@/components/dashboard/CableChart";
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 
 const DashboardContent = () => {
@@ -108,16 +109,16 @@ const DashboardContent = () => {
       
       {/* Dashboard Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Responsible Task Distribution */}
+        {/* Responsible Task Distribution - Updated to show week-specific data */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
           <h2 className="text-lg font-medium mb-4">Tarefas por Responsável</h2>
-          <ResponsibleChart tasks={tasks} />
+          <ResponsibleChart weekStartDate={weekStartDate} />
         </div>
         
-        {/* Task Progress */}
+        {/* Cable Chart - Added to show week-specific data */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Progresso de Tarefas</h2>
-          <TaskProgressChart pcpData={pcpData} />
+          <h2 className="text-lg font-medium mb-4">Tarefas por Cabo</h2>
+          <CableChart weekStartDate={weekStartDate} />
         </div>
         
         {/* Tasks by Discipline */}

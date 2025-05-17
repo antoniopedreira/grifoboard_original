@@ -7,9 +7,10 @@ import { useAuth } from "@/context/AuthContext";
 
 interface ResponsibleChartProps {
   tasks?: Task[];
+  weekStartDate: Date; // Add weekStartDate prop
 }
 
-const ResponsibleChart: React.FC<ResponsibleChartProps> = () => {
+const ResponsibleChart: React.FC<ResponsibleChartProps> = ({ weekStartDate }) => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { userSession } = useAuth();
@@ -17,7 +18,7 @@ const ResponsibleChart: React.FC<ResponsibleChartProps> = () => {
   
   useEffect(() => {
     fetchResponsiblePCPData();
-  }, [obraId]);
+  }, [obraId, weekStartDate]); // Add weekStartDate as dependency
   
   const fetchResponsiblePCPData = async () => {
     if (!obraId) {
@@ -28,11 +29,15 @@ const ResponsibleChart: React.FC<ResponsibleChartProps> = () => {
     try {
       setIsLoading(true);
       
-      // Buscar todas as tarefas da obra
+      // Format date to YYYY-MM-DD for database query
+      const formattedDate = weekStartDate.toISOString().split('T')[0];
+      
+      // Buscar tarefas da obra para a semana selecionada
       const { data: tarefas, error: tarefasError } = await supabase
         .from('tarefas')
         .select('responsavel, percentual_executado')
-        .eq('obra_id', obraId);
+        .eq('obra_id', obraId)
+        .eq('semana', formattedDate); // Filter by selected week
       
       if (tarefasError) {
         console.error("Erro ao buscar tarefas:", tarefasError);
@@ -93,7 +98,7 @@ const ResponsibleChart: React.FC<ResponsibleChartProps> = () => {
   if (chartData.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Nenhum dado disponível</p>
+        <p className="text-gray-500">Nenhum dado disponível para esta semana</p>
       </div>
     );
   }

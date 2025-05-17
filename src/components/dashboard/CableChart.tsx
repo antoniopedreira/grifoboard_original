@@ -4,7 +4,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
-const CableChart: React.FC = () => {
+interface CableChartProps {
+  weekStartDate: Date;
+}
+
+const CableChart: React.FC<CableChartProps> = ({ weekStartDate }) => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { userSession } = useAuth();
@@ -12,7 +16,7 @@ const CableChart: React.FC = () => {
   
   useEffect(() => {
     fetchCablePCPData();
-  }, [obraId]);
+  }, [obraId, weekStartDate]);
   
   const fetchCablePCPData = async () => {
     if (!obraId) {
@@ -23,11 +27,15 @@ const CableChart: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Buscar todas as tarefas da obra com cabo e percentual executado
+      // Format date to YYYY-MM-DD for database query
+      const formattedDate = weekStartDate.toISOString().split('T')[0];
+      
+      // Buscar todas as tarefas da obra com cabo e percentual executado para a semana selecionada
       const { data: tarefas, error: tarefasError } = await supabase
         .from('tarefas')
         .select('cabo, percentual_executado')
         .eq('obra_id', obraId)
+        .eq('semana', formattedDate) // Filter by selected week
         .not('cabo', 'is', null); // Apenas tarefas com cabo definido
       
       if (tarefasError) {
@@ -89,7 +97,7 @@ const CableChart: React.FC = () => {
   if (chartData.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Nenhum dado de cabo disponível</p>
+        <p className="text-gray-500">Nenhum dado de cabo disponível para esta semana</p>
       </div>
     );
   }
