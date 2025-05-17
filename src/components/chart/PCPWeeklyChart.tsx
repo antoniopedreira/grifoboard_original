@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface PCPWeeklyChartProps {
@@ -20,11 +20,18 @@ interface PCPWeeklyChartProps {
 
 const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ weeklyData }) => {
   // Transforme os dados para o formato esperado pelo gráfico
-  const chartData = weeklyData.map((item) => ({
-    name: format(item.date, "dd/MM", { locale: ptBR }), // Formato dia/mês
-    value: item.percentage,
-    isCurrentWeek: item.isCurrentWeek
-  }));
+  const chartData = weeklyData.map((item) => {
+    // Ensure date is valid before formatting
+    const formattedDate = item.date && isValid(item.date) 
+      ? format(item.date, "dd/MM", { locale: ptBR }) 
+      : `Semana ${item.week}`;
+      
+    return {
+      name: formattedDate,
+      value: item.percentage,
+      isCurrentWeek: item.isCurrentWeek
+    };
+  });
 
   // Cores para barras normais e barras destacadas (semana atual)
   const barColors = {
