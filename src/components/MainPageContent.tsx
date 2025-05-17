@@ -9,6 +9,7 @@ import { useTaskManager } from "@/hooks/useTaskManager";
 import MainHeader from "@/components/MainHeader";
 import PCPSection from "@/components/PCPSection";
 import TasksSection from "@/components/TasksSection";
+import { motion } from "framer-motion";
 
 interface MainPageContentProps {
   initialTab?: "dashboard" | "tasks";
@@ -75,42 +76,79 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   const clearCauseFilter = () => {
     setSelectedCause(null);
   };
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 80,
+        damping: 15
+      }
+    }
+  };
   
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
+    <motion.div 
+      className="container mx-auto max-w-7xl px-4 py-6 bg-background"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Header com título e botões */}
-      <MainHeader 
-        onNewTaskClick={() => setIsFormOpen(true)}
-        onRegistryClick={() => setIsRegistryOpen(true)}
-      />
+      <motion.div variants={itemVariants}>
+        <MainHeader 
+          onNewTaskClick={() => setIsFormOpen(true)}
+          onRegistryClick={() => setIsRegistryOpen(true)}
+        />
+      </motion.div>
       
       {/* Week Navigation */}
-      <WeekNavigation
-        weekStartDate={weekStartDate}
-        weekEndDate={weekEndDate}
-        onPreviousWeek={navigateToPreviousWeek}
-        onNextWeek={navigateToNextWeek}
-      />
+      <motion.div variants={itemVariants}>
+        <WeekNavigation
+          weekStartDate={weekStartDate}
+          weekEndDate={weekEndDate}
+          onPreviousWeek={navigateToPreviousWeek}
+          onNextWeek={navigateToNextWeek}
+        />
+      </motion.div>
       
       {/* PCP Section com gráficos e filtro ativo */}
-      <PCPSection 
-        pcpData={pcpData}
-        weeklyPCPData={weeklyPCPData}
-        tasks={tasks}
-        selectedCause={selectedCause}
-        onCauseSelect={handleCauseSelect}
-        onClearFilter={clearCauseFilter}
-      />
+      <motion.div variants={itemVariants}>
+        <PCPSection 
+          pcpData={pcpData}
+          weeklyPCPData={weeklyPCPData}
+          tasks={tasks}
+          selectedCause={selectedCause}
+          onCauseSelect={handleCauseSelect}
+          onClearFilter={clearCauseFilter}
+        />
+      </motion.div>
       
       {/* Tasks Section com lista de tarefas */}
-      <TasksSection 
-        tasks={tasks}
-        isLoading={isLoading}
-        onTaskUpdate={handleTaskUpdate}
-        onTaskDelete={handleTaskDelete}
-        onTaskDuplicate={handleTaskDuplicate}
-        selectedCause={selectedCause}
-      />
+      <motion.div variants={itemVariants}>
+        <TasksSection 
+          tasks={tasks}
+          isLoading={isLoading}
+          onTaskUpdate={handleTaskUpdate}
+          onTaskDelete={handleTaskDelete}
+          onTaskDuplicate={handleTaskDuplicate}
+          selectedCause={selectedCause}
+        />
+      </motion.div>
       
       {/* Dialogs */}
       <TaskForm 
@@ -124,7 +162,7 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
         isOpen={isRegistryOpen} 
         onOpenChange={setIsRegistryOpen} 
       />
-    </div>
+    </motion.div>
   );
 };
 

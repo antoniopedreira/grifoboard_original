@@ -1,214 +1,319 @@
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { motion } from "framer-motion"
-import { Badge } from "@/components/ui/badge"
-import {
-  LayoutDashboard,
-  LayoutList,
-  LogOut,
-} from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
+import { ChevronLeft, ChevronRight, LayoutDashboard, List, Home, User, LogOut, Settings, Menu } from "lucide-react";
+import { Button } from "./button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
+import { ThemeToggle } from "./theme-toggle";
 
-const sidebarVariants = {
-  open: {
-    width: "15rem",
-  },
-  closed: {
-    width: "3.05rem",
-  },
+// Context
+type SidebarContextType = {
+  expanded: boolean;
+  setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  mobileOpen: boolean;
+  setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const contentVariants = {
-  open: { display: "block", opacity: 1 },
-  closed: { display: "block", opacity: 1 },
-};
+const SidebarContext = createContext<SidebarContextType>({
+  expanded: true,
+  setExpanded: () => {},
+  mobileOpen: false,
+  setMobileOpen: () => {},
+});
 
-const variants = {
-  open: {
-    x: 0,
-    opacity: 1,
-    transition: {
-      x: { stiffness: 1000, velocity: -100 },
-    },
-  },
-  closed: {
-    x: -20,
-    opacity: 0,
-    transition: {
-      x: { stiffness: 100 },
-    },
-  },
-};
-
-const transitionProps = {
-  type: "tween",
-  ease: "easeOut",
-  duration: 0.2,
-  staggerChildren: 0.1,
-};
-
-const staggerVariants = {
-  open: {
-    transition: { staggerChildren: 0.03, delayChildren: 0.02 },
-  },
-};
-
-export function SessionNavBar() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { userSession, signOut } = useAuth();
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
+  const [expanded, setExpanded] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   
-  // Check the current path to determine active tab
-  const isDashboardActive = location.pathname.includes("/dashboard");
-  const isTasksActive = location.pathname.includes("/tarefas");
-  
-  // Extract the first letter for the avatar fallback
-  const userInitial = userSession?.user?.email?.charAt(0).toUpperCase() || "U";
-  
-  // If there's no user or active obra, don't show the sidebar
-  if (!userSession?.user || !userSession.obraAtiva) {
-    return null;
-  }
-  
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  // Close sidebar on mobile when resizing to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 1024) {
+        setMobileOpen(false);
+      }
+    };
+    
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <motion.div
-      className={cn(
-        "sidebar fixed left-0 z-30 h-[calc(100vh-65px)] shrink-0 border-r top-[65px]",
-      )}
-      initial={isCollapsed ? "closed" : "open"}
-      animate={isCollapsed ? "closed" : "open"}
-      variants={sidebarVariants}
-      transition={transitionProps}
-      onMouseEnter={() => setIsCollapsed(false)}
-      onMouseLeave={() => setIsCollapsed(true)}
-    >
-      <motion.div
-        className={`relative z-30 flex text-muted-foreground h-full shrink-0 flex-col bg-white transition-all`}
-        variants={contentVariants}
-      >
-        <motion.ul variants={staggerVariants} className="flex h-full flex-col">
-          <div className="flex grow flex-col items-center">
-            <div className="flex h-full w-full flex-col">
-              <div className="flex grow flex-col gap-4">
-                <ScrollArea className="h-16 grow p-2">
-                  <div className={cn("flex w-full flex-col gap-1 pt-10")}>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start",
-                        isDashboardActive && "bg-muted text-blue-600"
-                      )}
-                      onClick={() => navigate("/dashboard")}
-                    >
-                      <LayoutDashboard className="h-4 w-4" />{" "}
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Dashboard</p>
-                        )}
-                      </motion.li>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start",
-                        isTasksActive && "bg-muted text-blue-600"
-                      )}
-                      onClick={() => navigate("/tarefas")}
-                    >
-                      <LayoutList className="h-4 w-4" />{" "}
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Tarefas</p>
-                        )}
-                      </motion.li>
-                    </Button>
-                  </div>
-                </ScrollArea>
-              </div>
-              <div className="flex flex-col p-2">
-                <div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="w-full" asChild>
-                      <Button 
-                        variant="ghost" 
-                        className="flex h-8 w-full flex-row items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start"
-                      >
-                        <Avatar className="size-4">
-                          <AvatarFallback>
-                            {userInitial}
-                          </AvatarFallback>
-                        </Avatar>
-                        <motion.li
-                          variants={variants}
-                          className="flex w-full items-center gap-2"
-                        >
-                          {!isCollapsed && (
-                            <p className="text-sm font-medium">Conta</p>
-                          )}
-                        </motion.li>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent sideOffset={5}>
-                      <div className="flex flex-row items-center gap-2 p-2">
-                        <Avatar className="size-6">
-                          <AvatarFallback>
-                            {userInitial}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col text-left">
-                          <span className="text-sm font-medium">
-                            {userSession?.user?.email || "Usuário"}
-                          </span>
-                        </div>
-                      </div>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="flex items-center gap-2"
-                        onClick={handleSignOut}
-                      >
-                        <LogOut className="h-4 w-4" /> Sair
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.ul>
-      </motion.div>
-    </motion.div>
+    <SidebarContext.Provider value={{ expanded, setExpanded, mobileOpen, setMobileOpen }}>
+      {children}
+    </SidebarContext.Provider>
   );
 }
 
-// IMPORTANT: Remove these exports that cause the circular dependency
-// export {
-//   Sidebar,
-//   SidebarContent,
-//   SidebarGroup,
-//   SidebarGroupContent,
-//   SidebarGroupLabel,
-//   SidebarMenu,
-//   SidebarMenuButton,
-//   SidebarMenuItem,
-// } from "@/components/ui/sidebar"
+export function SidebarTrigger() {
+  const { mobileOpen, setMobileOpen } = useContext(SidebarContext);
+  
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setMobileOpen(!mobileOpen)}
+      className="lg:hidden fixed top-4 left-4 z-50"
+    >
+      <Menu className="h-5 w-5" />
+      <span className="sr-only">Abrir menu</span>
+    </Button>
+  );
+}
 
-export default SessionNavBar;
+export function Sidebar({ children }: { children?: React.ReactNode }) {
+  const { expanded, setExpanded, mobileOpen, setMobileOpen } = useContext(SidebarContext);
+  
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const sidebar = document.getElementById("main-sidebar");
+      if (mobileOpen && sidebar && !sidebar.contains(event.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileOpen, setMobileOpen]);
+  
+  return (
+    <>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside
+        id="main-sidebar"
+        className={cn(
+          "fixed top-0 left-0 h-full z-50 transition-all duration-300",
+          "bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
+          "flex flex-col",
+          expanded ? "w-64" : "w-20",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        {children || <SessionNavBar />}
+        
+        {/* Toggle button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setExpanded(!expanded)}
+          className="absolute -right-3 top-12 hidden lg:flex h-6 w-6 rounded-full border border-sidebar-border bg-background shadow-md"
+        >
+          {expanded ? (
+            <ChevronLeft className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+          <span className="sr-only">
+            {expanded ? "Recolher menu" : "Expandir menu"}
+          </span>
+        </Button>
+      </aside>
+      
+      {/* Main content wrapper with padding */}
+      <div 
+        className={cn(
+          "transition-all duration-300 min-h-screen",
+          mobileOpen ? "lg:ml-64" : "lg:ml-20"
+        )}
+      >
+        {/* This space is for the main content */}
+        <div className="pt-16 lg:pt-0">
+          <main className="h-full">{/* The application's main content goes here */}</main>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function SessionNavBar() {
+  const { expanded } = useContext(SidebarContext);
+  const location = useLocation();
+  const { signOut, userSession } = useAuth();
+  
+  // Define os links de navegação
+  const navLinks = [
+    {
+      name: "Dashboard",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      href: "/dashboard",
+    },
+    {
+      name: "Tarefas",
+      icon: <List className="w-5 h-5" />,
+      href: "/tarefas",
+    },
+    {
+      name: "Obras",
+      icon: <Home className="w-5 h-5" />,
+      href: "/obras",
+    }
+  ];
+  
+  return (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div 
+        className={cn(
+          "flex items-center gap-3 p-4 h-16 border-b border-sidebar-border",
+          !expanded && "justify-center"
+        )}
+      >
+        <div className="flex items-center justify-center w-10 h-10 bg-sidebar-primary rounded-lg">
+          <span className="text-xl font-bold text-white">G</span>
+        </div>
+        {expanded && <span className="text-xl font-bold">GrifoBoard</span>}
+      </div>
+      
+      {/* User Profile */}
+      <div className={cn("p-4 border-b border-sidebar-border", !expanded && "flex justify-center")}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
+            <User className="w-5 h-5" />
+          </div>
+          {expanded && (
+            <div className="flex-1 overflow-hidden">
+              <p className="font-medium truncate">{userSession?.user?.email?.split('@')[0] || "Usuário"}</p>
+              <p className="text-xs text-sidebar-foreground/70 truncate">
+                {userSession?.obraAtiva?.nome_obra || "Sem obra ativa"}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Navigation */}
+      <nav className="flex-1 p-2 overflow-y-auto">
+        <ul className="space-y-1">
+          {navLinks.map((link) => {
+            const isActive = location.pathname === link.href;
+            
+            return (
+              <li key={link.name}>
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={link.href}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "hover:bg-sidebar-accent/40 text-sidebar-foreground/80",
+                          !expanded && "justify-center"
+                        )}
+                      >
+                        {link.icon}
+                        {expanded && <span>{link.name}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {!expanded && (
+                      <TooltipContent side="right" className="bg-popover border-border">
+                        {link.name}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      
+      {/* Footer Controls */}
+      <div className={cn(
+        "p-4 border-t border-sidebar-border flex items-center",
+        expanded ? "justify-between" : "flex-col gap-4"
+      )}>
+        <ThemeToggle />
+        
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={signOut}
+                className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="sr-only">Sair</span>
+              </Button>
+            </TooltipTrigger>
+            {!expanded && (
+              <TooltipContent side="right">Sair</TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    </div>
+  );
+}
+
+export function SidebarContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex-1 overflow-y-auto p-4", className)} {...props} />;
+}
+
+export function SidebarHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-4 border-b border-sidebar-border", className)} {...props} />;
+}
+
+export function SidebarFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-4 border-t border-sidebar-border", className)} {...props} />;
+}
+
+export function SidebarGroup({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("mb-6", className)} {...props} />;
+}
+
+export function SidebarGroupLabel({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const { expanded } = useContext(SidebarContext);
+
+  if (!expanded) return null;
+
+  return (
+    <div className={cn("px-3 py-2 text-xs uppercase font-semibold text-sidebar-foreground/50", className)} {...props} />
+  );
+}
+
+export function SidebarGroupContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("space-y-1", className)} {...props} />;
+}
+
+export function SidebarMenu({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) {
+  return <ul className={cn("space-y-1", className)} {...props} />;
+}
+
+export function SidebarMenuItem({ className, ...props }: React.HTMLAttributes<HTMLLIElement>) {
+  return <li className={cn("", className)} {...props} />;
+}
+
+export function SidebarMenuButton({
+  className,
+  asChild = false,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }) {
+  const { expanded } = useContext(SidebarContext);
+  const Component = asChild ? React.Fragment : "button";
+
+  return (
+    <Component
+      className={cn(
+        "flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm transition-all",
+        "hover:bg-sidebar-accent/40 text-sidebar-foreground/80",
+        !expanded && "justify-center",
+        className
+      )}
+      {...props}
+    />
+  );
+}

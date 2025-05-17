@@ -2,6 +2,9 @@
 import { Task } from "@/types";
 import PCPChart from "@/components/PCPChart";
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { motion } from "framer-motion";
+import { GlassCard } from "./ui/glass-card";
 
 interface PCPSectionProps {
   pcpData: any;
@@ -31,19 +34,30 @@ const PCPSection: React.FC<PCPSectionProps> = ({
       />
       
       {selectedCause && (
-        <div className="mb-4 px-4 py-2 bg-muted rounded-lg flex justify-between items-center">
-          <div className="text-sm">
-            <span className="font-medium">Filtro ativo: </span>
-            <span className="text-primary">{selectedCause}</span>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClearFilter}
-          >
-            Limpar
-          </Button>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+        >
+          <GlassCard className="mb-4 flex justify-between items-center py-3 px-4">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-primary-accent rounded-full mr-3"></div>
+              <div className="text-sm">
+                <span className="font-medium">Filtro ativo: </span>
+                <span className="text-accent">{selectedCause}</span>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClearFilter}
+              className="hover:bg-white/10"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Limpar
+            </Button>
+          </GlassCard>
+        </motion.div>
       )}
     </>
   );
