@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface PCPWeeklyChartProps {
@@ -22,9 +22,24 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ weeklyData }) => {
   // Transform data safely for the chart
   const chartData = weeklyData.map((item) => {
     // Check if date is valid before formatting
-    const dateStr = item.date instanceof Date && !isNaN(item.date.getTime()) 
-      ? format(item.date, "dd/MM", { locale: ptBR })
-      : `Week ${item.week || ""}`;
+    let dateStr = "Semana";
+    
+    // Handle string dates (from Supabase)
+    if (typeof item.date === 'string') {
+      try {
+        dateStr = format(parseISO(item.date), "dd/MM", { locale: ptBR });
+      } catch (e) {
+        dateStr = item.date.substring(0, 10); // Fallback to raw string
+      }
+    }
+    // Handle Date objects
+    else if (item.date instanceof Date && !isNaN(item.date.getTime())) {
+      dateStr = format(item.date, "dd/MM", { locale: ptBR });
+    }
+    // Use week as fallback
+    else if (item.week) {
+      dateStr = `Sem ${item.week}`;
+    }
 
     return {
       name: dateStr,
