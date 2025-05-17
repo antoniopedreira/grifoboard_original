@@ -31,8 +31,8 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = ({ weeklyPCP
       } catch (e) {
         // Safe fallback when date parsing fails
         if (typeof item.date === 'string') {
-          const dateValue = item.date.toString(); // Explicit conversion
-          dateStr = dateValue.substring(0, 10); // Now substring is called on a string
+          // Ensure item.date is a string before using substring
+          dateStr = item.date.substring(0, 10);
         } else {
           dateStr = "Data inválida";
         }
