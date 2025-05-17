@@ -1,9 +1,9 @@
 
-import SessionNavBar from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/ui/sidebar";
 
 const CustomSidebar = () => {
   return (
-    <SessionNavBar />
+    <Sidebar />
   );
 };
 

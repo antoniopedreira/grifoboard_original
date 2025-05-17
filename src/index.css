@@ -144,19 +144,21 @@
   
   /* Animation utility classes */
   .animate-float {
-    @apply animate-float;
+    animation: float 6s ease-in-out infinite;
   }
   
   .animate-glow {
-    @apply animate-glow;
+    animation: glow 4s ease-in-out infinite;
   }
   
+  /* Fixed circular dependency by removing the @apply */
   .animate-pulse-slow {
-    @apply animate-pulse-slow;
+    animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   .animate-shimmer {
-    @apply bg-shimmer bg-[length:1000px_100%] animate-shimmer;
+    @apply bg-shimmer bg-[length:1000px_100%];
+    animation: shimmer 2.5s infinite linear;
   }
   
   /* Utility classes for the gradient text and buttons */
