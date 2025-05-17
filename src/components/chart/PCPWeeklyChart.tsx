@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
-import { format, isValid } from "date-fns";
+import { format, isValid, parseISO, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -52,14 +52,28 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
       
       if (data && data.length > 0) {
         const formattedData = data.map((item, index) => {
-          const date = item.semana ? new Date(item.semana) : null;
+          // Converter string para data e obter a segunda-feira
+          let date = null;
+          if (item.semana) {
+            // Parse a string para objeto Date
+            const parsedDate = typeof item.semana === 'string' 
+              ? parseISO(item.semana) 
+              : new Date(item.semana);
+              
+            if (isValid(parsedDate)) {
+              // Garantir que a data seja a segunda-feira da semana
+              date = startOfWeek(parsedDate, { weekStartsOn: 1 });
+            }
+          }
+          
           const formattedDate = date && isValid(date)
             ? format(date, "dd/MM", { locale: ptBR })
             : `Semana ${index + 1}`;
             
           return {
             name: formattedDate,
-            value: item.percentual_concluido || 0,
+            // Multiplicar o percentual por 100 para exibir como porcentagem
+            value: (item.percentual_concluido || 0) * 100,
             isCurrentWeek: index === data.length - 1 // Assume que o último é a semana atual
           };
         });
