@@ -5,6 +5,7 @@ import { Obra } from "@/types/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useRegistry } from "@/context/RegistryContext";
 import MainPageContent from "@/components/MainPageContent";
+import DashboardContent from "@/components/DashboardContent";
 
 interface IndexProps {
   onObraSelect: (obra: Obra) => void;
@@ -47,7 +48,8 @@ const Index = ({ onObraSelect }: IndexProps) => {
     return null; // Rendering will be handled by the useEffect navigation
   }
 
-  return <MainPageContent initialTab={isDashboard ? "dashboard" : "tasks"} />;
+  // Render either the dashboard or tasks page based on the current route
+  return isDashboard ? <DashboardContent /> : <MainPageContent />;
 };
 
 export default Index;
