@@ -29,8 +29,8 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ weeklyData }) => {
       try {
         dateStr = format(parseISO(item.date), "dd/MM", { locale: ptBR });
       } catch (e) {
-        // Use first 10 characters if it's a string but not a valid date
-        dateStr = item.date.slice(0, 10);
+        // Make sure we're dealing with a string before using slice
+        dateStr = typeof item.date === 'string' ? item.date.slice(0, 10) : "Data inválida";
       }
     }
     // Handle Date objects
