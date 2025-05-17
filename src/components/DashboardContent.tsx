@@ -5,10 +5,10 @@ import { useToast } from "@/hooks/use-toast";
 import WeekNavigation from "@/components/WeekNavigation";
 import { getWeekStartDate } from "@/utils/pcp";
 import { useTaskManager } from "@/hooks/useTaskManager";
-import TaskStatusChart from "@/components/dashboard/TaskStatusChart";
 import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
 import TaskDisciplineChart from "@/components/dashboard/TaskDisciplineChart";
 import PerformanceTrendChart from "@/components/dashboard/PerformanceTrendChart";
+import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 
 const DashboardContent = () => {
   const { toast } = useToast();
@@ -71,34 +71,7 @@ const DashboardContent = () => {
         onNextWeek={navigateToNextWeek}
       />
       
-      {/* Dashboard Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Task Status Distribution */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Estado das Tarefas</h2>
-          <TaskStatusChart tasks={tasks} />
-        </div>
-        
-        {/* Task Progress */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Progresso Semanal</h2>
-          <TaskProgressChart pcpData={pcpData} />
-        </div>
-        
-        {/* Tasks by Discipline */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Tarefas por Disciplina</h2>
-          <TaskDisciplineChart tasks={tasks} />
-        </div>
-        
-        {/* Performance Trend */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h2 className="text-lg font-medium mb-4">Tendência de Desempenho</h2>
-          <PerformanceTrendChart weeklyPCPData={weeklyPCPData} />
-        </div>
-      </div>
-
-      {/* Task Metrics Overview */}
+      {/* Task Metrics Overview - Moved to top */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
         <div className="border rounded-lg p-4 bg-white shadow-sm text-center">
           <h3 className="text-sm font-medium text-gray-500">Total de Tarefas</h3>
@@ -123,6 +96,33 @@ const DashboardContent = () => {
           <p className="text-3xl font-bold text-blue-600">
             {pcpData?.overall?.percentage ? `${Math.round(pcpData.overall.percentage)}%` : '0%'}
           </p>
+        </div>
+      </div>
+      
+      {/* Dashboard Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        {/* Responsible Task Distribution - New chart replacing Task Status */}
+        <div className="border rounded-lg p-4 bg-white shadow-sm">
+          <h2 className="text-lg font-medium mb-4">Tarefas por Responsável</h2>
+          <ResponsibleChart tasks={tasks} />
+        </div>
+        
+        {/* Task Progress */}
+        <div className="border rounded-lg p-4 bg-white shadow-sm">
+          <h2 className="text-lg font-medium mb-4">Progresso Semanal</h2>
+          <TaskProgressChart pcpData={pcpData} />
+        </div>
+        
+        {/* Tasks by Discipline */}
+        <div className="border rounded-lg p-4 bg-white shadow-sm">
+          <h2 className="text-lg font-medium mb-4">Tarefas por Disciplina</h2>
+          <TaskDisciplineChart tasks={tasks} />
+        </div>
+        
+        {/* Performance Trend */}
+        <div className="border rounded-lg p-4 bg-white shadow-sm">
+          <h2 className="text-lg font-medium mb-4">Tendência de Desempenho</h2>
+          <PerformanceTrendChart weeklyPCPData={weeklyPCPData} />
         </div>
       </div>
     </div>
