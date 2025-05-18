@@ -6,19 +6,15 @@ import WeekNavigation from "@/components/WeekNavigation";
 import { getWeekStartDate } from "@/utils/pcp";
 import { useTaskManager } from "@/hooks/useTaskManager";
 import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
+import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
-import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import CableChart from "@/components/dashboard/CableChart";
 
 const DashboardContent = () => {
-  const {
-    toast
-  } = useToast();
-  const {
-    userSession
-  } = useAuth();
+  const { toast } = useToast();
+  const { userSession } = useAuth();
 
   // Initialize with the current week's Monday
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
@@ -32,12 +28,7 @@ const DashboardContent = () => {
   }, [weekStartDate]);
 
   // Get task data from our custom hook
-  const {
-    tasks,
-    isLoading,
-    pcpData,
-    weeklyPCPData
-  } = useTaskManager(weekStartDate);
+  const { tasks, isLoading, pcpData, weeklyPCPData } = useTaskManager(weekStartDate);
 
   // Navigate to previous and next weeks
   const navigateToPreviousWeek = () => {
@@ -45,26 +36,37 @@ const DashboardContent = () => {
     prevWeek.setDate(prevWeek.getDate() - 7);
     setWeekStartDate(prevWeek);
   };
+  
   const navigateToNextWeek = () => {
     const nextWeek = new Date(weekStartDate);
     nextWeek.setDate(nextWeek.getDate() + 7);
     setWeekStartDate(nextWeek);
   };
+
   if (isLoading) {
-    return <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
+    return (
+      <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
         <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
         <div className="text-center py-10 text-gray-500">
           <p>Carregando dados...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
+
+  return (
+    <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
       <h1 className="text-2xl font-bold mb-6">
         Dashboard - {userSession?.obraAtiva?.nome_obra || "Obra"}
       </h1>
       
       {/* Week Navigation */}
-      <WeekNavigation weekStartDate={weekStartDate} weekEndDate={weekEndDate} onPreviousWeek={navigateToPreviousWeek} onNextWeek={navigateToNextWeek} />
+      <WeekNavigation 
+        weekStartDate={weekStartDate} 
+        weekEndDate={weekEndDate} 
+        onPreviousWeek={navigateToPreviousWeek} 
+        onNextWeek={navigateToNextWeek} 
+      />
       
       {/* Task Metrics Overview - Moved to top */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
@@ -100,7 +102,7 @@ const DashboardContent = () => {
       
       {/* Dashboard Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Executor Task Distribution */}
+        {/* Executor Chart */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
           <ExecutorChart weekStartDate={weekStartDate} />
         </div>
@@ -110,16 +112,18 @@ const DashboardContent = () => {
           <TeamChart weekStartDate={weekStartDate} />
         </div>
         
-        {/* Responsible Chart - NEW */}
+        {/* Responsible Chart */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
           <ResponsibleChart weekStartDate={weekStartDate} />
         </div>
         
-        {/* Cable Chart - NEW */}
+        {/* Cable Chart */}
         <div className="border rounded-lg p-4 bg-white shadow-sm">
           <CableChart weekStartDate={weekStartDate} />
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default DashboardContent;
