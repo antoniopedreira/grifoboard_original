@@ -9,14 +9,13 @@ interface TaskStatusChartProps {
 const TaskStatusChart: React.FC<TaskStatusChartProps> = ({ tasks }) => {
   // Calculate counts for different task statuses
   const completedCount = tasks.filter(task => task.isFullyCompleted).length;
-  const notDoneCount = tasks.filter(task => 
-    task.dailyStatus?.some(status => status.status === "not_done")
-  ).length;
+  // Changed logic: Not completed tasks are all tasks that aren't fully completed
+  const notDoneCount = tasks.filter(task => !task.isFullyCompleted).length;
   const plannedCount = tasks.length - completedCount - notDoneCount;
   
   const data = [
     { name: 'Concluídas', value: completedCount },
-    { name: 'Não Realizadas', value: notDoneCount },
+    { name: 'Não Feitas', value: notDoneCount },
     { name: 'Planejadas', value: plannedCount },
   ];
   
