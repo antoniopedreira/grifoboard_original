@@ -83,7 +83,7 @@ const DashboardContent = () => {
         <div className="border rounded-lg p-4 bg-white shadow-sm text-center">
           <h3 className="text-sm font-medium text-gray-500">Não Realizadas</h3>
           <p className="text-3xl font-bold text-red-600">
-            {tasks.filter(task => task.dailyStatus?.some(status => status.status === "not_done")).length}
+            {tasks.filter(task => !task.isFullyCompleted).length}
           </p>
         </div>
         <div className="border rounded-lg p-4 bg-white shadow-sm text-center">

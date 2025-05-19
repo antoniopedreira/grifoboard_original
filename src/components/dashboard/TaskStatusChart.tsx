@@ -15,7 +15,7 @@ const TaskStatusChart: React.FC<TaskStatusChartProps> = ({ tasks }) => {
   
   const data = [
     { name: 'Concluídas', value: completedCount },
-    { name: 'Não Feitas', value: notDoneCount },
+    { name: 'Não Realizadas', value: notDoneCount }, // Fixed the label from 'Não Feitas' to 'Não Realizadas'
     { name: 'Planejadas', value: plannedCount },
   ];
   
