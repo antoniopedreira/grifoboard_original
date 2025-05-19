@@ -34,8 +34,8 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
 
   // Chart colors
   const chartColors = {
-    standard: "#38BDF8",   // Standard blue color for all bars
-    highlighted: "#0EA5E9" // Highlighted color for current week
+    standard: "#021C2F",   // Updated to requested color
+    highlighted: "#021C2F" // Updated to requested color
   };
 
   return (

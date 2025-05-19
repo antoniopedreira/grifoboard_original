@@ -12,13 +12,14 @@ const MainHeader: React.FC<MainHeaderProps> = ({ onNewTaskClick, onRegistryClick
 
   return (
     <div className="mb-6 flex justify-between items-center">
-      <h2 className="text-2xl font-bold text-gray-900">
+      <h2 className="text-2xl font-bold" style={{ color: "#021C2F" }}>
         {session.obraAtiva ? `Tarefas - ${session.obraAtiva.nome_obra}` : 'Planejamento Semanal'}
       </h2>
       <div className="flex gap-2">
         <Button 
           variant="outline" 
-          className="border-gray-200 hover:bg-gray-50 text-primary"
+          className="border-gray-200 hover:bg-gray-50" 
+          style={{ color: "#021C2F" }}
           onClick={onRegistryClick}
         >
           Cadastros
