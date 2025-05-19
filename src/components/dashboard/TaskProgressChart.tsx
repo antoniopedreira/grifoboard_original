@@ -39,7 +39,7 @@ const TaskProgressChart: React.FC<TaskProgressChartProps> = ({ pcpData }) => {
         <Tooltip formatter={(value) => `${value}%`} />
         <Legend />
         <Bar dataKey="Planejado" fill="#cbd5e1" />
-        <Bar dataKey="Executado" fill="#3b82f6" />
+        <Bar dataKey="Executado" fill="#021C2F" />
       </BarChart>
     </ResponsiveContainer>
   );

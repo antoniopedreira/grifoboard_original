@@ -27,7 +27,7 @@ const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
       {chartData.map((entry, index) => (
         <Cell 
           key={`cell-${index}`} 
-          fill={entry.isCurrentWeek ? colors.highlighted : colors.standard} 
+          fill="#021C2F"
           stroke={entry.isCurrentWeek ? "#0284C7" : ""}
           strokeWidth={entry.isCurrentWeek ? 1 : 0}
         />

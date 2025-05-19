@@ -22,8 +22,8 @@ const TaskDisciplineChart: React.FC<TaskDisciplineChartProps> = ({ tasks }) => {
   
   // Colors for different disciplines
   const COLORS = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
+    '#021C2F', '#10b981', '#021C2F', '#ef4444', 
+    '#021C2F', '#ec4899', '#021C2F', '#84cc16'
   ];
   
   return (

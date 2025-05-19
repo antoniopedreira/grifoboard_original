@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   BarChart, 
@@ -15,11 +14,11 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
-interface PerformanceTrendChartProps {
-  weeklyPCPData?: any[];
+interface PCPWeeklyChartProps {
+  weeklyData?: any[];
 }
 
-const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = () => {
+const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { userSession } = useAuth();
@@ -106,12 +105,6 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = () => {
     );
   }
 
-  // Atualizado para usar #021C2F para todas as barras
-  const barColors = {
-    normal: "#021C2F",
-    current: "#021C2F"
-  };
-
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart 
@@ -145,7 +138,7 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = () => {
           {chartData.map((entry, index) => (
             <Cell 
               key={`cell-${index}`} 
-              fill="#021C2F"
+              fill="#021C2F" 
               stroke={entry.isCurrentWeek ? "#0369a1" : ""}
               strokeWidth={entry.isCurrentWeek ? 1 : 0}
             />
@@ -156,4 +149,4 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = () => {
   );
 };
 
-export default PerformanceTrendChart;
+export default PCPWeeklyChart;

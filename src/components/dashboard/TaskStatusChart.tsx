@@ -20,7 +20,7 @@ const TaskStatusChart: React.FC<TaskStatusChartProps> = ({ tasks }) => {
     { name: 'Planejadas', value: plannedCount },
   ];
   
-  const COLORS = ['#10b981', '#ef4444', '#3b82f6'];
+  const COLORS = ['#10b981', '#ef4444', '#021C2F'];
   
   return (
     <ResponsiveContainer width="100%" height={300}>
