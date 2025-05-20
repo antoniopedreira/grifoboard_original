@@ -61,23 +61,32 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Component to handle route restoration
+// Improved component to handle route restoration only on page reload
 const RouteRestorer = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [restored, setRestored] = useState(false);
 
   useEffect(() => {
-    // Only attempt to restore route once during initialization
+    // Only attempt to restore route once during initial page load
     if (!restored) {
-      const lastRoute = sessionStorage.getItem('lastRoute');
+      // Check if this is an actual page reload (not just switching tabs)
+      // We can detect this by checking if the performance navigation type is 'reload' or 'navigate'
+      const isPageReload = !sessionStorage.getItem('appInitialized');
       
-      // Only redirect if:
-      // 1. We have a saved route
-      // 2. We're not already on that route
-      // 3. We're at the root path (/)
-      if (lastRoute && lastRoute !== location.pathname && location.pathname === '/') {
-        navigate(lastRoute);
+      // Mark as initialized to distinguish between first load and subsequent visits
+      sessionStorage.setItem('appInitialized', 'true');
+      
+      if (isPageReload) {
+        const lastRoute = sessionStorage.getItem('lastRoute');
+        
+        // Only redirect if:
+        // 1. We have a saved route
+        // 2. We're not already on that route
+        // 3. We're at the root path (/)
+        if (lastRoute && lastRoute !== location.pathname && location.pathname === '/') {
+          navigate(lastRoute);
+        }
       }
       
       // Mark as restored to prevent future redirects
