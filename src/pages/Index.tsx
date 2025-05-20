@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Obra } from "@/types/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -16,16 +16,18 @@ const Index = ({ onObraSelect }: IndexProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { setSelectedObraId } = useRegistry();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   // Determine if we're in dashboard or tasks view
   const isDashboard = location.pathname === "/dashboard";
 
-  // If there's no user, redirect to auth page
+  // If there's no user, redirect to auth page (apenas uma vez)
   useEffect(() => {
-    if (!userSession?.user) {
+    if (!userSession?.user && !redirectAttempted) {
       navigate("/auth");
+      setRedirectAttempted(true);
     }
-  }, [userSession, navigate]);
+  }, [userSession, navigate, redirectAttempted]);
 
   // Set the selected obra ID when an obra is selected or active
   useEffect(() => {
@@ -37,12 +39,13 @@ const Index = ({ onObraSelect }: IndexProps) => {
     }
   }, [userSession?.obraAtiva, setSelectedObraId, onObraSelect]);
 
-  // If there's no active obra, redirect to obras page
+  // If there's no active obra, redirect to obras page (apenas uma vez)
   useEffect(() => {
-    if (userSession?.user && !userSession.obraAtiva) {
+    if (userSession?.user && !userSession.obraAtiva && !redirectAttempted) {
       navigate("/obras");
+      setRedirectAttempted(true);
     }
-  }, [userSession, navigate]);
+  }, [userSession, navigate, redirectAttempted]);
 
   if (!userSession?.user || !userSession.obraAtiva) {
     return null; // Rendering will be handled by the useEffect navigation

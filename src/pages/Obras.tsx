@@ -27,13 +27,15 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const { setSelectedObraId } = useRegistry();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // If there's no user, redirect to auth page
+  // If there's no user, redirect to auth page (apenas uma vez)
   useEffect(() => {
-    if (!userSession?.user) {
+    if (!userSession?.user && !redirectAttempted) {
       navigate("/auth");
+      setRedirectAttempted(true);
     }
-  }, [userSession, navigate]);
+  }, [userSession, navigate, redirectAttempted]);
 
   // Fetch obras
   useEffect(() => {
