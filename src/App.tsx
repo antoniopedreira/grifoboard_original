@@ -111,34 +111,38 @@ function App() {
       <AuthProvider>
         <RegistryProvider>
           <Router>
-            <AppLayout>
-              <Routes>
-                <Route path="/" element={<Navigate to={initialRoute} replace />} />
-                <Route path="/auth" element={<Auth onAuthenticated={() => {
+            <Routes>
+              <Route path="/auth" element={
+                <Auth onAuthenticated={() => {
                   // If user had a saved route, restore it after login
                   const lastRoute = sessionStorage.getItem('lastRoute');
                   return lastRoute || '/obras';
-                }} />} />
-                <Route path="/obras" element={
-                  <RequireAuth>
-                    <Obras onObraSelect={handleObraSelect} />
-                  </RequireAuth>
-                } />
-                <Route path="/tarefas" element={
-                  <RequireAuth>
-                    <Index onObraSelect={handleObraSelect} />
-                  </RequireAuth>
-                } />
-                <Route path="/dashboard" element={
-                  <RequireAuth>
-                    <Index onObraSelect={handleObraSelect} />
-                  </RequireAuth>
-                } />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppLayout>
+                }} />
+              } />
+              <Route element={<AppLayout>
+                <Routes>
+                  <Route path="/" element={<Navigate to={initialRoute} replace />} />
+                  <Route path="/obras" element={
+                    <RequireAuth>
+                      <Obras onObraSelect={handleObraSelect} />
+                    </RequireAuth>
+                  } />
+                  <Route path="/tarefas" element={
+                    <RequireAuth>
+                      <Index onObraSelect={handleObraSelect} />
+                    </RequireAuth>
+                  } />
+                  <Route path="/dashboard" element={
+                    <RequireAuth>
+                      <Index onObraSelect={handleObraSelect} />
+                    </RequireAuth>
+                  } />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>} />
+            </Routes>
+            <Toaster />
           </Router>
-          <Toaster />
         </RegistryProvider>
       </AuthProvider>
     </QueryClientProvider>

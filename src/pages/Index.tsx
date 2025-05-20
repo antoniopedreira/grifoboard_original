@@ -41,7 +41,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
       sessionStorage.setItem('lastRoute', location.pathname);
       navigate("/obras", { replace: true });
     }
-  }, [userSession?.user, userSession?.obraAtiva, navigate, location.pathname]);
+  }, [userSession, navigate, location.pathname]);
 
   if (!userSession?.user || !userSession.obraAtiva) {
     return null; // Rendering will be handled by the useEffect navigation

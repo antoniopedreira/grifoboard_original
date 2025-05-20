@@ -9,8 +9,8 @@ interface AuthProps {
 }
 
 const Auth = ({ onAuthenticated }: AuthProps = {}) => {
-  const { userSession } = useAuth();
   const navigate = useNavigate();
+  const { userSession } = useAuth();
 
   useEffect(() => {
     if (userSession?.user) {

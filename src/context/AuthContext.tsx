@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Obra, UserSession } from '@/types/supabase';
@@ -82,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     initializeAuth();
-  }, [authInitialized]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -155,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setObraAtiva = (obra: Obra | null) => {
-    setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
+    setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : prev);
     
     // Salvar obra ativa no localStorage
     if (userSession.user && obra) {
