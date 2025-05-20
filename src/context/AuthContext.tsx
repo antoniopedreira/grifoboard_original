@@ -13,7 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setObraAtiva: (obra: Obra | null) => void;
-  setUserSession: (session: UserSession | null) => void; // Fixed return type to void
+  setUserSession: (session: UserSession | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,39 +33,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Verificar sessão atual
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUserSession({ user: mapUser(session.user), obraAtiva: null });
-      }
-      setIsLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        // First set up the auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (_event, session) => {
+            const mappedUser = mapUser(session?.user || null);
+            // Get saved active obra if it exists
+            if (mappedUser) {
+              const savedObra = localStorage.getItem(`obraAtiva_${mappedUser.id}`);
+              const obraAtiva = savedObra ? JSON.parse(savedObra) : null;
+              setUserSession({ user: mappedUser, obraAtiva });
+            } else {
+              setUserSession({ user: null, obraAtiva: null });
+            }
+            setIsLoading(false);
+          }
+        );
 
-    // Ouvir mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUserSession({ user: mapUser(session?.user || null), obraAtiva: null });
+        // Then check for an existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        const mappedUser = mapUser(session?.user || null);
+
+        // Get saved active obra if user exists
+        if (mappedUser) {
+          const savedObra = localStorage.getItem(`obraAtiva_${mappedUser.id}`);
+          const obraAtiva = savedObra ? JSON.parse(savedObra) : null;
+          setUserSession({ user: mappedUser, obraAtiva });
+        } else {
+          setUserSession({ user: null, obraAtiva: null });
+        }
+        setIsLoading(false);
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Error initializing auth:', error);
         setIsLoading(false);
       }
-    );
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
   }, []);
-
-  // Recuperar obra ativa do localStorage ao iniciar
-  useEffect(() => {
-    if (userSession.user) {
-      const savedObra = localStorage.getItem(`obraAtiva_${userSession.user.id}`);
-      if (savedObra) {
-        try {
-          const obra = JSON.parse(savedObra);
-          setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
-        } catch (e) {
-          localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
-        }
-      }
-    }
-  }, [userSession.user]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -117,7 +127,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       await supabase.auth.signOut();
-      setUserSession({ user: null, obraAtiva: null }); // Fixed: using setUserSession instead of non-existent setSession
+      setUserSession({ user: null, obraAtiva: null });
+      
+      // Clear any saved routes
+      sessionStorage.removeItem('lastRoute');
+      
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",

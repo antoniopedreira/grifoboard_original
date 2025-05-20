@@ -27,7 +27,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
       sessionStorage.setItem('lastRoute', location.pathname);
       navigate("/auth");
     }
-  }, [userSession, navigate, location.pathname]);
+  }, [userSession?.user, navigate, location.pathname]);
 
   // Set the selected obra ID when an obra is selected or active
   useEffect(() => {
@@ -46,7 +46,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
       sessionStorage.setItem('lastRoute', '/obras');
       navigate("/obras");
     }
-  }, [userSession, navigate]);
+  }, [userSession?.user, userSession?.obraAtiva, navigate]);
 
   if (!userSession?.user || !userSession.obraAtiva) {
     return null; // Rendering will be handled by the useEffect navigation

@@ -73,6 +73,7 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   }, [location.pathname, isAuthenticated]);
 
   if (!isAuthenticated && location.pathname !== '/auth') {
+    // Don't save '/auth' as lastRoute when redirecting to auth
     return <Navigate to="/auth" replace />;
   }
 
