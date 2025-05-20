@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTaskManager } from "@/hooks/useTaskManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
 
@@ -70,11 +70,13 @@ const TeamChart = ({
                 type="number" 
                 domain={[0, 100]} 
                 tickFormatter={value => `${value}%`}
+                tick={{ fontSize: 12 }}
               />
               <YAxis 
                 dataKey="name" 
                 type="category" 
                 width={100}
+                tick={{ fontSize: 12 }}
               />
               <Tooltip formatter={value => [`${value}%`, 'PCP']} />
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
@@ -82,7 +84,14 @@ const TeamChart = ({
                 dataKey="percentual" 
                 fill="#021C2F" 
                 radius={[0, 4, 4, 0]} 
-              />
+              >
+                <LabelList 
+                  dataKey="percentual" 
+                  position="right" 
+                  formatter={(value: number) => `${Math.round(value)}%`}
+                  style={{ fontSize: 11, fill: '#666' }}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, LabelList } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,7 +137,7 @@ const CableChart: React.FC<CableChartProps> = ({
             margin={{
               top: 5,
               right: 30,
-              left: 100,
+              left: 20,
               bottom: 5
             }}
           >

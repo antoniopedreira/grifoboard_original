@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   BarChart, 
@@ -105,12 +106,6 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
       </div>
     );
   }
-
-  // Cores para barras normais e barras destacadas (semana atual)
-  const barColors = {
-    normal: "#38bdf8", // Azul claro
-    current: "#0284c7"  // Azul escuro para a semana atual
-  };
 
   return (
     <ResponsiveContainer width="100%" height={300}>
