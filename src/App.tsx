@@ -61,17 +61,16 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Improved component to handle route restoration only on page reload
+// Enhanced route restoration with tab visibility support
 const RouteRestorer = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [restored, setRestored] = useState(false);
 
+  // Handle initial page load route restoration
   useEffect(() => {
     // Only attempt to restore route once during initial page load
     if (!restored) {
-      // Check if this is an actual page reload (not just switching tabs)
-      // We can detect this by checking if the performance navigation type is 'reload' or 'navigate'
       const isPageReload = !sessionStorage.getItem('appInitialized');
       
       // Mark as initialized to distinguish between first load and subsequent visits
@@ -80,10 +79,6 @@ const RouteRestorer = () => {
       if (isPageReload) {
         const lastRoute = sessionStorage.getItem('lastRoute');
         
-        // Only redirect if:
-        // 1. We have a saved route
-        // 2. We're not already on that route
-        // 3. We're at the root path (/)
         if (lastRoute && lastRoute !== location.pathname && location.pathname === '/') {
           navigate(lastRoute);
         }
@@ -93,6 +88,27 @@ const RouteRestorer = () => {
       setRestored(true);
     }
   }, [navigate, location.pathname, restored]);
+
+  // Handle tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const lastRoute = sessionStorage.getItem('lastRoute');
+        const currentPath = window.location.pathname;
+        
+        // Only navigate if we're on a different path and have a saved route
+        if (lastRoute && lastRoute !== currentPath) {
+          navigate(lastRoute);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [navigate]);
 
   return null;
 };
