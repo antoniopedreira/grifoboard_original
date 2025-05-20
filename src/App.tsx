@@ -9,7 +9,7 @@ import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
 import NotFound from "@/pages/NotFound";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CustomSidebar from '@/components/CustomSidebar';
@@ -18,7 +18,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: false
+      retry: false,
+      // Maintain query data when the window is unfocused
+      staleTime: Infinity,
+      gcTime: Infinity
     }
   }
 });
@@ -54,11 +57,38 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Route guard component
+const RequireAuth = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  
+  // Get auth state from localStorage to prevent tab switching issues
+  const authData = localStorage.getItem('supabase.auth.token');
+  const isAuthenticated = !!authData;
+
+  if (!isAuthenticated && location.pathname !== '/auth') {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 function App() {
   const [selectedObraId, setSelectedObraId] = useState<string | null>(null);
   
+  // Check localStorage for obra selection on initial load
+  useEffect(() => {
+    const storedObraId = localStorage.getItem('selectedObraId');
+    if (storedObraId) {
+      setSelectedObraId(storedObraId);
+    }
+  }, []);
+  
   const handleObraSelect = (obra: Obra) => {
     setSelectedObraId(obra.id);
+    // Save selected obra to localStorage
+    if (obra.id) {
+      localStorage.setItem('selectedObraId', obra.id);
+    }
   };
 
   return (
@@ -70,9 +100,21 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/obras" replace />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
-                <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
-                <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
+                <Route path="/obras" element={
+                  <RequireAuth>
+                    <Obras onObraSelect={handleObraSelect} />
+                  </RequireAuth>
+                } />
+                <Route path="/tarefas" element={
+                  <RequireAuth>
+                    <Index onObraSelect={handleObraSelect} />
+                  </RequireAuth>
+                } />
+                <Route path="/dashboard" element={
+                  <RequireAuth>
+                    <Index onObraSelect={handleObraSelect} />
+                  </RequireAuth>
+                } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>
