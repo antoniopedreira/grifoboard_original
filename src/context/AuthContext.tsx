@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const [userSession, setUserSession] = useState<UserSession>({ user: null, obraAtiva: null });
   const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Função auxiliar para converter User do Supabase para o formato do UserSession
   const mapUser = (user: User | null): UserSession['user'] => {
@@ -34,27 +35,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
+      if (authInitialized) return; // Prevent multiple initializations
+      
       try {
-        // First set up the auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          (_event, session) => {
-            const mappedUser = mapUser(session?.user || null);
-            // Get saved active obra if it exists
-            if (mappedUser) {
-              const savedObra = localStorage.getItem(`obraAtiva_${mappedUser.id}`);
-              const obraAtiva = savedObra ? JSON.parse(savedObra) : null;
-              setUserSession({ user: mappedUser, obraAtiva });
-            } else {
-              setUserSession({ user: null, obraAtiva: null });
-            }
-            setIsLoading(false);
-          }
-        );
-
-        // Then check for an existing session
+        setAuthInitialized(true);
+        
+        // Get existing session first
         const { data: { session } } = await supabase.auth.getSession();
         const mappedUser = mapUser(session?.user || null);
-
+        
         // Get saved active obra if user exists
         if (mappedUser) {
           const savedObra = localStorage.getItem(`obraAtiva_${mappedUser.id}`);
@@ -63,8 +52,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setUserSession({ user: null, obraAtiva: null });
         }
-        setIsLoading(false);
+        
+        // Then set up the auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (_event, session) => {
+            const mappedUser = mapUser(session?.user || null);
+            // Handle auth state changes with setTimeout to prevent deadlocks
+            setTimeout(() => {
+              if (mappedUser) {
+                const savedObra = localStorage.getItem(`obraAtiva_${mappedUser.id}`);
+                const obraAtiva = savedObra ? JSON.parse(savedObra) : null;
+                setUserSession({ user: mappedUser, obraAtiva });
+              } else {
+                setUserSession({ user: null, obraAtiva: null });
+              }
+            }, 0);
+          }
+        );
 
+        setIsLoading(false);
+        
         return () => {
           subscription.unsubscribe();
         };
@@ -75,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [authInitialized]);
 
   const signIn = async (email: string, password: string) => {
     try {

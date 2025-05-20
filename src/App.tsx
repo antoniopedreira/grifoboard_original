@@ -65,7 +65,7 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   const authData = localStorage.getItem('supabase.auth.token');
   const isAuthenticated = !!authData;
 
-  // Save current route to sessionStorage when navigating
+  // Save current route to sessionStorage when navigating - only once per route
   useEffect(() => {
     if (isAuthenticated && location.pathname !== '/auth') {
       sessionStorage.setItem('lastRoute', location.pathname);
