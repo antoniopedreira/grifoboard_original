@@ -12,6 +12,7 @@ interface RegistryContextType {
   executors: string[];   
   cables: string[];      
   addRegistry: (type: string, value: string) => Promise<void>;
+  deleteRegistry: (type: string, value: string) => Promise<void>;
   isLoading: boolean;
   isSaving: boolean;
   selectedObraId: string | null;
@@ -69,12 +70,44 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   });
   
+  // Mutation to delete registry items
+  const deleteRegistryMutation = useMutation({
+    mutationFn: async ({ type, value }: { type: string; value: string }) => {
+      if (!selectedObraId) throw new Error('No obra selected');
+      
+      await registrosService.excluirRegistro(selectedObraId, type, value);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registros', selectedObraId] });
+      toast({
+        title: "Cadastro removido",
+        description: "O item foi excluído com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir cadastro",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
   // Function to add new registry items
   const addRegistry = async (type: string, value: string) => {
     if (value.trim() === "") return;
 
     try {
       await addRegistryMutation.mutateAsync({ type, value });
+    } catch (error) {
+      // Error is handled by the mutation
+    }
+  };
+  
+  // Function to delete registry items
+  const deleteRegistry = async (type: string, value: string) => {
+    try {
+      await deleteRegistryMutation.mutateAsync({ type, value });
     } catch (error) {
       // Error is handled by the mutation
     }
@@ -89,8 +122,9 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       executors, 
       cables, 
       addRegistry,
+      deleteRegistry,
       isLoading,
-      isSaving: addRegistryMutation.isPending,
+      isSaving: addRegistryMutation.isPending || deleteRegistryMutation.isPending,
       selectedObraId,
       setSelectedObraId
     }}>

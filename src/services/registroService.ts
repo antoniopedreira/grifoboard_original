@@ -53,11 +53,11 @@ export const registrosService = {
     return data;
   },
 
-  async excluirRegistro(id: string): Promise<void> {
+  async excluirRegistro(obra_id: string, tipo: string, valor: string): Promise<void> {
     const { error } = await supabase
       .from('registros')
       .delete()
-      .eq('id', id);
+      .match({ obra_id, tipo, valor });
     
     if (error) {
       console.error("Error deleting registro:", error);

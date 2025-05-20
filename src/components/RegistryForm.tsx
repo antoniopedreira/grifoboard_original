@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { useRegistry } from "@/context/RegistryContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface RegistryFormProps {
   onClose: () => void;
@@ -26,7 +26,8 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
   const [newResponsible, setNewResponsible] = useState("");
   const [newExecutor, setNewExecutor] = useState("");
   const [newCable, setNewCable] = useState("");
-  const { sectors, disciplines, teams, responsibles, executors, cables, isLoading } = useRegistry();
+  const { sectors, disciplines, teams, responsibles, executors, cables, isLoading, deleteRegistry } = useRegistry();
+  const [deletingItem, setDeletingItem] = useState<{type: string, value: string} | null>(null);
 
   const handleSubmit = async (type: string) => {
     let value = "";
@@ -77,10 +78,49 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     }
   };
 
+  const handleDelete = async (type: string, value: string) => {
+    setDeletingItem({type, value});
+    try {
+      await deleteRegistry(type, value);
+    } catch (error) {
+      // Error is handled by the context
+    } finally {
+      setDeletingItem(null);
+    }
+  };
+
   // Display existing items count
   const renderItemsCount = (items: string[]) => {
     if (isLoading) return <span className="text-xs text-muted-foreground">Carregando...</span>;
     return <span className="text-xs text-muted-foreground">{items.length} itens</span>;
+  };
+
+  // Render list of items with delete buttons
+  const renderItemsList = (type: string, items: string[]) => {
+    if (isLoading) return <div className="text-sm text-muted-foreground py-2">Carregando...</div>;
+    if (items.length === 0) return <div className="text-sm text-muted-foreground py-2">Nenhum item cadastrado</div>;
+
+    return (
+      <div className="space-y-2 mt-4 max-h-[200px] overflow-y-auto">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
+            <span className="text-sm">{item}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleDelete(type, item)}
+              disabled={deletingItem?.type === type && deletingItem?.value === item}
+            >
+              {deletingItem?.type === type && deletingItem?.value === item ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 text-destructive" />
+              )}
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -151,6 +191,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
             </Button>
           </div>
         </div>
+        {renderItemsList("sector", sectors)}
       </TabsContent>
       
       <TabsContent value="discipline" className="space-y-4">
@@ -180,6 +221,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
             </Button>
           </div>
         </div>
+        {renderItemsList("discipline", disciplines)}
       </TabsContent>
       
       <TabsContent value="team" className="space-y-4">
@@ -209,6 +251,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
             </Button>
           </div>
         </div>
+        {renderItemsList("team", teams)}
       </TabsContent>
       
       <TabsContent value="responsible" className="space-y-4">
@@ -238,6 +281,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
             </Button>
           </div>
         </div>
+        {renderItemsList("responsible", responsibles)}
       </TabsContent>
       
       <TabsContent value="executor" className="space-y-4">
@@ -267,6 +311,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
             </Button>
           </div>
         </div>
+        {renderItemsList("executor", executors)}
       </TabsContent>
       
       <TabsContent value="cable" className="space-y-4">
@@ -296,6 +341,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
             </Button>
           </div>
         </div>
+        {renderItemsList("cable", cables)}
       </TabsContent>
     </Tabs>
   );
