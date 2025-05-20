@@ -137,36 +137,27 @@ const CableChart: React.FC<CableChartProps> = ({
             margin={{
               top: 5,
               right: 30,
-              left: 80,
+              left: 20,
               bottom: 5
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis 
               type="number" 
               domain={[0, 100]} 
-              tickFormatter={value => `${value}%`} 
-              tick={{
-                fontSize: 12
-              }} 
+              tickFormatter={value => `${value}%`}
             />
             <YAxis 
-              type="category" 
               dataKey="name" 
-              width={70} 
-              tick={{
-                fontSize: 12
-              }} 
+              type="category" 
+              width={100}
             />
-            <Tooltip 
-              formatter={(value: number) => [`${value.toFixed(1)}%`, 'PCP']} 
-              labelFormatter={name => `Cabo: ${name}`} 
-            />
+            <Tooltip formatter={value => [`${value}%`, 'PCP']} />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <Bar 
               dataKey="value" 
-              name="PCP" 
               fill="#021C2F" 
-              radius={[0, 4, 4, 0]}
+              radius={[0, 4, 4, 0]} 
             />
           </BarChart>
         </ResponsiveContainer>
