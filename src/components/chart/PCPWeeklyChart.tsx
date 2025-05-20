@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   BarChart, 
@@ -8,7 +7,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Cell
+  Cell,
+  LabelList
 } from "recharts";
 import { format, isValid, parseISO, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -116,7 +116,7 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
     <ResponsiveContainer width="100%" height={300}>
       <BarChart 
         data={chartData} 
-        margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
+        margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
         barSize={40}
       >
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -140,15 +140,14 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
           dataKey="value" 
           name="Progresso Semanal" 
           radius={[4, 4, 0, 0]}
+          fill="#021C2F"
         >
-          {chartData.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}`} 
-              fill={entry.isCurrentWeek ? barColors.current : barColors.normal} 
-              stroke={entry.isCurrentWeek ? "#0369a1" : ""}
-              strokeWidth={entry.isCurrentWeek ? 1 : 0}
-            />
-          ))}
+          <LabelList 
+            dataKey="value" 
+            position="top" 
+            formatter={(value: number) => `${Math.round(value)}%`}
+            style={{ fontSize: 11, fill: '#666' }}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

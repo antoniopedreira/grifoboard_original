@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, LabelList } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,7 +136,7 @@ const CableChart: React.FC<CableChartProps> = ({
             margin={{
               top: 5,
               right: 30,
-              left: 20,
+              left: 100,
               bottom: 5
             }}
           >
@@ -146,19 +145,27 @@ const CableChart: React.FC<CableChartProps> = ({
               type="number" 
               domain={[0, 100]} 
               tickFormatter={value => `${value}%`}
+              tick={{ fontSize: 12 }}
             />
             <YAxis 
               dataKey="name" 
               type="category" 
               width={100}
+              tick={{ fontSize: 12 }}
             />
             <Tooltip formatter={value => [`${value}%`, 'PCP']} />
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <Bar 
               dataKey="value" 
               fill="#021C2F" 
               radius={[0, 4, 4, 0]} 
-            />
+            >
+              <LabelList 
+                dataKey="value" 
+                position="right" 
+                formatter={(value: number) => `${Math.round(value)}%`}
+                style={{ fontSize: 11, fill: '#666' }}
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

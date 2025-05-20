@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Bar, Cell } from "recharts";
+import { Bar, Cell, LabelList } from "recharts";
 
 interface PCPChartBarsProps {
   chartData: {
@@ -32,6 +32,12 @@ const PCPChartBars: React.FC<PCPChartBarsProps> = ({ chartData, colors }) => {
           strokeWidth={entry.isCurrentWeek ? 1 : 0}
         />
       ))}
+      <LabelList 
+        dataKey="value" 
+        position="top" 
+        formatter={(value: number) => `${Math.round(value)}%`}
+        style={{ fontSize: 11, fill: '#666' }}
+      />
     </Bar>
   );
 };

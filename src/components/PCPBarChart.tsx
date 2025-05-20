@@ -32,10 +32,10 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
     isCurrentWeek: item.isCurrentWeek
   }));
 
-  // Chart colors
+  // Chart colors - all set to the same blue color
   const chartColors = {
-    standard: "#021C2F",   // Updated to requested color
-    highlighted: "#021C2F" // Updated to requested color
+    standard: "#021C2F",
+    highlighted: "#021C2F"
   };
 
   return (
@@ -51,7 +51,7 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart 
               data={chartData} 
-              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+              margin={{ top: 30, right: 10, left: 0, bottom: 5 }}
               barSize={36} // Aumentado a largura das barras
               barGap={2}   // Gap between bars
             >
