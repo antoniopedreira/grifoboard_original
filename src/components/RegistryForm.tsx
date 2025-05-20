@@ -83,6 +83,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     try {
       await deleteRegistry(type, value);
     } catch (error) {
+      console.error("Erro ao excluir:", error);
       // Error is handled by the context
     } finally {
       setDeletingItem(null);

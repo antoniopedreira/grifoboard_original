@@ -54,14 +54,20 @@ export const registrosService = {
   },
 
   async excluirRegistro(obra_id: string, tipo: string, valor: string): Promise<void> {
+    console.log(`Excluindo registro: obra_id=${obra_id}, tipo=${tipo}, valor=${valor}`);
+    
     const { error } = await supabase
       .from('registros')
       .delete()
-      .match({ obra_id, tipo, valor });
+      .eq('obra_id', obra_id)
+      .eq('tipo', tipo)
+      .eq('valor', valor);
     
     if (error) {
       console.error("Error deleting registro:", error);
       throw error;
     }
+    
+    console.log("Registro excluído com sucesso");
   }
 };
