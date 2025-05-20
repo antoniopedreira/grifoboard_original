@@ -57,13 +57,20 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Route guard component
+// Route guard component with route persistence
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   
   // Get auth state from localStorage to prevent tab switching issues
   const authData = localStorage.getItem('supabase.auth.token');
   const isAuthenticated = !!authData;
+
+  // Save current route to sessionStorage when navigating
+  useEffect(() => {
+    if (isAuthenticated && location.pathname !== '/auth') {
+      sessionStorage.setItem('lastRoute', location.pathname);
+    }
+  }, [location.pathname, isAuthenticated]);
 
   if (!isAuthenticated && location.pathname !== '/auth') {
     return <Navigate to="/auth" replace />;
@@ -74,12 +81,19 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   const [selectedObraId, setSelectedObraId] = useState<string | null>(null);
+  const [initialRoute, setInitialRoute] = useState<string>('/obras');
   
-  // Check localStorage for obra selection on initial load
+  // Check localStorage for obra selection and sessionStorage for last route on initial load
   useEffect(() => {
     const storedObraId = localStorage.getItem('selectedObraId');
     if (storedObraId) {
       setSelectedObraId(storedObraId);
+    }
+    
+    // Get the last route from sessionStorage
+    const lastRoute = sessionStorage.getItem('lastRoute');
+    if (lastRoute) {
+      setInitialRoute(lastRoute);
     }
   }, []);
   
@@ -98,8 +112,12 @@ function App() {
           <Router>
             <AppLayout>
               <Routes>
-                <Route path="/" element={<Navigate to="/obras" replace />} />
-                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={<Navigate to={initialRoute} replace />} />
+                <Route path="/auth" element={<Auth onAuthenticated={() => {
+                  // If user had a saved route, restore it after login
+                  const lastRoute = sessionStorage.getItem('lastRoute');
+                  return lastRoute || '/obras';
+                }} />} />
                 <Route path="/obras" element={
                   <RequireAuth>
                     <Obras onObraSelect={handleObraSelect} />

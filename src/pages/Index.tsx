@@ -23,9 +23,11 @@ const Index = ({ onObraSelect }: IndexProps) => {
   // If there's no user, redirect to auth page
   useEffect(() => {
     if (!userSession?.user) {
+      // Save the current route before redirecting
+      sessionStorage.setItem('lastRoute', location.pathname);
       navigate("/auth");
     }
-  }, [userSession, navigate]);
+  }, [userSession, navigate, location.pathname]);
 
   // Set the selected obra ID when an obra is selected or active
   useEffect(() => {
@@ -40,6 +42,8 @@ const Index = ({ onObraSelect }: IndexProps) => {
   // If there's no active obra, redirect to obras page
   useEffect(() => {
     if (userSession?.user && !userSession.obraAtiva) {
+      // Save the current route before redirecting
+      sessionStorage.setItem('lastRoute', '/obras');
       navigate("/obras");
     }
   }, [userSession, navigate]);
