@@ -2,6 +2,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PCPData } from "@/types";
 import PCPProgress from "./PCPProgress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PCPBreakdownCardProps {
   title: string;
@@ -15,14 +16,16 @@ const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
         <CardTitle className="text-xl">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {data && Object.entries(data).map(([key, value]) => (
-            <PCPProgress key={key} data={value} label={key} />
-          ))}
-          {(!data || Object.keys(data).length === 0) && (
-            <div className="text-sm text-muted-foreground">Sem dados disponíveis</div>
-          )}
-        </div>
+        <ScrollArea className="h-[200px] pr-4">
+          <div className="space-y-3">
+            {data && Object.entries(data).map(([key, value]) => (
+              <PCPProgress key={key} data={value} label={key} />
+            ))}
+            {(!data || Object.keys(data).length === 0) && (
+              <div className="text-sm text-muted-foreground">Sem dados disponíveis</div>
+            )}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
