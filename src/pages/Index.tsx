@@ -34,12 +34,10 @@ const Index = ({ onObraSelect }: IndexProps) => {
     if (userSession?.obraAtiva) {
       setSelectedObraId(userSession.obraAtiva.id);
       onObraSelect(userSession.obraAtiva);
-    } else {
-      setSelectedObraId(null);
     }
   }, [userSession?.obraAtiva, setSelectedObraId, onObraSelect]);
 
-  // If there's no active obra, redirect to obras page (apenas uma vez)
+  // Redirect to obras page only if no active obra and user is logged in
   useEffect(() => {
     if (userSession?.user && !userSession.obraAtiva && !redirectAttempted) {
       navigate("/obras");

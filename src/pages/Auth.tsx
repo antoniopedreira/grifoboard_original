@@ -12,8 +12,11 @@ const Auth = () => {
   useEffect(() => {
     // Verificar se o usuário já está autenticado e redirecionar apenas uma vez
     if (userSession?.user && !redirectAttempted) {
-      const lastRoute = sessionStorage.getItem('lastRoute') || '/obras';
-      navigate(lastRoute);
+      // Usar a última rota acessada ou /obras como fallback
+      const lastRoute = sessionStorage.getItem('lastRoute');
+      // Só redirecionar se houver uma rota salva, caso contrário vai para /obras
+      const targetRoute = lastRoute || '/obras';
+      navigate(targetRoute);
       setRedirectAttempted(true);
     }
   }, [userSession, navigate, redirectAttempted]);

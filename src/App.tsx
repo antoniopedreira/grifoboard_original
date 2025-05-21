@@ -61,7 +61,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Enhanced route restoration with tab visibility support
+// Route restoration component with improved behavior
 const RouteRestorer = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,6 +79,8 @@ const RouteRestorer = () => {
       if (isPageReload) {
         const lastRoute = sessionStorage.getItem('lastRoute');
         
+        // Only navigate if we have a saved route, we're not already on that route,
+        // and we're at the root path (/) to avoid interrupting intentional navigation
         if (lastRoute && lastRoute !== location.pathname && location.pathname === '/') {
           navigate(lastRoute);
         }
@@ -89,17 +91,13 @@ const RouteRestorer = () => {
     }
   }, [navigate, location.pathname, restored]);
 
-  // Handle tab visibility changes
+  // Handle tab visibility changes - improved to avoid unnecessary redirects
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        const lastRoute = sessionStorage.getItem('lastRoute');
-        const currentPath = window.location.pathname;
-        
-        // Only navigate if we're on a different path and have a saved route
-        if (lastRoute && lastRoute !== currentPath) {
-          navigate(lastRoute);
-        }
+        // No automatic redirection when switching back to the tab
+        // The user should stay on their current route
+        console.log('Tab is now visible, maintaining current route:', window.location.pathname);
       }
     };
 
@@ -108,7 +106,7 @@ const RouteRestorer = () => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [navigate]);
+  }, []);
 
   return null;
 };

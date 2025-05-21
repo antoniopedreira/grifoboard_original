@@ -72,6 +72,9 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
       
       // Redireciona para dashboard ao invés de tarefas
       navigate("/dashboard");
+      
+      // Atualize o sessionStorage com a nova rota
+      sessionStorage.setItem('lastRoute', '/dashboard');
     } catch (error: any) {
       console.error('Error selecting obra:', error);
       toast({
