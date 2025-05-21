@@ -11,11 +11,11 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({ task, onCompletionStatusChange 
   return (
     <div className="flex justify-between">
       <div>
-        <h3 className="font-semibold text-gray-900">{task.description}</h3>
-        <p className="text-sm text-gray-500">{task.item}</p>
+        <h3 className="font-semibold text-sm text-gray-900">{task.description}</h3>
+        <p className="text-xs text-gray-500">{task.item}</p>
       </div>
       <Badge 
-        className={`cursor-pointer ${
+        className={`cursor-pointer text-xs ${
           task.isFullyCompleted 
             ? "bg-green-500 hover:bg-green-600" 
             : "text-orange-500 border-orange-500 hover:bg-orange-100"

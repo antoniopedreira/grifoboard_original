@@ -10,7 +10,7 @@ interface TaskStatusDisplayProps {
 
 const TaskStatusDisplay: React.FC<TaskStatusDisplayProps> = ({ task, onStatusChange }) => {
   return (
-    <div className="mt-4">
+    <div className="mt-2">
       <div className="flex justify-between items-center">
         {Object.entries(dayNameMap).map(([day, shortName]) => {
           const dayKey = day as DayOfWeek;
@@ -19,7 +19,7 @@ const TaskStatusDisplay: React.FC<TaskStatusDisplayProps> = ({ task, onStatusCha
           
           return (
             <div key={day} className="flex flex-col items-center">
-              <span className="text-xs text-gray-500 mb-1">{shortName}</span>
+              <span className="text-[10px] text-gray-500 mb-1">{shortName}</span>
               <DayStatusButton
                 day={dayKey}
                 status={dayStatus}

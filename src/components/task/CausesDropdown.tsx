@@ -30,7 +30,7 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
   };
 
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col gap-1 w-full">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -40,7 +40,7 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full truncate"
+                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full truncate h-7 px-2"
                   >
                     {renderCauseText()}
                   </Button>
@@ -50,7 +50,7 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
                     <DropdownMenuItem 
                       key={cause} 
                       onClick={() => onCauseSelect(cause)}
-                      className="text-gray-800 hover:bg-gray-50"
+                      className="text-xs text-gray-800 hover:bg-gray-50"
                     >
                       {cause}
                     </DropdownMenuItem>

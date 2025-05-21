@@ -37,7 +37,7 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
         <span />
       )}
       
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -45,9 +45,9 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
                 variant="ghost" 
                 size="sm" 
                 onClick={onDuplicateClick} 
-                className="text-gray-700 hover:bg-gray-100"
+                className="text-gray-700 hover:bg-gray-100 p-1 h-7"
               >
-                <Copy className="h-4 w-4" />
+                <Copy className="h-3 w-3" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -60,9 +60,9 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
           variant="ghost" 
           size="sm" 
           onClick={onEditClick} 
-          className="text-gray-700 hover:bg-gray-100"
+          className="text-gray-700 hover:bg-gray-100 text-xs h-7"
         >
-          <Pencil className="mr-1 h-4 w-4" /> Editar
+          <Pencil className="mr-1 h-3 w-3" /> Editar
         </Button>
       </div>
     </div>

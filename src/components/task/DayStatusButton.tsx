@@ -13,7 +13,7 @@ interface DayStatusButtonProps {
 const DayStatusButton: React.FC<DayStatusButtonProps> = ({ day, status, isPlanned, onStatusChange }) => {
   if (!isPlanned) {
     return (
-      <div className="h-8 w-8 rounded-full bg-gray-200 opacity-30 border border-gray-300" />
+      <div className="h-6 w-6 rounded-full bg-gray-200 opacity-30 border border-gray-300" />
     );
   }
 
@@ -33,10 +33,10 @@ const DayStatusButton: React.FC<DayStatusButtonProps> = ({ day, status, isPlanne
   return (
     <button
       onClick={handleClick}
-      className={`h-8 w-8 rounded-full ${statusColor} border flex items-center justify-center text-white`}
+      className={`h-6 w-6 rounded-full ${statusColor} border flex items-center justify-center text-white`}
       aria-label={`Status para ${day}: ${status}`}
     >
-      {status === "completed" && <Check className="w-4 h-4" />}
+      {status === "completed" && <Check className="w-3 h-3" />}
     </button>
   );
 };
