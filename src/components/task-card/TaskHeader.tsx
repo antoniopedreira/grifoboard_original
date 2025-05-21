@@ -15,7 +15,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({ task, onCompletionStatusChange 
         <p className="text-xs text-gray-500">{task.item}</p>
       </div>
       <Badge 
-        className={`cursor-pointer text-xs ${
+        className={`cursor-pointer text-xs whitespace-nowrap px-2 ${
           task.isFullyCompleted 
             ? "bg-green-500 hover:bg-green-600" 
             : "text-orange-500 border-orange-500 hover:bg-orange-100"
