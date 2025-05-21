@@ -18,11 +18,11 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   const [filterCable, setFilterCable] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   
-  // Extract unique values for filters
-  const sectors = Array.from(new Set(tasks.map(task => task.sector)));
-  const responsibles = Array.from(new Set(tasks.map(task => task.responsible)));
-  const executors = Array.from(new Set(tasks.map(task => task.executor).filter(Boolean)));
-  const cables = Array.from(new Set(tasks.map(task => task.cable).filter(Boolean)));
+  // Extract unique values for filters and filter out empty values
+  const sectors = Array.from(new Set(tasks.map(task => task.sector))).filter(Boolean);
+  const responsibles = Array.from(new Set(tasks.map(task => task.responsible))).filter(Boolean);
+  const executors = Array.from(new Set(tasks.map(task => task.executor).filter(Boolean))).filter(Boolean);
+  const cables = Array.from(new Set(tasks.map(task => task.cable).filter(Boolean))).filter(Boolean);
 
   // Apply filters whenever filter values change
   useEffect(() => {

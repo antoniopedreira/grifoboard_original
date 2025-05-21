@@ -24,6 +24,9 @@ const RegistrySelect: React.FC<RegistrySelectProps> = ({
   onOpenRegistryDialog,
   className
 }) => {
+  // Filter out any empty options
+  const validOptions = options.filter(option => option.trim() !== "");
+  
   return (
     <div className={`space-y-2 ${className}`}>
       <Label htmlFor={id} className="font-medium">{label}</Label>
@@ -32,8 +35,8 @@ const RegistrySelect: React.FC<RegistrySelectProps> = ({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.length > 0 ? (
-            options.map(option => (
+          {validOptions.length > 0 ? (
+            validOptions.map(option => (
               <SelectItem key={option} value={option}>{option}</SelectItem>
             ))
           ) : (

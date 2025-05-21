@@ -1,3 +1,4 @@
+
 import { DayOfWeek } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,14 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   onWeekDateChange
 }) => {
   const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
+
+  // Filter out any empty values from the registry arrays
+  const validSectors = sectors.filter(item => item && item.trim() !== "");
+  const validDisciplines = disciplines.filter(item => item && item.trim() !== "");
+  const validTeams = teams.filter(item => item && item.trim() !== "");
+  const validResponsibles = responsibles.filter(item => item && item.trim() !== "");
+  const validExecutors = executors.filter(item => item && item.trim() !== "");
+  const validCables = cables.filter(item => item && item.trim() !== "");
 
   // Helper function to evaluate isFormValid regardless of type
   const checkFormValidity = () => {
@@ -128,8 +137,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o setor" />
             </SelectTrigger>
             <SelectContent>
-              {sectors.length > 0 ? (
-                sectors.map(option => (
+              {validSectors.length > 0 ? (
+                validSectors.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))
               ) : (
@@ -152,8 +161,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione a disciplina" />
             </SelectTrigger>
             <SelectContent>
-              {disciplines.length > 0 ? (
-                disciplines.map(option => (
+              {validDisciplines.length > 0 ? (
+                validDisciplines.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))
               ) : (
@@ -179,8 +188,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o cabo" />
             </SelectTrigger>
             <SelectContent>
-              {cables.length > 0 ? (
-                cables.map(option => (
+              {validCables.length > 0 ? (
+                validCables.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))
               ) : (
@@ -203,8 +212,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione a equipe" />
             </SelectTrigger>
             <SelectContent>
-              {teams.length > 0 ? (
-                teams.map(option => (
+              {validTeams.length > 0 ? (
+                validTeams.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))
               ) : (
@@ -229,8 +238,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o responsável" />
             </SelectTrigger>
             <SelectContent>
-              {responsibles.length > 0 ? (
-                responsibles.map(option => (
+              {validResponsibles.length > 0 ? (
+                validResponsibles.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))
               ) : (
@@ -252,8 +261,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <SelectValue placeholder="Selecione o executante" />
             </SelectTrigger>
             <SelectContent>
-              {executors.length > 0 ? (
-                executors.map(option => (
+              {validExecutors.length > 0 ? (
+                validExecutors.map(option => (
                   <SelectItem key={option} value={option}>{option}</SelectItem>
                 ))
               ) : (
