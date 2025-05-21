@@ -21,7 +21,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
   // Determine if we're in dashboard or tasks view
   const isDashboard = location.pathname === "/dashboard";
 
-  // If there's no user, redirect to auth page (apenas uma vez)
+  // If there's no user, redirect to auth page (only once)
   useEffect(() => {
     if (!userSession?.user && !redirectAttempted) {
       navigate("/auth");
@@ -29,7 +29,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
     }
   }, [userSession, navigate, redirectAttempted]);
 
-  // Set the selected obra ID when an obra is selected or active
+  // Set the selected obra ID when an obra is active
   useEffect(() => {
     if (userSession?.obraAtiva) {
       setSelectedObraId(userSession.obraAtiva.id);
@@ -37,7 +37,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
     }
   }, [userSession?.obraAtiva, setSelectedObraId, onObraSelect]);
 
-  // Redirect to obras page only if no active obra and user is logged in
+  // If user is logged in but no active obra, redirect to obras page to select one
   useEffect(() => {
     if (userSession?.user && !userSession.obraAtiva && !redirectAttempted) {
       navigate("/obras");

@@ -29,7 +29,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const { toast } = useToast();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // If there's no user, redirect to auth page (apenas uma vez)
+  // If there's no user, redirect to auth page (only once)
   useEffect(() => {
     if (!userSession?.user && !redirectAttempted) {
       navigate("/auth");
@@ -37,7 +37,15 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
     }
   }, [userSession, navigate, redirectAttempted]);
 
-  // Fetch obras
+  // If user already has an active obra, redirect to dashboard
+  useEffect(() => {
+    if (userSession?.user && userSession.obraAtiva && !redirectAttempted) {
+      navigate('/dashboard');
+      setRedirectAttempted(true);
+    }
+  }, [userSession, navigate, redirectAttempted]);
+
+  // Fetch obras when user is authenticated
   useEffect(() => {
     const fetchObras = async () => {
       try {
@@ -62,6 +70,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
 
   const handleSelectObra = async (obra: Obra) => {
     try {
+      // Set the active obra in the auth context (which will also save to localStorage)
       setObraAtiva(obra);
       
       // Set the selected obra ID for registry context
@@ -70,11 +79,8 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
       // Call the onObraSelect prop
       onObraSelect(obra);
       
-      // Redireciona para dashboard ao invés de tarefas
+      // Navigate to dashboard after obra selection
       navigate("/dashboard");
-      
-      // Atualize o sessionStorage com a nova rota
-      sessionStorage.setItem('lastRoute', '/dashboard');
     } catch (error: any) {
       console.error('Error selecting obra:', error);
       toast({

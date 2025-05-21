@@ -13,7 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setObraAtiva: (obra: Obra | null) => void;
-  setUserSession: (session: UserSession | null) => void; // Fixed return type to void
+  setUserSession: (session: UserSession | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userSession, setUserSession] = useState<UserSession>({ user: null, obraAtiva: null });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Função auxiliar para converter User do Supabase para o formato do UserSession
+  // Helper function to convert Supabase User to UserSession format
   const mapUser = (user: User | null): UserSession['user'] => {
     if (!user) return null;
     return {
@@ -32,40 +32,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   };
 
+  // Retrieve obra ativa from localStorage on initial load
+  const getInitialObraAtiva = (userId: string | undefined) => {
+    if (!userId) return null;
+    
+    const savedObra = localStorage.getItem(`obraAtiva_${userId}`);
+    if (savedObra) {
+      try {
+        return JSON.parse(savedObra);
+      } catch (e) {
+        localStorage.removeItem(`obraAtiva_${userId}`);
+        return null;
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
-    // Verificar sessão atual
+    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setUserSession({ user: mapUser(session.user), obraAtiva: null });
+        // Retrieve active obra from localStorage when session is available
+        const obraAtiva = getInitialObraAtiva(session.user.id);
+        setUserSession({ user: mapUser(session.user), obraAtiva });
       }
       setIsLoading(false);
     });
 
-    // Ouvir mudanças de autenticação
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUserSession({ user: mapUser(session?.user || null), obraAtiva: null });
+        if (session) {
+          // When auth state changes, also try to get the active obra
+          const obraAtiva = getInitialObraAtiva(session.user.id);
+          setUserSession({ user: mapUser(session.user), obraAtiva });
+        } else {
+          setUserSession({ user: null, obraAtiva: null });
+        }
         setIsLoading(false);
       }
     );
 
     return () => subscription.unsubscribe();
   }, []);
-
-  // Recuperar obra ativa do localStorage ao iniciar
-  useEffect(() => {
-    if (userSession.user) {
-      const savedObra = localStorage.getItem(`obraAtiva_${userSession.user.id}`);
-      if (savedObra) {
-        try {
-          const obra = JSON.parse(savedObra);
-          setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
-        } catch (e) {
-          localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
-        }
-      }
-    }
-  }, [userSession.user]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -117,7 +126,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       await supabase.auth.signOut();
-      setUserSession({ user: null, obraAtiva: null }); // Fixed: using setUserSession instead of non-existent setSession
+      setUserSession({ user: null, obraAtiva: null });
+      // Also clear obra from localStorage
+      if (userSession.user) {
+        localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
+      }
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
@@ -136,7 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const setObraAtiva = (obra: Obra | null) => {
     setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
     
-    // Salvar obra ativa no localStorage
+    // Save active obra in localStorage for persistence
     if (userSession.user && obra) {
       localStorage.setItem(`obraAtiva_${userSession.user.id}`, JSON.stringify(obra));
     } else if (userSession.user) {

@@ -10,13 +10,15 @@ const Auth = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
   useEffect(() => {
-    // Verificar se o usuário já está autenticado e redirecionar apenas uma vez
+    // Only check auth status once to prevent multiple redirects
     if (userSession?.user && !redirectAttempted) {
-      // Usar a última rota acessada ou /obras como fallback
-      const lastRoute = sessionStorage.getItem('lastRoute');
-      // Só redirecionar se houver uma rota salva, caso contrário vai para /obras
-      const targetRoute = lastRoute || '/obras';
-      navigate(targetRoute);
+      if (userSession.obraAtiva) {
+        // If user has an active obra, redirect to dashboard
+        navigate('/dashboard');
+      } else {
+        // If user is logged in but no active obra, redirect to obras page
+        navigate('/obras');
+      }
       setRedirectAttempted(true);
     }
   }, [userSession, navigate, redirectAttempted]);

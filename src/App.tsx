@@ -29,13 +29,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const isAuthPage = location.pathname === '/auth';
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
 
-  // Save the current route to sessionStorage for restoration later, but only for authenticated routes
-  useEffect(() => {
-    if (!isAuthPage) {
-      sessionStorage.setItem('lastRoute', location.pathname);
-    }
-  }, [location.pathname, isAuthPage]);
-
   return (
     <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-background' : ''}`}>
       {!isAuthPage && <Header />}
@@ -61,52 +54,17 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Route restoration component with improved behavior
+// Improved route restoration component
 const RouteRestorer = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [restored, setRestored] = useState(false);
 
-  // Handle initial page load route restoration
+  // Save the current route to sessionStorage for restoration later, but only for app routes
   useEffect(() => {
-    // Only attempt to restore route once during initial page load
-    if (!restored) {
-      const isPageReload = !sessionStorage.getItem('appInitialized');
-      
-      // Mark as initialized to distinguish between first load and subsequent visits
-      sessionStorage.setItem('appInitialized', 'true');
-      
-      if (isPageReload) {
-        const lastRoute = sessionStorage.getItem('lastRoute');
-        
-        // Only navigate if we have a saved route, we're not already on that route,
-        // and we're at the root path (/) to avoid interrupting intentional navigation
-        if (lastRoute && lastRoute !== location.pathname && location.pathname === '/') {
-          navigate(lastRoute);
-        }
-      }
-      
-      // Mark as restored to prevent future redirects
-      setRestored(true);
+    if (location.pathname !== '/auth') {
+      sessionStorage.setItem('lastRoute', location.pathname);
     }
-  }, [navigate, location.pathname, restored]);
-
-  // Handle tab visibility changes - improved to avoid unnecessary redirects
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // No automatic redirection when switching back to the tab
-        // The user should stay on their current route
-        console.log('Tab is now visible, maintaining current route:', window.location.pathname);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+  }, [location.pathname]);
 
   return null;
 };
