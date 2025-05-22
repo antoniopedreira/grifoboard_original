@@ -10,6 +10,11 @@ interface PCPBreakdownCardProps {
 }
 
 const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
+  // Sort data entries by percentage in descending order
+  const sortedEntries = data 
+    ? Object.entries(data).sort((a, b) => b[1].percentage - a[1].percentage)
+    : [];
+
   return (
     <Card className="col-span-1 lg:col-span-1 shadow-sm">
       <CardHeader className="pb-2">
@@ -18,7 +23,7 @@ const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
       <CardContent>
         <ScrollArea className="h-[200px] pr-4">
           <div className="space-y-3">
-            {data && Object.entries(data).map(([key, value]) => (
+            {sortedEntries.length > 0 && sortedEntries.map(([key, value]) => (
               <PCPProgress key={key} data={value} label={key} />
             ))}
             {(!data || Object.keys(data).length === 0) && (

@@ -16,11 +16,10 @@ const TaskDisciplineChart: React.FC<TaskDisciplineChartProps> = ({ tasks }) => {
     return acc;
   }, {});
   
-  // Transform into chart data format
-  const data = Object.entries(disciplineMap).map(([name, value]) => ({
-    name,
-    value,
-  }));
+  // Transform into chart data format and sort by value (count) descending
+  const data = Object.entries(disciplineMap)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
   
   // Colors for different disciplines
   const COLORS = [
