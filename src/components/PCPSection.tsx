@@ -3,7 +3,6 @@ import { Task } from "@/types";
 import PCPChart from "@/components/PCPChart";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X } from "lucide-react";
 
 interface PCPSectionProps {
   pcpData: any;
@@ -33,18 +32,16 @@ const PCPSection: React.FC<PCPSectionProps> = ({
       />
       
       {selectedCause && (
-        <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg flex justify-between items-center shadow-sm animate-fade-in">
+        <div className="mb-4 px-4 py-2 bg-muted rounded-lg flex justify-between items-center">
           <div className="text-sm">
-            <span className="font-medium text-blue-700">Filtro ativo: </span>
-            <span className="text-blue-800">{selectedCause}</span>
+            <span className="font-medium">Filtro ativo: </span>
+            <span className="text-primary">{selectedCause}</span>
           </div>
           <Button 
             variant="ghost" 
-            size="sm"
-            className="h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-1"
+            size="sm" 
             onClick={onClearFilter}
           >
-            <X className="h-4 w-4 mr-1" />
             Limpar
           </Button>
         </div>

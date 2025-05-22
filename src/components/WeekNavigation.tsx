@@ -27,18 +27,17 @@ const WeekNavigation = ({
     today.getTime() <= weekEndDate.getTime();
     
   return (
-    <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md backdrop-blur-sm border border-gray-100">
+    <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm">
       <Button 
         variant="outline" 
         size="icon"
-        className="hover:bg-gray-100 transition-colors"
         onClick={onPreviousWeek}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
       
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-800">
+        <h3 className="text-xl font-semibold">
           {currentWeekFormatted}
         </h3>
         {isCurrentWeek && (
@@ -49,7 +48,6 @@ const WeekNavigation = ({
       <Button 
         variant="outline" 
         size="icon"
-        className="hover:bg-gray-100 transition-colors"
         onClick={onNextWeek}
       >
         <ChevronRight className="h-4 w-4" />
