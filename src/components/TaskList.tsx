@@ -4,6 +4,8 @@ import { Task } from "@/types";
 import TaskFilters from "./task/TaskFilters";
 import TaskGrid from "./task/TaskGrid";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 interface TaskListProps {
   tasks: Task[];
@@ -48,14 +50,26 @@ const TaskList: React.FC<TaskListProps> = ({
   }, [tasksAfterCauseFilter, selectedCause]);
 
   return (
-    <div className="w-full space-y-4">
-      <div className="glass-card p-4 rounded-xl shadow-sm mb-4">
+    <div className="w-full space-y-6">
+      <div className="glass-card p-5 rounded-xl shadow-sm">
         <TaskFilters 
           tasks={tasksAfterCauseFilter} 
           onFiltersChange={setFilteredTasks} 
           selectedCause={selectedCause}
         />
       </div>
+      
+      {selectedCause && (
+        <Alert variant="success" className="flex items-center mb-2">
+          <CheckCircle2 className="h-4 w-4" />
+          <div>
+            <AlertTitle className="text-sm">Filtro por causa ativo</AlertTitle>
+            <AlertDescription className="text-xs">
+              Exibindo tarefas com a causa: <span className="font-medium">{selectedCause}</span>
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
       
       <TaskGrid 
         tasks={filteredTasks} 

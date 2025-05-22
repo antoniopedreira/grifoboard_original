@@ -35,24 +35,24 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div>
+            <div className="w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full truncate h-6 px-2 rounded-md flex items-center shadow-sm hover:shadow"
+                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full truncate h-7 px-3 pr-8 rounded-md flex items-center shadow-sm hover:shadow bg-white"
                   >
                     {renderCauseText()}
-                    <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
+                    <ChevronDown className="h-3 w-3 ml-1 opacity-70 absolute right-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="max-h-[200px] overflow-y-auto bg-white rounded-lg shadow-md border border-gray-200">
+                <DropdownMenuContent className="max-h-[250px] overflow-y-auto bg-white rounded-lg shadow-md border border-gray-200 w-[200px]">
                   {standardCauses.map(cause => (
                     <DropdownMenuItem 
                       key={cause} 
                       onClick={() => onCauseSelect(cause)}
-                      className="text-xs text-gray-700 hover:bg-gray-50 cursor-pointer"
+                      className="text-xs py-2 text-gray-700 hover:bg-gray-50 cursor-pointer"
                     >
                       {cause}
                     </DropdownMenuItem>

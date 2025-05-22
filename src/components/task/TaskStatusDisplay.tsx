@@ -10,8 +10,8 @@ interface TaskStatusDisplayProps {
 
 const TaskStatusDisplay: React.FC<TaskStatusDisplayProps> = ({ task, onStatusChange }) => {
   return (
-    <div className="mt-2 bg-white p-2 rounded-lg border border-gray-100">
-      <div className="grid grid-cols-7 gap-1">
+    <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+      <div className="grid grid-cols-7 gap-1.5">
         {Object.entries(dayNameMap).map(([day, shortName]) => {
           const dayKey = day as DayOfWeek;
           const dayStatus = task.dailyStatus.find(s => s.day === dayKey)?.status || "not_planned";
@@ -19,7 +19,7 @@ const TaskStatusDisplay: React.FC<TaskStatusDisplayProps> = ({ task, onStatusCha
           
           return (
             <div key={day} className="flex flex-col items-center">
-              <span className="text-[9px] text-gray-500 mb-0.5 font-medium">{shortName}</span>
+              <span className="text-[9px] text-gray-500 mb-1 font-semibold">{shortName}</span>
               <DayStatusButton
                 day={dayKey}
                 status={dayStatus}
