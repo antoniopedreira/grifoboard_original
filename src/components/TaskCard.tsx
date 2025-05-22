@@ -51,7 +51,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <>
-      <Card className="w-full bg-white shadow-sm hover:shadow-md transition-shadow text-sm">
+      <Card className="w-full bg-white shadow-sm hover:shadow-md transition-shadow text-sm h-full">
         <CardHeader className="pb-1 pt-3 px-3">
           <TaskHeader 
             task={task} 
@@ -59,7 +59,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           />
         </CardHeader>
         
-        <CardContent className="px-3 pb-1">
+        <CardContent className="px-3 pb-1 overflow-hidden">
           <TaskDetails 
             sector={task.sector}
             discipline={task.discipline}

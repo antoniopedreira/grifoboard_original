@@ -19,29 +19,29 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   cable
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs mb-3">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs mb-3">
       <div className="flex flex-col">
-        <span className="text-gray-500 font-medium">Setor</span>
+        <span className="text-gray-500 font-medium text-[10px]">Setor</span>
         <span className="truncate text-gray-800">{sector}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500 font-medium">Disciplina</span>
+        <span className="text-gray-500 font-medium text-[10px]">Disciplina</span>
         <span className="truncate text-gray-800">{discipline}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500 font-medium">Equipe</span>
+        <span className="text-gray-500 font-medium text-[10px]">Equipe</span>
         <span className="truncate text-gray-800">{team}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500 font-medium">Responsável</span>
+        <span className="text-gray-500 font-medium text-[10px]">Responsável</span>
         <span className="truncate text-gray-800">{responsible}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500 font-medium">Executante</span>
+        <span className="text-gray-500 font-medium text-[10px]">Executante</span>
         <span className="truncate text-gray-800">{executor}</span>
       </div>
       <div className="flex flex-col">
-        <span className="text-gray-500 font-medium">Cabo</span>
+        <span className="text-gray-500 font-medium text-[10px]">Cabo</span>
         <span className="truncate text-gray-800">{cable}</span>
       </div>
     </div>

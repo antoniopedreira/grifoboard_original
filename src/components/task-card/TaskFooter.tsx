@@ -45,7 +45,7 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
                 variant="ghost" 
                 size="sm" 
                 onClick={onDuplicateClick} 
-                className="text-gray-700 hover:bg-gray-100 p-1 h-7"
+                className="text-gray-700 hover:bg-gray-100 p-1 h-6"
               >
                 <Copy className="h-3 w-3" />
               </Button>
@@ -60,7 +60,7 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
           variant="ghost" 
           size="sm" 
           onClick={onEditClick} 
-          className="text-gray-700 hover:bg-gray-100 text-xs h-7"
+          className="text-gray-700 hover:bg-gray-100 text-xs h-6"
         >
           <Pencil className="mr-1 h-3 w-3" /> Editar
         </Button>

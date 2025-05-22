@@ -24,9 +24,9 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
   const renderCauseText = () => {
     if (!currentCause) return "Causas Padrão";
     
-    return (
-      <span className="truncate block">{currentCause}</span>
-    );
+    return currentCause.length > 18 
+      ? <span className="truncate block max-w-full">{currentCause.substring(0, 18)}...</span>
+      : <span className="truncate block max-w-full">{currentCause}</span>;
   };
 
   return (
@@ -40,7 +40,7 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full truncate h-7 px-2"
+                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full truncate h-6 px-2"
                   >
                     {renderCauseText()}
                   </Button>
@@ -64,13 +64,6 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
-      {currentCause && (
-        <div className="text-xs text-red-500 hidden">
-          <span className="font-semibold">Causa: </span>
-          <span>{currentCause}</span>
-        </div>
-      )}
     </div>
   );
 };

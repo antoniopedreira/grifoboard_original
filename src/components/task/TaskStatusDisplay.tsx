@@ -19,7 +19,7 @@ const TaskStatusDisplay: React.FC<TaskStatusDisplayProps> = ({ task, onStatusCha
           
           return (
             <div key={day} className="flex flex-col items-center">
-              <span className="text-[10px] text-gray-500 mb-1">{shortName}</span>
+              <span className="text-[9px] text-gray-500 mb-0.5">{shortName}</span>
               <DayStatusButton
                 day={dayKey}
                 status={dayStatus}
