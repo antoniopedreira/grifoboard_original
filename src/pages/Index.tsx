@@ -46,7 +46,15 @@ const Index = ({ onObraSelect }: IndexProps) => {
   }, [userSession, navigate, redirectAttempted]);
 
   if (!userSession?.user || !userSession.obraAtiva) {
-    return null; // Rendering will be handled by the useEffect navigation
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center space-x-2">
+          <div className="h-4 w-4 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]"></div>
+          <div className="h-4 w-4 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
+          <div className="h-4 w-4 animate-bounce rounded-full bg-primary"></div>
+        </div>
+      </div>
+    );
   }
 
   // Render either the dashboard or tasks page based on the current route

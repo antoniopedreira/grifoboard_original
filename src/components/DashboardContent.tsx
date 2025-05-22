@@ -11,6 +11,8 @@ import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import CableChart from "@/components/dashboard/CableChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const DashboardContent = () => {
   const { toast } = useToast();
@@ -46,8 +48,12 @@ const DashboardContent = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-        <div className="text-center py-10 text-gray-500">
+        <div className="flex items-center justify-center space-x-2">
+          <div className="h-4 w-4 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]"></div>
+          <div className="h-4 w-4 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
+          <div className="h-4 w-4 animate-bounce rounded-full bg-primary"></div>
+        </div>
+        <div className="text-center py-5 text-gray-500">
           <p>Carregando dados...</p>
         </div>
       </div>
@@ -56,9 +62,18 @@ const DashboardContent = () => {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
-      <h1 className="text-2xl font-bold mb-6">
-        Dashboard - {userSession?.obraAtiva?.nome_obra || "Obra"}
-      </h1>
+      {/* Dashboard Header with Glassmorphism */}
+      <div className="relative mb-8 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg">
+        <div className="absolute inset-0 bg-white/5 rounded-xl backdrop-blur-[2px] z-0"></div>
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <p className="text-slate-600 mt-1">
+            {userSession?.obraAtiva?.nome_obra || "Obra"}
+          </p>
+        </div>
+      </div>
       
       {/* Week Navigation */}
       <WeekNavigation 
@@ -68,59 +83,110 @@ const DashboardContent = () => {
         onNextWeek={navigateToNextWeek} 
       />
       
-      {/* Task Metrics Overview - Moved to top */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-        <div className="border rounded-lg p-4 bg-white shadow-sm text-center">
-          <h3 className="text-sm font-medium text-gray-500">Total de Tarefas</h3>
-          <p className="text-3xl font-bold">{tasks.length}</p>
-        </div>
-        <div className="border rounded-lg p-4 bg-white shadow-sm text-center">
-          <h3 className="text-sm font-medium text-gray-500">Concluídas</h3>
-          <p className="text-3xl font-bold text-green-600">
-            {tasks.filter(task => task.isFullyCompleted).length}
-          </p>
-        </div>
-        <div className="border rounded-lg p-4 bg-white shadow-sm text-center">
-          <h3 className="text-sm font-medium text-gray-500">Não Realizadas</h3>
-          <p className="text-3xl font-bold text-red-600">
-            {tasks.filter(task => !task.isFullyCompleted).length}
-          </p>
-        </div>
-        <div className="border rounded-lg p-4 bg-white shadow-sm text-center">
-          <h3 className="text-sm font-medium text-gray-500">PCP Semanal</h3>
-          <p className="text-3xl font-bold text-blue-600">
-            {pcpData?.overall?.percentage ? `${Math.round(pcpData.overall.percentage)}%` : '0%'}
-          </p>
-        </div>
+      {/* Task Metrics Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center">
+              <h3 className="text-sm font-medium text-gray-500">Total de Tarefas</h3>
+              <p className="text-3xl font-bold mt-1">{tasks.length}</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center">
+              <h3 className="text-sm font-medium text-gray-500">Concluídas</h3>
+              <p className="text-3xl font-bold text-green-600 mt-1">
+                {tasks.filter(task => task.isFullyCompleted).length}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center">
+              <h3 className="text-sm font-medium text-gray-500">Não Realizadas</h3>
+              <p className="text-3xl font-bold text-red-600 mt-1">
+                {tasks.filter(task => !task.isFullyCompleted).length}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center">
+              <h3 className="text-sm font-medium text-gray-500">PCP Semanal</h3>
+              <p className="text-3xl font-bold text-blue-600 mt-1">
+                {pcpData?.overall?.percentage ? `${Math.round(pcpData.overall.percentage)}%` : '0%'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Progresso Semanal - Gráfico de barras com PCP por semana */}
-      <div className="border rounded-lg p-4 bg-white shadow-sm mt-6">
-        <h2 className="text-lg font-medium mb-4">Progresso Semanal</h2>
-        <PCPWeeklyChart weeklyData={weeklyPCPData} />
-      </div>
+      <Card className="border shadow-md mt-6 overflow-hidden bg-gradient-to-br from-white to-gray-50">
+        <CardHeader className="pb-2 border-b bg-gradient-to-r from-gray-50 to-white">
+          <CardTitle className="text-lg font-medium">Progresso Semanal</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <PCPWeeklyChart weeklyData={weeklyPCPData} />
+        </CardContent>
+      </Card>
       
       {/* Dashboard Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Executor Chart */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <ExecutorChart weekStartDate={weekStartDate} />
-        </div>
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-2 border-b bg-gradient-to-r from-gray-50 to-white">
+            <CardTitle className="text-lg font-medium">PCP por Executante</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ScrollArea className="h-[320px]">
+              <ExecutorChart weekStartDate={weekStartDate} />
+            </ScrollArea>
+          </CardContent>
+        </Card>
         
         {/* Team Chart */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <TeamChart weekStartDate={weekStartDate} />
-        </div>
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-2 border-b bg-gradient-to-r from-gray-50 to-white">
+            <CardTitle className="text-lg font-medium">PCP por Equipe</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ScrollArea className="h-[320px]">
+              <TeamChart weekStartDate={weekStartDate} />
+            </ScrollArea>
+          </CardContent>
+        </Card>
         
         {/* Responsible Chart */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <ResponsibleChart weekStartDate={weekStartDate} />
-        </div>
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-2 border-b bg-gradient-to-r from-gray-50 to-white">
+            <CardTitle className="text-lg font-medium">PCP por Responsável</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ScrollArea className="h-[320px]">
+              <ResponsibleChart weekStartDate={weekStartDate} />
+            </ScrollArea>
+          </CardContent>
+        </Card>
         
         {/* Cable Chart */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <CableChart weekStartDate={weekStartDate} />
-        </div>
+        <Card className="border shadow-md overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-2 border-b bg-gradient-to-r from-gray-50 to-white">
+            <CardTitle className="text-lg font-medium">PCP por Cabo</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ScrollArea className="h-[320px]">
+              <CableChart weekStartDate={weekStartDate} />
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
