@@ -36,7 +36,7 @@ const TaskList: React.FC<TaskListProps> = ({
       toast({
         title: "Tarefa concluída",
         description: updatedTask.description,
-        variant: "success"
+        variant: "success" // Now we can use "success" with the new variant definition
       });
     }
   };
