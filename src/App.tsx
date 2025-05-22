@@ -30,7 +30,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
 
   return (
-    <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-background' : ''}`}>
+    <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-gray-50' : ''} font-sans`}>
       {!isAuthPage && <Header />}
       
       <div className="flex flex-1 w-full">
@@ -38,8 +38,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         
         <main className="flex-1 overflow-hidden">
           {!isAuthPage && !isObrasPage ? (
-            <ScrollArea className="h-[calc(100vh-65px)]">
-              <div className="container mx-auto px-4 py-6">
+            <ScrollArea className="h-[calc(100vh-64px)]">
+              <div className="py-6">
                 {children}
               </div>
             </ScrollArea>

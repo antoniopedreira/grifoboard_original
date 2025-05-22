@@ -1,6 +1,7 @@
 
 import TaskCard from "../TaskCard";
 import { Task } from "@/types";
+import { ClipboardX } from "lucide-react";
 
 interface TaskGridProps {
   tasks: Task[];
@@ -12,8 +13,10 @@ interface TaskGridProps {
 const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, onTaskDuplicate }) => {
   if (tasks.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 border rounded-lg bg-white border-gray-100">
-        <p className="text-gray-500 text-lg">Nenhuma tarefa encontrada</p>
+      <div className="flex flex-col items-center justify-center py-12 px-4 rounded-xl bg-white border border-gray-100 shadow-sm">
+        <ClipboardX className="h-12 w-12 text-gray-300 mb-3" />
+        <p className="text-gray-500 text-base">Nenhuma tarefa encontrada</p>
+        <p className="text-gray-400 text-sm mt-1">Tente ajustar os filtros ou criar uma nova tarefa</p>
       </div>
     );
   }

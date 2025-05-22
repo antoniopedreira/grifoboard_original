@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { 
   formatDateRange,
   getPreviousWeekDates,
@@ -27,27 +27,32 @@ const WeekNavigation = ({
     today.getTime() <= weekEndDate.getTime();
     
   return (
-    <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm">
+    <div className="flex justify-between items-center mb-8 bg-white rounded-xl shadow-sm p-4 border border-gray-100/40 backdrop-blur-sm hover:shadow transition-shadow duration-200">
       <Button 
         variant="outline" 
         size="icon"
+        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
         onClick={onPreviousWeek}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
       
-      <div className="text-center">
-        <h3 className="text-xl font-semibold">
-          {currentWeekFormatted}
-        </h3>
+      <div className="flex flex-col items-center">
+        <div className="flex items-center">
+          <Calendar className="h-5 w-5 mr-2 text-primary" />
+          <h3 className="text-lg font-medium font-heading">
+            {currentWeekFormatted}
+          </h3>
+        </div>
         {isCurrentWeek && (
-          <span className="text-sm text-green-600 font-medium">Semana Atual</span>
+          <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full mt-1">Semana Atual</span>
         )}
       </div>
       
       <Button 
         variant="outline" 
         size="icon"
+        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
         onClick={onNextWeek}
       >
         <ChevronRight className="h-4 w-4" />

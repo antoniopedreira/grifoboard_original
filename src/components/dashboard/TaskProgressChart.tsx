@@ -33,25 +33,25 @@ const TaskProgressChart: React.FC<TaskProgressChartProps> = ({ pcpData }) => {
           bottom: 5,
         }}
       >
-        <CartesianGrid strokeDasharray="3 3" />
+        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
         <YAxis tickFormatter={(tick) => `${tick}%`} tick={{ fontSize: 12 }} />
         <Tooltip formatter={(value) => `${value}%`} />
         <Legend />
-        <Bar dataKey="Planejado" fill="#cbd5e1">
+        <Bar dataKey="Planejado" fill="#e2e8f0" radius={[4, 4, 0, 0]}>
           <LabelList 
             dataKey="Planejado" 
             position="top" 
             formatter={(value: number) => `${value}%`}
-            style={{ fontSize: 11, fill: '#666' }}
+            style={{ fontSize: 11, fill: '#64748b' }}
           />
         </Bar>
-        <Bar dataKey="Executado" fill="#021C2F">
+        <Bar dataKey="Executado" fill="#0c4a6e" radius={[4, 4, 0, 0]}>
           <LabelList 
             dataKey="Executado" 
             position="top" 
             formatter={(value: number) => `${Math.round(value)}%`}
-            style={{ fontSize: 11, fill: '#666' }}
+            style={{ fontSize: 11, fill: '#64748b' }}
           />
         </Bar>
       </BarChart>

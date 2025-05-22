@@ -3,6 +3,7 @@ import { Task } from "@/types";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { BookOpen } from "lucide-react";
 
 interface TaskDisciplineChartProps {
   tasks: Task[];
@@ -23,14 +24,17 @@ const TaskDisciplineChart: React.FC<TaskDisciplineChartProps> = ({ tasks }) => {
   
   // Colors for different disciplines
   const COLORS = [
-    '#021C2F', '#10b981', '#021C2F', '#ef4444', 
-    '#021C2F', '#ec4899', '#021C2F', '#84cc16'
+    '#0c4a6e', '#10b981', '#3b82f6', '#ef4444', 
+    '#8b5cf6', '#ec4899', '#f59e0b', '#84cc16'
   ];
   
   return (
-    <Card>
+    <Card className="shadow-sm border border-gray-100/40">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Tarefas por Disciplina</CardTitle>
+        <div className="flex items-center">
+          <BookOpen className="h-5 w-5 mr-2 text-primary" />
+          <CardTitle className="text-lg font-heading">Tarefas por Disciplina</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[250px]">
@@ -51,7 +55,12 @@ const TaskDisciplineChart: React.FC<TaskDisciplineChartProps> = ({ tasks }) => {
                 ))}
               </Pie>
               <Tooltip formatter={(value) => [`${value} tarefas`, undefined]} />
-              <Legend />
+              <Legend 
+                layout="vertical" 
+                verticalAlign="middle" 
+                align="right"
+                wrapperStyle={{ fontSize: '12px', paddingLeft: '10px' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </ScrollArea>

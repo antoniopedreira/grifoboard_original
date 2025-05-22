@@ -36,6 +36,7 @@ const TaskList: React.FC<TaskListProps> = ({
       toast({
         title: "Tarefa concluída",
         description: updatedTask.description,
+        variant: "success"
       });
     }
   };
@@ -47,12 +48,14 @@ const TaskList: React.FC<TaskListProps> = ({
   }, [tasksAfterCauseFilter, selectedCause]);
 
   return (
-    <div className="w-full">
-      <TaskFilters 
-        tasks={tasksAfterCauseFilter} 
-        onFiltersChange={setFilteredTasks} 
-        selectedCause={selectedCause}
-      />
+    <div className="w-full space-y-4">
+      <div className="glass-card p-4 rounded-xl shadow-sm mb-4">
+        <TaskFilters 
+          tasks={tasksAfterCauseFilter} 
+          onFiltersChange={setFilteredTasks} 
+          selectedCause={selectedCause}
+        />
+      </div>
       
       <TaskGrid 
         tasks={filteredTasks} 

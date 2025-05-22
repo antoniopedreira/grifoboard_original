@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
+import { Users } from "lucide-react";
 
 interface TeamChartProps {
   weekStartDate: Date;
@@ -49,58 +50,58 @@ const TeamChart = ({
   }, [allTasks, weekStartDate]);
 
   return (
-    <Card className="w-full h-[380px]">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">PCP por Equipe</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {teamData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={teamData}
-              layout="vertical"
-              margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5
-              }}
+    <div className="w-full h-[380px]">
+      <div className="flex items-center mb-4">
+        <Users className="h-5 w-5 mr-2 text-primary" />
+        <h3 className="text-lg font-medium font-heading">PCP por Equipe</h3>
+      </div>
+      
+      {teamData.length > 0 ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={teamData}
+            layout="vertical"
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 5
+            }}
+          >
+            <XAxis 
+              type="number" 
+              domain={[0, 100]} 
+              tickFormatter={value => `${value}%`}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              dataKey="name" 
+              type="category" 
+              width={120}
+              tick={{ fontSize: 12 }}
+            />
+            <Tooltip formatter={value => [`${value}%`, 'PCP']} />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
+            <Bar 
+              dataKey="percentual" 
+              fill="#0c4a6e" 
+              radius={[0, 4, 4, 0]} 
             >
-              <XAxis 
-                type="number" 
-                domain={[0, 100]} 
-                tickFormatter={value => `${value}%`}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis 
-                dataKey="name" 
-                type="category" 
-                width={100}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip formatter={value => [`${value}%`, 'PCP']} />
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <Bar 
+              <LabelList 
                 dataKey="percentual" 
-                fill="#021C2F" 
-                radius={[0, 4, 4, 0]} 
-              >
-                <LabelList 
-                  dataKey="percentual" 
-                  position="right" 
-                  formatter={(value: number) => `${Math.round(value)}%`}
-                  style={{ fontSize: 11, fill: '#666' }}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex h-[300px] items-center justify-center text-gray-400">
-            Sem dados disponíveis para esta semana
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                position="right" 
+                formatter={(value: number) => `${Math.round(value)}%`}
+                style={{ fontSize: 11, fill: '#64748b' }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[300px] items-center justify-center text-gray-400">
+          Sem dados disponíveis para esta semana
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -19,7 +19,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   cable
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs mb-3">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs mb-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
       <div className="flex flex-col">
         <span className="text-gray-500 font-medium text-[10px]">Setor</span>
         <span className="truncate text-gray-800">{sector}</span>
