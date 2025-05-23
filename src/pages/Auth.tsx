@@ -2,7 +2,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { AuthCard } from '@/components/ui/auth-card';
+import AuthCard from '@/components/auth/AuthCard';
 
 const Auth = () => {
   const { userSession } = useAuth();
@@ -24,13 +24,13 @@ const Auth = () => {
   }, [userSession, navigate, redirectAttempted]);
   
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <main className="flex-1 flex items-center justify-center p-4">
         <AuthCard />
-      </div>
+      </main>
       
       <footer className="py-4 text-center text-gray-500 text-sm">
-        © {new Date().getFullYear()} Gerenciador de Obras • Todos os direitos reservados
+        © {new Date().getFullYear()} GrifoBoard • Todos os direitos reservados
       </footer>
     </div>
   );

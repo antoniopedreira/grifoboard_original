@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '@/lib/supabase';
 import { Obra, UserSession } from '@/types/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   userSession: UserSession;
@@ -49,17 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Retrieve active obra from localStorage when session is available
-        const obraAtiva = getInitialObraAtiva(session.user.id);
-        setUserSession({ user: mapUser(session.user), obraAtiva });
-      }
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes
+    // First set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) {
@@ -72,6 +62,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       }
     );
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        const obraAtiva = getInitialObraAtiva(session.user.id);
+        setUserSession({ user: mapUser(session.user), obraAtiva });
+      }
+      setIsLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -127,10 +126,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       await supabase.auth.signOut();
       setUserSession({ user: null, obraAtiva: null });
+      
       // Also clear obra from localStorage
       if (userSession.user) {
         localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
       }
+      
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
@@ -147,7 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setObraAtiva = (obra: Obra | null) => {
-    setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : null);
+    setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : { user: null, obraAtiva: null });
     
     // Save active obra in localStorage for persistence
     if (userSession.user && obra) {
