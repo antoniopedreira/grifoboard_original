@@ -24,12 +24,12 @@ const Auth = () => {
   }, [userSession, navigate, redirectAttempted]);
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
       <main className="flex-1 flex items-center justify-center p-4">
         <AuthCard />
       </main>
       
-      <footer className="py-4 text-center text-gray-500 text-sm">
+      <footer className="py-6 text-center text-gray-500 text-sm w-full">
         © {new Date().getFullYear()} GrifoBoard • Todos os direitos reservados
       </footer>
     </div>
