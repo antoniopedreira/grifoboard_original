@@ -24,12 +24,23 @@ const Auth = () => {
   }, [userSession, navigate, redirectAttempted]);
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
-      <main className="flex-1 flex items-center justify-center p-4">
+    <div 
+      className="min-h-screen relative flex flex-col justify-between"
+      style={{
+        backgroundImage: `url('/lovable-uploads/3f91862e-278f-40e3-b70c-323faa1a249b.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Overlay for better contrast */}
+      <div className="absolute inset-0 bg-black/40"></div>
+      
+      <main className="relative z-10 flex-1 flex items-center justify-center p-4">
         <AuthCard />
       </main>
       
-      <footer className="py-6 text-center text-gray-500 text-sm w-full">
+      <footer className="relative z-10 py-6 text-center text-white/80 text-sm w-full">
         © {new Date().getFullYear()} GrifoBoard • Todos os direitos reservados
       </footer>
     </div>

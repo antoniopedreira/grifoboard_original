@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const SignupForm = () => {
   const [email, setEmail] = useState('');
@@ -67,22 +67,22 @@ const SignupForm = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-5">
         {/* Email field */}
         <div className="space-y-2">
-          <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="signup-email" className="text-sm font-semibold text-gray-700">
             Email
           </Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input 
               id="signup-email" 
               type="email" 
               placeholder="seu@email.com" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="pl-10" 
+              className="pl-12 h-12 text-base border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               required
             />
           </div>
@@ -90,30 +90,30 @@ const SignupForm = () => {
         
         {/* Password field */}
         <div className="space-y-2">
-          <Label htmlFor="signup-password" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="signup-password" className="text-sm font-semibold text-gray-700">
             Senha
           </Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input 
               id="signup-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="pl-10 pr-10" 
+              className="pl-12 pr-12 h-12 text-base border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               required
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
               aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4" />
+                <EyeOff className="h-5 w-5" />
               ) : (
-                <Eye className="h-4 w-4" />
+                <Eye className="h-5 w-5" />
               )}
             </button>
           </div>
@@ -121,18 +121,18 @@ const SignupForm = () => {
         
         {/* Confirm Password field */}
         <div className="space-y-2">
-          <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="confirm-password" className="text-sm font-semibold text-gray-700">
             Confirmar Senha
           </Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input 
               id="confirm-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={confirmPassword} 
               onChange={e => setConfirmPassword(e.target.value)} 
-              className="pl-10" 
+              className="pl-12 h-12 text-base border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               required
             />
           </div>
@@ -143,10 +143,13 @@ const SignupForm = () => {
       <Button 
         type="submit" 
         disabled={isLoading} 
-        className="w-full font-medium"
+        className="w-full h-12 font-semibold text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200"
       >
         {isLoading ? (
-          <div className="h-5 w-5 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Cadastrando...
+          </div>
         ) : (
           "Cadastrar"
         )}
