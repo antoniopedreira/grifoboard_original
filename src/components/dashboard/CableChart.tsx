@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Toolti
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart2 } from "lucide-react";
 
 interface CableChartProps {
   weekStartDate: Date;
@@ -98,7 +99,10 @@ const CableChart: React.FC<CableChartProps> = ({
     return (
       <Card className="w-full h-[380px]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">PCP por Cabo</CardTitle>
+          <div className="flex items-center">
+            <BarChart2 className="h-5 w-5 mr-2 text-primary" />
+            <CardTitle className="text-lg font-medium">PCP por Cabo</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px]">
@@ -113,7 +117,10 @@ const CableChart: React.FC<CableChartProps> = ({
     return (
       <Card className="w-full h-[380px]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">PCP por Cabo</CardTitle>
+          <div className="flex items-center">
+            <BarChart2 className="h-5 w-5 mr-2 text-primary" />
+            <CardTitle className="text-lg font-medium">PCP por Cabo</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px]">
@@ -127,7 +134,10 @@ const CableChart: React.FC<CableChartProps> = ({
   return (
     <Card className="w-full h-[380px]">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">PCP por Cabo</CardTitle>
+        <div className="flex items-center">
+          <BarChart2 className="h-5 w-5 mr-2 text-primary" />
+          <CardTitle className="text-lg font-medium">PCP por Cabo</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -141,7 +151,7 @@ const CableChart: React.FC<CableChartProps> = ({
               bottom: 5
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
             <XAxis 
               type="number" 
               domain={[0, 100]} 
@@ -164,7 +174,7 @@ const CableChart: React.FC<CableChartProps> = ({
                 dataKey="value" 
                 position="right" 
                 formatter={(value: number) => `${Math.round(value)}%`}
-                style={{ fontSize: 11, fill: '#666' }}
+                style={{ fontSize: 11, fill: '#64748b' }}
               />
             </Bar>
           </BarChart>

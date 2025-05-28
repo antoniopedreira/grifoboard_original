@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { useTaskManager } from "@/hooks/useTaskManager";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
-import { Users } from "lucide-react";
+import { BarChart2 } from "lucide-react";
 
 interface TeamChartProps {
   weekStartDate: Date;
@@ -52,7 +51,7 @@ const TeamChart = ({
   return (
     <div className="w-full h-[380px]">
       <div className="flex items-center mb-4">
-        <Users className="h-5 w-5 mr-2 text-primary" />
+        <BarChart2 className="h-5 w-5 mr-2 text-primary" />
         <h3 className="text-lg font-medium font-heading">PCP por Equipe</h3>
       </div>
       
@@ -84,7 +83,7 @@ const TeamChart = ({
             <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
             <Bar 
               dataKey="percentual" 
-              fill="#0c4a6e" 
+              fill="#021C2F" 
               radius={[0, 4, 4, 0]} 
             >
               <LabelList 

@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { useTaskManager } from "@/hooks/useTaskManager";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
-import { UserCheck } from "lucide-react";
+import { BarChart2 } from "lucide-react";
 
 interface ResponsibleChartProps {
   weekStartDate: Date;
@@ -52,7 +51,7 @@ const ResponsibleChart = ({
   return (
     <div className="w-full h-[380px]">
       <div className="flex items-center mb-4">
-        <UserCheck className="h-5 w-5 mr-2 text-primary" />
+        <BarChart2 className="h-5 w-5 mr-2 text-primary" />
         <h3 className="text-lg font-medium font-heading">PCP por Responsável</h3>
       </div>
       
@@ -84,7 +83,7 @@ const ResponsibleChart = ({
             <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
             <Bar 
               dataKey="percentual" 
-              fill="#0c4a6e" 
+              fill="#021C2F" 
               radius={[0, 4, 4, 0]} 
             >
               <LabelList 

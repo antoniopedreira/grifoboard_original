@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
+import { BarChart2 } from "lucide-react";
 
 interface ExecutorChartProps {
   weekStartDate: Date;
@@ -51,7 +52,10 @@ const ExecutorChart = ({
   return (
     <Card className="w-full h-[380px]">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">PCP por Executante</CardTitle>
+        <div className="flex items-center">
+          <BarChart2 className="h-5 w-5 mr-2 text-primary" />
+          <CardTitle className="text-lg font-medium">PCP por Executante</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         {executorData.length > 0 ? (
@@ -79,7 +83,7 @@ const ExecutorChart = ({
                 tick={{ fontSize: 12 }}
               />
               <Tooltip formatter={value => [`${value}%`, 'PCP']} />
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
               <Bar 
                 dataKey="percentual" 
                 fill="#021C2F" 
@@ -89,7 +93,7 @@ const ExecutorChart = ({
                   dataKey="percentual" 
                   position="right" 
                   formatter={(value: number) => `${Math.round(value)}%`}
-                  style={{ fontSize: 11, fill: '#666' }}
+                  style={{ fontSize: 11, fill: '#64748b' }}
                 />
               </Bar>
             </BarChart>
