@@ -25,12 +25,13 @@ const Auth = () => {
   
   return (
     <div 
-      className="min-h-screen relative flex flex-col justify-between"
+      className="min-h-screen w-full fixed inset-0 flex flex-col justify-between"
       style={{
         backgroundImage: `url('/lovable-uploads/3f91862e-278f-40e3-b70c-323faa1a249b.png')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
       }}
     >
       {/* Overlay for better contrast */}
