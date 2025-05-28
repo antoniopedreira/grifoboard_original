@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useTaskManager } from "@/hooks/useTaskManager";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
@@ -49,7 +48,7 @@ const TeamChart = ({
   }, [allTasks, weekStartDate]);
 
   return (
-    <div className="w-full h-[380px]">
+    <div className="w-full h-[380px] border border-gray-200 rounded-lg p-4">
       <div className="flex items-center mb-4">
         <BarChart2 className="h-5 w-5 mr-2 text-primary" />
         <h3 className="text-lg font-medium font-heading">PCP por Equipe</h3>
