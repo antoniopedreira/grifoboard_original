@@ -86,7 +86,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 
       {/* Week start date picker - full width */}
       <div className="space-y-2 w-full">
-        <Label htmlFor="edit-weekStartDate" className="font-medium">Semana (Segunda-feira)</Label>
+        <Label htmlFor="edit-weekStartDate" className="font-medium">Semana</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button

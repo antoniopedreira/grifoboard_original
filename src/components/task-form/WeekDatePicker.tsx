@@ -21,7 +21,7 @@ const WeekDatePicker: React.FC<WeekDatePickerProps> = ({
   return (
     <div className="space-y-2 w-full">
       <FormSectionHeader 
-        label="Semana (Segunda-feira)" 
+        label="Semana" 
         description="A tarefa será exibida apenas na semana selecionada."
       />
       <Popover>
