@@ -30,25 +30,21 @@ const CausesCountCard: React.FC<CausesCountCardProps> = ({ tasks, onCauseSelect 
 
   if (causesArray.length === 0) {
     return (
-      <Card className="col-span-1 shadow-sm">
-        <CardHeader className="pb-1">
-          <CardTitle className="text-lg">Causas do Não Cumprimento</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="glass-card rounded-xl shadow-sm hover:shadow transition-shadow duration-200">
+        <div className="p-4">
+          <h3 className="text-lg font-medium font-heading mb-2">Causas do Não Cumprimento</h3>
           <div className="text-muted-foreground text-center py-6">
             Nenhuma causa registrada
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="col-span-1 shadow-sm">
-      <CardHeader className="pb-1">
-        <CardTitle className="text-lg">Causas do Não Cumprimento</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-1">
+    <div className="glass-card rounded-xl shadow-sm hover:shadow transition-shadow duration-200">
+      <div className="p-4">
+        <h3 className="text-lg font-medium font-heading mb-2">Causas do Não Cumprimento</h3>
         <div className="max-h-[220px] overflow-y-auto">
           <Table>
             <TableBody>
@@ -65,8 +61,8 @@ const CausesCountCard: React.FC<CausesCountCardProps> = ({ tasks, onCauseSelect 
             </TableBody>
           </Table>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
