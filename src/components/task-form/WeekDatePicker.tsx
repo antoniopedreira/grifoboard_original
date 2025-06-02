@@ -7,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getWeekStartDate } from "@/utils/pcp";
 import { cn } from "@/lib/utils";
-import FormSectionHeader from "./FormSectionHeader";
+import { Label } from "@/components/ui/label";
 
 interface WeekDatePickerProps {
   weekStartDate: Date | undefined;
@@ -20,9 +20,7 @@ const WeekDatePicker: React.FC<WeekDatePickerProps> = ({
 }) => {
   return (
     <div className="space-y-2 w-full">
-      <FormSectionHeader 
-        label="Semana"
-      />
+      <Label htmlFor="weekStartDate" className="font-medium">Semana</Label>
       <Popover>
         <PopoverTrigger asChild>
           <Button
