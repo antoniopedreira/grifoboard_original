@@ -1,4 +1,3 @@
-
 import { DayOfWeek } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -119,9 +118,6 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             />
           </PopoverContent>
         </Popover>
-        <p className="text-sm text-muted-foreground">
-          A tarefa será exibida apenas na semana selecionada.
-        </p>
       </div>
 
       {/* Two columns layout for sector and discipline */}
