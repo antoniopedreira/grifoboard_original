@@ -88,6 +88,16 @@ const ChecklistForm: React.FC<ChecklistFormProps> = ({ onAtividadeCriada }) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <Label htmlFor="descricao">Descrição</Label>
+            <Textarea
+              id="descricao"
+              value={formData.descricao}
+              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              rows={2}
+            />
+          </div>
+          
+          <div>
             <Label htmlFor="local">Local</Label>
             <Input
               id="local"
@@ -134,16 +144,6 @@ const ChecklistForm: React.FC<ChecklistFormProps> = ({ onAtividadeCriada }) => {
               type="date"
               value={formData.data_termino}
               onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="descricao">Descrição</Label>
-            <Textarea
-              id="descricao"
-              value={formData.descricao}
-              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              rows={3}
             />
           </div>
           
