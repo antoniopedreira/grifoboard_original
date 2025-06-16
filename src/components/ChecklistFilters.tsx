@@ -34,7 +34,13 @@ const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({
     onFiltersChange(newFilters);
   };
 
-  const clearFilters = () => {
+  const clearIndividualFilter = (field: string) => {
+    const newFilters = { ...filters, [field]: '' };
+    setFilters(newFilters);
+    onFiltersChange(newFilters);
+  };
+
+  const clearAllFilters = () => {
     const emptyFilters = { local: '', setor: '', responsavel: '' };
     setFilters(emptyFilters);
     onFiltersChange(emptyFilters);
@@ -50,7 +56,7 @@ const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={clearFilters}
+            onClick={clearAllFilters}
             className="h-auto p-1"
           >
             <X className="h-4 w-4" />
@@ -60,7 +66,19 @@ const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="filter-local">Local</Label>
+          <div className="flex items-center justify-between mb-1">
+            <Label htmlFor="filter-local">Local</Label>
+            {filters.local && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => clearIndividualFilter('local')}
+                className="h-auto p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
           <Select value={filters.local} onValueChange={(value) => handleFilterChange('local', value)}>
             <SelectTrigger id="filter-local">
               <SelectValue placeholder="Filtrar por local..." />
@@ -74,7 +92,19 @@ const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({
         </div>
         
         <div>
-          <Label htmlFor="filter-setor">Setor</Label>
+          <div className="flex items-center justify-between mb-1">
+            <Label htmlFor="filter-setor">Setor</Label>
+            {filters.setor && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => clearIndividualFilter('setor')}
+                className="h-auto p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
           <Select value={filters.setor} onValueChange={(value) => handleFilterChange('setor', value)}>
             <SelectTrigger id="filter-setor">
               <SelectValue placeholder="Filtrar por setor..." />
@@ -88,7 +118,19 @@ const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({
         </div>
         
         <div>
-          <Label htmlFor="filter-responsavel">Responsável</Label>
+          <div className="flex items-center justify-between mb-1">
+            <Label htmlFor="filter-responsavel">Responsável</Label>
+            {filters.responsavel && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => clearIndividualFilter('responsavel')}
+                className="h-auto p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
           <Select value={filters.responsavel} onValueChange={(value) => handleFilterChange('responsavel', value)}>
             <SelectTrigger id="filter-responsavel">
               <SelectValue placeholder="Filtrar por responsável..." />
