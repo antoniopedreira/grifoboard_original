@@ -1,5 +1,5 @@
 
-import { Task } from "@/types";
+import { AtividadeChecklist } from "@/types/checklist";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -13,25 +13,21 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface ChecklistTableProps {
-  tasks: Task[];
+  atividades: AtividadeChecklist[];
   isLoading: boolean;
-  onTaskToggle: (taskId: string, completed: boolean) => void;
+  onAtividadeToggle: (atividadeId: string, concluida: boolean) => void;
 }
 
 const ChecklistTable: React.FC<ChecklistTableProps> = ({ 
-  tasks, 
+  atividades, 
   isLoading, 
-  onTaskToggle 
+  onAtividadeToggle 
 }) => {
-  const formatWeekDate = (date: Date | undefined) => {
-    if (!date) return "Não definida";
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "Não definida";
     
     try {
-      const weekStart = new Date(date);
-      const weekEnd = new Date(date);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      
-      return `${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`;
+      return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
     } catch (error) {
       console.error("Error formatting date:", error);
       return "Data inválida";
@@ -55,10 +51,10 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
     );
   }
 
-  if (tasks.length === 0) {
+  if (atividades.length === 0) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        Nenhuma tarefa encontrada para esta obra
+        Nenhuma atividade cadastrada para esta obra
       </div>
     );
   }
@@ -69,31 +65,33 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">Status</TableHead>
-            <TableHead>Descrição</TableHead>
+            <TableHead>Local</TableHead>
             <TableHead>Setor</TableHead>
             <TableHead>Responsável</TableHead>
-            <TableHead>Data da Semana</TableHead>
-            <TableHead>Disciplina</TableHead>
+            <TableHead>Data de Início</TableHead>
+            <TableHead>Data de Término</TableHead>
+            <TableHead>Descrição</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.id}>
+          {atividades.map((atividade) => (
+            <TableRow key={atividade.id}>
               <TableCell>
                 <Checkbox
-                  checked={task.isFullyCompleted}
+                  checked={atividade.concluida}
                   onCheckedChange={(checked) => 
-                    onTaskToggle(task.id, checked as boolean)
+                    onAtividadeToggle(atividade.id, checked as boolean)
                   }
                 />
               </TableCell>
               <TableCell className="font-medium">
-                {task.description}
+                {atividade.local}
               </TableCell>
-              <TableCell>{task.sector}</TableCell>
-              <TableCell>{task.responsible}</TableCell>
-              <TableCell>{formatWeekDate(task.weekStartDate)}</TableCell>
-              <TableCell>{task.discipline}</TableCell>
+              <TableCell>{atividade.setor}</TableCell>
+              <TableCell>{atividade.responsavel}</TableCell>
+              <TableCell>{formatDate(atividade.data_inicio)}</TableCell>
+              <TableCell>{formatDate(atividade.data_termino)}</TableCell>
+              <TableCell>{atividade.descricao || "-"}</TableCell>
             </TableRow>
           ))}
         </TableBody>

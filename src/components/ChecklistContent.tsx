@@ -2,34 +2,32 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Task } from "@/types";
-import { tarefasService } from "@/services/tarefaService";
-import { convertTarefaToTask } from "@/utils/taskUtils";
+import { AtividadeChecklist } from "@/types/checklist";
+import { checklistService } from "@/services/checklistService";
 import ChecklistTable from "./ChecklistTable";
+import ChecklistForm from "./ChecklistForm";
 import { CheckSquare } from "lucide-react";
 
 const ChecklistContent = () => {
   const { userSession } = useAuth();
   const { toast } = useToast();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [atividades, setAtividades] = useState<AtividadeChecklist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Carregar todas as tarefas da obra
-  const loadTasks = async () => {
+  const loadAtividades = async () => {
     if (!userSession?.obraAtiva) return;
     
     setIsLoading(true);
     try {
-      console.log("Loading tasks for obra:", userSession.obraAtiva.id);
-      const tarefas = await tarefasService.listarTarefas(userSession.obraAtiva.id);
-      console.log("Tasks loaded:", tarefas);
+      console.log("Loading checklist activities for obra:", userSession.obraAtiva.id);
+      const atividadesData = await checklistService.listarAtividades(userSession.obraAtiva.id);
+      console.log("Checklist activities loaded:", atividadesData);
       
-      const convertedTasks = tarefas.map(convertTarefaToTask);
-      setTasks(convertedTasks);
+      setAtividades(atividadesData);
     } catch (error: any) {
-      console.error("Error loading tasks:", error);
+      console.error("Error loading checklist activities:", error);
       toast({
-        title: "Erro ao carregar tarefas",
+        title: "Erro ao carregar atividades",
         description: error.message,
         variant: "destructive",
       });
@@ -40,33 +38,30 @@ const ChecklistContent = () => {
 
   useEffect(() => {
     if (userSession?.obraAtiva) {
-      loadTasks();
+      loadAtividades();
     }
   }, [userSession?.obraAtiva]);
 
-  const handleTaskToggle = async (taskId: string, completed: boolean) => {
+  const handleAtividadeToggle = async (atividadeId: string, concluida: boolean) => {
     try {
-      await tarefasService.atualizarTarefa(taskId, {
-        percentual_executado: completed ? 1 : 0
-      });
+      await checklistService.atualizarAtividade(atividadeId, { concluida });
       
-      // Update local state
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === taskId 
-            ? { ...task, isFullyCompleted: completed }
-            : task
+      setAtividades(prevAtividades => 
+        prevAtividades.map(atividade => 
+          atividade.id === atividadeId 
+            ? { ...atividade, concluida }
+            : atividade
         )
       );
       
       toast({
-        title: completed ? "Tarefa concluída" : "Tarefa marcada como não concluída",
+        title: concluida ? "Atividade concluída" : "Atividade marcada como não concluída",
         description: "Status atualizado com sucesso",
       });
     } catch (error: any) {
-      console.error("Error updating task:", error);
+      console.error("Error updating activity:", error);
       toast({
-        title: "Erro ao atualizar tarefa",
+        title: "Erro ao atualizar atividade",
         description: error.message,
         variant: "destructive",
       });
@@ -87,14 +82,17 @@ const ChecklistContent = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center mb-6">
         <CheckSquare className="h-6 w-6 mr-3 text-primary" />
-        <h1 className="text-2xl font-heading font-semibold">Checklist de Tarefas</h1>
+        <h1 className="text-2xl font-heading font-semibold">Checklist de Atividades</h1>
       </div>
       
       <div className="glass-card rounded-xl shadow-sm">
+        <div className="p-4">
+          <ChecklistForm onAtividadeCriada={loadAtividades} />
+        </div>
         <ChecklistTable 
-          tasks={tasks} 
+          atividades={atividades} 
           isLoading={isLoading}
-          onTaskToggle={handleTaskToggle}
+          onAtividadeToggle={handleAtividadeToggle}
         />
       </div>
     </div>
