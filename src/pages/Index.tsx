@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRegistry } from "@/context/RegistryContext";
 import MainPageContent from "@/components/MainPageContent";
 import DashboardContent from "@/components/DashboardContent";
+import ChecklistContent from "@/components/ChecklistContent";
 
 interface IndexProps {
   onObraSelect: (obra: Obra) => void;
@@ -18,8 +19,9 @@ const Index = ({ onObraSelect }: IndexProps) => {
   const { setSelectedObraId } = useRegistry();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
-  // Determine if we're in dashboard or tasks view
+  // Determine which content to render based on the current route
   const isDashboard = location.pathname === "/dashboard";
+  const isChecklist = location.pathname === "/checklist";
 
   // If there's no user, redirect to auth page (only once)
   useEffect(() => {
@@ -49,8 +51,14 @@ const Index = ({ onObraSelect }: IndexProps) => {
     return null; // Rendering will be handled by the useEffect navigation
   }
 
-  // Render either the dashboard or tasks page based on the current route
-  return isDashboard ? <DashboardContent /> : <MainPageContent />;
+  // Render the appropriate content based on the current route
+  if (isDashboard) {
+    return <DashboardContent />;
+  } else if (isChecklist) {
+    return <ChecklistContent />;
+  } else {
+    return <MainPageContent />;
+  }
 };
 
 export default Index;
