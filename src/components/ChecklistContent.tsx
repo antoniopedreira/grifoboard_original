@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { AtividadeChecklist } from "@/types/checklist";
@@ -20,6 +19,19 @@ const ChecklistContent = () => {
     setor: '',
     responsavel: ''
   });
+
+  // Calculate unique values for filters
+  const uniqueValues = useMemo(() => {
+    const uniqueLocais = [...new Set(atividades.map(atividade => atividade.local))].filter(Boolean).sort();
+    const uniqueSetores = [...new Set(atividades.map(atividade => atividade.setor))].filter(Boolean).sort();
+    const uniqueResponsaveis = [...new Set(atividades.map(atividade => atividade.responsavel))].filter(Boolean).sort();
+    
+    return {
+      uniqueLocais,
+      uniqueSetores,
+      uniqueResponsaveis
+    };
+  }, [atividades]);
 
   const loadAtividades = async () => {
     if (!userSession?.obraAtiva) return;
@@ -50,21 +62,15 @@ const ChecklistContent = () => {
     let filtered = atividades;
     
     if (filters.local) {
-      filtered = filtered.filter(atividade => 
-        atividade.local.toLowerCase().includes(filters.local.toLowerCase())
-      );
+      filtered = filtered.filter(atividade => atividade.local === filters.local);
     }
     
     if (filters.setor) {
-      filtered = filtered.filter(atividade => 
-        atividade.setor.toLowerCase().includes(filters.setor.toLowerCase())
-      );
+      filtered = filtered.filter(atividade => atividade.setor === filters.setor);
     }
     
     if (filters.responsavel) {
-      filtered = filtered.filter(atividade => 
-        atividade.responsavel.toLowerCase().includes(filters.responsavel.toLowerCase())
-      );
+      filtered = filtered.filter(atividade => atividade.responsavel === filters.responsavel);
     }
     
     setFilteredAtividades(filtered);
@@ -151,7 +157,12 @@ const ChecklistContent = () => {
         </div>
         
         <div className="p-4">
-          <ChecklistFilters onFiltersChange={applyFilters} />
+          <ChecklistFilters 
+            onFiltersChange={applyFilters}
+            uniqueLocais={uniqueValues.uniqueLocais}
+            uniqueSetores={uniqueValues.uniqueSetores}
+            uniqueResponsaveis={uniqueValues.uniqueResponsaveis}
+          />
         </div>
         
         <ChecklistTable 

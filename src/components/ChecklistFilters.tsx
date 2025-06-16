@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -11,9 +11,17 @@ interface ChecklistFiltersProps {
     setor: string;
     responsavel: string;
   }) => void;
+  uniqueLocais: string[];
+  uniqueSetores: string[];
+  uniqueResponsaveis: string[];
 }
 
-const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({ onFiltersChange }) => {
+const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({ 
+  onFiltersChange, 
+  uniqueLocais, 
+  uniqueSetores, 
+  uniqueResponsaveis 
+}) => {
   const [filters, setFilters] = useState({
     local: '',
     setor: '',
@@ -53,32 +61,44 @@ const ChecklistFilters: React.FC<ChecklistFiltersProps> = ({ onFiltersChange }) 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label htmlFor="filter-local">Local</Label>
-          <Input
-            id="filter-local"
-            placeholder="Filtrar por local..."
-            value={filters.local}
-            onChange={(e) => handleFilterChange('local', e.target.value)}
-          />
+          <Select value={filters.local} onValueChange={(value) => handleFilterChange('local', value)}>
+            <SelectTrigger id="filter-local">
+              <SelectValue placeholder="Filtrar por local..." />
+            </SelectTrigger>
+            <SelectContent>
+              {uniqueLocais.map(local => (
+                <SelectItem key={local} value={local}>{local}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div>
           <Label htmlFor="filter-setor">Setor</Label>
-          <Input
-            id="filter-setor"
-            placeholder="Filtrar por setor..."
-            value={filters.setor}
-            onChange={(e) => handleFilterChange('setor', e.target.value)}
-          />
+          <Select value={filters.setor} onValueChange={(value) => handleFilterChange('setor', value)}>
+            <SelectTrigger id="filter-setor">
+              <SelectValue placeholder="Filtrar por setor..." />
+            </SelectTrigger>
+            <SelectContent>
+              {uniqueSetores.map(setor => (
+                <SelectItem key={setor} value={setor}>{setor}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div>
           <Label htmlFor="filter-responsavel">Responsável</Label>
-          <Input
-            id="filter-responsavel"
-            placeholder="Filtrar por responsável..."
-            value={filters.responsavel}
-            onChange={(e) => handleFilterChange('responsavel', e.target.value)}
-          />
+          <Select value={filters.responsavel} onValueChange={(value) => handleFilterChange('responsavel', value)}>
+            <SelectTrigger id="filter-responsavel">
+              <SelectValue placeholder="Filtrar por responsável..." />
+            </SelectTrigger>
+            <SelectContent>
+              {uniqueResponsaveis.map(responsavel => (
+                <SelectItem key={responsavel} value={responsavel}>{responsavel}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
