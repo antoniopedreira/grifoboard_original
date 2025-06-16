@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -89,11 +88,10 @@ const ChecklistForm: React.FC<ChecklistFormProps> = ({ onAtividadeCriada }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="descricao">Descrição</Label>
-            <Textarea
+            <Input
               id="descricao"
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              rows={2}
             />
           </div>
           
