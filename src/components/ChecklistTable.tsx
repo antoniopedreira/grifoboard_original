@@ -69,7 +69,7 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
   if (atividades.length === 0) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        Nenhuma atividade cadastrada para esta obra
+        Nenhuma atividade encontrada
       </div>
     );
   }
@@ -86,7 +86,7 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
             <TableHead>Responsável</TableHead>
             <TableHead>Data de Início</TableHead>
             <TableHead>Data de Término</TableHead>
-            <TableHead className="w-12">Ações</TableHead>
+            <TableHead className="w-12"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -6,13 +6,20 @@ import { AtividadeChecklist } from "@/types/checklist";
 import { checklistService } from "@/services/checklistService";
 import ChecklistTable from "./ChecklistTable";
 import ChecklistForm from "./ChecklistForm";
+import ChecklistFilters from "./ChecklistFilters";
 import { CheckSquare } from "lucide-react";
 
 const ChecklistContent = () => {
   const { userSession } = useAuth();
   const { toast } = useToast();
   const [atividades, setAtividades] = useState<AtividadeChecklist[]>([]);
+  const [filteredAtividades, setFilteredAtividades] = useState<AtividadeChecklist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    local: '',
+    setor: '',
+    responsavel: ''
+  });
 
   const loadAtividades = async () => {
     if (!userSession?.obraAtiva) return;
@@ -24,6 +31,7 @@ const ChecklistContent = () => {
       console.log("Checklist activities loaded:", atividadesData);
       
       setAtividades(atividadesData);
+      setFilteredAtividades(atividadesData);
     } catch (error: any) {
       console.error("Error loading checklist activities:", error);
       toast({
@@ -36,11 +44,41 @@ const ChecklistContent = () => {
     }
   };
 
+  const applyFilters = (filters: { local: string; setor: string; responsavel: string }) => {
+    setFilters(filters);
+    
+    let filtered = atividades;
+    
+    if (filters.local) {
+      filtered = filtered.filter(atividade => 
+        atividade.local.toLowerCase().includes(filters.local.toLowerCase())
+      );
+    }
+    
+    if (filters.setor) {
+      filtered = filtered.filter(atividade => 
+        atividade.setor.toLowerCase().includes(filters.setor.toLowerCase())
+      );
+    }
+    
+    if (filters.responsavel) {
+      filtered = filtered.filter(atividade => 
+        atividade.responsavel.toLowerCase().includes(filters.responsavel.toLowerCase())
+      );
+    }
+    
+    setFilteredAtividades(filtered);
+  };
+
   useEffect(() => {
     if (userSession?.obraAtiva) {
       loadAtividades();
     }
   }, [userSession?.obraAtiva]);
+
+  useEffect(() => {
+    applyFilters(filters);
+  }, [atividades, filters]);
 
   const handleAtividadeToggle = async (atividadeId: string, concluida: boolean) => {
     try {
@@ -111,8 +149,13 @@ const ChecklistContent = () => {
         <div className="p-4">
           <ChecklistForm onAtividadeCriada={loadAtividades} />
         </div>
+        
+        <div className="p-4">
+          <ChecklistFilters onFiltersChange={applyFilters} />
+        </div>
+        
         <ChecklistTable 
-          atividades={atividades} 
+          atividades={filteredAtividades} 
           isLoading={isLoading}
           onAtividadeToggle={handleAtividadeToggle}
           onAtividadeDelete={handleAtividadeDelete}
