@@ -1,6 +1,7 @@
 
 import { AtividadeChecklist } from "@/types/checklist";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -9,19 +10,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Trash2 } from "lucide-react";
 
 interface ChecklistTableProps {
   atividades: AtividadeChecklist[];
   isLoading: boolean;
   onAtividadeToggle: (atividadeId: string, concluida: boolean) => void;
+  onAtividadeDelete: (atividadeId: string) => void;
 }
 
 const ChecklistTable: React.FC<ChecklistTableProps> = ({ 
   atividades, 
   isLoading, 
-  onAtividadeToggle 
+  onAtividadeToggle,
+  onAtividadeDelete
 }) => {
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "Não definida";
@@ -65,12 +80,13 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">Status</TableHead>
+            <TableHead>Descrição</TableHead>
             <TableHead>Local</TableHead>
             <TableHead>Setor</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Data de Início</TableHead>
             <TableHead>Data de Término</TableHead>
-            <TableHead>Descrição</TableHead>
+            <TableHead className="w-12">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -85,13 +101,39 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
                 />
               </TableCell>
               <TableCell className="font-medium">
-                {atividade.local}
+                {atividade.descricao || "-"}
               </TableCell>
+              <TableCell>{atividade.local}</TableCell>
               <TableCell>{atividade.setor}</TableCell>
               <TableCell>{atividade.responsavel}</TableCell>
               <TableCell>{formatDate(atividade.data_inicio)}</TableCell>
               <TableCell>{formatDate(atividade.data_termino)}</TableCell>
-              <TableCell>{atividade.descricao || "-"}</TableCell>
+              <TableCell>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir atividade</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir esta atividade? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onAtividadeDelete(atividade.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

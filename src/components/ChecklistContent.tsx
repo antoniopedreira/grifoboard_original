@@ -68,6 +68,28 @@ const ChecklistContent = () => {
     }
   };
 
+  const handleAtividadeDelete = async (atividadeId: string) => {
+    try {
+      await checklistService.excluirAtividade(atividadeId);
+      
+      setAtividades(prevAtividades => 
+        prevAtividades.filter(atividade => atividade.id !== atividadeId)
+      );
+      
+      toast({
+        title: "Atividade excluída",
+        description: "Atividade removida com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Error deleting activity:", error);
+      toast({
+        title: "Erro ao excluir atividade",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!userSession?.obraAtiva) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -93,6 +115,7 @@ const ChecklistContent = () => {
           atividades={atividades} 
           isLoading={isLoading}
           onAtividadeToggle={handleAtividadeToggle}
+          onAtividadeDelete={handleAtividadeDelete}
         />
       </div>
     </div>
