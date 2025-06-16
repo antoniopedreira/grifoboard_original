@@ -6,6 +6,7 @@ import { checklistService } from "@/services/checklistService";
 import ChecklistTable from "./ChecklistTable";
 import ChecklistForm from "./ChecklistForm";
 import ChecklistFilters from "./ChecklistFilters";
+import ChecklistStats from "./ChecklistStats";
 import { CheckSquare } from "lucide-react";
 
 const ChecklistContent = () => {
@@ -163,6 +164,10 @@ const ChecklistContent = () => {
             uniqueSetores={uniqueValues.uniqueSetores}
             uniqueResponsaveis={uniqueValues.uniqueResponsaveis}
           />
+        </div>
+        
+        <div className="p-4">
+          <ChecklistStats atividades={filteredAtividades} />
         </div>
         
         <ChecklistTable 
