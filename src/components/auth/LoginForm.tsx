@@ -50,21 +50,21 @@ const LoginForm = () => {
   
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* Email field */}
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+          <Label htmlFor="email" className="text-sm font-medium text-slate-700">
             Email
           </Label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors duration-200" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
             <Input 
               id="email" 
               type="email" 
               placeholder="seu@email.com" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="pl-12 h-12 text-sm border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 rounded-xl bg-gray-50/50 focus:bg-white hover:bg-white" 
+              className="pl-12 h-14 text-base border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-2xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
               required
             />
           </div>
@@ -72,24 +72,24 @@ const LoginForm = () => {
         
         {/* Password field */}
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+          <Label htmlFor="password" className="text-sm font-medium text-slate-700">
             Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors duration-200" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
             <Input 
               id="password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="pl-12 pr-12 h-12 text-sm border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 rounded-xl bg-gray-50/50 focus:bg-white hover:bg-white" 
+              className="pl-12 pr-12 h-14 text-base border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-2xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
               required
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary focus:outline-none transition-colors duration-200 p-1 rounded-lg hover:bg-gray-100"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors duration-200 p-2 rounded-xl hover:bg-slate-100/50"
               aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
             >
               {showPassword ? (
@@ -103,24 +103,24 @@ const LoginForm = () => {
       </div>
       
       {/* Remember me & Forgot password */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex items-center justify-between pt-4">
         <div className="flex items-center space-x-3">
           <Checkbox 
             id="remember-me" 
             checked={rememberMe} 
             onCheckedChange={(checked) => setRememberMe(checked === true)} 
-            className="rounded-md"
+            className="rounded-lg border-slate-300 data-[state=checked]:bg-slate-800 data-[state=checked]:border-slate-800"
           />
           <Label 
             htmlFor="remember-me" 
-            className="text-sm text-gray-600 cursor-pointer select-none font-medium"
+            className="text-sm text-slate-600 cursor-pointer select-none font-medium"
           >
             Lembrar-me
           </Label>
         </div>
         <button 
           type="button"
-          className="text-sm text-primary hover:text-primary/80 font-semibold hover:underline transition-all duration-200"
+          className="text-sm text-slate-600 hover:text-slate-800 font-medium hover:underline transition-all duration-200"
         >
           Esqueci a senha
         </button>
@@ -130,7 +130,7 @@ const LoginForm = () => {
       <Button 
         type="submit" 
         disabled={isLoading} 
-        className="w-full h-12 font-semibold text-sm bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+        className="w-full h-14 mt-8 font-semibold text-base bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl transform hover:scale-[1.02] active:scale-[0.98]"
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
