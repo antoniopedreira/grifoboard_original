@@ -27,9 +27,31 @@ export const useTaskActions = (
       return;
     }
     
+    // Create updated dailyStatus array that includes all planned days
+    const updatedDailyStatus = [...task.dailyStatus];
+    
+    // For each planned day in the edited data, ensure it has a status
+    editedTaskData.plannedDays.forEach(plannedDay => {
+      const existingStatus = updatedDailyStatus.find(status => status.day === plannedDay);
+      
+      // If this day doesn't have a status yet, add it as "planned"
+      if (!existingStatus) {
+        updatedDailyStatus.push({
+          day: plannedDay,
+          status: "planned"
+        });
+      }
+    });
+    
+    // Remove statuses for days that are no longer planned
+    const filteredDailyStatus = updatedDailyStatus.filter(status => 
+      editedTaskData.plannedDays.includes(status.day)
+    );
+    
     const updatedTask: Task = {
       ...task,
       ...editedTaskData,
+      dailyStatus: filteredDailyStatus,
     };
 
     onTaskUpdate(updatedTask);
