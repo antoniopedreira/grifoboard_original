@@ -16,21 +16,21 @@ const AuthCard = () => {
       className="w-full"
     >
       {/* Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <motion.div 
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 100, damping: 15 }}
-          className="w-14 h-14 mx-auto mb-4 bg-gradient-to-br from-slate-800 to-slate-600 rounded-2xl flex items-center justify-center shadow-xl"
+          className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-slate-800 to-slate-600 rounded-2xl flex items-center justify-center shadow-xl"
         >
-          <span className="text-xl font-bold text-white">G</span>
+          <span className="text-lg font-bold text-white">G</span>
         </motion.div>
         
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="text-3xl font-bold text-slate-800 mb-2"
+          className="text-2xl font-bold text-slate-800 mb-1"
         >
           GrifoBoard
         </motion.h1>
@@ -39,7 +39,7 @@ const AuthCard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="text-slate-600 text-base"
+          className="text-slate-600 text-sm"
         >
           Gerencie suas obras e acompanhe o progresso
         </motion.p>
@@ -58,24 +58,24 @@ const AuthCard = () => {
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <div className="p-2 bg-slate-50/50">
-            <TabsList className="grid grid-cols-2 w-full bg-white/80 rounded-2xl p-1 shadow-sm">
+          <div className="p-1.5 bg-slate-50/50">
+            <TabsList className="grid grid-cols-2 w-full bg-white/80 rounded-xl p-1 shadow-sm">
               <TabsTrigger 
                 value="login" 
-                className="py-3 px-6 rounded-xl text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-md transition-all duration-300 text-slate-600"
+                className="py-2 px-4 rounded-lg text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-md transition-all duration-300 text-slate-600"
               >
                 Entrar
               </TabsTrigger>
               <TabsTrigger 
                 value="signup" 
-                className="py-3 px-6 rounded-xl text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-md transition-all duration-300 text-slate-600"
+                className="py-2 px-4 rounded-lg text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-slate-800 data-[state=active]:shadow-md transition-all duration-300 text-slate-600"
               >
                 Cadastrar
               </TabsTrigger>
             </TabsList>
           </div>
           
-          <div className="p-6">
+          <div className="p-4">
             <AnimatePresence mode="wait">
               <TabsContent value="login" asChild>
                 <motion.div
@@ -108,7 +108,7 @@ const AuthCard = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="text-center mt-6 text-slate-500 text-xs"
+        className="text-center mt-4 text-slate-500 text-[10px]"
       >
         © {new Date().getFullYear()} GrifoBoard • Todos os direitos reservados
       </motion.div>

@@ -24,8 +24,8 @@ const Auth = () => {
   }, [userSession, navigate, redirectAttempted]);
   
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4 overflow-hidden">
-      <div className="w-full max-w-md max-h-screen overflow-y-auto">
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center overflow-hidden">
+      <div className="w-full max-w-sm">
         <AuthCard />
       </div>
     </div>
