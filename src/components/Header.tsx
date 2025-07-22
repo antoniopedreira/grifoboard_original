@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -16,34 +15,32 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-border shadow-lg z-40 relative">
-      <div className="container mx-auto px-6 py-4">
+    <header className="frosted-glass border-b border-border/50 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="bg-gradient-primary p-2 rounded-xl shadow-md">
-              <div className="text-white font-bold text-lg">G</div>
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-semibold text-sm">G</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-heading bg-gradient-primary bg-clip-text text-transparent">
-                GrifoBoard
-              </h1>
-              <div className="text-xs text-muted-foreground">
-                Sistema de Gestão de Obras
-              </div>
+              <h1 className="text-lg font-semibold text-foreground">GrifoBoard</h1>
+              <div className="text-xs text-muted-foreground">Sistema de Gestão de Obras</div>
             </div>
           </div>
 
           {userSession.user && (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {userSession.obraAtiva && isTasksPage && (
-                <div className="hidden md:flex items-center bg-muted/50 rounded-xl px-4 py-2 ml-4">
+                <div className="hidden md:flex items-center bg-muted/50 rounded-lg px-3 py-2">
                   <div className="flex items-center">
-                    <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-2">
                       <Building2 className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <div className="text-xs text-muted-foreground font-medium">Obra ativa:</div>
-                      <div className="font-semibold text-sm text-foreground">{userSession.obraAtiva.nome_obra}</div>
+                      <div className="text-xs text-muted-foreground">Obra ativa:</div>
+                      <div className="font-medium text-sm text-foreground">
+                        {userSession.obraAtiva.nome_obra}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -53,7 +50,7 @@ const Header = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="icon-button h-10 px-4 font-medium"
+                  className="smooth-button"
                   onClick={handleMudarObra}
                 >
                   <Building2 className="h-4 w-4 mr-2" />
@@ -64,7 +61,7 @@ const Header = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-sm h-10 px-4 hover:bg-destructive/10 hover:text-destructive font-medium transition-all duration-300"
+                className="smooth-button hover:bg-destructive/10 hover:text-destructive"
                 onClick={() => signOut()}
               >
                 <LogOut className="h-4 w-4 mr-2" />

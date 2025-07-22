@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +10,7 @@ import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import CableChart from "@/components/dashboard/CableChart";
-import { BarChart3, CalendarDays, CheckCircle, CircleX, ClipboardList } from "lucide-react";
+import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 
 const DashboardContent = () => {
   const { toast } = useToast();
@@ -46,223 +45,175 @@ const DashboardContent = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary-light/10">
-        <div className="container mx-auto max-w-7xl px-6 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-muted/20 to-background p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Loading Header */}
-          <div className="mb-10 animate-pulse">
+          <div className="glass-card p-8 animate-pulse">
             <div className="flex items-center space-x-4">
-              <div className="h-16 w-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl"></div>
+              <div className="w-12 h-12 bg-muted rounded-lg"></div>
               <div>
-                <div className="h-10 w-48 bg-gradient-to-r from-muted to-muted/60 rounded-lg"></div>
-                <div className="h-6 w-32 bg-muted/60 rounded-lg mt-2"></div>
+                <div className="h-8 w-48 bg-muted rounded"></div>
+                <div className="h-4 w-32 bg-muted/60 rounded mt-2"></div>
               </div>
             </div>
           </div>
           
           {/* Loading Navigation */}
-          <div className="h-16 bg-gradient-to-r from-muted to-muted/60 rounded-2xl mb-8 animate-pulse"></div>
+          <div className="glass-card p-4 animate-pulse">
+            <div className="h-12 bg-muted rounded"></div>
+          </div>
           
           {/* Loading Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="premium-card p-6 animate-pulse">
+              <div key={i} className="glass-card p-6 animate-pulse">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="h-12 w-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl"></div>
+                  <div className="w-10 h-10 bg-muted rounded-lg"></div>
                   <div className="text-right">
-                    <div className="h-8 w-16 bg-muted rounded-lg"></div>
-                    <div className="h-4 w-12 bg-muted/60 rounded mt-1"></div>
+                    <div className="h-8 w-12 bg-muted rounded"></div>
+                    <div className="h-3 w-16 bg-muted/60 rounded mt-1"></div>
                   </div>
                 </div>
-                <div className="h-4 w-24 bg-muted rounded-lg"></div>
-                <div className="h-3 w-20 bg-muted/60 rounded-lg mt-2"></div>
+                <div className="h-4 w-24 bg-muted rounded"></div>
               </div>
             ))}
           </div>
           
           {/* Loading Chart */}
-          <div className="premium-card p-8 mb-10 animate-pulse">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="h-6 w-40 bg-muted rounded-lg"></div>
-                <div className="h-4 w-56 bg-muted/60 rounded-lg mt-2"></div>
-              </div>
-              <div className="h-12 w-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl"></div>
-            </div>
-            <div className="h-64 bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl"></div>
-          </div>
-          
-          {/* Loading Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="premium-card p-6 animate-pulse">
-                <div className="h-6 w-32 bg-muted rounded-lg mb-4"></div>
-                <div className="h-64 bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl"></div>
-              </div>
-            ))}
+          <div className="glass-card p-6 animate-pulse">
+            <div className="h-64 bg-muted rounded"></div>
           </div>
         </div>
       </div>
     );
   }
 
+  const completedTasks = tasks.filter(task => task.isFullyCompleted).length;
+  const pendingTasks = tasks.filter(task => !task.isFullyCompleted).length;
+  const pcpPercentage = pcpData?.overall?.percentage ? Math.round(pcpData.overall.percentage) : 0;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary-light/10">
-      <div className="container mx-auto max-w-7xl px-6 py-8">
-        {/* Modern Header */}
-        <div className="mb-10">
+    <div className="min-h-screen bg-gradient-to-br from-muted/20 to-background">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Clean Header */}
+        <div className="glass-card p-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="bg-gradient-primary p-3 rounded-2xl shadow-glow">
-                <BarChart3 className="h-8 w-8 text-white" />
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-4xl font-heading font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  Dashboard
-                </h1>
-                <p className="text-muted-foreground text-lg mt-1">
+                <h1 className="text-3xl font-semibold text-foreground">Dashboard</h1>
+                <p className="text-muted-foreground">
                   {userSession?.obraAtiva?.nome_obra || "Obra"}
                 </p>
               </div>
             </div>
             
-            {/* Quick Actions */}
-            <div className="flex items-center space-x-3">
-              <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
-                <div className="w-3 h-3 rounded-full bg-success animate-pulse"></div>
-                <span>Atualizado agora</span>
-              </div>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+              <span>Atualizado agora</span>
             </div>
           </div>
         </div>
         
         {/* Week Navigation */}
-        <div className="mb-8">
-          <WeekNavigation 
-            weekStartDate={weekStartDate} 
-            weekEndDate={weekEndDate} 
-            onPreviousWeek={navigateToPreviousWeek} 
-            onNextWeek={navigateToNextWeek} 
-          />
-        </div>
+        <WeekNavigation 
+          weekStartDate={weekStartDate} 
+          weekEndDate={weekEndDate} 
+          onPreviousWeek={navigateToPreviousWeek} 
+          onNextWeek={navigateToNextWeek} 
+        />
         
-        {/* Modern Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <div className="interactive-card group cursor-default">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-primary-light p-3 rounded-xl group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                  <ClipboardList className="h-6 w-6 text-primary group-hover:text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-primary">{tasks.length}</div>
-                  <div className="text-xs text-muted-foreground font-medium">Total</div>
-                </div>
+        {/* Clean Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="minimal-card p-6 interactive">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Total de Tarefas</h3>
-              <div className="mt-2 flex items-center text-xs text-muted-foreground">
-                <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                Esta semana
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-foreground">{tasks.length}</div>
+                <div className="text-xs text-muted-foreground">Total</div>
               </div>
             </div>
+            <h3 className="text-sm font-medium text-foreground">Total de Tarefas</h3>
+            <p className="text-xs text-muted-foreground mt-1">Esta semana</p>
           </div>
           
-          <div className="interactive-card group cursor-default">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-success-light p-3 rounded-xl group-hover:bg-success group-hover:text-white transition-all duration-300">
-                  <CheckCircle className="h-6 w-6 text-success group-hover:text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-success">
-                    {tasks.filter(task => task.isFullyCompleted).length}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-medium">Concluídas</div>
-                </div>
+          <div className="minimal-card p-6 interactive">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-success" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Tarefas Concluídas</h3>
-              <div className="mt-2 flex items-center text-xs text-muted-foreground">
-                <div className="w-2 h-2 rounded-full bg-success mr-2"></div>
-                {Math.round((tasks.filter(task => task.isFullyCompleted).length / Math.max(tasks.length, 1)) * 100)}% do total
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-success">{completedTasks}</div>
+                <div className="text-xs text-muted-foreground">Concluídas</div>
               </div>
             </div>
+            <h3 className="text-sm font-medium text-foreground">Tarefas Concluídas</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {Math.round((completedTasks / Math.max(tasks.length, 1)) * 100)}% do total
+            </p>
           </div>
           
-          <div className="interactive-card group cursor-default">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-destructive-light p-3 rounded-xl group-hover:bg-destructive group-hover:text-white transition-all duration-300">
-                  <CircleX className="h-6 w-6 text-destructive group-hover:text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-destructive">
-                    {tasks.filter(task => !task.isFullyCompleted).length}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-medium">Pendentes</div>
-                </div>
+          <div className="minimal-card p-6 interactive">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-destructive" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Não Realizadas</h3>
-              <div className="mt-2 flex items-center text-xs text-muted-foreground">
-                <div className="w-2 h-2 rounded-full bg-destructive mr-2"></div>
-                Requer atenção
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-destructive">{pendingTasks}</div>
+                <div className="text-xs text-muted-foreground">Pendentes</div>
               </div>
             </div>
+            <h3 className="text-sm font-medium text-foreground">Não Realizadas</h3>
+            <p className="text-xs text-muted-foreground mt-1">Requer atenção</p>
           </div>
           
-          <div className="interactive-card group cursor-default">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-accent-light p-3 rounded-xl group-hover:bg-accent group-hover:text-white transition-all duration-300">
-                  <CalendarDays className="h-6 w-6 text-accent group-hover:text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-accent">
-                    {pcpData?.overall?.percentage ? `${Math.round(pcpData.overall.percentage)}%` : '0%'}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-medium">Performance</div>
-                </div>
+          <div className="minimal-card p-6 interactive">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">PCP Semanal</h3>
-              <div className="mt-2 flex items-center text-xs text-muted-foreground">
-                <div className="w-2 h-2 rounded-full bg-accent mr-2"></div>
-                Índice de produção
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-primary">{pcpPercentage}%</div>
+                <div className="text-xs text-muted-foreground">Performance</div>
               </div>
             </div>
+            <h3 className="text-sm font-medium text-foreground">PCP Semanal</h3>
+            <p className="text-xs text-muted-foreground mt-1">Índice de produção</p>
           </div>
         </div>
         
         {/* Weekly Progress Chart */}
-        <div className="premium-card p-8 mb-10">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-heading font-bold text-foreground">Progresso Semanal</h2>
-              <p className="text-muted-foreground mt-1">Análise detalhada do PCP por semana</p>
-            </div>
-            <div className="bg-gradient-primary p-3 rounded-xl">
-              <BarChart3 className="h-6 w-6 text-white" />
+              <h2 className="text-xl font-semibold text-foreground">Progresso Semanal</h2>
+              <p className="text-sm text-muted-foreground">Análise detalhada do PCP por semana</p>
             </div>
           </div>
-          <div className="bg-white/50 rounded-xl p-4">
+          <div className="bg-background/50 rounded-lg p-4">
             <PCPWeeklyChart weeklyData={weeklyPCPData} />
           </div>
         </div>
         
         {/* Analytics Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="premium-card p-6 hover:shadow-glow transition-all duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="minimal-card p-6">
             <ExecutorChart weekStartDate={weekStartDate} />
           </div>
           
-          <div className="premium-card p-6 hover:shadow-glow transition-all duration-500">
+          <div className="minimal-card p-6">
             <TeamChart weekStartDate={weekStartDate} />
           </div>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="premium-card p-6 hover:shadow-glow transition-all duration-500">
+          
+          <div className="minimal-card p-6">
             <ResponsibleChart weekStartDate={weekStartDate} />
           </div>
           
-          <div className="premium-card p-6 hover:shadow-glow transition-all duration-500">
+          <div className="minimal-card p-6">
             <CableChart weekStartDate={weekStartDate} />
           </div>
         </div>
