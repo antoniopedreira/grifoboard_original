@@ -72,8 +72,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 
   return (
     <>
-      <div className="overflow-y-auto p-6 pt-4 max-h-[calc(90vh-140px)]">
-        <div className="grid gap-5 py-2">
+      <div className="overflow-y-auto p-6 pt-4 max-h-[calc(90vh-200px)]">
+        <div className="grid gap-5 py-2 pb-6">
           {/* Description - first position */}
           <div className="space-y-2 w-full">
             <Label htmlFor="edit-description" className="font-medium">Descrição</Label>
@@ -273,8 +273,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             </div>
           </div>
           
-          {/* Planned days - centered */}
-          <div className="space-y-3 w-full">
+          {/* Planned days - centered with extra bottom margin */}
+          <div className="space-y-3 w-full mb-8">
             <Label className="font-medium">Dias Planejados</Label>
             <div className="flex flex-wrap justify-center gap-4 mt-2">
               {(Object.entries(dayNameMap) as [DayOfWeek, string][]).map(([day, name]) => (
@@ -293,7 +293,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
       </div>
 
       {/* Fixed footer with buttons */}
-      <div className="flex justify-between p-6 sticky bottom-0 bg-background border-t mt-auto">
+      <div className="flex justify-between p-6 sticky bottom-0 bg-background border-t">
         <Button 
           variant="destructive" 
           onClick={onDelete}
