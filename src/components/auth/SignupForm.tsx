@@ -67,72 +67,72 @@ const SignupForm = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-3">
         {/* Email field */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="signup-email" className="text-sm font-medium text-slate-700">
             Email
           </Label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
             <Input 
               id="signup-email" 
               type="email" 
               placeholder="seu@email.com" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="pl-12 h-14 text-base border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-2xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
+              className="pl-10 h-11 text-sm border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
               required
             />
           </div>
         </div>
         
         {/* Password field */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="signup-password" className="text-sm font-medium text-slate-700">
             Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
             <Input 
               id="signup-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="pl-12 pr-12 h-14 text-base border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-2xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
+              className="pl-10 pr-10 h-11 text-sm border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
               required
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors duration-200 p-2 rounded-xl hover:bg-slate-100/50"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors duration-200 p-1.5 rounded-lg hover:bg-slate-100/50"
               aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
             >
               {showPassword ? (
-                <EyeOff className="h-5 w-5" />
+                <EyeOff className="h-4 w-4" />
               ) : (
-                <Eye className="h-5 w-5" />
+                <Eye className="h-4 w-4" />
               )}
             </button>
           </div>
         </div>
         
         {/* Confirm Password field */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="confirm-password" className="text-sm font-medium text-slate-700">
             Confirmar Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
             <Input 
               id="confirm-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={confirmPassword} 
               onChange={e => setConfirmPassword(e.target.value)} 
-              className="pl-12 h-14 text-base border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-2xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
+              className="pl-10 h-11 text-sm border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 transition-all duration-300 rounded-xl bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
               required
             />
           </div>
@@ -140,7 +140,7 @@ const SignupForm = () => {
       </div>
       
       {/* Password strength indicator */}
-      <div className="text-sm text-slate-600 bg-slate-50/50 backdrop-blur-sm p-4 rounded-2xl">
+      <div className="text-xs text-slate-600 bg-slate-50/50 backdrop-blur-sm p-3 rounded-xl">
         A senha deve ter pelo menos 6 caracteres
       </div>
       
@@ -148,11 +148,11 @@ const SignupForm = () => {
       <Button 
         type="submit" 
         disabled={isLoading} 
-        className="w-full h-14 mt-8 font-semibold text-base bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl transform hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full h-12 mt-4 font-semibold text-base bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98]"
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
             Cadastrando...
           </div>
         ) : (

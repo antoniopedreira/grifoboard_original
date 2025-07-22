@@ -16,21 +16,21 @@ const AuthCard = () => {
       className="w-full"
     >
       {/* Header */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-8">
         <motion.div 
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 100, damping: 15 }}
-          className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-slate-800 to-slate-600 rounded-2xl flex items-center justify-center shadow-xl"
+          className="w-14 h-14 mx-auto mb-4 bg-gradient-to-br from-slate-800 to-slate-600 rounded-2xl flex items-center justify-center shadow-xl"
         >
-          <span className="text-2xl font-bold text-white">G</span>
+          <span className="text-xl font-bold text-white">G</span>
         </motion.div>
         
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="text-4xl font-bold text-slate-800 mb-3"
+          className="text-3xl font-bold text-slate-800 mb-2"
         >
           GrifoBoard
         </motion.h1>
@@ -39,7 +39,7 @@ const AuthCard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="text-slate-600 text-lg"
+          className="text-slate-600 text-base"
         >
           Gerencie suas obras e acompanhe o progresso
         </motion.p>
@@ -75,7 +75,7 @@ const AuthCard = () => {
             </TabsList>
           </div>
           
-          <div className="p-8">
+          <div className="p-6">
             <AnimatePresence mode="wait">
               <TabsContent value="login" asChild>
                 <motion.div
@@ -108,7 +108,7 @@ const AuthCard = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="text-center mt-8 text-slate-500 text-sm"
+        className="text-center mt-6 text-slate-500 text-xs"
       >
         © {new Date().getFullYear()} GrifoBoard • Todos os direitos reservados
       </motion.div>
