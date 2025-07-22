@@ -77,11 +77,8 @@ const CausesCountCard: React.FC<CausesCountCardProps> = ({ tasks, onCauseSelect 
               onClick={() => onCauseSelect(cause)}
             >
               <span className="text-slate-700 font-medium text-sm flex-1 mr-3">{cause}</span>
-              <div className="flex items-center space-x-2">
-                <span className="text-red-600 font-bold text-sm">{count}</span>
-                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                  <span className="text-red-600 text-xs font-bold">{count}</span>
-                </div>
+              <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="text-red-600 text-xs font-bold">{count}</span>
               </div>
             </div>
           ))}
