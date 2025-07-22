@@ -28,7 +28,7 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
         <div className="flex flex-col justify-center items-center space-y-4">
           {/* Circular Progress Indicator */}
           <div className="relative flex items-center justify-center">
-            <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+            <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 100 100">
               <circle
                 cx="50"
                 cy="50"
@@ -51,19 +51,19 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-slate-800">{percentage}%</span>
+              <span className="text-xl font-bold text-slate-800">{percentage}%</span>
             </div>
           </div>
           
           <div className="text-center">
-            <div className="text-sm font-medium text-slate-600 mb-1">
+            <div className="text-xs font-medium text-slate-600 mb-1">
               {data.completedTasks} de {data.totalTasks} tarefas concluídas
             </div>
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-xs text-slate-500">Concluídas</span>
-              <div className="w-2 h-2 rounded-full bg-slate-300 ml-3"></div>
-              <span className="text-xs text-slate-500">Pendentes</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+              <span className="text-[10px] text-slate-500">Concluídas</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-300 ml-2"></div>
+              <span className="text-[10px] text-slate-500">Pendentes</span>
             </div>
           </div>
         </div>
