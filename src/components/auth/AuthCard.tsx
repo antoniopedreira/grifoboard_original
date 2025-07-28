@@ -53,12 +53,12 @@ const AuthCard = () => {
         </motion.p>
       </div>
       
-      {/* Auth Form with glass morphism */}
+      {/* Auth Form with glass morphism - NO WHITE BACKGROUND */}
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.6 }}
-        className="backdrop-blur-xl bg-white/10 rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+        className="backdrop-blur-xl bg-white/5 rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
       >
         <Tabs 
           defaultValue="login" 

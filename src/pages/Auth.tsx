@@ -21,7 +21,7 @@ const Auth = () => {
   }, [userSession, navigate, redirectAttempted]);
   
   return (
-    <div className="min-h-screen w-full relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Construction grid pattern background */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -35,8 +35,8 @@ const Auth = () => {
       <div className="absolute top-1/2 left-10 w-16 h-16 bg-slate-700/10 rounded-full"></div>
       <div className="absolute bottom-1/3 left-1/3 w-20 h-20 border border-slate-700/20 rotate-45"></div>
       
-      {/* Main content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+      {/* Main content - perfectly centered */}
+      <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <AuthCard />
         </div>
