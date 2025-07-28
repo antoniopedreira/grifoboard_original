@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, UserPlus } from 'lucide-react';
 
 const SignupForm = () => {
   const [email, setEmail] = useState('');
@@ -67,72 +67,72 @@ const SignupForm = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-3">
         {/* Email field */}
-        <div className="space-y-1">
-          <Label htmlFor="signup-email" className="text-xs font-medium text-slate-700">
+        <div className="space-y-2">
+          <Label htmlFor="signup-email" className="text-sm font-medium text-white/90">
             Email
           </Label>
           <div className="relative group">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 group-focus-within:text-orange-400 transition-colors duration-200" />
             <Input 
               id="signup-email" 
               type="email" 
               placeholder="seu@email.com" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="pl-10 h-9 text-sm border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all duration-300 rounded-lg bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
+              className="pl-12 h-12 text-white placeholder:text-white/40 border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 rounded-xl bg-white/10 backdrop-blur-sm focus:bg-white/15 hover:bg-white/12" 
               required
             />
           </div>
         </div>
         
         {/* Password field */}
-        <div className="space-y-1">
-          <Label htmlFor="signup-password" className="text-xs font-medium text-slate-700">
+        <div className="space-y-2">
+          <Label htmlFor="signup-password" className="text-sm font-medium text-white/90">
             Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 group-focus-within:text-orange-400 transition-colors duration-200" />
             <Input 
               id="signup-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="pl-10 pr-10 h-9 text-sm border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all duration-300 rounded-lg bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
+              className="pl-12 pr-12 h-12 text-white placeholder:text-white/40 border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 rounded-xl bg-white/10 backdrop-blur-sm focus:bg-white/15 hover:bg-white/12" 
               required
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors duration-200 p-1 rounded-md hover:bg-slate-100/50"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-orange-400 focus:outline-none transition-colors duration-200 p-1 rounded-lg hover:bg-white/10"
               aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4" />
+                <EyeOff className="h-5 w-5" />
               ) : (
-                <Eye className="h-4 w-4" />
+                <Eye className="h-5 w-5" />
               )}
             </button>
           </div>
         </div>
         
         {/* Confirm Password field */}
-        <div className="space-y-1">
-          <Label htmlFor="confirm-password" className="text-xs font-medium text-slate-700">
+        <div className="space-y-2">
+          <Label htmlFor="confirm-password" className="text-sm font-medium text-white/90">
             Confirmar Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-600 transition-colors duration-200" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 group-focus-within:text-orange-400 transition-colors duration-200" />
             <Input 
               id="confirm-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={confirmPassword} 
               onChange={e => setConfirmPassword(e.target.value)} 
-              className="pl-10 h-9 text-sm border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all duration-300 rounded-lg bg-white/50 backdrop-blur-sm focus:bg-white/80 hover:bg-white/70" 
+              className="pl-12 h-12 text-white placeholder:text-white/40 border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 rounded-xl bg-white/10 backdrop-blur-sm focus:bg-white/15 hover:bg-white/12" 
               required
             />
           </div>
@@ -140,7 +140,7 @@ const SignupForm = () => {
       </div>
       
       {/* Password strength indicator */}
-      <div className="text-[10px] text-slate-600 bg-slate-50/50 backdrop-blur-sm p-2 rounded-lg">
+      <div className="text-sm text-white/60 bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/10">
         A senha deve ter pelo menos 6 caracteres
       </div>
       
@@ -148,15 +148,18 @@ const SignupForm = () => {
       <Button 
         type="submit" 
         disabled={isLoading} 
-        className="w-full h-10 mt-3 font-semibold text-sm bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg transform hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full h-12 mt-5 font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
             Cadastrando...
           </div>
         ) : (
-          "Cadastrar"
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Cadastrar
+          </div>
         )}
       </Button>
     </form>
