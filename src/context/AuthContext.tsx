@@ -172,6 +172,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
+      
+      // Don't redirect automatically - let user stay where they are
     } catch (error: any) {
       toast({
         title: "Erro ao desconectar",

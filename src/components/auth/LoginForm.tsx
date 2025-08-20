@@ -40,7 +40,11 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
     
     try {
       await signIn(email, password);
-      navigate('/obras');
+      toast({
+        title: "Login bem-sucedido",
+        description: "Bem-vindo de volta!",
+      });
+      // Let user navigate manually instead of auto-redirect
     } catch (error: any) {
       toast({
         title: "Erro ao entrar",
