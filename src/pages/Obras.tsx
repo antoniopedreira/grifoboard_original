@@ -158,33 +158,16 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-grifo-bg">
-      <div className="container max-w-7xl py-8">
-        {/* Header da página */}
-        <div className="mb-8">
-          <h1 className="grifo-h1 mb-2">Minhas Obras</h1>
-          <p className="grifo-body text-muted-foreground">
-            Selecione uma obra para acompanhar o desempenho em tempo real
-          </p>
-        </div>
-
-        {/* Card principal */}
-        <div className="grifo-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="grifo-h3 mb-1">Obras Disponíveis</h2>
-              <p className="grifo-small">
-                {obras.length > 0 ? `${obras.length} obra${obras.length > 1 ? 's' : ''} encontrada${obras.length > 1 ? 's' : ''}` : 'Nenhuma obra encontrada'}
-              </p>
-            </div>
-            <Button 
-              onClick={() => setIsFormOpen(true)}
-              className="grifo-button-primary"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Nova Obra
-            </Button>
-          </div>
-          
+    <div className="flex-1 container max-w-7xl py-4 bg-background">
+      <Card className="bg-white border border-gray-100 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-gray-900">Minhas Obras</CardTitle>
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nova Obra
+          </Button>
+        </CardHeader>
+        
+        <CardContent>
           <ObrasList 
             obras={obras} 
             isLoading={isLoading} 
@@ -192,24 +175,24 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
             onDeleteObra={handleDeleteObra}
             onEditObra={handleEditObra}
           />
-        </div>
-        
-        <ObraForm 
-          isOpen={isFormOpen} 
-          onClose={() => setIsFormOpen(false)} 
-          onObraCriada={handleObraCriada} 
-        />
-        
-        <ObraEditForm
-          isOpen={isEditFormOpen}
-          onClose={() => {
-            setIsEditFormOpen(false);
-            setSelectedObraForEdit(null);
-          }}
-          onObraAtualizada={handleObraAtualizada}
-          obra={selectedObraForEdit}
-        />
-      </div>
+        </CardContent>
+      </Card>
+      
+      <ObraForm 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        onObraCriada={handleObraCriada} 
+      />
+      
+      <ObraEditForm
+        isOpen={isEditFormOpen}
+        onClose={() => {
+          setIsEditFormOpen(false);
+          setSelectedObraForEdit(null);
+        }}
+        onObraAtualizada={handleObraAtualizada}
+        obra={selectedObraForEdit}
+      />
     </div>
   );
 };

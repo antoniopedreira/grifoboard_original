@@ -27,38 +27,35 @@ const WeekNavigation = ({
     today.getTime() <= weekEndDate.getTime();
     
   return (
-    <div className="flex justify-between items-center bg-grifo-surface rounded-grifo-lg p-4 shadow-grifo">
-      {/* Botão semana anterior */}
+    <div className="flex justify-between items-center mb-8 bg-white rounded-xl shadow-sm p-4 border border-gray-100/40 backdrop-blur-sm hover:shadow transition-shadow duration-200">
       <Button 
         variant="outline" 
         size="icon"
-        className="h-10 w-10 rounded-grifo border-border hover:bg-primary/10 hover:border-primary"
+        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
         onClick={onPreviousWeek}
       >
-        <ChevronLeft className="h-5 w-5 text-accent" />
+        <ChevronLeft className="h-4 w-4" />
       </Button>
       
-      {/* WeekBar central - destaque */}
-      <div className="flex flex-col items-center px-6">
-        <div className="flex items-center mb-1">
-          <Calendar className="h-6 w-6 mr-3 text-primary" />
-          <h3 className="grifo-h3 text-accent">
+      <div className="flex flex-col items-center">
+        <div className="flex items-center">
+          <Calendar className="h-5 w-5 mr-2 text-primary" />
+          <h3 className="text-lg font-medium font-heading">
             {currentWeekFormatted}
           </h3>
         </div>
         {isCurrentWeek && (
-          <div className="grifo-chip-success">Semana Atual</div>
+          <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full mt-1">Semana Atual</span>
         )}
       </div>
       
-      {/* Botão próxima semana */}
       <Button 
         variant="outline" 
         size="icon"
-        className="h-10 w-10 rounded-grifo border-border hover:bg-primary/10 hover:border-primary"
+        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
         onClick={onNextWeek}
       >
-        <ChevronRight className="h-5 w-5 text-accent" />
+        <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   );
