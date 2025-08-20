@@ -6,6 +6,9 @@ import { AuthProvider } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
 import Header from "@/components/Header";
 import Auth from "@/pages/Auth";
+import Login from "@/pages/auth/Login";
+import Signup from "@/pages/auth/Signup";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
 import NotFound from "@/pages/NotFound";
@@ -26,11 +29,11 @@ const queryClient = new QueryClient({
 // Component to determine if sidebar should be shown based on route
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/auth';
+  const isAuthPage = location.pathname.startsWith('/auth');
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
 
   return (
-    <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-gray-50' : ''} font-sans`}>
+    <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-grifo-bg' : ''} font-sans`}>
       {!isAuthPage && <Header />}
       
       <div className="flex flex-1 w-full">
@@ -44,7 +47,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               </div>
             </ScrollArea>
           ) : (
-            <div className="container mx-auto px-4 py-6">
+            <div className={!isAuthPage ? "container mx-auto px-4 py-6" : ""}>
               {children}
             </div>
           )}
@@ -86,6 +89,9 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/obras" replace />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/signup" element={<Signup />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />

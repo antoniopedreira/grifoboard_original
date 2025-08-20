@@ -5,65 +5,77 @@
 @tailwind utilities;
 
 :root {
-  /* Clean Minimal Palette */
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
+  /* Grifo Brand Colors */
+  --grifo-gold: 45 75% 52%; /* #C7A347 */
+  --grifo-gold-600: 44 66% 48%; /* #B7943F */
+  --grifo-navy: 212 73% 12%; /* #0A1D33 */
+  --grifo-ink: 212 35% 17%; /* #1E2836 */
+  --grifo-bg: 0 0% 100%; /* #FFFFFF */
+  --grifo-surface: 220 14% 96%; /* #F5F6F8 */
   
-  /* Neutral Primary */
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --primary-hover: 240 5.9% 15%;
-  --primary-light: 240 4.8% 95.9%;
-
-  /* Subtle Secondary */
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --secondary-light: 240 4.8% 98%;
-
-  /* Minimal Accent */
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --accent-light: 240 4.8% 98%;
-
-  /* Clean Status Colors */
-  --success: 142 76% 36%;
-  --success-foreground: 355.7 100% 97.3%;
-  --success-light: 142 76% 95%;
+  /* Core Colors */
+  --background: var(--grifo-bg);
+  --foreground: var(--grifo-ink);
+  --card: var(--grifo-bg);
+  --card-foreground: var(--grifo-ink);
+  --popover: var(--grifo-bg);
+  --popover-foreground: var(--grifo-ink);
   
-  --warning: 47.9 95.8% 53.1%;
-  --warning-foreground: 26 83.3% 14.1%;
-  --warning-light: 47.9 95.8% 95%;
-  
-  --destructive: 0 72.2% 50.6%;
-  --destructive-foreground: 0 85.7% 97.3%;
-  --destructive-light: 0 72.2% 95%;
+  /* Primary (Grifo Gold) */
+  --primary: var(--grifo-gold);
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: var(--grifo-gold-600);
+  --primary-light: 45 75% 97%;
 
-  /* Neutral System */
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
+  /* Secondary (Surface) */
+  --secondary: var(--grifo-surface);
+  --secondary-foreground: var(--grifo-navy);
+  --secondary-light: 220 14% 98%;
 
-  /* Clean Design Tokens */
-  --radius: 8px;
+  /* Accent (Navy) */
+  --accent: var(--grifo-navy);
+  --accent-foreground: 0 0% 100%;
+  --accent-light: 212 73% 97%;
+
+  /* Status Colors */
+  --success: 140 69% 43%; /* #2BB673 */
+  --success-foreground: 0 0% 100%;
+  --success-light: 140 69% 97%;
   
-  /* Glass Morphism */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  --glass-backdrop: blur(8px);
+  --warning: 35 91% 55%; /* #F5A524 */
+  --warning-foreground: 0 0% 100%;
+  --warning-light: 35 91% 97%;
   
-  /* Minimal Shadows */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  --destructive: 0 65% 58%; /* #E24D4D */
+  --destructive-foreground: 0 0% 100%;
+  --destructive-light: 0 65% 97%;
+
+  /* System Colors */
+  --muted: var(--grifo-surface);
+  --muted-foreground: 212 15% 50%;
+  --border: 220 14% 90%;
+  --input: 220 14% 90%;
+  --ring: var(--grifo-gold);
+
+  /* Grifo Design Tokens */
+  --radius: 16px;
+  --radius-lg: 20px;
+  --radius-sm: 12px;
+  
+  /* Grifo Shadows */
+  --shadow-grifo: 0 10px 30px rgba(10, 29, 51, 0.08);
+  --shadow-grifo-lg: 0 20px 40px rgba(10, 29, 51, 0.12);
+  --shadow-grifo-hover: 0 15px 35px rgba(10, 29, 51, 0.15);
+  
+  /* Focus Ring with Golden Glow */
+  --focus-ring: 0 0 0 2px hsl(var(--grifo-gold) / 0.2), 0 0 8px hsl(var(--grifo-gold) / 0.15);
+  
+  /* Grid System (8px base) */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
 
   /* Sidebar */
   --sidebar-background: 0 0% 98%;
@@ -77,46 +89,50 @@
 }
 
 .dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
+  /* Dark mode keeps Grifo brand colors with adjusted backgrounds */
+  --background: 212 35% 8%;
+  --foreground: 0 0% 95%;
+  --card: 212 35% 10%;
+  --card-foreground: 0 0% 95%;
+  --popover: 212 35% 10%;
+  --popover-foreground: 0 0% 95%;
   
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --primary-hover: 0 0% 90%;
-  --primary-light: 240 3.7% 15.9%;
+  /* Primary remains golden */
+  --primary: var(--grifo-gold);
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: var(--grifo-gold-600);
+  --primary-light: 45 75% 15%;
 
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --secondary-light: 240 3.7% 12%;
+  /* Secondary adjusted for dark */
+  --secondary: 212 35% 15%;
+  --secondary-foreground: 0 0% 95%;
+  --secondary-light: 212 35% 12%;
 
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --accent-light: 240 3.7% 12%;
+  /* Accent navy adjusted */
+  --accent: var(--grifo-navy);
+  --accent-foreground: 0 0% 95%;
+  --accent-light: 212 73% 15%;
 
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
+  --muted: 212 35% 15%;
+  --muted-foreground: 212 15% 70%;
+  --border: 212 35% 20%;
+  --input: 212 35% 20%;
+  --ring: var(--grifo-gold);
 
-  /* Dark Glass */
-  --glass-bg: rgba(0, 0, 0, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.05);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  /* Dark shadows */
+  --shadow-grifo: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --shadow-grifo-lg: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --shadow-grifo-hover: 0 15px 35px rgba(0, 0, 0, 0.5);
 
   /* Dark Sidebar */
-  --sidebar-background: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 94.1%;
-  --sidebar-primary-foreground: 220.9 39.3% 11%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 240 4.9% 83.9%;
+  --sidebar-background: 212 35% 10%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-primary: var(--grifo-gold);
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 212 35% 15%;
+  --sidebar-accent-foreground: 0 0% 95%;
+  --sidebar-border: 212 35% 20%;
+  --sidebar-ring: var(--grifo-gold);
 }
 
 @layer base {
@@ -142,36 +158,86 @@
 }
 
 @layer components {
-  /* Glass Card */
-  .glass-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: var(--glass-backdrop);
-    -webkit-backdrop-filter: var(--glass-backdrop);
-    @apply rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl;
+  /* Grifo Card System */
+  .grifo-card {
+    @apply bg-card border border-border rounded-[--radius-lg] transition-all duration-200;
+    box-shadow: var(--shadow-grifo);
+  }
+  
+  .grifo-card:hover {
+    box-shadow: var(--shadow-grifo-hover);
+    @apply -translate-y-0.5;
   }
 
-  /* Minimal Card */
-  .minimal-card {
-    @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-200;
+  /* Grifo Surface for Filters/Secondary Areas */
+  .grifo-surface {
+    @apply bg-secondary rounded-[--radius] border border-border;
+  }
+
+  /* Focus States with Golden Glow */
+  .grifo-focus {
+    @apply focus-visible:outline-none;
+    box-shadow: var(--focus-ring);
   }
 
   /* Interactive Element */
-  .interactive {
+  .grifo-interactive {
     @apply hover:scale-[1.02] transition-all duration-200 ease-out;
   }
 
-  /* Smooth Button */
-  .smooth-button {
-    @apply transition-all duration-200 ease-out hover:scale-105;
+  /* Golden Button Effect */
+  .grifo-gold-button {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-[--radius] px-6 py-3 font-medium transition-all duration-200;
+    box-shadow: var(--shadow-grifo);
+  }
+  
+  .grifo-gold-button:hover {
+    box-shadow: var(--shadow-grifo-hover);
+    @apply -translate-y-0.5;
   }
 
-  /* Frosted Glass */
-  .frosted-glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    @apply rounded-xl;
+  /* Typography Scale */
+  .grifo-h1 {
+    @apply text-[34px] font-bold leading-tight text-accent;
+  }
+  
+  .grifo-h2 {
+    @apply text-2xl font-bold leading-tight text-accent;
+  }
+  
+  .grifo-h3 {
+    @apply text-xl font-semibold leading-tight text-accent;
+  }
+  
+  .grifo-body {
+    @apply text-base font-medium leading-relaxed text-foreground;
+  }
+  
+  .grifo-small {
+    @apply text-sm font-normal leading-relaxed text-muted-foreground;
+  }
+
+  /* Status Chips */
+  .grifo-chip-success {
+    @apply bg-success/10 text-success border border-success/20 rounded-full px-3 py-1 text-sm font-medium;
+  }
+  
+  .grifo-chip-warning {
+    @apply bg-warning/10 text-warning border border-warning/20 rounded-full px-3 py-1 text-sm font-medium;
+  }
+  
+  .grifo-chip-danger {
+    @apply bg-destructive/10 text-destructive border border-destructive/20 rounded-full px-3 py-1 text-sm font-medium;
+  }
+
+  /* Pattern Background for Auth Hero */
+  .grifo-pattern {
+    background-image: 
+      linear-gradient(45deg, hsl(var(--grifo-surface)) 25%, transparent 25%), 
+      linear-gradient(-45deg, hsl(var(--grifo-surface)) 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, hsl(var(--grifo-surface)) 75%), 
+      linear-gradient(-45deg, transparent 75%, hsl(var(--grifo-surface)) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
   }
 }
