@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Lock, Eye, EyeOff, Loader2, UserPlus } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const SignupForm = () => {
   const [email, setEmail] = useState('');
@@ -67,22 +67,22 @@ const SignupForm = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
         {/* Email field */}
         <div className="space-y-2">
-          <Label htmlFor="signup-email" className="text-sm font-medium text-white/90">
+          <Label htmlFor="signup-email" className="text-sm font-medium text-foreground">
             Email
           </Label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 group-focus-within:text-orange-400 transition-colors duration-200" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-[hsl(var(--grifo-gold))] transition-colors duration-200" />
             <Input 
               id="signup-email" 
               type="email" 
               placeholder="seu@email.com" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="pl-12 h-12 text-white placeholder:text-white/40 border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 rounded-xl bg-white/10 backdrop-blur-sm focus:bg-white/15 hover:bg-white/12" 
+              className="pl-12 h-12 rounded-xl border-border focus:border-[hsl(var(--grifo-gold))] focus:ring-2 focus:ring-[hsl(var(--grifo-gold))]/20 transition-all duration-300" 
               required
             />
           </div>
@@ -90,24 +90,24 @@ const SignupForm = () => {
         
         {/* Password field */}
         <div className="space-y-2">
-          <Label htmlFor="signup-password" className="text-sm font-medium text-white/90">
+          <Label htmlFor="signup-password" className="text-sm font-medium text-foreground">
             Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 group-focus-within:text-orange-400 transition-colors duration-200" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-[hsl(var(--grifo-gold))] transition-colors duration-200" />
             <Input 
               id="signup-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="pl-12 pr-12 h-12 text-white placeholder:text-white/40 border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 rounded-xl bg-white/10 backdrop-blur-sm focus:bg-white/15 hover:bg-white/12" 
+              className="pl-12 pr-12 h-12 rounded-xl border-border focus:border-[hsl(var(--grifo-gold))] focus:ring-2 focus:ring-[hsl(var(--grifo-gold))]/20 transition-all duration-300" 
               required
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-orange-400 focus:outline-none transition-colors duration-200 p-1 rounded-lg hover:bg-white/10"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-[hsl(var(--grifo-gold))] focus:outline-none transition-colors duration-200 p-1 rounded-lg hover:bg-accent"
               aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
             >
               {showPassword ? (
@@ -121,18 +121,18 @@ const SignupForm = () => {
         
         {/* Confirm Password field */}
         <div className="space-y-2">
-          <Label htmlFor="confirm-password" className="text-sm font-medium text-white/90">
+          <Label htmlFor="confirm-password" className="text-sm font-medium text-foreground">
             Confirmar Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 group-focus-within:text-orange-400 transition-colors duration-200" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-[hsl(var(--grifo-gold))] transition-colors duration-200" />
             <Input 
               id="confirm-password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={confirmPassword} 
               onChange={e => setConfirmPassword(e.target.value)} 
-              className="pl-12 h-12 text-white placeholder:text-white/40 border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 rounded-xl bg-white/10 backdrop-blur-sm focus:bg-white/15 hover:bg-white/12" 
+              className="pl-12 h-12 rounded-xl border-border focus:border-[hsl(var(--grifo-gold))] focus:ring-2 focus:ring-[hsl(var(--grifo-gold))]/20 transition-all duration-300" 
               required
             />
           </div>
@@ -140,7 +140,7 @@ const SignupForm = () => {
       </div>
       
       {/* Password strength indicator */}
-      <div className="text-sm text-white/60 bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/10">
+      <div className="text-sm text-muted-foreground bg-muted p-3 rounded-xl border border-border">
         A senha deve ter pelo menos 6 caracteres
       </div>
       
@@ -148,7 +148,7 @@ const SignupForm = () => {
       <Button 
         type="submit" 
         disabled={isLoading} 
-        className="w-full h-12 mt-5 font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
+        className="w-full h-12 font-semibold text-white bg-[hsl(var(--grifo-gold))] hover:bg-[hsl(var(--grifo-gold-hover))] shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
@@ -156,10 +156,7 @@ const SignupForm = () => {
             Cadastrando...
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Cadastrar
-          </div>
+          'Criar conta'
         )}
       </Button>
     </form>

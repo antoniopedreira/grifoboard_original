@@ -42,6 +42,12 @@
   --destructive-foreground: 0 85.7% 97.3%;
   --destructive-light: 0 72.2% 95%;
 
+  /* Grifo Brand Colors */
+  --grifo-gold: 45 60% 52%;
+  --grifo-gold-hover: 45 60% 47%;
+  --grifo-gold-light: 45 60% 95%;
+  --grifo-text: 219 39% 11%;
+
   /* Neutral System */
   --muted: 240 4.8% 95.9%;
   --muted-foreground: 240 3.8% 46.1%;
