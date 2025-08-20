@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
+import { Building2, Calendar, BarChart3, Users } from 'lucide-react';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -9,7 +10,7 @@ interface AuthLayoutProps {
 const AuthLayout = ({ children, title }: AuthLayoutProps) => {
   return (
     <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Construction grid pattern background */}
+      {/* Construction grid pattern background - NO SHAPES */}
       <div className="absolute inset-0 opacity-5">
         <div 
           className="absolute inset-0" 
@@ -19,18 +20,77 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
         />
       </div>
       
-      {/* Geometric shapes for construction theme */}
-      <div className="absolute top-20 left-20 w-32 h-32 border border-slate-700/30 rotate-45 rounded-lg hidden lg:block"></div>
-      <div className="absolute bottom-20 right-20 w-24 h-24 border border-slate-700/30 rotate-12 hidden lg:block"></div>
-      <div className="absolute top-1/2 left-10 w-16 h-16 bg-slate-700/10 rounded-full hidden lg:block"></div>
-      <div className="absolute bottom-1/3 left-1/3 w-20 h-20 border border-slate-700/20 rotate-45 hidden lg:block"></div>
-      
-      {/* Desktop Layout - Side by Side */}
+      {/* Desktop Layout - Side by Side 60/40 */}
       <div className="hidden lg:flex h-full">
-        {/* Left Side - Background (60%) */}
-        <div className="w-3/5 relative flex items-center justify-center">
-          {/* Subtle overlay for contrast if needed */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/10"></div>
+        {/* Left Side - Hero Content (60%) */}
+        <div className="w-3/5 relative flex items-center">
+          <div className="max-w-2xl ml-16 space-y-8">
+            {/* Logo */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="flex items-center space-x-3"
+            >
+              <div className="w-12 h-12 bg-[#C7A347] rounded-xl flex items-center justify-center">
+                <Building2 className="w-7 h-7 text-white" />
+              </div>
+              <span className="text-[#C7A347] text-lg font-semibold">GRIFO</span>
+            </motion.div>
+
+            {/* Headlines */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="space-y-4"
+            >
+              <h1 className="text-5xl font-bold text-white leading-tight">
+                Grifo Engenharia
+              </h1>
+              <h3 className="text-2xl text-slate-300 font-medium">
+                Gestão Inteligente de Obras
+              </h3>
+            </motion.div>
+
+            {/* Feature Bullets */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="space-y-6"
+            >
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center mt-1">
+                  <Calendar className="w-5 h-5 text-[#C7A347]" />
+                </div>
+                <div>
+                  <h4 className="text-white font-semibold text-lg">Planejamento semanal</h4>
+                  <p className="text-slate-400">100% visual</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center mt-1">
+                  <BarChart3 className="w-5 h-5 text-[#C7A347]" />
+                </div>
+                <div>
+                  <h4 className="text-white font-semibold text-lg">PCP em tempo real</h4>
+                  <p className="text-slate-400">decisões rápidas</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center mt-1">
+                  <Users className="w-5 h-5 text-[#C7A347]" />
+                </div>
+                <div>
+                  <h4 className="text-white font-semibold text-lg">Fast Construction</h4>
+                  <p className="text-slate-400">entrega ágil, qualidade máxima</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
         
         {/* Right Side - Form Card (40%) */}
@@ -39,13 +99,15 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border p-8"
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8"
+            style={{ fontFamily: 'Inter, sans-serif' }}
           >
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-3xl font-bold text-foreground mb-8 text-center"
+              className="text-3xl font-bold mb-8 text-center"
+              style={{ color: '#0A1D33' }}
             >
               {title}
             </motion.h1>
@@ -63,8 +125,44 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
       
       {/* Mobile Layout - Stacked */}
       <div className="lg:hidden h-full flex flex-col">
-        {/* Top - Background */}
-        <div className="flex-1 relative"></div>
+        {/* Top - Hero Content */}
+        <div className="flex-1 relative flex items-center justify-center p-6">
+          <div className="text-center space-y-6">
+            {/* Logo */}
+            <div className="flex items-center justify-center space-x-3">
+              <div className="w-10 h-10 bg-[#C7A347] rounded-xl flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-[#C7A347] text-lg font-semibold">GRIFO</span>
+            </div>
+
+            {/* Headlines */}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-white">
+                Grifo Engenharia
+              </h1>
+              <h3 className="text-lg text-slate-300">
+                Gestão Inteligente de Obras
+              </h3>
+            </div>
+
+            {/* Compact bullets for mobile */}
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-center space-x-2 text-slate-300">
+                <Calendar className="w-4 h-4 text-[#C7A347]" />
+                <span>Planejamento semanal — 100% visual</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-slate-300">
+                <BarChart3 className="w-4 h-4 text-[#C7A347]" />
+                <span>PCP em tempo real — decisões rápidas</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-slate-300">
+                <Users className="w-4 h-4 text-[#C7A347]" />
+                <span>Fast Construction — entrega ágil</span>
+              </div>
+            </div>
+          </div>
+        </div>
         
         {/* Bottom - Form Card */}
         <div className="flex-1 flex items-center justify-center p-4">
@@ -72,13 +170,15 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full max-w-sm bg-card rounded-2xl shadow-2xl border border-border p-6"
+            className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6"
+            style={{ fontFamily: 'Inter, sans-serif' }}
           >
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-2xl font-bold text-foreground mb-6 text-center"
+              className="text-2xl font-bold mb-6 text-center"
+              style={{ color: '#0A1D33' }}
             >
               {title}
             </motion.h1>

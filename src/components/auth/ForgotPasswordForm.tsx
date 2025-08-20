@@ -54,11 +54,11 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
     return (
       <div className="space-y-6 text-center">
         <div className="space-y-3">
-          <div className="w-16 h-16 bg-[hsl(var(--grifo-gold))]/10 rounded-full flex items-center justify-center mx-auto">
-            <Mail className="w-8 h-8 text-[hsl(var(--grifo-gold))]" />
+          <div className="w-16 h-16 bg-[#C7A347]/10 rounded-full flex items-center justify-center mx-auto">
+            <Mail className="w-8 h-8 text-[#C7A347]" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Email enviado!</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl font-semibold" style={{ color: '#0A1D33' }}>Email enviado!</h2>
+          <p className="text-sm" style={{ color: '#1E2836' }}>
             Enviamos um link para redefinir sua senha para <strong>{email}</strong>
           </p>
         </div>
@@ -67,12 +67,18 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
           <Button 
             type="button" 
             onClick={onBackToLogin}
-            className="w-full h-12 font-semibold text-white bg-[hsl(var(--grifo-gold))] hover:bg-[hsl(var(--grifo-gold-hover))] shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+            className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+            style={{ 
+              height: '48px',
+              backgroundColor: '#C7A347'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A347'}
           >
             Voltar ao login
           </Button>
           
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm" style={{ color: '#1E2836' }}>
             Não recebeu o email? Verifique sua pasta de spam ou{' '}
             <button 
               type="button"
@@ -80,7 +86,8 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
                 setEmailSent(false);
                 setEmail('');
               }}
-              className="text-[hsl(var(--grifo-gold))] hover:underline font-medium"
+              className="font-medium hover:underline"
+              style={{ color: '#C7A347' }}
             >
               tente novamente
             </button>
@@ -93,25 +100,25 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-3 text-center">
-        <h2 className="text-xl font-semibold text-foreground">Esqueceu sua senha?</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-xl font-semibold" style={{ color: '#0A1D33' }}>Esqueceu sua senha?</h2>
+        <p className="text-sm" style={{ color: '#1E2836' }}>
           Digite seu email e enviaremos um link para redefinir sua senha
         </p>
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="forgot-email" className="text-sm font-medium text-foreground">
+        <Label htmlFor="forgot-email" className="text-sm font-medium" style={{ color: '#1E2836' }}>
           Email
         </Label>
         <div className="relative group">
-          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-[hsl(var(--grifo-gold))] transition-colors duration-200" />
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#C7A347] transition-colors duration-200" />
           <Input 
             id="forgot-email" 
             type="email" 
             placeholder="seu@email.com" 
             value={email} 
             onChange={e => setEmail(e.target.value)} 
-            className="pl-12 h-12 rounded-xl border-border focus:border-[hsl(var(--grifo-gold))] focus:ring-2 focus:ring-[hsl(var(--grifo-gold))]/20 transition-all duration-300" 
+            className="pl-12 h-12 rounded-xl border-gray-300 focus:border-[#C7A347] focus:ring-2 focus:ring-[#C7A347]/20 transition-all duration-300" 
             required
           />
         </div>
@@ -121,7 +128,13 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
         <Button 
           type="submit" 
           disabled={isLoading} 
-          className="w-full h-12 font-semibold text-white bg-[hsl(var(--grifo-gold))] hover:bg-[hsl(var(--grifo-gold-hover))] shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
+          className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
+          style={{ 
+            height: '48px',
+            backgroundColor: '#C7A347'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A347'}
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
@@ -137,7 +150,13 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
           type="button" 
           variant="ghost"
           onClick={onBackToLogin}
-          className="w-full h-12 font-medium text-muted-foreground hover:text-[hsl(var(--grifo-gold))] transition-all duration-300"
+          className="w-full font-medium transition-all duration-300"
+          style={{ 
+            height: '48px',
+            color: '#1E2836'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#C7A347'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#1E2836'}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao login

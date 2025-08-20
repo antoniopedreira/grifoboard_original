@@ -27,10 +27,10 @@ const LoginPage = () => {
           {/* Separator */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
+              <span className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">ou</span>
+              <span className="bg-white px-2 text-gray-500">ou</span>
             </div>
           </div>
           
@@ -39,7 +39,20 @@ const LoginPage = () => {
             type="button" 
             variant="outline"
             onClick={() => setCurrentView('signup')}
-            className="w-full h-12 font-semibold border-[hsl(var(--grifo-gold))] text-[hsl(var(--grifo-gold))] hover:bg-[hsl(var(--grifo-gold))]/10 hover:text-[hsl(var(--grifo-gold-hover))] transition-all duration-300 rounded-xl"
+            className="w-full font-semibold transition-all duration-300 rounded-xl"
+            style={{ 
+              height: '48px',
+              borderColor: '#C7A347',
+              color: '#C7A347'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#C7A347';
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#C7A347';
+            }}
           >
             Criar conta
           </Button>
@@ -53,10 +66,10 @@ const LoginPage = () => {
           {/* Separator */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
+              <span className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">ou</span>
+              <span className="bg-white px-2 text-gray-500">ou</span>
             </div>
           </div>
           
@@ -65,7 +78,20 @@ const LoginPage = () => {
             type="button" 
             variant="outline"
             onClick={() => setCurrentView('login')}
-            className="w-full h-12 font-semibold border-[hsl(var(--grifo-gold))] text-[hsl(var(--grifo-gold))] hover:bg-[hsl(var(--grifo-gold))]/10 hover:text-[hsl(var(--grifo-gold-hover))] transition-all duration-300 rounded-xl"
+            className="w-full font-semibold transition-all duration-300 rounded-xl"
+            style={{ 
+              height: '48px',
+              borderColor: '#C7A347',
+              color: '#C7A347'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#C7A347';
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#C7A347';
+            }}
           >
             Já tenho conta
           </Button>

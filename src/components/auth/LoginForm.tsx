@@ -57,18 +57,18 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       <div className="space-y-4">
         {/* Email field */}
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-foreground">
+          <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1E2836' }}>
             Email
           </Label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-[hsl(var(--grifo-gold))] transition-colors duration-200" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#C7A347] transition-colors duration-200" />
             <Input 
               id="email" 
               type="email" 
               placeholder="seu@email.com" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="pl-12 h-12 rounded-xl border-border focus:border-[hsl(var(--grifo-gold))] focus:ring-2 focus:ring-[hsl(var(--grifo-gold))]/20 transition-all duration-300" 
+              className="pl-12 h-12 rounded-xl border-gray-300 focus:border-[#C7A347] focus:ring-2 focus:ring-[#C7A347]/20 transition-all duration-300" 
               required
             />
           </div>
@@ -76,24 +76,24 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
         
         {/* Password field */}
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium text-foreground">
+          <Label htmlFor="password" className="text-sm font-medium" style={{ color: '#1E2836' }}>
             Senha
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-[hsl(var(--grifo-gold))] transition-colors duration-200" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#C7A347] transition-colors duration-200" />
             <Input 
               id="password" 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="pl-12 pr-12 h-12 rounded-xl border-border focus:border-[hsl(var(--grifo-gold))] focus:ring-2 focus:ring-[hsl(var(--grifo-gold))]/20 transition-all duration-300" 
+              className="pl-12 pr-12 h-12 rounded-xl border-gray-300 focus:border-[#C7A347] focus:ring-2 focus:ring-[#C7A347]/20 transition-all duration-300" 
               required
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-[hsl(var(--grifo-gold))] focus:outline-none transition-colors duration-200 p-1 rounded-lg hover:bg-accent"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C7A347] focus:outline-none transition-colors duration-200 p-1 rounded-lg hover:bg-gray-50"
               aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
             >
               {showPassword ? (
@@ -113,11 +113,12 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
             id="remember-me" 
             checked={rememberMe} 
             onCheckedChange={(checked) => setRememberMe(checked === true)} 
-            className="rounded border-border data-[state=checked]:bg-[hsl(var(--grifo-gold))] data-[state=checked]:border-[hsl(var(--grifo-gold))] h-4 w-4"
+            className="rounded border-gray-300 data-[state=checked]:bg-[#C7A347] data-[state=checked]:border-[#C7A347] h-4 w-4"
           />
           <Label 
             htmlFor="remember-me" 
-            className="text-sm text-muted-foreground cursor-pointer select-none font-medium"
+            className="text-sm cursor-pointer select-none font-medium"
+            style={{ color: '#1E2836' }}
           >
             Manter-me conectado
           </Label>
@@ -125,7 +126,10 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
         <button 
           type="button"
           onClick={onForgotPassword}
-          className="text-sm text-muted-foreground hover:text-[hsl(var(--grifo-gold))] font-medium hover:underline transition-all duration-200"
+          className="text-sm font-medium hover:underline transition-all duration-200"
+          style={{ color: '#1E2836' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#C7A347'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#1E2836'}
         >
           Esqueci minha senha
         </button>
@@ -135,7 +139,13 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       <Button 
         type="submit" 
         disabled={isLoading} 
-        className="w-full h-12 font-semibold text-white bg-[hsl(var(--grifo-gold))] hover:bg-[hsl(var(--grifo-gold-hover))] shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
+        className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
+        style={{ 
+          height: '48px',
+          backgroundColor: '#C7A347'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A347'}
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
