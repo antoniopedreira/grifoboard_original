@@ -39,20 +39,8 @@ const LoginPage = () => {
             type="button" 
             variant="outline"
             onClick={() => setCurrentView('signup')}
-            className="w-full font-semibold transition-all duration-300 rounded-xl"
-            style={{ 
-              height: '48px',
-              borderColor: '#C7A347',
-              color: '#C7A347'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C7A347';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#C7A347';
-            }}
+            className="w-full font-semibold transition-all duration-300 rounded-xl border-[#C7A347] text-[#C7A347] hover:bg-[#C7A347] hover:text-white"
+            style={{ height: '48px' }}
           >
             Criar conta
           </Button>
@@ -78,20 +66,8 @@ const LoginPage = () => {
             type="button" 
             variant="outline"
             onClick={() => setCurrentView('login')}
-            className="w-full font-semibold transition-all duration-300 rounded-xl"
-            style={{ 
-              height: '48px',
-              borderColor: '#C7A347',
-              color: '#C7A347'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C7A347';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#C7A347';
-            }}
+            className="w-full font-semibold transition-all duration-300 rounded-xl border-[#C7A347] text-[#C7A347] hover:bg-[#C7A347] hover:text-white"
+            style={{ height: '48px' }}
           >
             Já tenho conta
           </Button>
