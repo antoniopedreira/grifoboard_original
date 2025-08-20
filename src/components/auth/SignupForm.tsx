@@ -50,12 +50,15 @@ const SignupForm = () => {
     setIsLoading(true);
     
     try {
+      console.log('[SignupForm] submitting signup', { email });
       await signUp(email, password);
+      console.log('[SignupForm] signup success');
       toast({
         title: "Cadastro realizado",
         description: "Verifique seu email para confirmar o registro.",
       });
     } catch (error: any) {
+      console.error('[SignupForm] signup error', error);
       toast({
         title: "Erro no cadastro",
         description: error.message || "Não foi possível concluir seu cadastro.",

@@ -11,7 +11,7 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
   return (
     <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Construction grid pattern background - NO SHAPES */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div 
           className="absolute inset-0" 
           style={{
