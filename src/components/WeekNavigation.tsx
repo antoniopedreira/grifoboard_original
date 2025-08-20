@@ -27,35 +27,38 @@ const WeekNavigation = ({
     today.getTime() <= weekEndDate.getTime();
     
   return (
-    <div className="flex justify-between items-center mb-8 bg-white rounded-xl shadow-sm p-4 border border-gray-100/40 backdrop-blur-sm hover:shadow transition-shadow duration-200">
+    <div className="flex justify-between items-center bg-grifo-surface rounded-grifo-lg p-4 shadow-grifo">
+      {/* Botão semana anterior */}
       <Button 
         variant="outline" 
         size="icon"
-        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
+        className="h-10 w-10 rounded-grifo border-border hover:bg-primary/10 hover:border-primary"
         onClick={onPreviousWeek}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-5 w-5 text-accent" />
       </Button>
       
-      <div className="flex flex-col items-center">
-        <div className="flex items-center">
-          <Calendar className="h-5 w-5 mr-2 text-primary" />
-          <h3 className="text-lg font-medium font-heading">
+      {/* WeekBar central - destaque */}
+      <div className="flex flex-col items-center px-6">
+        <div className="flex items-center mb-1">
+          <Calendar className="h-6 w-6 mr-3 text-primary" />
+          <h3 className="grifo-h3 text-accent">
             {currentWeekFormatted}
           </h3>
         </div>
         {isCurrentWeek && (
-          <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full mt-1">Semana Atual</span>
+          <div className="grifo-chip-success">Semana Atual</div>
         )}
       </div>
       
+      {/* Botão próxima semana */}
       <Button 
         variant="outline" 
         size="icon"
-        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
+        className="h-10 w-10 rounded-grifo border-border hover:bg-primary/10 hover:border-primary"
         onClick={onNextWeek}
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-5 w-5 text-accent" />
       </Button>
     </div>
   );

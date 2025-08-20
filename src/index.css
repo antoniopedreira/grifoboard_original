@@ -5,11 +5,11 @@
 @tailwind utilities;
 
 :root {
-  /* Grifo Brand Colors */
-  --grifo-gold: 45 75% 52%; /* #C7A347 */
-  --grifo-gold-600: 44 66% 48%; /* #B7943F */
-  --grifo-navy: 212 73% 12%; /* #0A1D33 */
-  --grifo-ink: 212 35% 17%; /* #1E2836 */
+  /* Grifo Brand Colors (exact hex to HSL conversion) */
+  --grifo-gold: 45 60% 52%; /* #C7A347 */
+  --grifo-gold-600: 44 54% 47%; /* #B7943F */
+  --grifo-navy: 212 70% 12%; /* #0A1D33 */
+  --grifo-ink: 212 25% 17%; /* #1E2836 */
   --grifo-bg: 0 0% 100%; /* #FFFFFF */
   --grifo-surface: 220 14% 96%; /* #F5F6F8 */
   
@@ -25,7 +25,7 @@
   --primary: var(--grifo-gold);
   --primary-foreground: 0 0% 100%;
   --primary-hover: var(--grifo-gold-600);
-  --primary-light: 45 75% 97%;
+  --primary-light: 45 60% 97%;
 
   /* Secondary (Surface) */
   --secondary: var(--grifo-surface);
@@ -35,12 +35,12 @@
   /* Accent (Navy) */
   --accent: var(--grifo-navy);
   --accent-foreground: 0 0% 100%;
-  --accent-light: 212 73% 97%;
+  --accent-light: 212 70% 97%;
 
   /* Status Colors */
-  --success: 140 69% 43%; /* #2BB673 */
+  --success: 140 54% 43%; /* #2BB673 */
   --success-foreground: 0 0% 100%;
-  --success-light: 140 69% 97%;
+  --success-light: 140 54% 97%;
   
   --warning: 35 91% 55%; /* #F5A524 */
   --warning-foreground: 0 0% 100%;
@@ -50,11 +50,16 @@
   --destructive-foreground: 0 0% 100%;
   --destructive-light: 0 65% 97%;
 
+  /* Info Blue */
+  --info: 217 91% 60%; /* #3B82F6 */
+  --info-foreground: 0 0% 100%;
+  --info-light: 217 91% 97%;
+
   /* System Colors */
   --muted: var(--grifo-surface);
   --muted-foreground: 212 15% 50%;
-  --border: 220 14% 90%;
-  --input: 220 14% 90%;
+  --border: 220 13% 91%; /* #E5E7EB */
+  --input: 220 13% 91%;
   --ring: var(--grifo-gold);
 
   /* Grifo Design Tokens */
@@ -196,7 +201,7 @@
     @apply -translate-y-0.5;
   }
 
-  /* Typography Scale */
+  /* Typography Scale - Grifo Spec */
   .grifo-h1 {
     @apply text-[34px] font-bold leading-tight text-accent;
   }
@@ -215,6 +220,17 @@
   
   .grifo-small {
     @apply text-sm font-normal leading-relaxed text-muted-foreground;
+  }
+
+  /* Interactive Elements */
+  .grifo-button-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary-hover rounded-[--radius-lg] px-6 py-3 font-medium;
+    @apply transition-all duration-200 shadow-grifo hover:shadow-grifo-hover hover:-translate-y-0.5;
+  }
+
+  .grifo-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-[--radius-lg] px-6 py-3 font-medium;
+    @apply transition-all duration-200 border border-border;
   }
 
   /* Status Chips */

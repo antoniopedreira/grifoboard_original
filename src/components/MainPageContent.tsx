@@ -77,53 +77,69 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   };
   
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
-      {/* Header com título e botões */}
-      <MainHeader 
-        onNewTaskClick={() => setIsFormOpen(true)}
-        onRegistryClick={() => setIsRegistryOpen(true)}
-      />
-      
-      {/* Week Navigation */}
-      <WeekNavigation
-        weekStartDate={weekStartDate}
-        weekEndDate={weekEndDate}
-        onPreviousWeek={navigateToPreviousWeek}
-        onNextWeek={navigateToNextWeek}
-      />
-      
-      {/* PCP Section com gráficos e filtro ativo */}
-      <PCPSection 
-        pcpData={pcpData}
-        weeklyPCPData={weeklyPCPData}
-        tasks={tasks}
-        selectedCause={selectedCause}
-        onCauseSelect={handleCauseSelect}
-        onClearFilter={clearCauseFilter}
-      />
-      
-      {/* Tasks Section com lista de tarefas */}
-      <TasksSection 
-        tasks={tasks}
-        isLoading={isLoading}
-        onTaskUpdate={handleTaskUpdate}
-        onTaskDelete={handleTaskDelete}
-        onTaskDuplicate={handleTaskDuplicate}
-        selectedCause={selectedCause}
-      />
-      
-      {/* Dialogs */}
-      <TaskForm 
-        onTaskCreate={handleTaskCreate} 
-        isOpen={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        currentWeekStartDate={weekStartDate}
-      />
+    <div className="min-h-screen bg-grifo-bg">
+      <div className="container mx-auto max-w-7xl px-6 py-8">
+        {/* Header com microcopy */}
+        <div className="mb-8">
+          <h1 className="grifo-h1 mb-2">Tarefas da Semana</h1>
+          <p className="grifo-body text-muted-foreground">
+            Rápida leitura e ação para manter a equipe no ritmo certo
+          </p>
+        </div>
+        
+        {/* Week Navigation */}
+        <div className="grifo-card p-6 mb-6">
+          <WeekNavigation
+            weekStartDate={weekStartDate}
+            weekEndDate={weekEndDate}
+            onPreviousWeek={navigateToPreviousWeek}
+            onNextWeek={navigateToNextWeek}
+          />
+        </div>
+        
+        {/* PCP Section com gráficos e filtro ativo */}
+        <PCPSection 
+          pcpData={pcpData}
+          weeklyPCPData={weeklyPCPData}
+          tasks={tasks}
+          selectedCause={selectedCause}
+          onCauseSelect={handleCauseSelect}
+          onClearFilter={clearCauseFilter}
+        />
+        
+        {/* Tasks Section com lista de tarefas */}
+        <TasksSection 
+          tasks={tasks}
+          isLoading={isLoading}
+          onTaskUpdate={handleTaskUpdate}
+          onTaskDelete={handleTaskDelete}
+          onTaskDuplicate={handleTaskDuplicate}
+          selectedCause={selectedCause}
+        />
+        
+        {/* Dialogs */}
+        <TaskForm 
+          onTaskCreate={handleTaskCreate} 
+          isOpen={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          currentWeekStartDate={weekStartDate}
+        />
 
-      <RegistryDialog 
-        isOpen={isRegistryOpen} 
-        onOpenChange={setIsRegistryOpen} 
-      />
+        <RegistryDialog 
+          isOpen={isRegistryOpen} 
+          onOpenChange={setIsRegistryOpen} 
+        />
+
+        {/* CTA flutuante para mobile */}
+        <div className="fixed bottom-6 right-6 md:hidden">
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="grifo-button-primary w-14 h-14 rounded-full shadow-grifo-lg flex items-center justify-center"
+          >
+            <span className="text-xl font-bold">+</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

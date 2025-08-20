@@ -39,6 +39,11 @@ export default {
 					bg: 'hsl(var(--grifo-bg))',
 					surface: 'hsl(var(--grifo-surface))',
 				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))',
+					light: 'hsl(var(--info-light))'
+				},
 				
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
