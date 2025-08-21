@@ -44,7 +44,8 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
         title: "Login bem-sucedido",
         description: "Bem-vindo de volta!",
       });
-      // Let user navigate manually instead of auto-redirect
+      // Redirect to obras page after successful login
+      navigate('/obras');
     } catch (error: any) {
       toast({
         title: "Erro ao entrar",
