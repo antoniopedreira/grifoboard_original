@@ -12,17 +12,13 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data }) => {
   const percentage = Math.round(data.percentage);
   
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-fade-in">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full -translate-y-8 translate-x-8"></div>
-      <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-blue-500/10 to-blue-400/5 rounded-full translate-y-8 -translate-x-8"></div>
-      
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/50 shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-fade-in">      
       <div className="relative p-6">
         <div className="flex items-center mb-6">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
             <BarChart2 className="h-5 w-5 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-800 ml-3">PCP Geral da Semana</h3>
+          <h3 className="text-base font-semibold text-slate-800 ml-3 truncate">PCP Geral da Semana</h3>
         </div>
         
         <div className="flex flex-col justify-center items-center space-y-4">
