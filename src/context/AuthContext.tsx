@@ -52,13 +52,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // First set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         if (session) {
           // When auth state changes, also try to get the active obra
           const obraAtiva = getInitialObraAtiva(session.user.id);
           setUserSession({ user: mapUser(session.user), obraAtiva });
         } else {
+          // On logout or no session, clear everything including localStorage
           setUserSession({ user: null, obraAtiva: null });
+          
+          // Clear all localStorage items that might persist user data
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('obraAtiva_') || key.startsWith('user_')) {
+              localStorage.removeItem(key);
+            }
+          });
         }
         setIsLoading(false);
       }
@@ -160,20 +168,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      await supabase.auth.signOut();
+      
+      // Clear local session state first
+      const currentUserId = userSession.user?.id;
       setUserSession({ user: null, obraAtiva: null });
       
-      // Also clear obra from localStorage
-      if (userSession.user) {
-        localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
+      // Clear all localStorage data for this user
+      if (currentUserId) {
+        localStorage.removeItem(`obraAtiva_${currentUserId}`);
       }
+      
+      // Clear any other localStorage items that might persist user data
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('obraAtiva_') || key.startsWith('user_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
       
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
       
-      // Don't redirect automatically - let user stay where they are
     } catch (error: any) {
       toast({
         title: "Erro ao desconectar",

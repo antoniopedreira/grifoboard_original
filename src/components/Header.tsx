@@ -62,7 +62,10 @@ const Header = () => {
                 variant="ghost"
                 size="sm"
                 className="smooth-button hover:bg-destructive/10 hover:text-destructive"
-                onClick={() => signOut()}
+                onClick={async () => {
+                  await signOut();
+                  navigate('/auth');
+                }}
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
