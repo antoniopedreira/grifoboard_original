@@ -72,11 +72,11 @@ const CausesCountCard: React.FC<CausesCountCardProps> = ({ tasks, onCauseSelect 
           {causesArray.map(({ cause, count }, index) => (
             <div 
               key={cause}
-              className="flex items-center justify-between p-2.5 bg-white/70 rounded-xl border border-white/50 hover:bg-white/90 cursor-pointer transition-all duration-200 hover:scale-[1.02] animate-fade-in"
+              className="flex items-center justify-between p-2.5 bg-white/70 rounded-xl border border-white/50 hover:bg-white/90 cursor-pointer transition-all duration-200 hover:scale-[1.02] animate-fade-in overflow-hidden"
               style={{ animationDelay: `${index * 100}ms` }}
               onClick={() => onCauseSelect(cause)}
             >
-              <span className="text-slate-700 font-medium text-xs flex-1 mr-2">{cause}</span>
+              <span className="text-slate-700 font-medium text-xs flex-1 mr-2 overflow-hidden text-ellipsis whitespace-nowrap">{cause}</span>
               <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
                 <span className="text-red-600 text-[10px] font-bold">{count}</span>
               </div>
