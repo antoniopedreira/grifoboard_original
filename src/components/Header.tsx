@@ -19,12 +19,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center p-1.5">
-              <img 
-                src="/lovable-uploads/cea0c9d4-4316-49ee-b8e4-a13a1d3f40f8.png" 
-                alt="Grifo Engenharia Logo" 
-                className="w-full h-full object-contain"
-              />
+            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-semibold text-sm">G</span>
             </div>
             <div>
               <h1 className="text-lg font-semibold text-foreground">GrifoBoard</h1>
