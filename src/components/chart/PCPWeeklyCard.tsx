@@ -9,12 +9,12 @@ interface PCPWeeklyCardProps {
 
 const PCPWeeklyCard: React.FC<PCPWeeklyCardProps> = ({ weeklyData }) => {
   return (
-    <Card className="col-span-1 shadow-sm">
-      <CardHeader className="pb-1">
-        <CardTitle className="text-lg">PCP por Semana</CardTitle>
-      </CardHeader>
+    <div className="bg-white rounded-2xl shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition-all duration-300 p-4">
+      <div className="pb-1">
+        <h3 className="text-lg font-semibold text-slate-800">PCP por Semana</h3>
+      </div>
       <PCPBarChart weeklyData={weeklyData} />
-    </Card>
+    </div>
   );
 };
 
