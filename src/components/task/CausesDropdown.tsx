@@ -25,9 +25,19 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
   const renderCauseText = () => {
     if (!currentCause) return "Causas Padrão";
     
-    return currentCause.length > 16 
-      ? <span className="truncate block max-w-full">{currentCause.substring(0, 16)}...</span>
-      : <span className="truncate block max-w-full">{currentCause}</span>;
+    return (
+      <span 
+        className="block w-full"
+        style={{ 
+          overflow: 'hidden', 
+          whiteSpace: 'normal', 
+          wordWrap: 'break-word',
+          maxWidth: '100%'
+        }}
+      >
+        {currentCause}
+      </span>
+    );
   };
 
   return (
@@ -41,7 +51,12 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full truncate h-7 px-3 pr-8 rounded-md flex items-center shadow-sm hover:shadow bg-white"
+                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full h-7 px-3 pr-8 rounded-md flex items-center shadow-sm hover:shadow bg-white"
+                    style={{ 
+                      overflow: 'hidden', 
+                      whiteSpace: 'normal', 
+                      wordWrap: 'break-word' 
+                    }}
                   >
                     {renderCauseText()}
                     <ChevronDown className="h-3 w-3 ml-1 opacity-70 absolute right-2" />

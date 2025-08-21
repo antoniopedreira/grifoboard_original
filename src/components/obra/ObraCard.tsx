@@ -19,11 +19,20 @@ const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-gray-900 truncate">{obra.nome_obra}</CardTitle>
+          <div className="min-w-0 flex-1" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+            <CardTitle 
+              className="text-gray-900"
+              style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
+            >
+              {obra.nome_obra}
+            </CardTitle>
             <CardDescription className="text-gray-500 flex items-center mt-1">
               <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{obra.localizacao}</span>
+              <span 
+                style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
+              >
+                {obra.localizacao}
+              </span>
             </CardDescription>
           </div>
           <div className="flex space-x-2 flex-shrink-0 ml-2">

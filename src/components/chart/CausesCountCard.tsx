@@ -68,16 +68,30 @@ const CausesCountCard: React.FC<CausesCountCardProps> = ({ tasks, onCauseSelect 
           <h3 className="text-lg font-semibold text-slate-800 ml-3">Causas do Não Cumprimento</h3>
         </div>
         
-        <div className="max-h-[180px] overflow-y-auto space-y-1.5">
+        <div className="max-h-[180px] overflow-hidden space-y-1.5">
           {causesArray.map(({ cause, count }, index) => (
             <div 
               key={cause}
               className="flex items-center justify-between p-2.5 bg-white/70 rounded-xl border border-white/50 hover:bg-white/90 cursor-pointer transition-all duration-200 hover:scale-[1.02] animate-fade-in overflow-hidden"
-              style={{ animationDelay: `${index * 100}ms` }}
+              style={{ 
+                animationDelay: `${index * 100}ms`,
+                whiteSpace: 'normal',
+                wordWrap: 'break-word'
+              }}
               onClick={() => onCauseSelect(cause)}
             >
-              <span className="text-slate-700 font-medium text-xs flex-1 mr-2 overflow-hidden text-ellipsis whitespace-nowrap">{cause}</span>
-              <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+              <span 
+                className="text-slate-700 font-medium text-xs flex-1 mr-2"
+                style={{ 
+                  overflow: 'hidden',
+                  whiteSpace: 'normal',
+                  wordWrap: 'break-word',
+                  width: '100%'
+                }}
+              >
+                {cause}
+              </span>
+              <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
                 <span className="text-red-600 text-[10px] font-bold">{count}</span>
               </div>
             </div>

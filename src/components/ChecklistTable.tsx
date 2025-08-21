@@ -75,7 +75,7 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
       <Table>
         <TableHeader>
           <TableRow>
@@ -100,14 +100,27 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
                   }
                 />
               </TableCell>
-              <TableCell className="font-medium">
+              <TableCell 
+                className="font-medium" 
+                style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
+              >
                 {atividade.descricao || "-"}
               </TableCell>
-              <TableCell>{atividade.local}</TableCell>
-              <TableCell>{atividade.setor}</TableCell>
-              <TableCell>{atividade.responsavel}</TableCell>
-              <TableCell>{formatDate(atividade.data_inicio)}</TableCell>
-              <TableCell>{formatDate(atividade.data_termino)}</TableCell>
+              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                {atividade.local}
+              </TableCell>
+              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                {atividade.setor}
+              </TableCell>
+              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                {atividade.responsavel}
+              </TableCell>
+              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                {formatDate(atividade.data_inicio)}
+              </TableCell>
+              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                {formatDate(atividade.data_termino)}
+              </TableCell>
               <TableCell>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

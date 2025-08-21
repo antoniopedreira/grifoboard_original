@@ -11,9 +11,19 @@ interface TaskHeaderProps {
 const TaskHeader: React.FC<TaskHeaderProps> = ({ task, onCompletionStatusChange }) => {
   return (
     <div className="flex justify-between items-start gap-3">
-      <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-gray-800 line-clamp-2 mb-1">{task.description}</h3>
-        <p className="text-xs text-gray-500 truncate">{task.item}</p>
+      <div className="flex-1 min-w-0" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+        <h3 
+          className="font-medium text-gray-800 mb-1"
+          style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
+        >
+          {task.description}
+        </h3>
+        <p 
+          className="text-xs text-gray-500"
+          style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
+        >
+          {task.item}
+        </p>
       </div>
       
       {task.isFullyCompleted ? (
