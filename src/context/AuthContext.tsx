@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -122,10 +122,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      toast({
-        title: "Cadastro realizado",
-        description: "Verifique seu email para confirmar o registro.",
-      });
+      if (data?.session) {
+        toast({
+          title: "Conta criada",
+          description: "Cadastro concluído! Redirecionando...",
+        });
+      } else {
+        toast({
+          title: "Cadastro realizado",
+          description: "Sua conta foi criada. Você já pode acessar o app.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
