@@ -81,7 +81,17 @@ const ChecklistForm: React.FC<ChecklistFormProps> = ({ onAtividadeCriada }) => {
           Nova Atividade
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent 
+        className="max-w-md"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Only allow closing when clicking outside, not on focus loss
+          const isClickOutside = e.type === 'pointerdown';
+          if (!isClickOutside) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Cadastrar Nova Atividade</DialogTitle>
         </DialogHeader>

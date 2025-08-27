@@ -22,7 +22,17 @@ const RegistryDialog: React.FC<RegistryDialogProps> = ({ isOpen, onOpenChange })
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent 
+        className="sm:max-w-[650px]"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Only allow closing when clicking outside, not on focus loss
+          const isClickOutside = e.type === 'pointerdown';
+          if (!isClickOutside) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Cadastros</DialogTitle>
         </DialogHeader>

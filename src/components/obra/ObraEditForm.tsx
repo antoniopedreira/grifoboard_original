@@ -88,7 +88,17 @@ const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormP
         resetForm();
       }
     }}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent 
+        className="sm:max-w-[500px]"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Only allow closing when clicking outside, not on focus loss
+          const isClickOutside = e.type === 'pointerdown';
+          if (!isClickOutside) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Editar Obra</DialogTitle>
         </DialogHeader>

@@ -23,7 +23,17 @@ const TaskForm: React.FC<TaskFormProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden">
+      <DialogContent 
+        className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Only allow closing when clicking outside, not on focus loss
+          const isClickOutside = e.type === 'pointerdown';
+          if (!isClickOutside) {
+            e.preventDefault();
+          }
+        }}
+      >
         <TaskFormHeader />
         <TaskFormContent
           onTaskCreate={onTaskCreate}

@@ -37,7 +37,17 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden">
+      <DialogContent 
+        className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Only allow closing when clicking outside, not on focus loss
+          const isClickOutside = e.type === 'pointerdown';
+          if (!isClickOutside) {
+            e.preventDefault();
+          }
+        }}
+      >
         <div className="sticky top-0 bg-background z-10 p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center">

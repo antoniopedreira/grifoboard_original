@@ -78,7 +78,17 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
         resetForm();
       }
     }}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent 
+        className="sm:max-w-[500px]"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Only allow closing when clicking outside, not on focus loss
+          const isClickOutside = e.type === 'pointerdown';
+          if (!isClickOutside) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader className="sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between">
             <DialogTitle>Nova Obra</DialogTitle>
