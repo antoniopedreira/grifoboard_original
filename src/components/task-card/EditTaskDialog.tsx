@@ -1,15 +1,13 @@
 
-import { useRef } from "react";
 import { Task, DayOfWeek } from "@/types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from "@/components/ui/dialog";
 import EditTaskForm from "./EditTaskForm";
-import { Edit, X } from "lucide-react";
+import { Edit } from "lucide-react";
 
 interface EditTaskDialogProps {
   isOpen: boolean;
@@ -36,33 +34,10 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
   isFormValid,
   onWeekDateChange
 }) => {
-  const allowCloseRef = useRef(false);
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        if (allowCloseRef.current) {
-          onOpenChange(open);
-        } else {
-          // ignore close from focus/visibility changes
-        }
-      } else {
-        onOpenChange(open);
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
         className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden"
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => {
-          const isClickOutside = e.type === "pointerdown";
-          if (isClickOutside) {
-            allowCloseRef.current = true;
-            setTimeout(() => {
-              allowCloseRef.current = false;
-            }, 0);
-          } else {
-            e.preventDefault();
-          }
-        }}
       >
         <div className="sticky top-0 bg-background z-10 p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
