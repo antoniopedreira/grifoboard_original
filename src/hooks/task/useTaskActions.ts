@@ -201,7 +201,7 @@ export const useTaskActions = ({
       const newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted"> = {
         sector: taskToDuplicate.sector,
         item: taskToDuplicate.item,
-        description: `${taskToDuplicate.description} (Cópia)`, // Add "(Cópia)" to indicate it's a duplicate
+        description: taskToDuplicate.description,
         discipline: taskToDuplicate.discipline,
         team: taskToDuplicate.team,
         responsible: taskToDuplicate.responsible,

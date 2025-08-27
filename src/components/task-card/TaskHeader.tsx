@@ -13,7 +13,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({ task, onCompletionStatusChange 
     <div className="flex justify-between items-start gap-3">
       <div className="flex-1 min-w-0" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
         <h3 
-          className="font-medium text-gray-800 mb-1"
+          className="font-medium text-gray-800 mb-1 text-sm leading-tight"
           style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
         >
           {task.description}
