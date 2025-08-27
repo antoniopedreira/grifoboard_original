@@ -10,7 +10,7 @@ import DeleteConfirmDialog from "./task-card/DeleteConfirmDialog";
 import { useTaskStatus } from "./task-card/useTaskStatus";
 import { useTaskActions } from "./task-card/useTaskActions";
 import { useTaskEditForm } from "./task-card/useTaskEditForm";
-
+import { useSearchParams } from "react-router-dom";
 interface TaskCardProps {
   task: Task;
   onTaskUpdate: (updatedTask: Task) => void;
@@ -32,11 +32,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   } = useTaskStatus(task, onTaskUpdate);
   
   const { 
-    isEditDialogOpen, 
-    setIsEditDialogOpen, 
     isDeleteDialogOpen, 
     setIsDeleteDialogOpen, 
-    handleEditClick, 
     handleSaveEdit, 
     handleDelete 
   } = useTaskActions(task, onTaskUpdate, onTaskDelete);
@@ -48,6 +45,33 @@ const TaskCard: React.FC<TaskCardProps> = ({
     handleWeekDateChange, 
     isFormValid 
   } = useTaskEditForm(task);
+
+  // Route-driven edit modal state
+  const [searchParams, setSearchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
+  const isRouteOpen = editId === task.id;
+
+  const openEdit = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set("edit", task.id);
+    setSearchParams(next, { replace: true });
+  };
+  const closeEdit = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+  };
+  const handleOpenChange = (open: boolean) => {
+    if (open) openEdit(); else closeEdit();
+  };
+  const handleSaveAndClose = () => {
+    handleSaveEdit(editFormData);
+    closeEdit();
+  };
+  const handleDeleteAndClose = () => {
+    handleDelete();
+    closeEdit();
+  };
 
   return (
     <>
@@ -80,7 +104,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             isCompleted={task.isFullyCompleted}
             currentCause={task.causeIfNotDone}
             onCauseSelect={handleCauseSelect}
-            onEditClick={handleEditClick}
+            onEditClick={openEdit}
             onDuplicateClick={() => onTaskDuplicate?.(task)}
             onCauseRemove={task.causeIfNotDone ? () => handleCauseSelect("") : undefined}
           />
@@ -89,14 +113,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
       {/* Edit Dialog */}
       <EditTaskDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        isOpen={isRouteOpen}
+        onOpenChange={handleOpenChange}
         task={task}
         editFormData={editFormData}
         onEditFormChange={handleEditFormChange}
         onDayToggle={handleDayToggle}
         onDelete={() => setIsDeleteDialogOpen(true)}
-        onSave={() => handleSaveEdit(editFormData)}
+        onSave={handleSaveAndClose}
         isFormValid={isFormValid}
         onWeekDateChange={handleWeekDateChange}
       />
@@ -105,7 +129,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       <DeleteConfirmDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
+        onConfirm={handleDeleteAndClose}
       />
     </>
   );
