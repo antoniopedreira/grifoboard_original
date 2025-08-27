@@ -9,6 +9,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { useRegistry } from "@/context/RegistryContext";
 import { Loader2, Trash2 } from "lucide-react";
@@ -102,43 +103,45 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     if (items.length === 0) return <div className="text-sm text-muted-foreground py-2">Nenhum item cadastrado</div>;
 
     return (
-      <div className="space-y-2 mt-4 max-h-[200px] overflow-hidden">
-        {items.map((item, index) => (
-          <div 
-            key={index} 
-            className="flex items-center justify-between bg-muted/50 p-2 rounded-md"
-            style={{
-              overflow: 'hidden',
-              whiteSpace: 'normal',
-              wordWrap: 'break-word',
-              width: '100%'
-            }}
-          >
-            <span 
-              className="text-sm flex-1"
+      <ScrollArea className="h-[200px] mt-4">
+        <div className="space-y-2 pr-4">
+          {items.map((item, index) => (
+            <div 
+              key={index} 
+              className="flex items-center justify-between bg-muted/50 p-2 rounded-md"
               style={{
                 overflow: 'hidden',
                 whiteSpace: 'normal',
-                wordWrap: 'break-word'
+                wordWrap: 'break-word',
+                width: '100%'
               }}
             >
-              {item}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(type, item)}
-              disabled={deletingItem?.type === type && deletingItem?.value === item}
-            >
-              {deletingItem?.type === type && deletingItem?.value === item ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 text-destructive" />
-              )}
-            </Button>
-          </div>
-        ))}
-      </div>
+              <span 
+                className="text-sm flex-1"
+                style={{
+                  overflow: 'hidden',
+                  whiteSpace: 'normal',
+                  wordWrap: 'break-word'
+                }}
+              >
+                {item}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(type, item)}
+                disabled={deletingItem?.type === type && deletingItem?.value === item}
+              >
+                {deletingItem?.type === type && deletingItem?.value === item ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                )}
+              </Button>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
     );
   };
 
