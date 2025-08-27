@@ -13,6 +13,7 @@ interface TaskFiltersProps {
 const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selectedCause }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSector, setFilterSector] = useState("all");
+  const [filterDiscipline, setFilterDiscipline] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
   const [filterExecutor, setFilterExecutor] = useState("all");
   const [filterCable, setFilterCable] = useState("all");
@@ -20,6 +21,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   
   // Extract unique values for filters and filter out empty values
   const sectors = Array.from(new Set(tasks.map(task => task.sector))).filter(Boolean);
+  const disciplines = Array.from(new Set(tasks.map(task => task.discipline))).filter(Boolean);
   const responsibles = Array.from(new Set(tasks.map(task => task.responsible))).filter(Boolean);
   const executors = Array.from(new Set(tasks.map(task => task.executor).filter(Boolean))).filter(Boolean);
   const cables = Array.from(new Set(tasks.map(task => task.cable).filter(Boolean))).filter(Boolean);
@@ -33,6 +35,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
         task.item.toLowerCase().includes(searchTerm.toLowerCase());
         
       const matchesSector = filterSector === "all" || task.sector === filterSector;
+      const matchesDiscipline = filterDiscipline === "all" || task.discipline === filterDiscipline;
       const matchesResponsible = filterResponsible === "all" || task.responsible === filterResponsible;
       const matchesExecutor = filterExecutor === "all" || task.executor === filterExecutor;
       const matchesCable = filterCable === "all" || task.cable === filterCable;
@@ -40,16 +43,17 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
                           (filterStatus === "completed" && task.isFullyCompleted) ||
                           (filterStatus === "not_completed" && !task.isFullyCompleted);
       
-      return matchesSearch && matchesSector && matchesResponsible && matchesExecutor && matchesCable && matchesStatus;
+      return matchesSearch && matchesSector && matchesDiscipline && matchesResponsible && matchesExecutor && matchesCable && matchesStatus;
     });
 
     onFiltersChange(filteredTasks);
-  }, [searchTerm, filterSector, filterResponsible, filterExecutor, filterCable, filterStatus, tasks, onFiltersChange]);
+  }, [searchTerm, filterSector, filterDiscipline, filterResponsible, filterExecutor, filterCable, filterStatus, tasks, onFiltersChange]);
 
   // Reset filters when selectedCause changes
   useEffect(() => {
     setSearchTerm("");
     setFilterSector("all");
+    setFilterDiscipline("all");
     setFilterResponsible("all");
     setFilterExecutor("all");
     setFilterCable("all");
@@ -74,7 +78,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="completed">Concluídas</SelectItem>
             <SelectItem value="not_completed">Não Concluídas</SelectItem>
@@ -88,10 +92,25 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Setor" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Todos</SelectItem>
             {sectors.map(sector => (
               <SelectItem key={sector} value={sector}>{sector}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="w-full sm:w-auto">
+        <div className="text-xs text-gray-500 mb-1">Disciplina</div>
+        <Select value={filterDiscipline} onValueChange={setFilterDiscipline}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Disciplina" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">Todos</SelectItem>
+            {disciplines.map(discipline => (
+              <SelectItem key={discipline} value={discipline}>{discipline}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -103,7 +122,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Responsável" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Todos</SelectItem>
             {responsibles.map(responsible => (
               <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
@@ -118,7 +137,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Executante" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Todos</SelectItem>
             {executors.map(executor => (
               <SelectItem key={executor} value={executor}>{executor}</SelectItem>
@@ -133,7 +152,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Cabo" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Todos</SelectItem>
             {cables.map(cable => (
               <SelectItem key={cable} value={cable}>{cable}</SelectItem>
