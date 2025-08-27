@@ -1,4 +1,5 @@
 
+import { useRef } from "react";
 import { Task, DayOfWeek } from "@/types";
 import {
   Dialog,
@@ -35,15 +36,30 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
   isFormValid,
   onWeekDateChange
 }) => {
+  const allowCloseRef = useRef(false);
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        if (allowCloseRef.current) {
+          onOpenChange(open);
+        } else {
+          // ignore close from focus/visibility changes
+        }
+      } else {
+        onOpenChange(open);
+      }
+    }}>
       <DialogContent 
         className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
-          // Only allow closing when clicking outside, not on focus loss
-          const isClickOutside = e.type === 'pointerdown';
-          if (!isClickOutside) {
+          const isClickOutside = e.type === "pointerdown";
+          if (isClickOutside) {
+            allowCloseRef.current = true;
+            setTimeout(() => {
+              allowCloseRef.current = false;
+            }, 0);
+          } else {
             e.preventDefault();
           }
         }}
