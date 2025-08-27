@@ -162,7 +162,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
         </TabsTrigger>
         <TabsTrigger value="team" className="flex-1 px-3 py-2 text-sm">
           <div className="flex flex-col items-center">
-            <span>Equipe</span>
+            <span>Executante</span>
             <div className="ml-1 mt-1">{renderItemsCount(teams)}</div>
           </div>
         </TabsTrigger>
@@ -174,7 +174,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
         </TabsTrigger>
         <TabsTrigger value="executor" className="flex-1 px-3 py-2 text-sm">
           <div className="flex flex-col items-center">
-            <span>Exec.</span>
+            <span>Encarregado</span>
             <div className="ml-1 mt-1">{renderItemsCount(executors)}</div>
           </div>
         </TabsTrigger>
@@ -248,13 +248,13 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
       
       <TabsContent value="team" className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="new-team" className="font-medium">Nova Equipe</Label>
+          <Label htmlFor="new-team" className="font-medium">Novo Executante</Label>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               id="new-team"
               value={newTeam}
               onChange={(e) => setNewTeam(e.target.value)}
-              placeholder="Digite o nome da equipe"
+              placeholder="Digite o nome do executante"
               className="flex-1"
             />
             <Button 
@@ -268,7 +268,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
                   Salvando...
                 </>
               ) : (
-                "Adicionar Equipe"
+                "Adicionar Executante"
               )}
             </Button>
           </div>
@@ -308,13 +308,13 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
       
       <TabsContent value="executor" className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="new-executor" className="font-medium">Novo Executante</Label>
+          <Label htmlFor="new-executor" className="font-medium">Novo Encarregado</Label>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               id="new-executor"
               value={newExecutor}
               onChange={(e) => setNewExecutor(e.target.value)}
-              placeholder="Digite o nome do executante"
+              placeholder="Digite o nome do encarregado"
               className="flex-1"
             />
             <Button 
@@ -328,7 +328,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
                   Salvando...
                 </>
               ) : (
-                "Adicionar Executante"
+                "Adicionar Encarregado"
               )}
             </Button>
           </div>

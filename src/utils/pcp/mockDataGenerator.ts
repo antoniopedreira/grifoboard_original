@@ -5,7 +5,7 @@ import { formatDateRange, getWeekEndDate, getWeekStartDate } from "./dateUtils";
 export const generateMockTasks = (weekStart?: Date): Task[] => {
   const sectors = ["Fundação", "Alvenaria", "Estrutura", "Acabamento", "Instalações"];
   const disciplines = ["Civil", "Elétrica", "Hidráulica", "Arquitetura"];
-  const teams = ["Equipe A", "Equipe B", "Equipe C"];
+  const teams = ["Executante A", "Executante B", "Executante C"];
   const responsibles = ["João Silva", "Maria Oliveira", "Carlos Santos"];
   const executors = ["Pedro Alves", "Ana Costa", "Felipe Souza", "Juliana Lima"];
   const cables = ["Cabo A1", "Cabo B2", "Cabo C3", "Cabo D4", "Cabo E5"];

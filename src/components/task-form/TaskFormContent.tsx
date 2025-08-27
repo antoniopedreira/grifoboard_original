@@ -148,11 +148,11 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
             
             <RegistrySelect
               id="team"
-              label="Equipe"
+              label="Executante"
               value={team}
               onValueChange={setTeam}
               options={teams}
-              placeholder="Selecione a equipe"
+              placeholder="Selecione o executante"
             />
           </div>
           
@@ -169,11 +169,11 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
             
             <RegistrySelect
               id="executor"
-              label="Executante"
+              label="Encarregado"
               value={executor}
               onValueChange={setExecutor}
               options={executors}
-              placeholder="Selecione o executante"
+              placeholder="Selecione o encarregado"
             />
           </div>
           

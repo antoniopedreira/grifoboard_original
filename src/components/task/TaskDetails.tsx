@@ -33,7 +33,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(discipline)}</span>
       </div>
       <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Equipe</span>
+        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Executante</span>
         <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(team)}</span>
       </div>
       <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
@@ -41,7 +41,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(responsible)}</span>
       </div>
       <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Executante</span>
+        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Encarregado</span>
         <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(executor)}</span>
       </div>
       <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>

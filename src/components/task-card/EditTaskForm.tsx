@@ -199,15 +199,15 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               </Select>
             </div>
             
-            {/* Equipe */}
+            {/* Executante */}
             <div className="space-y-2">
-              <Label htmlFor="edit-team" className="font-medium">Equipe</Label>
+              <Label htmlFor="edit-team" className="font-medium">Executante</Label>
               <Select 
                 value={safeEditFormData.team} 
                 onValueChange={(value) => onEditFormChange("team", value)}
               >
                 <SelectTrigger id="edit-team">
-                  <SelectValue placeholder="Selecione a equipe" />
+                  <SelectValue placeholder="Selecione o executante" />
                 </SelectTrigger>
                 <SelectContent>
                   {validTeams.length > 0 ? (
@@ -216,7 +216,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
                     ))
                   ) : (
                     <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhuma equipe cadastrada</p>
+                      <p>Nenhum executante cadastrado</p>
                     </div>
                   )}
                 </SelectContent>
@@ -250,13 +250,13 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="edit-executor" className="font-medium">Executante</Label>
+              <Label htmlFor="edit-executor" className="font-medium">Encarregado</Label>
               <Select 
                 value={safeEditFormData.executor} 
                 onValueChange={(value) => onEditFormChange("executor", value)}
               >
                 <SelectTrigger id="edit-executor">
-                  <SelectValue placeholder="Selecione o executante" />
+                  <SelectValue placeholder="Selecione o encarregado" />
                 </SelectTrigger>
                 <SelectContent>
                   {validExecutors.length > 0 ? (
@@ -265,7 +265,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
                     ))
                   ) : (
                     <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum executante cadastrado</p>
+                      <p>Nenhum encarregado cadastrado</p>
                     </div>
                   )}
                 </SelectContent>

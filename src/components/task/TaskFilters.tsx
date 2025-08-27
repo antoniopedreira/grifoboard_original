@@ -132,10 +132,10 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
       </div>
 
       <div className="w-full sm:w-auto">
-        <div className="text-xs text-gray-500 mb-1">Executante</div>
+        <div className="text-xs text-gray-500 mb-1">Encarregado</div>
         <Select value={filterExecutor} onValueChange={setFilterExecutor}>
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Executante" />
+            <SelectValue placeholder="Encarregado" />
           </SelectTrigger>
           <SelectContent className="bg-background z-50">
             <SelectItem value="all">Todos</SelectItem>
