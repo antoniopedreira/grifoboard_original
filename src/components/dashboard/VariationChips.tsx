@@ -68,7 +68,7 @@ const VariationChips: React.FC<VariationChipsProps> = ({
     <div className="flex flex-wrap gap-2">
       {chips.map((chip, index) => (
         <Badge
-          key={index}
+          key={`${chip.label}-${chip.delta}`}
           variant={getVariationColor(chip.delta, chip.isNegativeGood) as any}
           className="flex items-center gap-1 px-3 py-1"
         >

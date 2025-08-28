@@ -168,7 +168,7 @@ const DashboardContent = () => {
             </div>
             <h3 className="text-sm font-medium text-foreground">Total de Tarefas</h3>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
               <span className={`text-xs font-medium ${totalTasksDelta >= 0 ? 'text-primary' : 'text-muted-foreground'}`}>
                 {totalTasksDelta >= 0 ? '+' : ''}{totalTasksDelta}
               </span>
@@ -187,7 +187,7 @@ const DashboardContent = () => {
             </div>
             <h3 className="text-sm font-medium text-foreground">Tarefas Concluídas</h3>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
               <span className={`text-xs font-medium ${completedTasksDelta >= 0 ? 'text-success' : 'text-destructive'}`}>
                 {completedTasksDelta >= 0 ? '+' : ''}{completedTasksDelta} ({completedTasksDelta >= 0 ? '+' : ''}{((completedTasksDelta / Math.max(prevCompletedTasks, 1)) * 100).toFixed(1)}%)
               </span>
@@ -206,7 +206,7 @@ const DashboardContent = () => {
             </div>
             <h3 className="text-sm font-medium text-foreground">Não Realizadas</h3>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
               <span className={`text-xs font-medium ${pendingTasksDelta <= 0 ? 'text-success' : 'text-destructive'}`}>
                 {pendingTasksDelta >= 0 ? '+' : ''}{pendingTasksDelta}
               </span>
@@ -225,7 +225,7 @@ const DashboardContent = () => {
             </div>
             <h3 className="text-sm font-medium text-foreground">PCP Semanal</h3>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
               <span className={`text-xs font-medium ${pcpDelta >= 0 ? 'text-success' : 'text-destructive'}`}>
                 {pcpDelta >= 0 ? '+' : ''}{pcpDelta}p.p.
               </span>
@@ -255,7 +255,7 @@ const DashboardContent = () => {
               <div className={`text-3xl font-bold ${getPcpColor(pcpPercentage)}`}>
                 {pcpPercentage}%
               </div>
-              <div className="text-xs text-muted-foreground">PCP Atual</div>
+              <div className="text-xs text-muted-foreground">PCP Médio</div>
             </div>
           </div>
           <div className="bg-background/50 rounded-lg p-4">
