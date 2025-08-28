@@ -5,7 +5,7 @@ import WeekNavigation from "@/components/WeekNavigation";
 import { getWeekStartDate } from "@/utils/pcp";
 import { useTaskManager } from "@/hooks/useTaskManager";
 import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
-import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
+import WeeklyProgressWithAverage from "@/components/dashboard/WeeklyProgressWithAverage";
 import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
@@ -244,24 +244,8 @@ const DashboardContent = () => {
           />
         </div>
         
-        {/* Weekly Progress Comparison */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">Progresso Semanal</h2>
-              <p className="text-sm text-muted-foreground">Semana Atual × Semana Anterior</p>
-            </div>
-            <div className="text-right">
-              <div className={`text-3xl font-bold ${getPcpColor(pcpPercentage)}`}>
-                {pcpPercentage}%
-              </div>
-              <div className="text-xs text-muted-foreground">PCP Médio</div>
-            </div>
-          </div>
-          <div className="bg-background/50 rounded-lg p-4">
-            <PCPWeeklyChart weeklyData={weeklyPCPData} />
-          </div>
-        </div>
+        {/* Weekly Progress All Weeks */}
+        <WeeklyProgressWithAverage />
         
         {/* Analytics Charts Grid 2x2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
