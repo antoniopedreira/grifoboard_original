@@ -2,6 +2,7 @@
 // Standard causes list for not completed tasks
 export const standardCauses = [
   "Absenteísmo",
+  "Atraso",
   "Chuva",
   "Executante produzindo abaixo do planejado",
   "Executante trabalhando em outra obra",
@@ -29,5 +30,6 @@ export const standardCauses = [
   "Relocação da mão de obra",
   "Retrabalho",
   "Sem disponibilidade",
-  "Vento"
+  "Vento",
+  "Outros"
 ];
