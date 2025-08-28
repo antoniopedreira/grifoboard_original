@@ -177,10 +177,7 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
                       <span className="font-medium">Executante:</span> {task.executor}
                     </div>
                     <div>
-                      <span className="font-medium">Equipe:</span> {task.team}
-                    </div>
-                    <div>
-                      <span className="font-medium">Cabo:</span> {task.cable}
+                      <span className="font-medium">Encarregado:</span> {task.team}
                     </div>
                   </div>
                   
