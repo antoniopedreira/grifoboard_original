@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useTaskManager } from "@/hooks/useTaskManager";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
@@ -7,21 +6,18 @@ import { BarChart2 } from "lucide-react";
 
 interface TeamChartProps {
   weekStartDate: Date;
+  tasks: Task[];
 }
 
 const TeamChart = ({
-  weekStartDate
+  weekStartDate,
+  tasks
 }: TeamChartProps) => {
-  const { allTasks } = useTaskManager(weekStartDate);
   const [teamData, setTeamData] = useState<{ name: string; percentual: number; }[]>([]);
 
   useEffect(() => {
-    // Filter tasks for the current week
-    const tasksForWeek = allTasks.filter(task => {
-      if (!task.weekStartDate) return false;
-      const taskDate = new Date(task.weekStartDate);
-      return taskDate.toISOString().split('T')[0] === weekStartDate.toISOString().split('T')[0];
-    });
+    // Use the tasks passed as props directly
+    const tasksForWeek = tasks;
 
     // Group tasks by team
     const teamGroups = tasksForWeek.reduce<Record<string, Task[]>>((acc, task) => {
@@ -44,8 +40,10 @@ const TeamChart = ({
 
     // Sort by percentage descending
     data.sort((a, b) => b.percentual - a.percentual);
-    setTeamData(data);
-  }, [allTasks, weekStartDate]);
+    
+    const processedData = data.slice(0, 10); // Limit to top 10
+    setTeamData(processedData);
+  }, [tasks]); // Changed dependency from allTasks to tasks
 
   return (
     <div className="w-full h-[380px] border border-gray-200 rounded-lg p-4">

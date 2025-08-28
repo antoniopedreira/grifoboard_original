@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import WeekNavigation from "@/components/WeekNavigation";
 import { getWeekStartDate } from "@/utils/pcp";
-import { useTaskManager } from "@/hooks/useTaskManager";
+import { DashboardProvider, useDashboard } from "@/context/DashboardContext";
 import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
 import WeeklyProgressWithAverage from "@/components/dashboard/WeeklyProgressWithAverage";
 import ExecutorChart from "@/components/dashboard/ExecutorChart";
@@ -14,13 +14,29 @@ import VariationChips from "@/components/dashboard/VariationChips";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 
 const DashboardContent = () => {
-  const { toast } = useToast();
   const { userSession } = useAuth();
+  const initialWeekStartDate = getWeekStartDate(new Date());
 
-  // Initialize with the current week's Monday
-  const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
+  return (
+    <DashboardProvider initialWeekStartDate={initialWeekStartDate}>
+      <DashboardInner />
+    </DashboardProvider>
+  );
+};
+
+const DashboardInner = () => {
+  const { userSession } = useAuth();
+  const {
+    currentWeekTasks,
+    currentWeekPcpData,
+    prevWeekTasks,
+    prevWeekPcpData,
+    isLoading,
+    weekStartDate,
+    setWeekStartDate
+  } = useDashboard();
+
   const [weekEndDate, setWeekEndDate] = useState(new Date());
-  const [previousWeekData, setPreviousWeekData] = useState<any>(null);
 
   // Calculate end of week when start date changes
   useEffect(() => {
@@ -28,14 +44,6 @@ const DashboardContent = () => {
     endDate.setDate(endDate.getDate() + 6);
     setWeekEndDate(endDate);
   }, [weekStartDate]);
-
-  // Get task data from our custom hook
-  const { tasks, isLoading, pcpData, weeklyPCPData } = useTaskManager(weekStartDate);
-
-  // Get previous week data for comparison
-  const prevWeekStart = new Date(weekStartDate);
-  prevWeekStart.setDate(prevWeekStart.getDate() - 7);
-  const { tasks: prevTasks, pcpData: prevPcpData } = useTaskManager(prevWeekStart);
 
   // Navigate to previous and next weeks
   const navigateToPreviousWeek = () => {
@@ -48,6 +56,33 @@ const DashboardContent = () => {
     const nextWeek = new Date(weekStartDate);
     nextWeek.setDate(nextWeek.getDate() + 7);
     setWeekStartDate(nextWeek);
+  };
+
+  // Calculate metrics from dashboard context data
+  const completedTasks = currentWeekTasks.filter(task => task.isFullyCompleted).length;
+  const pendingTasks = currentWeekTasks.filter(task => !task.isFullyCompleted).length;
+  const pcpPercentage = currentWeekPcpData?.overall?.percentage ? Math.round(currentWeekPcpData.overall.percentage) : 0;
+
+  // Previous week calculations for WoW comparison
+  const prevCompletedTasks = prevWeekTasks.filter(task => task.isFullyCompleted).length;
+  const prevPendingTasks = prevWeekTasks.filter(task => !task.isFullyCompleted).length;
+  const prevPcpPercentage = prevWeekPcpData?.overall?.percentage ? Math.round(prevWeekPcpData.overall.percentage) : 0;
+
+  // Calculate deltas
+  const totalTasksDelta = currentWeekTasks.length - prevWeekTasks.length;
+  const completedTasksDelta = completedTasks - prevCompletedTasks;
+  const pendingTasksDelta = pendingTasks - prevPendingTasks;
+  const pcpDelta = pcpPercentage - prevPcpPercentage;
+
+  // Mock data for additional deltas (can be calculated from real data later)
+  const delaysDelta = Math.floor(Math.random() * 10) - 5;
+  const criticalCausesDelta = Math.floor(Math.random() * 6) - 3;
+
+  // PCP color based on percentage
+  const getPcpColor = (pcp: number) => {
+    if (pcp >= 85) return "text-success";
+    if (pcp >= 70) return "text-warning";
+    return "text-destructive";
   };
 
   if (isLoading) {
@@ -95,32 +130,6 @@ const DashboardContent = () => {
     );
   }
 
-  const completedTasks = tasks.filter(task => task.isFullyCompleted).length;
-  const pendingTasks = tasks.filter(task => !task.isFullyCompleted).length;
-  const pcpPercentage = pcpData?.overall?.percentage ? Math.round(pcpData.overall.percentage) : 0;
-
-  // Previous week calculations for WoW comparison
-  const prevCompletedTasks = prevTasks.filter(task => task.isFullyCompleted).length;
-  const prevPendingTasks = prevTasks.filter(task => !task.isFullyCompleted).length;
-  const prevPcpPercentage = prevPcpData?.overall?.percentage ? Math.round(prevPcpData.overall.percentage) : 0;
-
-  // Calculate deltas
-  const totalTasksDelta = tasks.length - prevTasks.length;
-  const completedTasksDelta = completedTasks - prevCompletedTasks;
-  const pendingTasksDelta = pendingTasks - prevPendingTasks;
-  const pcpDelta = pcpPercentage - prevPcpPercentage;
-
-  // Mock data for additional deltas (can be calculated from real data later)
-  const delaysDelta = Math.floor(Math.random() * 10) - 5;
-  const criticalCausesDelta = Math.floor(Math.random() * 6) - 3;
-
-  // PCP color based on percentage
-  const getPcpColor = (pcp: number) => {
-    if (pcp >= 85) return "text-success";
-    if (pcp >= 70) return "text-warning";
-    return "text-destructive";
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-muted/20 to-background">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -162,7 +171,7 @@ const DashboardContent = () => {
                 <Activity className="w-5 h-5 text-primary" />
               </div>
               <div className="text-right">
-                <div className="text-2xl font-semibold text-foreground">{tasks.length}</div>
+                <div className="text-2xl font-semibold text-foreground">{currentWeekTasks.length}</div>
                 <div className="text-xs text-muted-foreground">Total</div>
               </div>
             </div>
@@ -243,26 +252,25 @@ const DashboardContent = () => {
             criticalCausesDelta={criticalCausesDelta}
           />
         </div>
-        
         {/* Weekly Progress - All Weeks */}
         <WeeklyProgressWithAverage />
         
         {/* Analytics Charts Grid 2x2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="minimal-card p-6">
-            <ExecutorChart weekStartDate={weekStartDate} />
+            <ExecutorChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
           </div>
           
           <div className="minimal-card p-6">
-            <TeamChart weekStartDate={weekStartDate} />
+            <TeamChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
           </div>
           
           <div className="minimal-card p-6">
-            <ResponsibleChart weekStartDate={weekStartDate} />
+            <ResponsibleChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
           </div>
           
           <div className="minimal-card p-6">
-            <WeeklyCausesChart weekStartDate={weekStartDate} />
+            <WeeklyCausesChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
           </div>
         </div>
       </div>

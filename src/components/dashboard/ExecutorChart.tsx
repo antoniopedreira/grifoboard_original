@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useTaskManager } from "@/hooks/useTaskManager";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
@@ -7,21 +6,18 @@ import { BarChart2 } from "lucide-react";
 
 interface ExecutorChartProps {
   weekStartDate: Date;
+  tasks: Task[];
 }
 
 const ExecutorChart = ({
-  weekStartDate
+  weekStartDate,
+  tasks
 }: ExecutorChartProps) => {
-  const { allTasks } = useTaskManager(weekStartDate);
   const [executorData, setExecutorData] = useState<{ name: string; percentual: number; }[]>([]);
 
   useEffect(() => {
-    // Filter tasks for the current week
-    const tasksForWeek = allTasks.filter(task => {
-      if (!task.weekStartDate) return false;
-      const taskDate = new Date(task.weekStartDate);
-      return taskDate.toISOString().split('T')[0] === weekStartDate.toISOString().split('T')[0];
-    });
+    // Use the tasks passed as props directly
+    const tasksForWeek = tasks;
 
     // Group tasks by executor
     const executorGroups = tasksForWeek.reduce<Record<string, Task[]>>((acc, task) => {
@@ -44,8 +40,10 @@ const ExecutorChart = ({
 
     // Sort by percentage descending
     data.sort((a, b) => b.percentual - a.percentual);
-    setExecutorData(data);
-  }, [allTasks, weekStartDate]);
+    
+    const processedData = data.slice(0, 10); // Limit to top 10
+    setExecutorData(processedData);
+  }, [tasks]); // Changed dependency from allTasks to tasks
 
   return (
     <div className="w-full h-[380px] border border-gray-200 rounded-lg p-4">

@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useTaskManager } from "@/hooks/useTaskManager";
 import { Search, Filter, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Task } from "@/types";
 
 interface WeeklyCausesChartProps {
   weekStartDate: Date;
+  tasks: Task[];
 }
 
 interface CauseData {
@@ -20,8 +21,7 @@ interface CauseData {
   isCritica: boolean;
 }
 
-const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate }) => {
-  const { tasks } = useTaskManager(weekStartDate);
+const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, tasks }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGroup, setFilterGroup] = useState("todos");
   const [sortBy, setSortBy] = useState("quantidade");
