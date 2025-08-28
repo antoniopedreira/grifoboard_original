@@ -178,7 +178,7 @@ const DashboardInner = () => {
             <div className="flex items-center gap-1 mt-1">
               <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
               <span className={`text-xs font-medium ${totalTasksDelta >= 0 ? 'text-primary' : 'text-muted-foreground'}`}>
-                {totalTasksDelta >= 0 ? '+' : ''}{totalTasksDelta}
+                {totalTasksDelta >= 0 ? '+' : ''}{totalTasksDelta} ({totalTasksDelta >= 0 ? '+' : ''}{((totalTasksDelta / Math.max(prevWeekTasks.length, 1)) * 100).toFixed(1)}%)
               </span>
             </div>
           </div>
@@ -216,7 +216,7 @@ const DashboardInner = () => {
             <div className="flex items-center gap-1 mt-1">
               <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
               <span className={`text-xs font-medium ${pendingTasksDelta <= 0 ? 'text-success' : 'text-destructive'}`}>
-                {pendingTasksDelta >= 0 ? '+' : ''}{pendingTasksDelta}
+                {pendingTasksDelta >= 0 ? '+' : ''}{pendingTasksDelta} ({pendingTasksDelta >= 0 ? '+' : ''}{((pendingTasksDelta / Math.max(prevPendingTasks, 1)) * 100).toFixed(1)}%)
               </span>
             </div>
           </div>
