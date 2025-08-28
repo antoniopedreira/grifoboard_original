@@ -244,7 +244,7 @@ const DashboardContent = () => {
           />
         </div>
         
-        {/* Weekly Progress All Weeks */}
+        {/* Weekly Progress - All Weeks */}
         <WeeklyProgressWithAverage />
         
         {/* Analytics Charts Grid 2x2 */}
