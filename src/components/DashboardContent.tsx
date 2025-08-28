@@ -10,7 +10,6 @@ import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
-import VariationChips from "@/components/dashboard/VariationChips";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 
 const DashboardContent = () => {
@@ -242,16 +241,6 @@ const DashboardInner = () => {
           </div>
         </div>
 
-        {/* Variation Chips */}
-        <div className="minimal-card p-4">
-          <VariationChips
-            completedDelta={completedTasksDelta}
-            pendingDelta={pendingTasksDelta}
-            pcpDelta={pcpDelta}
-            delaysDelta={delaysDelta}
-            criticalCausesDelta={criticalCausesDelta}
-          />
-        </div>
         {/* Weekly Progress - All Weeks */}
         <WeeklyProgressWithAverage />
         
