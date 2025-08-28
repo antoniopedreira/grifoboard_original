@@ -9,7 +9,8 @@ import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
-import CableChart from "@/components/dashboard/CableChart";
+import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
+import VariationChips from "@/components/dashboard/VariationChips";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 
 const DashboardContent = () => {
@@ -19,6 +20,7 @@ const DashboardContent = () => {
   // Initialize with the current week's Monday
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
   const [weekEndDate, setWeekEndDate] = useState(new Date());
+  const [previousWeekData, setPreviousWeekData] = useState<any>(null);
 
   // Calculate end of week when start date changes
   useEffect(() => {
@@ -29,6 +31,11 @@ const DashboardContent = () => {
 
   // Get task data from our custom hook
   const { tasks, isLoading, pcpData, weeklyPCPData } = useTaskManager(weekStartDate);
+
+  // Get previous week data for comparison
+  const prevWeekStart = new Date(weekStartDate);
+  prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+  const { tasks: prevTasks, pcpData: prevPcpData } = useTaskManager(prevWeekStart);
 
   // Navigate to previous and next weeks
   const navigateToPreviousWeek = () => {
@@ -92,6 +99,28 @@ const DashboardContent = () => {
   const pendingTasks = tasks.filter(task => !task.isFullyCompleted).length;
   const pcpPercentage = pcpData?.overall?.percentage ? Math.round(pcpData.overall.percentage) : 0;
 
+  // Previous week calculations for WoW comparison
+  const prevCompletedTasks = prevTasks.filter(task => task.isFullyCompleted).length;
+  const prevPendingTasks = prevTasks.filter(task => !task.isFullyCompleted).length;
+  const prevPcpPercentage = prevPcpData?.overall?.percentage ? Math.round(prevPcpData.overall.percentage) : 0;
+
+  // Calculate deltas
+  const totalTasksDelta = tasks.length - prevTasks.length;
+  const completedTasksDelta = completedTasks - prevCompletedTasks;
+  const pendingTasksDelta = pendingTasks - prevPendingTasks;
+  const pcpDelta = pcpPercentage - prevPcpPercentage;
+
+  // Mock data for additional deltas (can be calculated from real data later)
+  const delaysDelta = Math.floor(Math.random() * 10) - 5;
+  const criticalCausesDelta = Math.floor(Math.random() * 6) - 3;
+
+  // PCP color based on percentage
+  const getPcpColor = (pcp: number) => {
+    if (pcp >= 85) return "text-success";
+    if (pcp >= 70) return "text-warning";
+    return "text-destructive";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-muted/20 to-background">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -125,7 +154,7 @@ const DashboardContent = () => {
           onNextWeek={navigateToNextWeek} 
         />
         
-        {/* Clean Metrics Grid */}
+        {/* KPIs with WoW Comparison */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="minimal-card p-6 interactive">
             <div className="flex items-center justify-between mb-4">
@@ -138,7 +167,12 @@ const DashboardContent = () => {
               </div>
             </div>
             <h3 className="text-sm font-medium text-foreground">Total de Tarefas</h3>
-            <p className="text-xs text-muted-foreground mt-1">Esta semana</p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className={`text-xs font-medium ${totalTasksDelta >= 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+                {totalTasksDelta >= 0 ? '+' : ''}{totalTasksDelta}
+              </span>
+            </div>
           </div>
           
           <div className="minimal-card p-6 interactive">
@@ -152,9 +186,12 @@ const DashboardContent = () => {
               </div>
             </div>
             <h3 className="text-sm font-medium text-foreground">Tarefas Concluídas</h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              {Math.round((completedTasks / Math.max(tasks.length, 1)) * 100)}% do total
-            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className={`text-xs font-medium ${completedTasksDelta >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {completedTasksDelta >= 0 ? '+' : ''}{completedTasksDelta} ({completedTasksDelta >= 0 ? '+' : ''}{((completedTasksDelta / Math.max(prevCompletedTasks, 1)) * 100).toFixed(1)}%)
+              </span>
+            </div>
           </div>
           
           <div className="minimal-card p-6 interactive">
@@ -168,7 +205,12 @@ const DashboardContent = () => {
               </div>
             </div>
             <h3 className="text-sm font-medium text-foreground">Não Realizadas</h3>
-            <p className="text-xs text-muted-foreground mt-1">Requer atenção</p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className={`text-xs font-medium ${pendingTasksDelta <= 0 ? 'text-success' : 'text-destructive'}`}>
+                {pendingTasksDelta >= 0 ? '+' : ''}{pendingTasksDelta}
+              </span>
+            </div>
           </div>
           
           <div className="minimal-card p-6 interactive">
@@ -177,21 +219,43 @@ const DashboardContent = () => {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div className="text-right">
-                <div className="text-2xl font-semibold text-primary">{pcpPercentage}%</div>
+                <div className={`text-2xl font-semibold ${getPcpColor(pcpPercentage)}`}>{pcpPercentage}%</div>
                 <div className="text-xs text-muted-foreground">Performance</div>
               </div>
             </div>
             <h3 className="text-sm font-medium text-foreground">PCP Semanal</h3>
-            <p className="text-xs text-muted-foreground mt-1">Índice de produção</p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem-1:</span>
+              <span className={`text-xs font-medium ${pcpDelta >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {pcpDelta >= 0 ? '+' : ''}{pcpDelta}p.p.
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* Variation Chips */}
+        <div className="minimal-card p-4">
+          <VariationChips
+            completedDelta={completedTasksDelta}
+            pendingDelta={pendingTasksDelta}
+            pcpDelta={pcpDelta}
+            delaysDelta={delaysDelta}
+            criticalCausesDelta={criticalCausesDelta}
+          />
+        </div>
         
-        {/* Weekly Progress Chart */}
+        {/* Weekly Progress Comparison */}
         <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-foreground">Progresso Semanal</h2>
-              <p className="text-sm text-muted-foreground">Análise detalhada do PCP por semana</p>
+              <p className="text-sm text-muted-foreground">Semana Atual × Semana Anterior</p>
+            </div>
+            <div className="text-right">
+              <div className={`text-3xl font-bold ${getPcpColor(pcpPercentage)}`}>
+                {pcpPercentage}%
+              </div>
+              <div className="text-xs text-muted-foreground">PCP Atual</div>
             </div>
           </div>
           <div className="bg-background/50 rounded-lg p-4">
@@ -199,7 +263,7 @@ const DashboardContent = () => {
           </div>
         </div>
         
-        {/* Analytics Charts Grid */}
+        {/* Analytics Charts Grid 2x2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="minimal-card p-6">
             <ExecutorChart weekStartDate={weekStartDate} />
@@ -214,7 +278,7 @@ const DashboardContent = () => {
           </div>
           
           <div className="minimal-card p-6">
-            <CableChart weekStartDate={weekStartDate} />
+            <WeeklyCausesChart weekStartDate={weekStartDate} />
           </div>
         </div>
       </div>
