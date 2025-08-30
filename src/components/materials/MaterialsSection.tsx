@@ -107,53 +107,49 @@ const MaterialsSection: React.FC<MaterialsSectionProps> = ({ tarefaId }) => {
   }
 
   return (
-    <Card className="mt-4">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm">
+    <div className="bg-gray-50/50 rounded-lg border border-gray-100">
+      <div className="p-3 pb-2">
+        <div className="flex items-center gap-2 mb-3">
           <Package className="w-4 h-4 text-orange-500" />
-          Materiais Necessários
-          <Badge variant="secondary" className="ml-2">
+          <span className="text-xs font-medium text-gray-700">Materiais Necessários</span>
+          <Badge variant="secondary" className="ml-1 h-5 text-[10px] px-1.5">
             {materials.length}
           </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+        </div>
+        <div className="space-y-2">
         {materials.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[11px] text-gray-500 italic">
             Nenhum material adicionado ainda.
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5 max-h-24 overflow-y-auto scrollbar-thin">
             {materials.map((material, index) => (
-              <div key={material.id}>
-                <div className="flex items-start justify-between p-3 bg-muted/30 rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-foreground mb-1">
-                      {material.descricao}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Responsável: <span className="font-medium">{material.responsavel}</span>
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleRemoveMaterial(material.id)}
-                    className="ml-2 h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+              <div key={material.id} className="flex items-start justify-between p-2 bg-white/80 rounded border border-gray-100/80">
+                <div className="flex-1 min-w-0 pr-2">
+                  <p className="font-medium text-[11px] text-gray-800 mb-0.5 line-clamp-1">
+                    {material.descricao}
+                  </p>
+                  <p className="text-[10px] text-gray-500">
+                    <span className="font-medium">{material.responsavel}</span>
+                  </p>
                 </div>
-                {index < materials.length - 1 && <Separator className="my-2" />}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleRemoveMaterial(material.id)}
+                  className="h-5 w-5 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
               </div>
             ))}
           </div>
         )}
 
         {isAdding ? (
-          <div className="space-y-3 p-3 border rounded-lg bg-card">
+          <div className="space-y-2 p-2 border rounded bg-white/90">
             <div>
-              <Label htmlFor="material-descricao" className="text-xs">
+              <Label htmlFor="material-descricao" className="text-[10px] text-gray-600">
                 Descrição do Material
               </Label>
               <Input
@@ -161,11 +157,11 @@ const MaterialsSection: React.FC<MaterialsSectionProps> = ({ tarefaId }) => {
                 value={newMaterial.descricao}
                 onChange={(e) => setNewMaterial(prev => ({ ...prev, descricao: e.target.value }))}
                 placeholder="Ex: Cimento Portland CP-IV 32"
-                className="mt-1 h-8 text-sm"
+                className="mt-1 h-6 text-[11px] border-gray-200"
               />
             </div>
             <div>
-              <Label htmlFor="material-responsavel" className="text-xs">
+              <Label htmlFor="material-responsavel" className="text-[10px] text-gray-600">
                 Responsável pelo Material
               </Label>
               <Input
@@ -173,11 +169,11 @@ const MaterialsSection: React.FC<MaterialsSectionProps> = ({ tarefaId }) => {
                 value={newMaterial.responsavel}
                 onChange={(e) => setNewMaterial(prev => ({ ...prev, responsavel: e.target.value }))}
                 placeholder="Ex: João Silva"
-                className="mt-1 h-8 text-sm"
+                className="mt-1 h-6 text-[11px] border-gray-200"
               />
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleAddMaterial} className="h-7 text-xs">
+            <div className="flex gap-1.5">
+              <Button size="sm" onClick={handleAddMaterial} className="h-6 text-[10px] px-2">
                 Adicionar
               </Button>
               <Button 
@@ -187,7 +183,7 @@ const MaterialsSection: React.FC<MaterialsSectionProps> = ({ tarefaId }) => {
                   setIsAdding(false);
                   setNewMaterial({ descricao: '', responsavel: '' });
                 }}
-                className="h-7 text-xs"
+                className="h-6 text-[10px] px-2"
               >
                 Cancelar
               </Button>
@@ -198,14 +194,15 @@ const MaterialsSection: React.FC<MaterialsSectionProps> = ({ tarefaId }) => {
             size="sm"
             variant="outline"
             onClick={() => setIsAdding(true)}
-            className="w-full h-8 text-xs"
+            className="w-full h-6 text-[10px] border-gray-200 hover:bg-gray-50"
           >
             <Plus className="w-3 h-3 mr-1" />
             Adicionar Material
           </Button>
         )}
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 };
 

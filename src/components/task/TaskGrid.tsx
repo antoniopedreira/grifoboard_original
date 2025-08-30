@@ -26,15 +26,16 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 auto-rows-fr">
       {tasks.map(task => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          onTaskUpdate={onTaskUpdate}
-          onTaskDelete={onTaskDelete}
-          onTaskDuplicate={onTaskDuplicate}
-        />
+        <div key={task.id} className="h-full">
+          <TaskCard
+            task={task}
+            onTaskUpdate={onTaskUpdate}
+            onTaskDelete={onTaskDelete}
+            onTaskDuplicate={onTaskDuplicate}
+          />
+        </div>
       ))}
     </div>
   );

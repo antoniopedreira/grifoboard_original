@@ -7,6 +7,7 @@ import TaskHeader from "./task-card/TaskHeader";
 import TaskFooter from "./task-card/TaskFooter";
 import EditTaskDialog from "./task-card/EditTaskDialog";
 import DeleteConfirmDialog from "./task-card/DeleteConfirmDialog";
+import MaterialsSection from "./materials/MaterialsSection";
 import { useTaskStatus } from "./task-card/useTaskStatus";
 import { useTaskActions } from "./task-card/useTaskActions";
 import { useTaskEditForm } from "./task-card/useTaskEditForm";
@@ -75,15 +76,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <>
-      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 h-full border border-gray-100/60 overflow-hidden hover:-translate-y-1">
-        <CardHeader className="pb-2 pt-4 px-4" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100/60 overflow-hidden hover:-translate-y-1 flex flex-col min-h-[520px]">
+        <CardHeader className="pb-3 pt-4 px-4 flex-shrink-0">
           <TaskHeader 
             task={task} 
             onCompletionStatusChange={handleCompletionStatusChange} 
           />
         </CardHeader>
         
-        <CardContent className="px-4 pb-2" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+        <CardContent className="px-4 pb-3 flex-1 flex flex-col">
           <TaskDetails 
             sector={task.sector}
             discipline={task.discipline}
@@ -97,9 +98,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
             task={task}
             onStatusChange={handleStatusChange}
           />
+          
+          {!task.isFullyCompleted && (
+            <div className="mt-3 flex-1">
+              <MaterialsSection tarefaId={task.id} />
+            </div>
+          )}
         </CardContent>
         
-        <CardFooter className="px-4 pt-1 pb-4" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+        <CardFooter className="px-4 pt-2 pb-4 flex-shrink-0">
           <TaskFooter 
             isCompleted={task.isFullyCompleted}
             currentCause={task.causeIfNotDone}

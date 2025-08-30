@@ -23,30 +23,30 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-4 p-3 rounded-lg bg-gray-50/80 border border-gray-100" style={{ overflow: 'hidden' }}>
-      <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Setor</span>
-        <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(sector)}</span>
+    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs mb-3 p-2.5 rounded-lg bg-gray-50/80 border border-gray-100">
+      <div className="flex flex-col min-w-0">
+        <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Setor</span>
+        <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(sector)}</span>
       </div>
-      <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Disciplina</span>
-        <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(discipline)}</span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Disciplina</span>
+        <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(discipline)}</span>
       </div>
-      <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Executante</span>
-        <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(team)}</span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Executante</span>
+        <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(team)}</span>
       </div>
-      <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Responsável</span>
-        <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(responsible)}</span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Responsável</span>
+        <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(responsible)}</span>
       </div>
-      <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Encarregado</span>
-        <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(executor)}</span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Encarregado</span>
+        <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(executor)}</span>
       </div>
-      <div className="flex flex-col" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-        <span className="text-gray-500 font-medium text-[10px] uppercase tracking-wide">Cabo</span>
-        <span className="text-gray-800 font-medium mt-0.5" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>{formatField(cable)}</span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Cabo</span>
+        <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(cable)}</span>
       </div>
     </div>
   );
