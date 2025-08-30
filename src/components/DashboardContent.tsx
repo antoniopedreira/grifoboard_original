@@ -10,6 +10,7 @@ import ExecutorChart from "@/components/dashboard/ExecutorChart";
 import TeamChart from "@/components/dashboard/TeamChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
+import TaskDetailsModal from "@/components/dashboard/TaskDetailsModal";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 
 const DashboardContent = () => {
@@ -36,6 +37,9 @@ const DashboardInner = () => {
   } = useDashboard();
 
   const [weekEndDate, setWeekEndDate] = useState(new Date());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"completed" | "pending">("completed");
+  const [modalTasks, setModalTasks] = useState<any[]>([]);
 
   // Calculate end of week when start date changes
   useEffect(() => {
@@ -82,6 +86,21 @@ const DashboardInner = () => {
     if (pcp >= 85) return "text-success";
     if (pcp >= 70) return "text-warning";
     return "text-destructive";
+  };
+
+  // Handlers for opening modals
+  const handleCompletedTasksClick = () => {
+    const completed = currentWeekTasks.filter(task => task.isFullyCompleted);
+    setModalTasks(completed);
+    setModalType("completed");
+    setModalOpen(true);
+  };
+
+  const handlePendingTasksClick = () => {
+    const pending = currentWeekTasks.filter(task => !task.isFullyCompleted);
+    setModalTasks(pending);
+    setModalType("pending");
+    setModalOpen(true);
   };
 
   if (isLoading) {
@@ -183,7 +202,7 @@ const DashboardInner = () => {
             </div>
           </div>
           
-          <div className="minimal-card p-6 interactive">
+          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform" onClick={handleCompletedTasksClick}>
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5 text-success" />
@@ -202,7 +221,7 @@ const DashboardInner = () => {
             </div>
           </div>
           
-          <div className="minimal-card p-6 interactive">
+          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform" onClick={handlePendingTasksClick}>
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-destructive" />
@@ -263,6 +282,14 @@ const DashboardInner = () => {
           </div>
         </div>
       </div>
+
+      {/* Task Details Modal */}
+      <TaskDetailsModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        tasks={modalTasks}
+        type={modalType}
+      />
     </div>
   );
 };
