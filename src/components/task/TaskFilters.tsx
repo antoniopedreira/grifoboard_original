@@ -15,6 +15,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   const [filterSector, setFilterSector] = useState("all");
   const [filterDiscipline, setFilterDiscipline] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
+  const [filterTeam, setFilterTeam] = useState("all");
   const [filterExecutor, setFilterExecutor] = useState("all");
   
   const [filterStatus, setFilterStatus] = useState("all");
@@ -23,6 +24,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   const sectors = Array.from(new Set(tasks.map(task => task.sector))).filter(Boolean);
   const disciplines = Array.from(new Set(tasks.map(task => task.discipline))).filter(Boolean);
   const responsibles = Array.from(new Set(tasks.map(task => task.responsible))).filter(Boolean);
+  const teams = Array.from(new Set(tasks.map(task => task.team))).filter(Boolean);
   const executors = Array.from(new Set(tasks.map(task => task.executor).filter(Boolean))).filter(Boolean);
   
 
@@ -37,17 +39,18 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
       const matchesSector = filterSector === "all" || task.sector === filterSector;
       const matchesDiscipline = filterDiscipline === "all" || task.discipline === filterDiscipline;
       const matchesResponsible = filterResponsible === "all" || task.responsible === filterResponsible;
+      const matchesTeam = filterTeam === "all" || task.team === filterTeam;
       const matchesExecutor = filterExecutor === "all" || task.executor === filterExecutor;
       
       const matchesStatus = filterStatus === "all" || 
                           (filterStatus === "completed" && task.isFullyCompleted) ||
                           (filterStatus === "not_completed" && !task.isFullyCompleted);
       
-      return matchesSearch && matchesSector && matchesDiscipline && matchesResponsible && matchesExecutor && matchesStatus;
+      return matchesSearch && matchesSector && matchesDiscipline && matchesResponsible && matchesTeam && matchesExecutor && matchesStatus;
     });
 
     onFiltersChange(filteredTasks);
-  }, [searchTerm, filterSector, filterDiscipline, filterResponsible, filterExecutor, filterStatus, tasks, onFiltersChange]);
+  }, [searchTerm, filterSector, filterDiscipline, filterResponsible, filterTeam, filterExecutor, filterStatus, tasks, onFiltersChange]);
 
   // Reset filters when selectedCause changes
   useEffect(() => {
@@ -55,6 +58,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
     setFilterSector("all");
     setFilterDiscipline("all");
     setFilterResponsible("all");
+    setFilterTeam("all");
     setFilterExecutor("all");
     
     setFilterStatus("all");
@@ -62,7 +66,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   
   return (
     <div className="flex flex-wrap gap-4 mb-6">
-      <div className="flex-1 min-w-[200px]">
+      <div className="w-[200px]">
         <div className="text-xs text-gray-500 mb-1">Busca</div>
         <Input
           placeholder="Buscar tarefas..."
@@ -126,6 +130,21 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
             <SelectItem value="all">Todos</SelectItem>
             {responsibles.map(responsible => (
               <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="w-full sm:w-auto">
+        <div className="text-xs text-gray-500 mb-1">Executante</div>
+        <Select value={filterTeam} onValueChange={setFilterTeam}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Executante" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">Todos</SelectItem>
+            {teams.map(team => (
+              <SelectItem key={team} value={team}>{team}</SelectItem>
             ))}
           </SelectContent>
         </Select>
