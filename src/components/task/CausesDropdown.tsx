@@ -21,23 +21,9 @@ interface CausesDropdownProps {
 }
 
 const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentCause }) => {
-  // Function to truncate text and add ellipsis if needed
   const renderCauseText = () => {
     if (!currentCause) return "Causas Padrão";
-    
-    return (
-      <span 
-        className="block w-full"
-        style={{ 
-          overflow: 'hidden', 
-          whiteSpace: 'normal', 
-          wordWrap: 'break-word',
-          maxWidth: '100%'
-        }}
-      >
-        {currentCause}
-      </span>
-    );
+    return currentCause;
   };
 
   return (
@@ -51,18 +37,13 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full h-7 px-3 pr-8 rounded-md flex items-center shadow-sm hover:shadow bg-white"
-                    style={{ 
-                      overflow: 'hidden', 
-                      whiteSpace: 'normal', 
-                      wordWrap: 'break-word' 
-                    }}
+                    className="text-xs text-left justify-between text-gray-700 border-gray-200 w-full h-auto min-h-7 px-3 pr-8 rounded-md flex items-center shadow-sm hover:shadow bg-white whitespace-nowrap overflow-hidden"
                   >
                     {renderCauseText()}
                     <ChevronDown className="h-3 w-3 ml-1 opacity-70 absolute right-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="max-h-[250px] overflow-y-auto bg-white rounded-lg shadow-md border border-gray-200 w-[200px] z-50">
+                <DropdownMenuContent className="max-h-[250px] overflow-y-auto bg-white rounded-lg shadow-md border border-gray-200 w-[280px] z-50">
                   {standardCauses.map(cause => (
                     <DropdownMenuItem 
                       key={cause} 
