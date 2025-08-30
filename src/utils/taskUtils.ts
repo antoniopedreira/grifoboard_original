@@ -1,4 +1,3 @@
-
 import { Task, DayOfWeek, TaskStatus } from "@/types";
 import { Tarefa } from "@/types/supabase";
 
@@ -82,18 +81,24 @@ export const convertTaskStatusToTarefa = (task: Task): Partial<Tarefa> => {
     semana: task.weekStartDate ? formatDateToISO(task.weekStartDate) : undefined
   };
   
-  // Update day status fields
+  // Clear all day fields first
+  const daysMapping: Record<DayOfWeek, string> = {
+    'mon': 'seg',
+    'tue': 'ter',
+    'wed': 'qua',
+    'thu': 'qui',
+    'fri': 'sex',
+    'sat': 'sab',
+    'sun': 'dom'
+  };
+  
+  // Reset all day fields to null initially
+  Object.values(daysMapping).forEach(dbField => {
+    (tarefaToUpdate as any)[dbField] = null;
+  });
+  
+  // Update day status fields based on dailyStatus
   if (task.dailyStatus && task.dailyStatus.length > 0) {
-    const daysMapping: Record<DayOfWeek, string> = {
-      'mon': 'seg',
-      'tue': 'ter',
-      'wed': 'qua',
-      'thu': 'qui',
-      'fri': 'sex',
-      'sat': 'sab',
-      'sun': 'dom'
-    };
-    
     task.dailyStatus.forEach(dailyStatus => {
       const dbField = daysMapping[dailyStatus.day];
       if (dbField) {
@@ -109,6 +114,14 @@ export const convertTaskStatusToTarefa = (task: Task): Partial<Tarefa> => {
         
         // Type assertion to handle dynamic field assignments
         (tarefaToUpdate as any)[dbField] = status;
+      }
+    });
+  } else if (task.plannedDays && task.plannedDays.length > 0) {
+    // Fallback: if no dailyStatus but plannedDays exist, set them as "Planejada"
+    task.plannedDays.forEach(plannedDay => {
+      const dbField = daysMapping[plannedDay];
+      if (dbField) {
+        (tarefaToUpdate as any)[dbField] = 'Planejada';
       }
     });
   }
