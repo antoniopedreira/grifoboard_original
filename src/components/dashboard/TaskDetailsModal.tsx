@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, AlertCircle, User, Users, Wrench, Cable } from "lucide-react";
+import MaterialsSection from "@/components/materials/MaterialsSection";
 
 interface TaskDetailsModalProps {
   isOpen: boolean;
@@ -124,6 +125,10 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         </div>
                       )}
                     </div>
+                    
+                    {!isCompleted && (
+                      <MaterialsSection tarefaId={task.id} />
+                    )}
                   </div>
                   
                   {index < tasks.length - 1 && <Separator className="my-4" />}
