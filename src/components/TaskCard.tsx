@@ -76,7 +76,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <>
-      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100/60 overflow-hidden hover:-translate-y-1 flex flex-col min-h-[520px]">
+      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100/60 overflow-hidden hover:-translate-y-1 flex flex-col">
         <CardHeader className="pb-3 pt-4 px-4 flex-shrink-0">
           <TaskHeader 
             task={task} 
@@ -100,13 +100,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
           />
           
           {!task.isFullyCompleted && (
-            <div className="mt-3 flex-1">
-              <MaterialsSection tarefaId={task.id} />
-            </div>
+            <MaterialsSection tarefaId={task.id} />
           )}
         </CardContent>
         
-        <CardFooter className="px-4 pt-2 pb-4 flex-shrink-0">
+        <CardFooter className="px-4 pt-2 pb-4 flex-shrink-0 mt-auto">
           <TaskFooter 
             isCompleted={task.isFullyCompleted}
             currentCause={task.causeIfNotDone}
