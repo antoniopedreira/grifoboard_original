@@ -4,9 +4,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Obra } from "@/types/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useRegistry } from "@/context/RegistryContext";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import MainPageContent from "@/components/MainPageContent";
 import DashboardContent from "@/components/DashboardContent";
 import ChecklistContent from "@/components/ChecklistContent";
+import SessionMonitor from "@/components/SessionMonitor";
+import SessionConflictDetector from "@/components/auth/SessionConflictDetector";
+import SessionDebugInfo from "@/components/auth/SessionDebugInfo";
 
 interface IndexProps {
   onObraSelect: (obra: Obra) => void;
@@ -18,6 +22,12 @@ const Index = ({ onObraSelect }: IndexProps) => {
   const location = useLocation();
   const { setSelectedObraId } = useRegistry();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  
+  // Enable session timeout management
+  useSessionTimeout({ 
+    timeoutMinutes: 30, // 30 minutes of inactivity
+    warningMinutes: 5   // Show warning 5 minutes before expiry
+  });
   
   // Determine which content to render based on the current route
   const isDashboard = location.pathname === "/dashboard";
@@ -60,11 +70,32 @@ const Index = ({ onObraSelect }: IndexProps) => {
 
   // Render the appropriate content based on the current route
   if (isDashboard) {
-    return <DashboardContent />;
+    return (
+      <>
+        <SessionMonitor />
+        <SessionConflictDetector />
+        <SessionDebugInfo />
+        <DashboardContent />
+      </>
+    );
   } else if (isChecklist) {
-    return <ChecklistContent />;
+    return (
+      <>
+        <SessionMonitor />
+        <SessionConflictDetector />
+        <SessionDebugInfo />
+        <ChecklistContent />
+      </>
+    );
   } else {
-    return <MainPageContent />;
+    return (
+      <>
+        <SessionMonitor />
+        <SessionConflictDetector />
+        <SessionDebugInfo />
+        <MainPageContent />
+      </>
+    );
   }
 };
 
