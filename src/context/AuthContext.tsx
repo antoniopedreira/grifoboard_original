@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Obra, UserSession } from '@/types/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { User, Session } from '@supabase/supabase-js';
@@ -212,14 +212,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setObraAtiva = (obra: Obra | null) => {
-    setUserSession(prev => prev ? { ...prev, obraAtiva: obra } : { user: null, obraAtiva: null });
+    console.log("🏗️ Setting active obra:", obra?.id, obra?.nome_obra);
     
-    // Save active obra in localStorage for persistence
-    if (userSession.user && obra) {
-      localStorage.setItem(`obraAtiva_${userSession.user.id}`, JSON.stringify(obra));
-    } else if (userSession.user) {
-      localStorage.removeItem(`obraAtiva_${userSession.user.id}`);
-    }
+    setUserSession(prev => {
+      const newSession = prev ? { ...prev, obraAtiva: obra } : { user: null, obraAtiva: null };
+      
+      // Save active obra in localStorage for persistence
+      if (prev?.user && obra) {
+        localStorage.setItem(`obraAtiva_${prev.user.id}`, JSON.stringify(obra));
+        console.log("💾 Saved obra to localStorage for user:", prev.user.id);
+      } else if (prev?.user) {
+        localStorage.removeItem(`obraAtiva_${prev.user.id}`);
+        console.log("🗑️ Removed obra from localStorage for user:", prev.user.id);
+      }
+      
+      return newSession;
+    });
   };
 
   const value = {

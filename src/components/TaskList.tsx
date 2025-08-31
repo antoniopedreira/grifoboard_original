@@ -34,13 +34,12 @@ const TaskList: React.FC<TaskListProps> = ({
     onTaskUpdate(updatedTask);
     
     // Show a toast notification when a task is updated
-    if (updatedTask.isFullyCompleted) {
-      toast({
-        title: "Tarefa concluída",
-        description: updatedTask.description,
-        variant: "success" // Now we can use "success" with the new variant definition
-      });
-    }
+      if (updatedTask.isFullyCompleted) {
+        toast({
+          title: "Tarefa concluída",
+          description: updatedTask.description,
+        });
+      }
   };
 
   useEffect(() => {

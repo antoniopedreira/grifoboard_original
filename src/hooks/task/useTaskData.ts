@@ -28,19 +28,25 @@ export const useTaskData = (
     setFilteredTasks: React.Dispatch<React.SetStateAction<Task[]>>,
     callback?: () => void
   ) => {
-    if (!session.obraAtiva) return;
+    if (!session.obraAtiva) {
+      console.log("⚠️ No active obra, skipping task load");
+      return;
+    }
     
     setIsLoading(true);
     try {
-      console.log("Loading tasks for obra:", session.obraAtiva.id);
+      console.log("🔍 Loading tasks for obra:", session.obraAtiva.id, "for week:", weekStartDate.toDateString());
       const tarefas = await tarefasService.listarTarefas(session.obraAtiva.id);
-      console.log("Tasks loaded:", tarefas);
       
       const convertedTasks = tarefas.map(convertTarefaToTask);
+      console.log("📝 Converted tasks:", convertedTasks.length, "total tasks");
+      
       setTasks(convertedTasks);
       
       // Filter tasks for the current week
       const weekFilteredTasks = filterTasksByWeek(convertedTasks, weekStartDate);
+      console.log("📅 Week filtered tasks:", weekFilteredTasks.length, "tasks for this week");
+      
       setFilteredTasks(weekFilteredTasks);
       
       // Calcular dados do PCP para o gráfico semanal com as tarefas filtradas
@@ -49,7 +55,7 @@ export const useTaskData = (
       // Execute callback if provided
       if (callback) callback();
     } catch (error: any) {
-      console.error("Error loading tasks:", error);
+      console.error("❌ Error loading tasks:", error);
       toast({
         title: "Erro ao carregar tarefas",
         description: error.message,

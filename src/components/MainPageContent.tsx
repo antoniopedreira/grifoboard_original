@@ -61,13 +61,17 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   };
   
   const navigateToPreviousWeek = () => {
+    console.log("◀️ Navigating to previous week from:", weekStartDate.toDateString());
     const { start } = getPreviousWeekDates(weekStartDate);
+    console.log("📅 New week start date:", start.toDateString());
     setWeekStartDate(start);
     setSelectedCause(null); // Clear filter when changing week
   };
   
   const navigateToNextWeek = () => {
+    console.log("▶️ Navigating to next week from:", weekStartDate.toDateString());
     const { start } = getNextWeekDates(weekStartDate);
+    console.log("📅 New week start date:", start.toDateString());
     setWeekStartDate(start);
     setSelectedCause(null); // Clear filter when changing week
   };

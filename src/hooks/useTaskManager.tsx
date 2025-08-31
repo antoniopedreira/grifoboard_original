@@ -22,6 +22,7 @@ export const useTaskManager = (weekStartDate: Date) => {
   
   // Função para calcular dados do PCP com base nas tarefas
   const calculatePCPData = useCallback((tasksList: Task[]) => {
+    console.log("📊 Calculating PCP data for", tasksList.length, "tasks");
     const pcpData = calculatePCP(tasksList);
     setWeeklyPCPData([pcpData]);
     return pcpData;
@@ -44,18 +45,27 @@ export const useTaskManager = (weekStartDate: Date) => {
     session
   });
   
-  // Carregar tarefas quando a obra ativa mudar ou a data da semana mudar
+  // Carregar tarefas quando a obra ativa mudar
   useEffect(() => {
     if (session.obraAtiva) {
+      console.log("🔄 Loading tasks due to obra change:", session.obraAtiva.id);
       loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks);
+    } else {
+      console.log("⚠️ No active obra, clearing tasks");
+      setTasks([]);
+      setFilteredTasks([]);
     }
-  }, [session.obraAtiva, weekStartDate, loadTasks, calculatePCPData, filterTasksByWeek, setFilteredTasks]);
+  }, [session.obraAtiva, loadTasks]);
 
   // Quando a semana muda, atualizar a lista filtrada
   useEffect(() => {
-    setFilteredTasks(filterTasksByWeek(tasks, weekStartDate));
-    // Recalculate PCP data for the filtered tasks
-    calculatePCPData(filterTasksByWeek(tasks, weekStartDate));
+    if (tasks.length > 0) {
+      console.log("📅 Week changed, refiltering tasks for:", weekStartDate.toDateString());
+      const filteredTasks = filterTasksByWeek(tasks, weekStartDate);
+      setFilteredTasks(filteredTasks);
+      // Recalculate PCP data for the filtered tasks
+      calculatePCPData(filteredTasks);
+    }
   }, [weekStartDate, tasks, filterTasksByWeek, calculatePCPData, setFilteredTasks]);
 
   // Calcular PCP atual baseado nas tarefas filtradas da semana
