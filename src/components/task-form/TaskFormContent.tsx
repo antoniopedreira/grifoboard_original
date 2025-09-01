@@ -59,7 +59,6 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
       team,
       responsible,
       executor,
-      cable: "",
       plannedDays,
       weekStartDate,
     });

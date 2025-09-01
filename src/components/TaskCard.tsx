@@ -91,7 +91,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
             team={task.team}
             responsible={task.responsible}
             executor={task.executor || "Não definido"}
-            cable={task.cable || "Não definido"}
           />
           
           <TaskStatusDisplay 

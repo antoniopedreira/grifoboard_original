@@ -12,7 +12,6 @@ export const useTaskEditForm = (task: Task) => {
       team: task.team,
       responsible: task.responsible,
       executor: task.executor || "",
-      cable: "",
       plannedDays: task.plannedDays,
       causeIfNotDone: task.causeIfNotDone,
       weekStartDate: task.weekStartDate,

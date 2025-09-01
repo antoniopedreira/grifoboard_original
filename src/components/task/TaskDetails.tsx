@@ -7,7 +7,6 @@ interface TaskDetailsProps {
   team: string;
   responsible: string;
   executor: string;
-  cable: string;
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
@@ -15,8 +14,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   discipline,
   team,
   responsible,
-  executor,
-  cable
+  executor
 }) => {
   const formatField = (value: string) => {
     return value && value.trim() !== "" ? value : "Não definido";
@@ -40,13 +38,9 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Responsável</span>
         <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(responsible)}</span>
       </div>
-      <div className="flex flex-col min-w-0">
+      <div className="flex flex-col min-w-0 col-span-2">
         <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Encarregado</span>
         <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(executor)}</span>
-      </div>
-      <div className="flex flex-col min-w-0">
-        <span className="text-gray-500 font-medium text-[9px] uppercase tracking-wide">Cabo</span>
-        <span className="text-gray-800 font-medium mt-0.5 text-[11px] line-clamp-1">{formatField(cable)}</span>
       </div>
     </div>
   );
