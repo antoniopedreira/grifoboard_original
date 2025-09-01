@@ -52,7 +52,6 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
         const obrasData = await obrasService.listarObras();
         setObras(obrasData);
       } catch (error: any) {
-        console.error('Error fetching obras:', error);
         toast({
           title: 'Erro ao buscar obras',
           description: error.message || "Ocorreu um erro ao buscar as obras.",
@@ -82,7 +81,6 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
       // Navigate to dashboard after obra selection
       navigate("/dashboard");
     } catch (error: any) {
-      console.error('Error selecting obra:', error);
       toast({
         title: 'Erro ao selecionar obra',
         description: error.message || "Ocorreu um erro ao selecionar a obra.",
@@ -112,7 +110,6 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
         description: "A obra foi excluída com sucesso!",
       });
     } catch (error: any) {
-      console.error('Error deleting obra:', error);
       toast({
         title: 'Erro ao excluir obra',
         description: error.message || "Ocorreu um erro ao excluir a obra.",
@@ -132,7 +129,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
       const obrasData = await obrasService.listarObras();
       setObras(obrasData);
     } catch (error) {
-      console.error('Error refreshing obras list:', error);
+      // Silently handle error - not critical for UX
     }
   };
 
@@ -149,7 +146,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
         }
       }
     } catch (error) {
-      console.error('Error refreshing obras list:', error);
+      // Silently handle error - not critical for UX
     }
   };
 

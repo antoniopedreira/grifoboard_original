@@ -17,7 +17,6 @@ export const registrosService = {
       .eq('obra_id', obra_id);
     
     if (error) {
-      console.error("Error listing registros:", error);
       throw error;
     }
     return data || [];
@@ -33,8 +32,6 @@ export const registrosService = {
     if (error) {
       // If it's a unique violation error (duplicate), we can ignore it
       if (error.code === '23505') {
-        console.log("Registry already exists:", registro);
-        
         // Try to fetch the existing record
         const { data: existingData } = await supabase
           .from('registros')
@@ -47,15 +44,12 @@ export const registrosService = {
         if (existingData) return existingData;
       }
       
-      console.error("Error creating registro:", error);
       throw error;
     }
     return data;
   },
 
   async excluirRegistro(obra_id: string, tipo: string, valor: string): Promise<void> {
-    console.log(`Excluindo registro: obra_id=${obra_id}, tipo=${tipo}, valor=${valor}`);
-    
     const { error } = await supabase
       .from('registros')
       .delete()
@@ -64,10 +58,7 @@ export const registrosService = {
       .eq('valor', valor);
     
     if (error) {
-      console.error("Error deleting registro:", error);
       throw error;
     }
-    
-    console.log("Registro excluído com sucesso");
   }
 };

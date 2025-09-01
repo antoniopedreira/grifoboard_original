@@ -1,5 +1,4 @@
 
-import React from "react";
 import { TooltipProps } from "recharts";
 
 // Using the recharts TooltipProps type to ensure compatibility

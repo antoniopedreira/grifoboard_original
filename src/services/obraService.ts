@@ -10,7 +10,6 @@ export const obrasService = {
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error("Error listing obras:", error);
       throw error;
     }
     return data || [];
@@ -35,7 +34,6 @@ export const obrasService = {
       .single();
     
     if (error) {
-      console.error("Error creating obra:", error);
       throw error;
     }
     return data;
@@ -50,7 +48,6 @@ export const obrasService = {
       .single();
     
     if (error) {
-      console.error("Error updating obra:", error);
       throw error;
     }
     return data;
@@ -63,7 +60,6 @@ export const obrasService = {
       .eq('id', id);
     
     if (error) {
-      console.error("Error deleting obra:", error);
       throw error;
     }
   }

@@ -1,4 +1,4 @@
-import React from "react";
+import { createElement } from "react";
 import { Task } from "@/types";
 import {
   Dialog,
@@ -36,7 +36,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            {React.createElement(icon, { className: `w-5 h-5 ${iconColor}` })}
+            {createElement(icon, { className: `w-5 h-5 ${iconColor}` })}
             <span>{title}</span>
             <Badge variant={badgeVariant} className="ml-2">
               {tasks.length}

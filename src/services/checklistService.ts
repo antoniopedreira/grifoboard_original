@@ -11,7 +11,6 @@ export const checklistService = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching checklist activities:', error);
       throw new Error(`Erro ao carregar atividades: ${error.message}`);
     }
 
@@ -26,7 +25,6 @@ export const checklistService = {
       .single();
 
     if (error) {
-      console.error('Error creating checklist activity:', error);
       throw new Error(`Erro ao criar atividade: ${error.message}`);
     }
 
@@ -42,7 +40,6 @@ export const checklistService = {
       .single();
 
     if (error) {
-      console.error('Error updating checklist activity:', error);
       throw new Error(`Erro ao atualizar atividade: ${error.message}`);
     }
 
@@ -56,7 +53,6 @@ export const checklistService = {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting checklist activity:', error);
       throw new Error(`Erro ao excluir atividade: ${error.message}`);
     }
   }

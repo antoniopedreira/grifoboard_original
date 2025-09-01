@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { 
   BarChart, 
   Bar, 
@@ -46,7 +46,6 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
         .order('semana', { ascending: true });
       
       if (error) {
-        console.error("Erro ao buscar dados de execução:", error);
         setIsLoading(false);
         return;
       }
@@ -86,7 +85,6 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
       
       setIsLoading(false);
     } catch (err) {
-      console.error("Erro ao processar dados de execução:", err);
       setIsLoading(false);
     }
   };

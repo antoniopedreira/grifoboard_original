@@ -23,9 +23,16 @@ export const useTaskManager = (weekStartDate: Date) => {
   // Função para calcular dados do PCP com base nas tarefas
   const calculatePCPData = useCallback((tasksList: Task[]) => {
     const pcpData = calculatePCP(tasksList);
-    setWeeklyPCPData([pcpData]);
+    // Convert PCPBreakdown to WeeklyPCPData format for compatibility
+    const weeklyData: WeeklyPCPData = {
+      week: `Semana ${Math.ceil((new Date().getTime() - weekStartDate.getTime()) / (7 * 24 * 60 * 60 * 1000))}`,
+      percentage: pcpData.overall.percentage,
+      date: weekStartDate,
+      isCurrentWeek: true
+    };
+    setWeeklyPCPData([weeklyData]);
     return pcpData;
-  }, []);
+  }, [weekStartDate]);
   
   // Task actions with dependencies injected
   const { 

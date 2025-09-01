@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { 
   BarChart, 
   Bar, 
@@ -45,7 +45,6 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = () => {
         .order('semana', { ascending: true });
       
       if (error) {
-        console.error("Erro ao buscar dados de execução:", error);
         setIsLoading(false);
         return;
       }
@@ -85,7 +84,6 @@ const PerformanceTrendChart: React.FC<PerformanceTrendChartProps> = () => {
       
       setIsLoading(false);
     } catch (err) {
-      console.error("Erro ao processar dados de execução:", err);
       setIsLoading(false);
     }
   };

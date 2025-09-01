@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedSessionId = localStorage.getItem('current_session_id');
     
     if (storedSessionId && storedSessionId !== currentSessionId) {
-      console.warn('⚠️ Multiple sessions detected. Proceeding without auto-logout.');
       toast({
         title: "Outra sessão detectada",
         description: "Você está conectado em mais de um local. Continue com cuidado.",
@@ -93,8 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Set up auth state listener with better error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 Auth state change:', event, session?.user?.id);
-        
         try {
           if (session && session.user) {
             // Generate or get session ID
@@ -116,7 +113,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           } else {
             // Clear session on logout
-            console.log('🔓 Clearing session');
             setUserSession({ user: null, obraAtiva: null });
             setSessionId(null);
             
@@ -138,7 +134,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         } catch (error) {
-          console.error('❌ Error in auth state change:', error);
           // On error, force logout to prevent corrupted state
           setUserSession({ user: null, obraAtiva: null });
           setSessionId(null);
@@ -151,10 +146,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.error('❌ Error getting session:', error);
         if (error.message.includes('refresh_token_not_found') || 
             error.message.includes('Invalid Refresh Token')) {
-          console.log('🔄 Invalid refresh token, clearing session');
           localStorage.clear(); // Clear all localStorage on token errors
           setUserSession({ user: null, obraAtiva: null });
         }
@@ -228,7 +221,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
     } catch (error: any) {
-      console.error('❌ Login error:', error);
       toast({
         title: "Erro no login",
         description: error.message,
@@ -309,8 +301,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      console.log('🔓 Signing out user');
-      
       // Clear local session state first
       const currentUserId = userSession.user?.id;
       setUserSession({ user: null, obraAtiva: null });
@@ -342,7 +332,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
     } catch (error: any) {
-      console.error('❌ Logout error:', error);
       // Even if logout fails on server, clear local state
       setUserSession({ user: null, obraAtiva: null });
       setSessionId(null);
@@ -357,19 +346,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const setObraAtiva = (obra: Obra | null) => {
-    console.log("🏗️ Setting active obra:", obra?.id, obra?.nome_obra);
-    
+  const setObraAtiva = (obra: Obra | null) => {    
     setUserSession(prev => {
       const newSession = prev ? { ...prev, obraAtiva: obra } : { user: null, obraAtiva: null };
       
       // Save active obra in localStorage for persistence
       if (prev?.user && obra) {
         localStorage.setItem(`obraAtiva_${prev.user.id}`, JSON.stringify(obra));
-        console.log("💾 Saved obra to localStorage for user:", prev.user.id);
       } else if (prev?.user) {
         localStorage.removeItem(`obraAtiva_${prev.user.id}`);
-        console.log("🗑️ Removed obra from localStorage for user:", prev.user.id);
       }
       
       return newSession;

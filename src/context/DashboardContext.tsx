@@ -79,8 +79,8 @@ export const DashboardProvider = ({ children, initialWeekStartDate }: DashboardP
       // Use the loadTasks method but with a broader date range to get more data at once
       loadTasks(
         startRange, // Use start range instead of specific week
-        () => {}, // No need for PCP calculation callback here
-        () => allTasks, // Return all tasks instead of filtering
+        (tasks: Task[]) => calculatePCP(tasks), // PCP calculation callback
+        (tasks: Task[], startDate: Date) => tasks, // Return all tasks instead of filtering
         () => {}, // No filtered tasks setter needed
         () => setIsLoading(false) // Set loading false when done
       );
