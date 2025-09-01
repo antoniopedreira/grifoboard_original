@@ -122,7 +122,6 @@ export const useTaskActions = ({
         item: newTaskData.item,
         descricao: newTaskData.description,
         disciplina: newTaskData.discipline,
-        equipe: newTaskData.team,
         executante: newTaskData.team,
         responsavel: newTaskData.responsible,
         encarregado: newTaskData.executor,

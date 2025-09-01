@@ -16,10 +16,9 @@ export interface Tarefa {
   item: string;
   descricao: string;
   disciplina: string;
-  equipe: string;
   executante: string;
   responsavel: string;
-  encarregado?: string;
+  encarregado: string;
   cabo: string;
   semana: string;
   seg: string;

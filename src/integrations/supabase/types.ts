@@ -153,7 +153,7 @@ export type Database = {
           descricao: string
           disciplina: string
           dom: string | null
-          equipe: string
+          encarregado: string
           executante: string
           id: string
           item: string
@@ -176,7 +176,7 @@ export type Database = {
           descricao: string
           disciplina: string
           dom?: string | null
-          equipe: string
+          encarregado: string
           executante: string
           id?: string
           item: string
@@ -199,7 +199,7 @@ export type Database = {
           descricao?: string
           disciplina?: string
           dom?: string | null
-          equipe?: string
+          encarregado?: string
           executante?: string
           id?: string
           item?: string
