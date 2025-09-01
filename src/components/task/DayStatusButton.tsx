@@ -48,9 +48,9 @@ const DayStatusButton: React.FC<DayStatusButtonProps> = ({ day, status, isPlanne
       className={`h-7 w-7 rounded-md ${statusColorMap[status]} flex items-center justify-center ${statusTextMap[status]} transition-all duration-150 shadow-sm hover:shadow border`}
       aria-label={`Status para ${day}: ${status}`}
     >
-      {status === "completed" && <Check className="w-4 h-4" />}
+      {status === "completed" && <span className="text-xs font-bold">✓</span>}
       {status === "not_done" && <span className="text-xs font-bold">X</span>}
-      {status === "planned" && <span className="text-xs font-bold">?</span>}
+      {status === "planned" && <span className="text-xs font-bold">●</span>}
     </button>
   );
 };

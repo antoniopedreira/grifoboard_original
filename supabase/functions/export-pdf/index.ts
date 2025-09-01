@@ -39,9 +39,9 @@ function getStatusSymbol(status: string | null): string {
   
   const normalizedStatus = status.toLowerCase().trim();
   
-  if (normalizedStatus === 'executada') return '●';
+  if (normalizedStatus === 'executada') return '✓';
   if (normalizedStatus === 'não feita' || normalizedStatus === 'nao feita') return '×';
-  return '✓'; // Default for 'Planejada' or any other value
+  return '●'; // Default for 'Planejada' or any other value
 }
 
 function sortSetores(setores: string[]): string[] {
@@ -233,7 +233,7 @@ function generateHtmlContent(
   ${sectionsHtml}
   
   <div class="legend">
-    <strong>Legenda:</strong> ✓ Planejada | ● Executada | × Não Feita
+    <strong>Legenda:</strong> ● Planejada | ✓ Executada | × Não Feita
   </div>
 </body>
 </html>
