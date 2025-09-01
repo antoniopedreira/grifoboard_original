@@ -167,7 +167,7 @@ function generateHtmlContent(
   <style>
     @page {
       size: A4;
-      margin: 14mm 12mm 16mm 12mm;
+      margin: 14mm 22mm 16mm 22mm;
     }
     
     body {
