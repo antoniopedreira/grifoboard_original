@@ -96,11 +96,7 @@ const SessionMonitor = () => {
   if (!userSession.user || !sessionInfo) return null;
   return <div className="space-y-2">
       {/* Session Status Indicator (always visible for logged users) */}
-      <div className="flex items-center text-xs text-gray-500 px-2">
-        {getSessionStatusIcon()}
-        
-        {sessionInfo.lastActivity}
-      </div>
+      
 
       {/* Session Alerts */}
       {showSessionAlert && sessionStatus === 'expired' && <Alert variant="destructive" className="mb-4">
