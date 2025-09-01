@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Building2, LogOut } from "lucide-react";
 const Header = () => {
   const {
@@ -9,8 +9,6 @@ const Header = () => {
     setObraAtiva
   } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const isTasksPage = location.pathname === "/tarefas";
   const handleMudarObra = () => {
     setObraAtiva(null);
     navigate("/obras");
@@ -29,7 +27,7 @@ const Header = () => {
           </div>
 
           {userSession.user && <div className="flex items-center space-x-3">
-              {userSession.obraAtiva && isTasksPage && <div className="hidden md:flex items-center bg-muted/50 rounded-lg px-3 py-2">
+              {userSession.obraAtiva && <div className="hidden md:flex items-center bg-muted/50 rounded-lg px-3 py-2">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-2">
                       <Building2 className="w-4 h-4 text-primary" />
