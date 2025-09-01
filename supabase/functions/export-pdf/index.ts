@@ -33,7 +33,7 @@ function getStatusSymbol(status: string | null): string {
   const s = status.toLowerCase().trim();
   if (s === "executada") return "✓";
   if (s === "não feita" || s === "nao feita") return "×";
-  return "●"; // Planejada/qualquer outro
+  return "●";
 }
 
 function sortSetores(setores: string[]): string[] {
@@ -51,7 +51,6 @@ function sortSetores(setores: string[]): string[] {
   });
 }
 
-/** HTML com layout alinhado (colgroup em %) e margem lateral pequena */
 function generateHtmlContent(
   tasks: TaskData[],
   obraNome: string,
@@ -60,9 +59,7 @@ function generateHtmlContent(
 ): string {
   // Agrupa por setor
   const grouped: GroupedTasks = {};
-  for (const t of tasks) {
-    (grouped[t.setor] ||= []).push(t);
-  }
+  for (const t of tasks) (grouped[t.setor] ||= []).push(t);
   const setores = sortSetores(Object.keys(grouped));
 
   // Tabelas por setor
@@ -73,7 +70,6 @@ function generateHtmlContent(
     for (const setor of setores) {
       const rows = grouped[setor];
 
-      // Linhas
       const body = rows.map(r => `
         <tr>
           <td class="text">${r.descricao ?? ""}</td>
@@ -134,13 +130,13 @@ function generateHtmlContent(
   <meta charset="utf-8" />
   <title>Relatório Semanal de Atividades</title>
   <style>
-    /* Margem pequena dos lados, como solicitado */
-    @page { size: A4; margin: 14mm 14mm 16mm 14mm; } /* top right bottom left */
+    /* MARGEM PEQUENA DOS LADOS + GUTTER INTERNO */
+    @page { size: A4; margin: 14mm 18mm 16mm 18mm; } /* top right bottom left */
+    .page { padding: 0 6mm; } /* respiro interno adicional nas laterais */
 
     * { box-sizing: border-box; }
     body { margin:0; color:#111; font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
 
-    /* Sem “container” estreito: usa a largura total da página menos a margem */
     .header { text-align:center; margin-bottom:16px; }
     .header h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
     .meta { color:#666; font-size:12px; margin:4px 0 12px; }
@@ -157,29 +153,29 @@ function generateHtmlContent(
     th { background:#fafafa; font-weight:600; }
     tbody tr:nth-child(even) td { background:#fbfcfe; }
 
-    /* Alinhamento e quebras */
     .center { text-align:center; }
     .nowrap { white-space:nowrap; }
-    .text { word-break: break-word; overflow-wrap:anywhere; } /* quebra só no conteúdo */
-    thead th { word-break: keep-all; } /* evita “quebrar por letra” nos títulos */
+    .text { word-break: break-word; overflow-wrap:anywhere; }
+    thead th { word-break: keep-all; }
     .day { text-align:center; }
 
-    /* Altura mínima p/ linhas mais compactas */
     td, th { line-height: 1.25; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
-    <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
-    <div class="meta" style="font-size:11px;">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
-    <hr />
-  </div>
+  <div class="page">
+    <div class="header">
+      <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
+      <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
+      <div class="meta" style="font-size:11px;">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
+      <hr />
+    </div>
 
-  ${sections}
+    ${sections}
 
-  <div class="meta" style="text-align:center; border-top:1px solid #e5e7eb; padding-top:12px;">
-    <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
+    <div class="meta" style="text-align:center; border-top:1px solid #e5e7eb; padding-top:12px;">
+      <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
+    </div>
   </div>
 </body>
 </html>`;
@@ -232,7 +228,7 @@ serve(async (req) => {
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-    // HTML alinhado
+    // HTML alinhado com margem pequena + gutter
     const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate);
 
     const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.html`;
