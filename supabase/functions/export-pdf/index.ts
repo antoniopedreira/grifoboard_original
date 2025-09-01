@@ -34,6 +34,12 @@ function formatDateRange(startDate: Date, endDate: Date): string {
   return `${formatDate(startDate)} a ${formatDate(endDate)}`;
 }
 
+function formatDayDate(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  return `${day}/${month}`;
+}
+
 function getStatusSymbol(status: string | null): string {
   if (!status || status.trim() === '') return '';
   
@@ -90,6 +96,21 @@ function generateHtmlContent(
   // Gerar conteúdo HTML
   let sectionsHtml = '';
   
+  // Calcular as datas dos dias da semana
+  const mondayDate = new Date(weekStart);
+  const tuesdayDate = new Date(weekStart);
+  tuesdayDate.setDate(tuesdayDate.getDate() + 1);
+  const wednesdayDate = new Date(weekStart);
+  wednesdayDate.setDate(wednesdayDate.getDate() + 2);
+  const thursdayDate = new Date(weekStart);
+  thursdayDate.setDate(thursdayDate.getDate() + 3);
+  const fridayDate = new Date(weekStart);
+  fridayDate.setDate(fridayDate.getDate() + 4);
+  const saturdayDate = new Date(weekStart);
+  saturdayDate.setDate(saturdayDate.getDate() + 5);
+  const sundayDate = new Date(weekStart);
+  sundayDate.setDate(sundayDate.getDate() + 6);
+  
   if (setores.length === 0) {
     sectionsHtml = `
       <div style="text-align: center; padding: 40px; color: #666; font-style: italic;">
@@ -111,21 +132,35 @@ function generateHtmlContent(
             </span>
           </div>
           
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-            <thead style="display: table-header-group;">
+          <table>
+            <colgroup>
+              <col><!-- Atividade: 50mm -->
+              <col><!-- Disciplina: 20mm -->
+              <col><!-- Executante: 20mm -->
+              <col><!-- Responsável: 20mm -->
+              <col><!-- Encarregado: 20mm -->
+              <col><!-- Seg: 5.7mm -->
+              <col><!-- Ter: 5.7mm -->
+              <col><!-- Qua: 5.7mm -->
+              <col><!-- Qui: 5.7mm -->
+              <col><!-- Sex: 5.7mm -->
+              <col><!-- Sab: 5.7mm -->
+              <col><!-- Dom: 5.7mm -->
+            </colgroup>
+            <thead>
               <tr style="background: #fafafa; border-bottom: 1px solid #e5e7eb;">
                 <th style="padding: 8px 6px; text-align: left; font-weight: bold; border: 1px solid #e5e7eb;">Atividade</th>
                 <th style="padding: 8px 6px; text-align: left; font-weight: bold; border: 1px solid #e5e7eb;">Disciplina</th>
                 <th style="padding: 8px 6px; text-align: left; font-weight: bold; border: 1px solid #e5e7eb;">Executante</th>
                 <th style="padding: 8px 6px; text-align: left; font-weight: bold; border: 1px solid #e5e7eb;">Responsável</th>
                 <th style="padding: 8px 6px; text-align: left; font-weight: bold; border: 1px solid #e5e7eb;">Encarregado</th>
-                <th style="padding: 8px 4px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb; width: 30px;">Seg</th>
-                <th style="padding: 8px 4px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb; width: 30px;">Ter</th>
-                <th style="padding: 8px 4px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb; width: 30px;">Qua</th>
-                <th style="padding: 8px 4px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb; width: 30px;">Qui</th>
-                <th style="padding: 8px 4px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb; width: 30px;">Sex</th>
-                <th style="padding: 8px 4px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb; width: 30px;">Sáb</th>
-                <th style="padding: 8px 4px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb; width: 30px;">Dom</th>
+                <th class="day-header" style="padding: 4px 2px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb;">Seg<br><small>${formatDayDate(mondayDate)}</small></th>
+                <th class="day-header" style="padding: 4px 2px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb;">Ter<br><small>${formatDayDate(tuesdayDate)}</small></th>
+                <th class="day-header" style="padding: 4px 2px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb;">Qua<br><small>${formatDayDate(wednesdayDate)}</small></th>
+                <th class="day-header" style="padding: 4px 2px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb;">Qui<br><small>${formatDayDate(thursdayDate)}</small></th>
+                <th class="day-header" style="padding: 4px 2px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb;">Sex<br><small>${formatDayDate(fridayDate)}</small></th>
+                <th class="day-header" style="padding: 4px 2px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb;">Sáb<br><small>${formatDayDate(saturdayDate)}</small></th>
+                <th class="day-header" style="padding: 4px 2px; text-align: center; font-weight: bold; border: 1px solid #e5e7eb;">Dom<br><small>${formatDayDate(sundayDate)}</small></th>
               </tr>
             </thead>
             <tbody>
@@ -139,13 +174,13 @@ function generateHtmlContent(
             <td style="padding: 8px 6px; border: 1px solid #e5e7eb; vertical-align: top;">${task.executante}</td>
             <td style="padding: 8px 6px; border: 1px solid #e5e7eb; vertical-align: top;">${task.responsavel}</td>
             <td style="padding: 8px 6px; border: 1px solid #e5e7eb; vertical-align: top;">${task.encarregado}</td>
-            <td style="padding: 8px 4px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">${getStatusSymbol(task.seg)}</td>
-            <td style="padding: 8px 4px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">${getStatusSymbol(task.ter)}</td>
-            <td style="padding: 8px 4px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">${getStatusSymbol(task.qua)}</td>
-            <td style="padding: 8px 4px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">${getStatusSymbol(task.qui)}</td>
-            <td style="padding: 8px 4px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">${getStatusSymbol(task.sex)}</td>
-            <td style="padding: 8px 4px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">${getStatusSymbol(task.sab)}</td>
-            <td style="padding: 8px 4px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">${getStatusSymbol(task.dom)}</td>
+            <td class="day-cell" style="padding: 8px 4px; border: 1px solid #e5e7eb;">${getStatusSymbol(task.seg)}</td>
+            <td class="day-cell" style="padding: 8px 4px; border: 1px solid #e5e7eb;">${getStatusSymbol(task.ter)}</td>
+            <td class="day-cell" style="padding: 8px 4px; border: 1px solid #e5e7eb;">${getStatusSymbol(task.qua)}</td>
+            <td class="day-cell" style="padding: 8px 4px; border: 1px solid #e5e7eb;">${getStatusSymbol(task.qui)}</td>
+            <td class="day-cell" style="padding: 8px 4px; border: 1px solid #e5e7eb;">${getStatusSymbol(task.sex)}</td>
+            <td class="day-cell" style="padding: 8px 4px; border: 1px solid #e5e7eb;">${getStatusSymbol(task.sab)}</td>
+            <td class="day-cell" style="padding: 8px 4px; border: 1px solid #e5e7eb;">${getStatusSymbol(task.dom)}</td>
           </tr>
         `;
       });
@@ -167,7 +202,7 @@ function generateHtmlContent(
   <style>
     @page {
       size: A4;
-      margin: 14mm 22mm 16mm 22mm;
+      margin: 14mm 24mm 16mm 24mm;
     }
     
     body {
@@ -177,6 +212,11 @@ function generateHtmlContent(
       color: #1f2937;
       margin: 0;
       padding: 0;
+    }
+    
+    .container {
+      max-width: 170mm;
+      margin: 0 auto;
     }
     
     .header {
@@ -205,6 +245,40 @@ function generateHtmlContent(
       margin-top: 10px;
     }
     
+    table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    
+    colgroup col:nth-child(1) { width: 50mm; }
+    colgroup col:nth-child(2) { width: 20mm; }
+    colgroup col:nth-child(3) { width: 20mm; }
+    colgroup col:nth-child(4) { width: 20mm; }
+    colgroup col:nth-child(5) { width: 20mm; }
+    colgroup col:nth-child(6) { width: 5.7mm; }
+    colgroup col:nth-child(7) { width: 5.7mm; }
+    colgroup col:nth-child(8) { width: 5.7mm; }
+    colgroup col:nth-child(9) { width: 5.7mm; }
+    colgroup col:nth-child(10) { width: 5.7mm; }
+    colgroup col:nth-child(11) { width: 5.7mm; }
+    colgroup col:nth-child(12) { width: 5.7mm; }
+    
+    th, td {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    .day-header {
+      text-align: center;
+    }
+    
+    .day-cell {
+      text-align: center;
+      vertical-align: middle;
+    }
+    
     .legend {
       margin-top: 30px;
       padding-top: 20px;
@@ -220,20 +294,22 @@ function generateHtmlContent(
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
-    <div class="subtitle">
-      Período: ${formatDateRange(weekStart, weekEnd)}
+  <div class="container">
+    <div class="header">
+      <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
+      <div class="subtitle">
+        Período: ${formatDateRange(weekStart, weekEnd)}
+      </div>
+      <div class="metadata">
+        Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString('pt-BR')}
+      </div>
     </div>
-    <div class="metadata">
-      Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString('pt-BR')}
+    
+    ${sectionsHtml}
+    
+    <div class="legend">
+      <strong>Legenda:</strong> ● Planejada | ✓ Executada | × Não Feita
     </div>
-  </div>
-  
-  ${sectionsHtml}
-  
-  <div class="legend">
-    <strong>Legenda:</strong> ● Planejada | ✓ Executada | × Não Feita
   </div>
 </body>
 </html>
