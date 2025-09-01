@@ -21,51 +21,37 @@ interface TaskData {
   sab: string | null;
   dom: string | null;
 }
+interface GroupedTasks { [setor: string]: TaskData[]; }
 
-interface GroupedTasks {
-  [setor: string]: TaskData[];
-}
+const DOW_PT = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("pt-BR");
-}
-
-function formatDateRange(startDate: Date, endDate: Date): string {
-  return `${formatDate(startDate)} a ${formatDate(endDate)}`;
-}
-
-function formatDayDate(date: Date): string {
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  return `${day}/${month}`;
-}
+function formatDate(d: Date) { return d.toLocaleDateString("pt-BR"); }
+function formatDateRange(a: Date, b: Date) { return `${formatDate(a)} a ${formatDate(b)}`; }
 
 function getStatusSymbol(status: string | null): string {
-  if (!status || status.trim() === "") return "";
-  const normalizedStatus = status.toLowerCase().trim();
-  if (normalizedStatus === "executada") return "✓";
-  if (normalizedStatus === "não feita" || normalizedStatus === "nao feita") return "×";
-  return "●"; // default (ex.: "Planejada")
+  if (!status || !status.trim()) return "";
+  const s = status.toLowerCase().trim();
+  if (s === "executada") return "✓";
+  if (s === "não feita" || s === "nao feita") return "×";
+  return "●"; // Planejada/qualquer outro
 }
 
 function sortSetores(setores: string[]): string[] {
-  return setores.sort((a, b) => {
-    const A = (a || "").toUpperCase();
-    const B = (b || "").toUpperCase();
-
-    if (A === "GERAL") return -1;
-    if (B === "GERAL") return 1;
-
-    const aMatch = A.match(/^SETOR\s+(\d+)$/);
-    const bMatch = B.match(/^SETOR\s+(\d+)$/);
-    if (aMatch && bMatch) return parseInt(aMatch[1]) - parseInt(bMatch[1]);
-    if (aMatch && !bMatch) return -1;
-    if (!aMatch && bMatch) return 1;
-
-    return A.localeCompare(B);
+  return setores.sort((A, B) => {
+    const a = (A || "").toUpperCase();
+    const b = (B || "").toUpperCase();
+    if (a === "GERAL") return -1;
+    if (b === "GERAL") return 1;
+    const am = a.match(/^SETOR\s+(\d+)$/);
+    const bm = b.match(/^SETOR\s+(\d+)$/);
+    if (am && bm) return +am[1] - +bm[1];
+    if (am && !bm) return -1;
+    if (!am && bm) return 1;
+    return a.localeCompare(b);
   });
 }
 
+/** HTML com layout alinhado (colgroup em %) e margem lateral pequena */
 function generateHtmlContent(
   tasks: TaskData[],
   obraNome: string,
@@ -73,200 +59,134 @@ function generateHtmlContent(
   weekEnd: Date
 ): string {
   // Agrupa por setor
-  const groupedTasks: GroupedTasks = {};
+  const grouped: GroupedTasks = {};
   for (const t of tasks) {
-    if (!groupedTasks[t.setor]) groupedTasks[t.setor] = [];
-    groupedTasks[t.setor].push(t);
+    (grouped[t.setor] ||= []).push(t);
   }
-  const setores = sortSetores(Object.keys(groupedTasks));
+  const setores = sortSetores(Object.keys(grouped));
 
-  // Datas da semana
-  const d0 = new Date(weekStart);
-  const d1 = new Date(weekStart); d1.setDate(d1.getDate() + 1);
-  const d2 = new Date(weekStart); d2.setDate(d2.getDate() + 2);
-  const d3 = new Date(weekStart); d3.setDate(d3.getDate() + 3);
-  const d4 = new Date(weekStart); d4.setDate(d4.getDate() + 4);
-  const d5 = new Date(weekStart); d5.setDate(d5.getDate() + 5);
-  const d6 = new Date(weekStart); d6.setDate(d6.getDate() + 6);
-
-  let sectionsHtml = "";
-
+  // Tabelas por setor
+  let sections = "";
   if (setores.length === 0) {
-    sectionsHtml = `
-      <div style="text-align:center; padding:40px; color:#666; font-style:italic;">
-        Nenhuma atividade planejada para a semana.
-      </div>`;
+    sections = `<p style="text-align:center; color:#666; font-style:italic; margin:40px 0">Nenhuma atividade planejada para a semana.</p>`;
   } else {
     for (const setor of setores) {
-      const setorTasks = groupedTasks[setor];
+      const rows = grouped[setor];
 
-      sectionsHtml += `
-      <section style="margin-bottom:28px; page-break-inside:avoid;">
-        <div style="margin-bottom:12px;">
-          <h2 style="font-size:16px; font-weight:700; color:#1f2937; margin:0; display:inline;">
-            Setor: ${setor || "Sem Setor"}
-          </h2>
-          <span style="background:#e5e7eb; color:#374151; padding:4px 8px; border-radius:12px; font-size:12px; margin-left:10px;">
-            ${setorTasks.length} atividade${setorTasks.length !== 1 ? "s" : ""}
-          </span>
-        </div>
+      // Linhas
+      const body = rows.map(r => `
+        <tr>
+          <td class="text">${r.descricao ?? ""}</td>
+          <td class="text">${r.disciplina ?? ""}</td>
+          <td class="text">${r.executante ?? ""}</td>
+          <td class="text">${r.responsavel ?? ""}</td>
+          <td class="text">${r.encarregado ?? ""}</td>
+          <td class="day">${getStatusSymbol(r.seg)}</td>
+          <td class="day">${getStatusSymbol(r.ter)}</td>
+          <td class="day">${getStatusSymbol(r.qua)}</td>
+          <td class="day">${getStatusSymbol(r.qui)}</td>
+          <td class="day">${getStatusSymbol(r.sex)}</td>
+          <td class="day">${getStatusSymbol(r.sab)}</td>
+          <td class="day">${getStatusSymbol(r.dom)}</td>
+        </tr>
+      `).join("");
 
-        <table class="grid">
-          <colgroup>
-            <col><!-- 1: Atividade   48mm -->
-            <col><!-- 2: Disciplina  16mm -->
-            <col><!-- 3: Executante  16mm -->
-            <col><!-- 4: Responsável 16mm -->
-            <col><!-- 5: Encarregado 18mm -->
-            <col><!-- 6: Seg  8mm -->
-            <col><!-- 7: Ter  8mm -->
-            <col><!-- 8: Qua  8mm -->
-            <col><!-- 9: Qui  8mm -->
-            <col><!-- 10: Sex 8mm -->
-            <col><!-- 11: Sáb 8mm -->
-            <col><!-- 12: Dom 8mm -->
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="text">Atividade</th>
-              <th class="text">Disciplina</th>
-              <th class="text">Executante</th>
-              <th class="text">Responsável</th>
-              <th class="text">Encarregado</th>
-              <th>
-                <div class="day-header">
-                  <span class="name">Seg</span><span class="date">${formatDayDate(d0)}</span>
-                </div>
-              </th>
-              <th>
-                <div class="day-header">
-                  <span class="name">Ter</span><span class="date">${formatDayDate(d1)}</span>
-                </div>
-              </th>
-              <th>
-                <div class="day-header">
-                  <span class="name">Qua</span><span class="date">${formatDayDate(d2)}</span>
-                </div>
-              </th>
-              <th>
-                <div class="day-header">
-                  <span class="name">Qui</span><span class="date">${formatDayDate(d3)}</span>
-                </div>
-              </th>
-              <th>
-                <div class="day-header">
-                  <span class="name">Sex</span><span class="date">${formatDayDate(d4)}</span>
-                </div>
-              </th>
-              <th>
-                <div class="day-header">
-                  <span class="name">Sáb</span><span class="date">${formatDayDate(d5)}</span>
-                </div>
-              </th>
-              <th>
-                <div class="day-header">
-                  <span class="name">Dom</span><span class="date">${formatDayDate(d6)}</span>
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>`;
+      sections += `
+        <section class="sector">
+          <div class="sector-title">
+            <h2>Setor: ${setor || "Sem Setor"}</h2>
+            <span class="pill">${rows.length} atividade${rows.length !== 1 ? "s" : ""}</span>
+          </div>
 
-      for (const task of setorTasks) {
-        sectionsHtml += `
-            <tr>
-              <td class="text">${task.descricao ?? ""}</td>
-              <td class="text">${task.disciplina ?? ""}</td>
-              <td class="text">${task.executante ?? ""}</td>
-              <td class="text">${task.responsavel ?? ""}</td>
-              <td class="text">${task.encarregado ?? ""}</td>
-              <td class="day-cell">${getStatusSymbol(task.seg)}</td>
-              <td class="day-cell">${getStatusSymbol(task.ter)}</td>
-              <td class="day-cell">${getStatusSymbol(task.qua)}</td>
-              <td class="day-cell">${getStatusSymbol(task.qui)}</td>
-              <td class="day-cell">${getStatusSymbol(task.sex)}</td>
-              <td class="day-cell">${getStatusSymbol(task.sab)}</td>
-              <td class="day-cell">${getStatusSymbol(task.dom)}</td>
-            </tr>`;
-      }
+          <table class="grid">
+            <!-- COLUNAS EM % — iguais em TODAS as tabelas -->
+            <colgroup>
+              <col style="width:28%"> <!-- Atividade -->
+              <col style="width:12%"> <!-- Disciplina -->
+              <col style="width:12%"> <!-- Executante -->
+              <col style="width:12%"> <!-- Responsável -->
+              <col style="width:12%"> <!-- Encarregado -->
+              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
+              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
+            </colgroup>
 
-      sectionsHtml += `
-          </tbody>
-        </table>
-      </section>`;
+            <thead>
+              <tr>
+                <th>Atividade</th>
+                <th>Disciplina</th>
+                <th>Executante</th>
+                <th>Responsável</th>
+                <th>Encarregado</th>
+                ${DOW_PT.map(n => `<th class="center nowrap">${n}</th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        </section>
+      `;
     }
   }
 
-  return `<!DOCTYPE html>
+  // HTML completo
+  return `<!doctype html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
   <title>Relatório Semanal de Atividades</title>
   <style>
-    @page { size: A4; margin: 14mm 20mm 16mm 20mm; } /* top, right, bottom, left */
+    /* Margem pequena dos lados, como solicitado */
+    @page { size: A4; margin: 14mm 14mm 16mm 14mm; } /* top right bottom left */
 
     * { box-sizing: border-box; }
-    body { font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:#111; margin:0; }
-    .container { max-width: 170mm; margin: 0 auto; } /* mantém respiro lateral consistente */
+    body { margin:0; color:#111; font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
 
-    .header { text-align:center; margin-bottom:30px; border-bottom:2px solid #e5e7eb; padding-bottom:20px; }
-    .header h1 { font-size:18px; font-weight:700; margin:0 0 10px; }
-    .header .subtitle { font-size:14px; color:#6b7280; margin:5px 0; }
-    .header .metadata { font-size:11px; color:#9ca3af; margin-top:10px; }
+    /* Sem “container” estreito: usa a largura total da página menos a margem */
+    .header { text-align:center; margin-bottom:16px; }
+    .header h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
+    .meta { color:#666; font-size:12px; margin:4px 0 12px; }
+    hr { border:0; border-top:1px solid #e5e7eb; margin: 8px 0 18px; }
 
-    table.grid { width:100%; border-collapse:collapse; table-layout:fixed; font-size:11px; }
-    thead { display: table-header-group; }  /* repete cabeçalho quando quebra página */
+    .sector { page-break-inside: avoid; margin: 0 0 22px; }
+    .sector-title { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .sector-title h2 { margin:0; font-size:16px; font-weight:700; color:#1f2937; }
+    .pill { background:#e5e7eb; color:#374151; font-size:12px; padding:4px 8px; border-radius:12px; }
+
+    table.grid { width:100%; border-collapse: collapse; table-layout: fixed; }
+    thead { display: table-header-group; } /* mantém cabeçalho nas quebras */
     th, td { border:1px solid #e5e7eb; padding:6px 8px; vertical-align: middle; }
     th { background:#fafafa; font-weight:600; }
     tbody tr:nth-child(even) td { background:#fbfcfe; }
 
-    /* Larguras fixas (mm) — iguais em TODAS as tabelas */
-    colgroup col:nth-child(1) { width: 48mm; }  /* Atividade   */
-    colgroup col:nth-child(2) { width: 16mm; }  /* Disciplina  */
-    colgroup col:nth-child(3) { width: 16mm; }  /* Executante  */
-    colgroup col:nth-child(4) { width: 16mm; }  /* Responsável */
-    colgroup col:nth-child(5) { width: 18mm; }  /* Encarregado */
-    colgroup col:nth-child(6),
-    colgroup col:nth-child(7),
-    colgroup col:nth-child(8),
-    colgroup col:nth-child(9),
-    colgroup col:nth-child(10),
-    colgroup col:nth-child(11),
-    colgroup col:nth-child(12) { width: 8mm; }  /* 7 dias → 56mm (Total 170mm) */
+    /* Alinhamento e quebras */
+    .center { text-align:center; }
+    .nowrap { white-space:nowrap; }
+    .text { word-break: break-word; overflow-wrap:anywhere; } /* quebra só no conteúdo */
+    thead th { word-break: keep-all; } /* evita “quebrar por letra” nos títulos */
+    .day { text-align:center; }
 
-    /* Quebra apenas nas colunas de texto; cabeçalho não quebra por letra */
-    th.text, td.text { word-break: break-word; overflow-wrap: anywhere; }
-    thead th { word-break: keep-all; }
-
-    /* Cabeçalho dos dias (duas linhas, sem quebrar letras) */
-    .day-header { text-align:center; line-height:1.05; }
-    .day-header .name, .day-header .date { display:block; white-space:nowrap; }
-    .day-header .name { font-size:10px; }
-    .day-header .date { font-size:9.5px; }
-
-    .day-cell { text-align:center; vertical-align:middle; }
-    .legend { margin-top:30px; padding-top:20px; border-top:1px solid #e5e7eb; font-size:11px; color:#6b7280; text-align:center; }
+    /* Altura mínima p/ linhas mais compactas */
+    td, th { line-height: 1.25; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
-      <div class="subtitle">Período: ${formatDateRange(weekStart, weekEnd)}</div>
-      <div class="metadata">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
-    </div>
-    ${sectionsHtml}
-    <div class="legend"><strong>Legenda:</strong> ● Planejada | ✓ Executada | × Não Feita</div>
+  <div class="header">
+    <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
+    <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
+    <div class="meta" style="font-size:11px;">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
+    <hr />
+  </div>
+
+  ${sections}
+
+  <div class="meta" style="text-align:center; border-top:1px solid #e5e7eb; padding-top:12px;">
+    <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
   </div>
 </body>
 </html>`;
 }
 
 serve(async (req) => {
-  // CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -274,16 +194,15 @@ serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Variáveis de ambiente do Supabase ausentes (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).");
     }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parâmetros
-    let obraId: string, obraNome: string, weekStart: string;
+    // Params (GET ou POST)
+    let obraId = "", obraNome = "", weekStart = "";
     if (req.method === "GET") {
-      const url = new URL(req.url);
-      obraId = url.searchParams.get("obraId") || "";
-      obraNome = url.searchParams.get("obraNome") || "";
-      weekStart = url.searchParams.get("weekStart") || "";
+      const u = new URL(req.url);
+      obraId = u.searchParams.get("obraId") || "";
+      obraNome = u.searchParams.get("obraNome") || "";
+      weekStart = u.searchParams.get("weekStart") || "";
     } else {
       const body = await req.json();
       obraId = body.obraId;
@@ -298,28 +217,24 @@ serve(async (req) => {
       });
     }
 
-    // Consulta
+    // Dados
     const { data: tasks, error } = await supabase
       .from("tarefas")
-      .select(
-        "setor, descricao, disciplina, executante, responsavel, encarregado, seg, ter, qua, qui, sex, sab, dom"
-      )
+      .select("setor, descricao, disciplina, executante, responsavel, encarregado, seg, ter, qua, qui, sex, sab, dom")
       .eq("obra_id", obraId)
       .eq("semana", weekStart)
       .order("setor", { ascending: true })
       .order("descricao", { ascending: true });
-
     if (error) throw error;
 
-    // Datas
+    // Período
     const weekStartDate = new Date(weekStart + "T00:00:00");
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-    // HTML
+    // HTML alinhado
     const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate);
 
-    // Retorno (HTML para download — o navegador baixa com .html)
     const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.html`;
     return new Response(html, {
       headers: {
@@ -329,8 +244,8 @@ serve(async (req) => {
         "Cache-Control": "no-store",
       },
     });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || "Erro inesperado" }), {
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e?.message || "Erro inesperado" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
