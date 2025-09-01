@@ -12,6 +12,7 @@ import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
 import TaskDetailsModal from "@/components/dashboard/TaskDetailsModal";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
+import { Task } from "@/types";
 
 const DashboardContent = () => {
   const { userSession } = useAuth();
@@ -39,7 +40,7 @@ const DashboardInner = () => {
   const [weekEndDate, setWeekEndDate] = useState(new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"completed" | "pending">("completed");
-  const [modalTasks, setModalTasks] = useState<any[]>([]);
+  const [modalTasks, setModalTasks] = useState<Task[]>([]);
 
   // Calculate end of week when start date changes
   useEffect(() => {

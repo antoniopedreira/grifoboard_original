@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Task } from "@/types";
+import { Task, WeeklyPCPData, PCPBreakdown } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { calculatePCP } from "@/utils/pcp";
@@ -13,7 +13,7 @@ export const useTaskManager = (weekStartDate: Date) => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [weeklyPCPData, setWeeklyPCPData] = useState<any[]>([]);
+  const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Use our extracted hooks
@@ -22,7 +22,6 @@ export const useTaskManager = (weekStartDate: Date) => {
   
   // Função para calcular dados do PCP com base nas tarefas
   const calculatePCPData = useCallback((tasksList: Task[]) => {
-    console.log("📊 Calculating PCP data for", tasksList.length, "tasks");
     const pcpData = calculatePCP(tasksList);
     setWeeklyPCPData([pcpData]);
     return pcpData;
@@ -48,10 +47,8 @@ export const useTaskManager = (weekStartDate: Date) => {
   // Carregar tarefas quando a obra ativa mudar
   useEffect(() => {
     if (session.obraAtiva) {
-      console.log("🔄 Loading tasks due to obra change:", session.obraAtiva.id);
       loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks);
     } else {
-      console.log("⚠️ No active obra, clearing tasks");
       setTasks([]);
       setFilteredTasks([]);
     }
@@ -60,7 +57,6 @@ export const useTaskManager = (weekStartDate: Date) => {
   // Quando a semana muda, atualizar a lista filtrada
   useEffect(() => {
     if (tasks.length > 0) {
-      console.log("📅 Week changed, refiltering tasks for:", weekStartDate.toDateString());
       const filteredTasks = filterTasksByWeek(tasks, weekStartDate);
       setFilteredTasks(filteredTasks);
       // Recalculate PCP data for the filtered tasks
@@ -76,7 +72,7 @@ export const useTaskManager = (weekStartDate: Date) => {
     allTasks: tasks,      // Keep all tasks for reference
     isLoading,
     pcpData,
-    weeklyPCPData,
+    weeklyPCPData: weeklyPCPData,
     loadTasks: (callback?: () => void) => loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks, callback),
     handleTaskUpdate,
     handleTaskDelete,

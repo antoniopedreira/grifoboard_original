@@ -1,13 +1,13 @@
 
-import { Task } from "@/types";
+import { Task, PCPBreakdown, WeeklyPCPData } from "@/types";
 import PCPChart from "@/components/PCPChart";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X } from "lucide-react";
 
 interface PCPSectionProps {
-  pcpData: any;
-  weeklyPCPData: any[];
+  pcpData: PCPBreakdown;
+  weeklyPCPData: WeeklyPCPData[];
   tasks: Task[];
   selectedCause: string | null;
   onCauseSelect: (cause: string) => void;

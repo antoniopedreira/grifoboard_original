@@ -61,11 +61,11 @@ const ChecklistForm: React.FC<ChecklistFormProps> = ({ onAtividadeCriada }) => {
       });
       setIsOpen(false);
       onAtividadeCriada();
-    } catch (error: any) {
-      console.error("Error creating activity:", error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast({
         title: "Erro ao criar atividade",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

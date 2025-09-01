@@ -1,13 +1,15 @@
 import { Task, DayOfWeek, TaskStatus } from "@/types";
 import { Tarefa } from "@/types/supabase";
+import { 
+  DAY_FIELD_MAPPING, 
+  REVERSE_DAY_FIELD_MAPPING, 
+  TASK_STATUS_MAPPING, 
+  REVERSE_TASK_STATUS_MAPPING 
+} from "@/lib/constants";
+import { formatDateToISO } from "@/lib/utils/formatters";
 
-// Format date to local YYYY-MM-DD (avoiding timezone issues)
-export const formatDateToISO = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+// Re-export for backward compatibility
+export { formatDateToISO } from "@/lib/utils/formatters";
 
 // Função auxiliar para converter Tarefa para Task
 export const convertTarefaToTask = (tarefa: Tarefa): Task => {
@@ -30,31 +32,13 @@ export const convertTarefaToTask = (tarefa: Tarefa): Task => {
   };
   
   // Process daily status from individual day fields
-  const daysMapping: Record<string, DayOfWeek> = {
-    'seg': 'mon',
-    'ter': 'tue',
-    'qua': 'wed',
-    'qui': 'thu',
-    'sex': 'fri',
-    'sab': 'sat',
-    'dom': 'sun'
-  };
-  
-  // Add days to plannedDays if they exist in the tarefa
-  Object.entries(daysMapping).forEach(([dbField, dayOfWeek]) => {
+  Object.entries(DAY_FIELD_MAPPING).forEach(([dbField, dayOfWeek]) => {
     const dayStatus = tarefa[dbField as keyof Tarefa];
     if (dayStatus === 'Planejada' || dayStatus === 'Executada' || dayStatus === 'Não Feita') {
       task.plannedDays.push(dayOfWeek);
       
       // Add day status to dailyStatus array
-      let status: TaskStatus;
-      if (dayStatus === 'Executada') {
-        status = 'completed';
-      } else if (dayStatus === 'Não Feita') {
-        status = 'not_done';
-      } else {
-        status = 'planned';
-      }
+      const status = TASK_STATUS_MAPPING[dayStatus as keyof typeof TASK_STATUS_MAPPING];
       
       task.dailyStatus.push({
         day: dayOfWeek,
@@ -82,47 +66,26 @@ export const convertTaskStatusToTarefa = (task: Task): Partial<Tarefa> => {
     semana: task.weekStartDate ? formatDateToISO(task.weekStartDate) : undefined
   };
   
-  // Clear all day fields first
-  const daysMapping: Record<DayOfWeek, string> = {
-    'mon': 'seg',
-    'tue': 'ter',
-    'wed': 'qua',
-    'thu': 'qui',
-    'fri': 'sex',
-    'sat': 'sab',
-    'sun': 'dom'
-  };
-  
   // Reset all day fields to null initially
-  Object.values(daysMapping).forEach(dbField => {
-    (tarefaToUpdate as any)[dbField] = null;
+  Object.values(REVERSE_DAY_FIELD_MAPPING).forEach(dbField => {
+    (tarefaToUpdate as Record<string, unknown>)[dbField] = null;
   });
   
   // Update day status fields based on dailyStatus
   if (task.dailyStatus && task.dailyStatus.length > 0) {
     task.dailyStatus.forEach(dailyStatus => {
-      const dbField = daysMapping[dailyStatus.day];
+      const dbField = REVERSE_DAY_FIELD_MAPPING[dailyStatus.day];
       if (dbField) {
-        let status = '';
-        
-        if (dailyStatus.status === 'completed') {
-          status = 'Executada';
-        } else if (dailyStatus.status === 'not_done') {
-          status = 'Não Feita';
-        } else if (dailyStatus.status === 'planned') {
-          status = 'Planejada';
-        }
-        
-        // Type assertion to handle dynamic field assignments
-        (tarefaToUpdate as any)[dbField] = status;
+        const status = REVERSE_TASK_STATUS_MAPPING[dailyStatus.status];
+        (tarefaToUpdate as Record<string, unknown>)[dbField] = status;
       }
     });
   } else if (task.plannedDays && task.plannedDays.length > 0) {
     // Fallback: if no dailyStatus but plannedDays exist, set them as "Planejada"
     task.plannedDays.forEach(plannedDay => {
-      const dbField = daysMapping[plannedDay];
+      const dbField = REVERSE_DAY_FIELD_MAPPING[plannedDay];
       if (dbField) {
-        (tarefaToUpdate as any)[dbField] = 'Planejada';
+        (tarefaToUpdate as Record<string, unknown>)[dbField] = 'Planejada';
       }
     });
   }

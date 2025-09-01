@@ -39,17 +39,15 @@ const ChecklistContent = () => {
     
     setIsLoading(true);
     try {
-      console.log("Loading checklist activities for obra:", userSession.obraAtiva.id);
       const atividadesData = await checklistService.listarAtividades(userSession.obraAtiva.id);
-      console.log("Checklist activities loaded:", atividadesData);
       
       setAtividades(atividadesData);
       setFilteredAtividades(atividadesData);
-    } catch (error: any) {
-      console.error("Error loading checklist activities:", error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast({
         title: "Erro ao carregar atividades",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -103,11 +101,11 @@ const ChecklistContent = () => {
         title: concluida ? "Atividade concluída" : "Atividade marcada como não concluída",
         description: "Status atualizado com sucesso",
       });
-    } catch (error: any) {
-      console.error("Error updating activity:", error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast({
         title: "Erro ao atualizar atividade",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -125,11 +123,11 @@ const ChecklistContent = () => {
         title: "Atividade excluída",
         description: "Atividade removida com sucesso",
       });
-    } catch (error: any) {
-      console.error("Error deleting activity:", error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast({
         title: "Erro ao excluir atividade",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }

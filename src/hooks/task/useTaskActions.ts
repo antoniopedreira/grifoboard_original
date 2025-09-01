@@ -1,8 +1,10 @@
 
 import { useCallback } from "react";
 import { Task } from "@/types";
+import { Tarefa } from "@/types/supabase";
 import { tarefasService } from "@/services/tarefaService";
 import { convertTarefaToTask, convertTaskStatusToTarefa, formatDateToISO } from "@/utils/taskUtils";
+import { getErrorMessage } from "@/lib/utils/errorHandler";
 
 type ToastType = {
   title: string;
@@ -61,11 +63,11 @@ export const useTaskActions = ({
       });
       
       return updatedTask;
-    } catch (error: any) {
-      console.error("Error updating task:", error);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       toast({
         title: "Erro ao atualizar tarefa",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -92,11 +94,11 @@ export const useTaskActions = ({
       });
       
       return true;
-    } catch (error: any) {
-      console.error("Error deleting task:", error);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       toast({
         title: "Erro ao excluir tarefa",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       return false;
@@ -116,7 +118,7 @@ export const useTaskActions = ({
       }
       
       // Initialize the new Tarefa object with required fields
-      const novaTarefa: Omit<any, 'id' | 'created_at'> = {
+      const novaTarefa: Omit<Tarefa, 'id' | 'created_at'> = {
         obra_id: session.obraAtiva.id,
         setor: newTaskData.sector,
         item: newTaskData.item,
@@ -153,10 +155,10 @@ export const useTaskActions = ({
       newTaskData.plannedDays.forEach(day => {
         const dbField = dayMapping[day];
         // Type assertion to handle dynamic field assignments
-        (novaTarefa as any)[dbField] = 'Planejada';
+        (novaTarefa as Record<string, unknown>)[dbField] = 'Planejada';
       });
       
-      console.log("Creating task with data:", novaTarefa);
+      
       // Criar tarefa no Supabase
       const createdTarefa = await tarefasService.criarTarefa(novaTarefa);
       
@@ -178,11 +180,11 @@ export const useTaskActions = ({
       });
       
       return novaTask;
-    } catch (error: any) {
-      console.error("Error creating task:", error);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       toast({
         title: "Erro ao criar tarefa",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -219,11 +221,11 @@ export const useTaskActions = ({
       });
       
       return createdTask;
-    } catch (error: any) {
-      console.error("Error duplicating task:", error);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       toast({
         title: "Erro ao duplicar tarefa",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;

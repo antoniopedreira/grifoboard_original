@@ -1,8 +1,9 @@
 
 import { useCallback } from "react";
-import { Task } from "@/types";
+import { Task, PCPBreakdown } from "@/types";
 import { tarefasService } from "@/services/tarefaService";
 import { convertTarefaToTask } from "@/utils/taskUtils";
+import { getErrorMessage } from "@/lib/utils/errorHandler";
 
 type ToastType = {
   title: string;
@@ -23,29 +24,25 @@ export const useTaskData = (
   // Função para carregar tarefas do Supabase
   const loadTasks = useCallback(async (
     weekStartDate: Date,
-    calculatePCPData: (tasks: Task[]) => any,
+    calculatePCPData: (tasks: Task[]) => PCPBreakdown,
     filterTasksByWeek: (tasks: Task[], startDate: Date) => Task[],
     setFilteredTasks: React.Dispatch<React.SetStateAction<Task[]>>,
     callback?: () => void
   ) => {
     if (!session.obraAtiva) {
-      console.log("⚠️ No active obra, skipping task load");
       return;
     }
     
     setIsLoading(true);
     try {
-      console.log("🔍 Loading tasks for obra:", session.obraAtiva.id, "for week:", weekStartDate.toDateString());
       const tarefas = await tarefasService.listarTarefas(session.obraAtiva.id);
       
       const convertedTasks = tarefas.map(convertTarefaToTask);
-      console.log("📝 Converted tasks:", convertedTasks.length, "total tasks");
       
       setTasks(convertedTasks);
       
       // Filter tasks for the current week
       const weekFilteredTasks = filterTasksByWeek(convertedTasks, weekStartDate);
-      console.log("📅 Week filtered tasks:", weekFilteredTasks.length, "tasks for this week");
       
       setFilteredTasks(weekFilteredTasks);
       
@@ -54,11 +51,11 @@ export const useTaskData = (
       
       // Execute callback if provided
       if (callback) callback();
-    } catch (error: any) {
-      console.error("❌ Error loading tasks:", error);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       toast({
         title: "Erro ao carregar tarefas",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

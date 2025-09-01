@@ -11,12 +11,9 @@ export const useTaskFilters = (allTasks: Task[], weekStartDate: Date) => {
     // Format both dates for comparison (local date strings)
     const weekStartDateStr = formatDateToISO(startDate);
     
-    console.log("🔍 Filtering tasks for week:", weekStartDateStr, "from", tasks.length, "total tasks");
-    
     const filtered = tasks.filter(task => {
       // If task has no weekStartDate, skip it
       if (!task.weekStartDate) {
-        console.log("⚠️ Task without weekStartDate:", task.id);
         return false;
       }
       
@@ -24,16 +21,9 @@ export const useTaskFilters = (allTasks: Task[], weekStartDate: Date) => {
       const taskWeekStartStr = formatDateToISO(task.weekStartDate);
       
       // Match tasks where the week start date is the same as the selected week
-      const matches = taskWeekStartStr === weekStartDateStr;
-      
-      if (matches) {
-        console.log("✅ Task matches week:", task.id, task.description.substring(0, 30) + '...');
-      }
-      
-      return matches;
+      return taskWeekStartStr === weekStartDateStr;
     });
     
-    console.log("📊 Filtered tasks result:", filtered.length, "tasks for this week");
     return filtered;
   }, []);
   
