@@ -42,7 +42,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   isFormValid,
   onWeekDateChange
 }) => {
-  const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
+  const { sectors, disciplines, teams, responsibles, executors } = useRegistry();
 
   // Filter out any empty values from the registry arrays
   const validSectors = sectors.filter(item => item && item.trim() !== "");
@@ -50,7 +50,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   const validTeams = teams.filter(item => item && item.trim() !== "");
   const validResponsibles = responsibles.filter(item => item && item.trim() !== "");
   const validExecutors = executors.filter(item => item && item.trim() !== "");
-  const validCables = cables.filter(item => item && item.trim() !== "");
+  
 
   // Helper function to evaluate isFormValid regardless of type
   const checkFormValidity = () => {
@@ -65,7 +65,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
     team: editFormData?.team || "",
     responsible: editFormData?.responsible || "",
     executor: editFormData?.executor || "",
-    cable: editFormData?.cable || "",
+    
     plannedDays: editFormData?.plannedDays || [],
     weekStartDate: editFormData?.weekStartDate
   };
@@ -173,32 +173,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
             </div>
           </div>
           
-          {/* Two columns layout for cable and team */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Cabo */}
-            <div className="space-y-2">
-              <Label htmlFor="edit-cable" className="font-medium">Cabo</Label>
-              <Select 
-                value={safeEditFormData.cable} 
-                onValueChange={(value) => onEditFormChange("cable", value)}
-              >
-                <SelectTrigger id="edit-cable">
-                  <SelectValue placeholder="Selecione o cabo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {validCables.length > 0 ? (
-                    validCables.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum cabo cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
+          {/* Single column layout for executante */}
+          <div className="grid grid-cols-1 gap-4">
             {/* Executante */}
             <div className="space-y-2">
               <Label htmlFor="edit-team" className="font-medium">Executante</Label>

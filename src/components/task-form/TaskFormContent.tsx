@@ -23,7 +23,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
   onOpenChange, 
   currentWeekStartDate 
 }) => {
-  const { sectors, disciplines, teams, responsibles, executors, cables } = useRegistry();
+  const { sectors, disciplines, teams, responsibles, executors } = useRegistry();
   const { toast } = useToast();
   
   const [sector, setSector] = useState("");
@@ -32,7 +32,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
   const [team, setTeam] = useState("");
   const [responsible, setResponsible] = useState("");
   const [executor, setExecutor] = useState("");
-  const [cable, setCable] = useState("");
+  
   const [plannedDays, setPlannedDays] = useState<DayOfWeek[]>([]);
   
   // Default to current week's Monday if no date is provided
@@ -59,7 +59,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
       team,
       responsible,
       executor,
-      cable,
+      cable: "",
       plannedDays,
       weekStartDate,
     });
@@ -71,7 +71,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
     setTeam("");
     setResponsible("");
     setExecutor("");
-    setCable("");
+    
     setPlannedDays([]);
     setWeekStartDate(currentWeekStartDate || getWeekStartDate(new Date()));
     
@@ -135,17 +135,8 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
             />
           </div>
           
-          {/* Two columns layout for cable and team */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <RegistrySelect
-              id="cable"
-              label="Cabo"
-              value={cable}
-              onValueChange={setCable}
-              options={cables}
-              placeholder="Selecione o cabo"
-            />
-            
+          {/* Single column layout for executante */}
+          <div className="grid grid-cols-1 gap-4">
             <RegistrySelect
               id="team"
               label="Executante"
