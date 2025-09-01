@@ -37,7 +37,6 @@ export interface Task {
   team: string;
   responsible: string;
   executor?: string;
-  cable?: string;
   plannedDays: DayOfWeek[];
   dailyStatus: DayStatus[];
   isFullyCompleted: boolean;

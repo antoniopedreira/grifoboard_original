@@ -26,8 +26,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
   const [newTeam, setNewTeam] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
   const [newExecutor, setNewExecutor] = useState("");
-  const [newCable, setNewCable] = useState("");
-  const { sectors, disciplines, teams, responsibles, executors, cables, isLoading, deleteRegistry } = useRegistry();
+  const { sectors, disciplines, teams, responsibles, executors, isLoading, deleteRegistry } = useRegistry();
   const [deletingItem, setDeletingItem] = useState<{type: string, value: string} | null>(null);
 
   const handleSubmit = async (type: string) => {
@@ -53,10 +52,6 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
       case "executor":
         value = newExecutor.trim();
         setNewExecutor("");
-        break;
-      case "cable":
-        value = newCable.trim();
-        setNewCable("");
         break;
     }
     
@@ -176,12 +171,6 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
           <div className="flex flex-col items-center">
             <span>Encarregado</span>
             <div className="ml-1 mt-1">{renderItemsCount(executors)}</div>
-          </div>
-        </TabsTrigger>
-        <TabsTrigger value="cable" className="flex-1 px-3 py-2 text-sm">
-          <div className="flex flex-col items-center">
-            <span>Cabo</span>
-            <div className="ml-1 mt-1">{renderItemsCount(cables)}</div>
           </div>
         </TabsTrigger>
       </TabsList>
@@ -334,36 +323,6 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
           </div>
         </div>
         {renderItemsList("executor", executors)}
-      </TabsContent>
-      
-      <TabsContent value="cable" className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new-cable" className="font-medium">Novo Cabo</Label>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Input
-              id="new-cable"
-              value={newCable}
-              onChange={(e) => setNewCable(e.target.value)}
-              placeholder="Digite o tipo de cabo"
-              className="flex-1"
-            />
-            <Button 
-              onClick={() => handleSubmit("cable")} 
-              disabled={isSaving || newCable.trim() === ""}
-              className="whitespace-nowrap"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                "Adicionar Cabo"
-              )}
-            </Button>
-          </div>
-        </div>
-        {renderItemsList("cable", cables)}
       </TabsContent>
     </Tabs>
   );

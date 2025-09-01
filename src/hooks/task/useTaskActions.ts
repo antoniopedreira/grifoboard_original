@@ -205,7 +205,6 @@ export const useTaskActions = ({
         team: taskToDuplicate.team,
         responsible: taskToDuplicate.responsible,
         executor: taskToDuplicate.executor,
-        cable: taskToDuplicate.cable,
         plannedDays: [...taskToDuplicate.plannedDays], // Copy planned days
         weekStartDate: taskToDuplicate.weekStartDate, // Keep same week
         causeIfNotDone: taskToDuplicate.causeIfNotDone,

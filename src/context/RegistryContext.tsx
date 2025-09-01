@@ -10,7 +10,6 @@ interface RegistryContextType {
   teams: string[];
   responsibles: string[];
   executors: string[];   
-  cables: string[];      
   addRegistry: (type: string, value: string) => Promise<void>;
   deleteRegistry: (type: string, value: string) => Promise<void>;
   isLoading: boolean;
@@ -45,7 +44,6 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const teams = registryItems.filter(item => item.tipo === 'team').map(item => item.valor);
   const responsibles = registryItems.filter(item => item.tipo === 'responsible').map(item => item.valor);
   const executors = registryItems.filter(item => item.tipo === 'executor').map(item => item.valor);
-  const cables = registryItems.filter(item => item.tipo === 'cable').map(item => item.valor);
   
   // Mutation to add new registry items
   const addRegistryMutation = useMutation({
@@ -120,7 +118,6 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       teams, 
       responsibles, 
       executors, 
-      cables, 
       addRegistry,
       deleteRegistry,
       isLoading,

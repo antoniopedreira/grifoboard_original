@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, AlertCircle, User, Users, Wrench, Cable } from "lucide-react";
+import { CheckCircle2, AlertCircle, User, Users, Wrench } from "lucide-react";
 import MaterialsSection from "@/components/materials/MaterialsSection";
 
 interface TaskDetailsModalProps {
