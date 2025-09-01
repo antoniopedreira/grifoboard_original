@@ -6,6 +6,8 @@ import {
   getPreviousWeekDates,
   getNextWeekDates
 } from "@/utils/pcp";
+import { useAuth } from "@/context/AuthContext";
+import ExportPdfButton from "@/components/ExportPdfButton";
 
 interface WeekNavigationProps {
   weekStartDate: Date;
@@ -20,6 +22,7 @@ const WeekNavigation = ({
   onPreviousWeek,
   onNextWeek
 }: WeekNavigationProps) => {
+  const { userSession } = useAuth();
   const currentWeekFormatted = formatDateRange(weekStartDate, weekEndDate);
   const today = new Date();
   const isCurrentWeek = 
@@ -49,14 +52,21 @@ const WeekNavigation = ({
         )}
       </div>
       
-      <Button 
-        variant="outline" 
-        size="icon"
-        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
-        onClick={onNextWeek}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center gap-2">
+        <ExportPdfButton
+          obraId={userSession.obraAtiva?.id || ""}
+          obraNome={userSession.obraAtiva?.nome_obra || ""}
+          weekStartDate={weekStartDate}
+        />
+        <Button 
+          variant="outline" 
+          size="icon"
+          className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
+          onClick={onNextWeek}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };
