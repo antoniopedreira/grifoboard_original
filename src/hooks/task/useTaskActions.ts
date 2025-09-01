@@ -125,7 +125,6 @@ export const useTaskActions = ({
         executante: newTaskData.team,
         responsavel: newTaskData.responsible,
         encarregado: newTaskData.executor,
-        cabo: newTaskData.cable,
         // Store the date in ISO format (YYYY-MM-DD)
         semana: formatDateToISO(newTaskData.weekStartDate),
         percentual_executado: 0,

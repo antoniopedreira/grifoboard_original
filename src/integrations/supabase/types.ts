@@ -147,7 +147,6 @@ export type Database = {
       }
       tarefas: {
         Row: {
-          cabo: string
           causa_nao_execucao: string | null
           created_at: string | null
           descricao: string
@@ -170,7 +169,6 @@ export type Database = {
           ter: string | null
         }
         Insert: {
-          cabo: string
           causa_nao_execucao?: string | null
           created_at?: string | null
           descricao: string
@@ -193,7 +191,6 @@ export type Database = {
           ter?: string | null
         }
         Update: {
-          cabo?: string
           causa_nao_execucao?: string | null
           created_at?: string | null
           descricao?: string
