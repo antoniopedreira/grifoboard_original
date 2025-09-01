@@ -40,20 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   };
 
-  // Handle session conflicts - detect multiple active sessions
+  // Session conflict detection disabled - was causing false positives
   const handleSessionConflict = (currentSessionId: string) => {
-    const storedSessionId = localStorage.getItem('current_session_id');
-    
-    if (storedSessionId && storedSessionId !== currentSessionId) {
-      toast({
-        title: "Outra sessão detectada",
-        description: "Você está conectado em mais de um local. Continue com cuidado.",
-      });
-      // Do NOT auto-logout; allow the user to decide
-      return false;
-    }
-    
-    return false; // No conflict or user chose to proceed
+    return false; // No conflict detection
   };
 
   // Monitor user activity to detect active sessions
