@@ -144,24 +144,24 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({
                   
                   <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
                     <div>
-                      <span className="font-medium">Setor:</span> {task.sector}
+                      <span className="font-medium">Setor:</span> <span className="uppercase">{task.sector}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Disciplina:</span> {task.discipline}
+                      <span className="font-medium">Disciplina:</span> <span className="uppercase">{task.discipline}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Responsável:</span> {task.responsible}
+                      <span className="font-medium">Responsável:</span> <span className="uppercase">{task.responsible}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Encarregado:</span> {task.executor}
+                      <span className="font-medium">Encarregado:</span> <span className="uppercase">{task.executor}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Executante:</span> {task.team}
+                      <span className="font-medium">Executante:</span> <span className="uppercase">{task.team}</span>
                     </div>
                   </div>
                   
                   {task.item && <div className="text-xs text-muted-foreground">
-                      <span className="font-medium">Item:</span> {task.item}
+                      <span className="font-medium">Item:</span> <span className="uppercase">{task.item}</span>
                     </div>}
                 </div>)}
             </div>}

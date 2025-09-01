@@ -59,7 +59,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         <h4 className="font-medium text-foreground mb-1">
                           {task.description}
                         </h4>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground uppercase">
                           {task.sector} • {task.item}
                         </p>
                       </div>
@@ -75,7 +75,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         </div>
                         <div>
                           <span className="text-muted-foreground">Disciplina:</span>
-                          <p className="font-medium">{task.discipline}</p>
+                          <p className="font-medium uppercase">{task.discipline}</p>
                         </div>
                       </div>
                       
@@ -83,7 +83,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         <User className="w-4 h-4 text-muted-foreground" />
                         <div>
                           <span className="text-muted-foreground">Responsável:</span>
-                          <p className="font-medium">{task.responsible}</p>
+                          <p className="font-medium uppercase">{task.responsible}</p>
                         </div>
                       </div>
                       
@@ -91,7 +91,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         <Users className="w-4 h-4 text-muted-foreground" />
                         <div>
                           <span className="text-muted-foreground">Executante:</span>
-                          <p className="font-medium">{task.team}</p>
+                          <p className="font-medium uppercase">{task.team}</p>
                         </div>
                       </div>
                       
@@ -100,17 +100,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                           <Wrench className="w-4 h-4 text-muted-foreground" />
                           <div>
                             <span className="text-muted-foreground">Encarregado:</span>
-                            <p className="font-medium">{task.executor}</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {task.cable && (
-                        <div className="flex items-center gap-2">
-                          <Cable className="w-4 h-4 text-muted-foreground" />
-                          <div>
-                            <span className="text-muted-foreground">Cabo:</span>
-                            <p className="font-medium">{task.cable}</p>
+                            <p className="font-medium uppercase">{task.executor}</p>
                           </div>
                         </div>
                       )}
