@@ -1,8 +1,5 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { FileDown, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useMemo } from "react";
+import { FileDown } from "lucide-react";
 
 // Utility function to normalize any date to Monday of its week
 function toMondayISO(date: Date): string {
@@ -20,109 +17,33 @@ interface ExportPdfButtonProps {
 }
 
 const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const weekStartISO = toMondayISO(weekStartDate);
 
-  const handleExportPdf = async () => {
-    if (!obraId || !obraNome) {
-      toast({
-        title: "Erro",
-        description: "Obra não selecionada. Selecione uma obra antes de exportar.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const href = useMemo(() => {
+    const q = new URLSearchParams({ obraId, obraNome, weekStart: weekStartISO }).toString();
+    return `https://qacaerwosglbayjfskyx.supabase.co/functions/v1/export-pdf?${q}`;
+  }, [obraId, obraNome, weekStartISO]);
 
-    try {
-      setIsLoading(true);
+  const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}.html`;
 
-      // Normalize weekStartDate to Monday ISO format
-      const weekStartISO = toMondayISO(weekStartDate);
-      
-      console.log('🚀 Exporting PDF for:', { obraId, obraNome, weekStartISO });
-
-      // Call the edge function
-      const { data, error } = await supabase.functions.invoke('export-pdf', {
-        body: {
-          obraId,
-          obraNome,
-          weekStart: weekStartISO
-        }
-      });
-
-      if (error) {
-        console.error('❌ Edge function error:', error);
-        throw error;
-      }
-
-    // The function returns HTML content that can be printed or saved as PDF
-    if (typeof data === 'string') {
-      // Create a new window with the HTML content for printing
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
-      if (printWindow) {
-        printWindow.document.write(data);
-        printWindow.document.close();
-        
-        // Auto-print after a short delay to allow content to render
-        setTimeout(() => {
-          printWindow.print();
-          // Don't auto-close, let user decide
-        }, 1000);
-        
-        toast({
-          title: "PDF gerado",
-          description: "Uma nova janela foi aberta para impressão/download do relatório.",
-        });
-      } else {
-        // Fallback: download as HTML file
-        const blob = new Blob([data], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const filename = `Relatorio_Semanal_${obraNome.replace(/[^a-zA-Z0-9]/g, '_')}_${weekStartISO}.html`;
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        toast({
-          title: "Relatório baixado",
-          description: "O arquivo HTML foi baixado. Abra-o no navegador e use Ctrl+P para gerar PDF.",
-        });
-      }
-    } else {
-      throw new Error('Invalid response format');
-    }
-
-    } catch (error: any) {
-      console.error('❌ Export PDF error:', error);
-      toast({
-        title: "Erro ao gerar PDF",
-        description: error.message || "Não foi possível gerar o relatório PDF.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleDownload = () => {
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleExportPdf}
-      disabled={isLoading || !obraId}
-      className="flex items-center gap-2 hover:bg-primary/5 border-primary/20"
+    <button 
+      onClick={handleDownload}
+      className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border border-primary/20 rounded-md hover:bg-primary/5 transition-colors"
     >
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <FileDown className="h-4 w-4" />
-      )}
-      {isLoading ? "Gerando..." : "Exportar PDF"}
-    </Button>
+      <FileDown className="h-4 w-4" />
+      Exportar PDF
+    </button>
   );
 };
-
 export default ExportPdfButton;

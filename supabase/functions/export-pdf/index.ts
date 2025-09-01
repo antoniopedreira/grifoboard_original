@@ -257,7 +257,20 @@ serve(async (req) => {
     // Initialize Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { obraId, obraNome, weekStart } = await req.json();
+    // Handle both GET and POST requests
+    let obraId: string, obraNome: string, weekStart: string;
+    
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      obraId = url.searchParams.get('obraId') || '';
+      obraNome = url.searchParams.get('obraNome') || '';
+      weekStart = url.searchParams.get('weekStart') || '';
+    } else {
+      const body = await req.json();
+      obraId = body.obraId;
+      obraNome = body.obraNome;
+      weekStart = body.weekStart;
+    }
 
     console.log('📊 Generating PDF for:', { obraId, obraNome, weekStart });
 
@@ -301,15 +314,15 @@ serve(async (req) => {
       weekEndDate
     );
 
-    // For now, return HTML content directly since jsPDF needs to run in browser context
-    // In a real implementation, you would use Puppeteer or similar to generate PDF from HTML
-    const filename = `Relatorio_Semanal_${(obraNome || 'Obra').replace(/[^a-zA-Z0-9]/g, '_')}_${weekStart}.html`;
+    // Return HTML content for download
+    const filename = `Relatorio_Semanal_${(obraNome || 'Obra').replace(/\s+/g, '_')}_${weekStart}.html`;
     
     return new Response(htmlContent, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html',
         'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store',
       },
     });
 
