@@ -45,23 +45,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedSessionId = localStorage.getItem('current_session_id');
     
     if (storedSessionId && storedSessionId !== currentSessionId) {
-      console.warn('🚨 Multiple sessions detected! Forcing logout to prevent conflicts.');
-      
+      console.warn('⚠️ Multiple sessions detected. Proceeding without auto-logout.');
       toast({
-        title: "Sessão conflitante detectada",
-        description: "Você foi desconectado devido a um login em outra janela/dispositivo.",
-        variant: "destructive",
+        title: "Outra sessão detectada",
+        description: "Você está conectado em mais de um local. Continue com cuidado.",
       });
-      
-      // Force logout to prevent data conflicts
-      setTimeout(() => {
-        signOut();
-      }, 2000);
-      
-      return true; // Conflict detected
+      // Do NOT auto-logout; allow the user to decide
+      return false;
     }
     
-    return false; // No conflict
+    return false; // No conflict or user chose to proceed
   };
 
   // Monitor user activity to detect active sessions
@@ -72,33 +65,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Check for session expiry or conflicts
+  // Health check (no auto-logout on inactivity or conflicts)
   const checkSessionHealth = () => {
     if (!userSession.user || !sessionId) return;
-    
-    const storedActivity = localStorage.getItem('last_activity');
-    const storedSessionId = localStorage.getItem('current_session_id');
-    
-    // Check for session conflicts
-    if (storedSessionId && storedSessionId !== sessionId) {
-      handleSessionConflict(sessionId);
-      return;
-    }
-    
-    // Check for session expiry (inactive for more than 30 minutes)
-    if (storedActivity) {
-      const timeSinceActivity = Date.now() - parseInt(storedActivity, 10);
-      const thirtyMinutes = 30 * 60 * 1000;
-      
-      if (timeSinceActivity > thirtyMinutes) {
-        console.log('🕐 Session expired due to inactivity');
-        toast({
-          title: "Sessão expirada",
-          description: "Sua sessão expirou devido à inatividade.",
-        });
-        signOut();
-      }
-    }
+    // Intentionally no-op: user will only be logged out when they click "Sair"
   };
 
   // Retrieve obra ativa from localStorage on initial load

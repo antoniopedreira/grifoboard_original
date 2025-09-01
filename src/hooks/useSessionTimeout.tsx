@@ -26,24 +26,7 @@ export const useSessionTimeout = ({
     lastActivityRef.current = Date.now();
     localStorage.setItem('last_activity', lastActivityRef.current.toString());
 
-    // Set warning timeout
-    const warningTime = (timeoutMinutes - warningMinutes) * 60 * 1000;
-    warningRef.current = setTimeout(() => {
-      toast.warning('Aviso de Sessão', {
-        description: `Sua sessão expirará em ${warningMinutes} minutos devido à inatividade.`,
-        duration: 10000,
-      });
-    }, warningTime);
-
-    // Set logout timeout
-    const timeoutTime = timeoutMinutes * 60 * 1000;
-    timeoutRef.current = setTimeout(() => {
-      toast.error('Sessão Expirada', {
-        description: 'Sua sessão expirou devido à inatividade.',
-        duration: 5000,
-      });
-      signOut();
-    }, timeoutTime);
+    // No automatic logout or warning — only track activity per user's request
   };
 
   useEffect(() => {
@@ -72,24 +55,8 @@ export const useSessionTimeout = ({
     // Handle visibility change (tab switching)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        // Check if session is still valid when tab becomes visible
-        const storedActivity = localStorage.getItem('last_activity');
-        if (storedActivity) {
-          const timeSinceActivity = Date.now() - parseInt(storedActivity, 10);
-          const maxInactiveTime = timeoutMinutes * 60 * 1000;
-          
-          if (timeSinceActivity > maxInactiveTime) {
-            // Session expired while tab was hidden
-            toast.error('Sessão Expirada', {
-              description: 'Sua sessão expirou devido à inatividade.',
-              duration: 5000,
-            });
-            signOut();
-          } else {
-            // Reset timeout for remaining time
-            resetTimeout();
-          }
-        }
+        // Simply refresh activity tracking; do not auto-logout
+        resetTimeout();
       }
     };
 
