@@ -33,7 +33,7 @@ const TeamChart = ({
     const data = Object.entries(teamGroups).map(([team, tasks]) => {
       const pcpData = calculatePCP(tasks);
       return {
-        name: team,
+        name: team.toUpperCase(),
         percentual: Math.round(pcpData.overall.percentage)
       };
     });

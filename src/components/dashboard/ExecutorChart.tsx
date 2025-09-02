@@ -33,7 +33,7 @@ const ExecutorChart = ({
     const data = Object.entries(executorGroups).map(([executor, tasks]) => {
       const pcpData = calculatePCP(tasks);
       return {
-        name: executor,
+        name: executor.toUpperCase(),
         percentual: Math.round(pcpData.overall.percentage)
       };
     });

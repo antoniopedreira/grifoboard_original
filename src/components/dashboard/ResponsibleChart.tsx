@@ -33,7 +33,7 @@ const ResponsibleChart = ({
     const data = Object.entries(responsibleGroups).map(([responsible, tasks]) => {
       const pcpData = calculatePCP(tasks);
       return {
-        name: responsible,
+        name: responsible.toUpperCase(),
         percentual: Math.round(pcpData.overall.percentage)
       };
     });
