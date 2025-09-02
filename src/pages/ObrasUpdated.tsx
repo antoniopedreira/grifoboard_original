@@ -23,7 +23,7 @@ const ObrasUpdated = () => {
   const loadObras = async () => {
     try {
       setIsLoading(true)
-      const obrasData = await obrasService.listar()
+      const obrasData = await obrasService.listarObras()
       setObras(obrasData)
     } catch (error) {
       toast({
