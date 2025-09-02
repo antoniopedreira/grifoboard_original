@@ -13,6 +13,7 @@ import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
 import TaskDetailsModal from "@/components/dashboard/TaskDetailsModal";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 import { Task } from "@/types";
+import { Kpi } from "@/components/ui/kpi";
 
 const DashboardContent = () => {
   const { userSession } = useAuth();
@@ -184,81 +185,48 @@ const DashboardInner = () => {
         
         {/* KPIs with WoW Comparison */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="minimal-card p-6 interactive">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Activity className="w-5 h-5 text-primary" />
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-semibold text-foreground">{currentWeekTasks.length}</div>
-                <div className="text-xs text-muted-foreground">Total</div>
-              </div>
-            </div>
-            <h3 className="text-sm font-medium text-foreground">Total de Tarefas</h3>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
-              <span className={`text-xs font-medium ${totalTasksDelta >= 0 ? 'text-primary' : 'text-muted-foreground'}`}>
-                {totalTasksDelta >= 0 ? '+' : ''}{totalTasksDelta} ({totalTasksDelta >= 0 ? '+' : ''}{((totalTasksDelta / Math.max(prevWeekTasks.length, 1)) * 100).toFixed(1)}%)
-              </span>
-            </div>
-          </div>
+          <Kpi
+            icon={Activity}
+            value={currentWeekTasks.length}
+            label="Total de Tarefas"
+            delta={{
+              value: totalTasksDelta,
+              label: `(${totalTasksDelta >= 0 ? '+' : ''}${((totalTasksDelta / Math.max(prevWeekTasks.length, 1)) * 100).toFixed(1)}%)`
+            }}
+          />
           
-          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform" onClick={handleCompletedTasksClick}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-success" />
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-semibold text-success">{completedTasks}</div>
-                <div className="text-xs text-muted-foreground">Concluídas</div>
-              </div>
-            </div>
-            <h3 className="text-sm font-medium text-foreground">Tarefas Concluídas</h3>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
-              <span className={`text-xs font-medium ${completedTasksDelta >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {completedTasksDelta >= 0 ? '+' : ''}{completedTasksDelta} ({completedTasksDelta >= 0 ? '+' : ''}{((completedTasksDelta / Math.max(prevCompletedTasks, 1)) * 100).toFixed(1)}%)
-              </span>
-            </div>
-          </div>
+          <Kpi
+            icon={CheckCircle2}
+            value={completedTasks}
+            label="Tarefas Concluídas"
+            delta={{
+              value: completedTasksDelta,
+              label: `(${completedTasksDelta >= 0 ? '+' : ''}${((completedTasksDelta / Math.max(prevCompletedTasks, 1)) * 100).toFixed(1)}%)`
+            }}
+            className="cursor-pointer hover:scale-[1.02] transition-transform"
+            onClick={handleCompletedTasksClick}
+          />
           
-          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform" onClick={handlePendingTasksClick}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-destructive" />
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-semibold text-destructive">{pendingTasks}</div>
-                <div className="text-xs text-muted-foreground">Pendentes</div>
-              </div>
-            </div>
-            <h3 className="text-sm font-medium text-foreground">Não Realizadas</h3>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
-              <span className={`text-xs font-medium ${pendingTasksDelta <= 0 ? 'text-success' : 'text-destructive'}`}>
-                {pendingTasksDelta >= 0 ? '+' : ''}{pendingTasksDelta} ({pendingTasksDelta >= 0 ? '+' : ''}{((pendingTasksDelta / Math.max(prevPendingTasks, 1)) * 100).toFixed(1)}%)
-              </span>
-            </div>
-          </div>
+          <Kpi
+            icon={Calendar}
+            value={pendingTasks}
+            label="Não Realizadas"
+            delta={{
+              value: pendingTasksDelta,
+              label: `(${pendingTasksDelta >= 0 ? '+' : ''}${((pendingTasksDelta / Math.max(prevPendingTasks, 1)) * 100).toFixed(1)}%)`
+            }}
+            className="cursor-pointer hover:scale-[1.02] transition-transform"
+            onClick={handlePendingTasksClick}
+          />
           
-          <div className="minimal-card p-6 interactive">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary" />
-              </div>
-              <div className="text-right">
-                <div className={`text-2xl font-semibold ${getPcpColor(pcpPercentage)}`}>{pcpPercentage}%</div>
-                <div className="text-xs text-muted-foreground">Performance</div>
-              </div>
-            </div>
-            <h3 className="text-sm font-medium text-foreground">PCP Semanal</h3>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
-              <span className={`text-xs font-medium ${pcpDelta >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {pcpDelta >= 0 ? '+' : ''}{pcpDelta}p.p.
-              </span>
-            </div>
-          </div>
+          <Kpi
+            icon={TrendingUp}
+            value={`${pcpPercentage}%`}
+            label="PCP Semanal"
+            delta={{
+              value: pcpDelta
+            }}
+          />
         </div>
 
         {/* Weekly Progress - All Weeks */}

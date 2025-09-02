@@ -43,58 +43,60 @@
 }
 
 :root {
-  /* Clean Minimal Palette */
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  /* Grifo Brand Identity */
+  --brand: 198 100% 14%; /* #081C2C */
+  --brand-foreground: 0 0% 98%;
+  
+  --accent: 45 65% 53%; /* #C8A04B - único dourado de ação */
+  --accent-foreground: 198 100% 14%;
+  
+  --surface: 229 18% 88%; /* #E0E2EC */
+  --surface-foreground: 198 100% 14%;
+  
+  --alt: 36 15% 93%; /* #EEEBEB - fundo global */
+  --alt-foreground: 198 100% 14%;
+  
+  --muted: 219 16% 34%; /* #475569 */
+  --muted-foreground: 36 15% 93%;
+  
+  --success: 148 79% 38%; /* #18A957 */
+  --success-foreground: 0 0% 98%;
+  
+  --warning: 45 93% 53%; /* #F1B21A */
+  --warning-foreground: 198 100% 14%;
+  
+  --danger: 355 70% 56%; /* #D64545 */
+  --danger-foreground: 0 0% 98%;
+
+  /* System Colors */
+  --background: 36 15% 93%; /* alt como fundo global */
+  --foreground: 198 100% 14%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
+  --card-foreground: 198 100% 14%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
+  --popover-foreground: 198 100% 14%;
   
-  /* Neutral Primary */
-  --primary: 240 5.9% 10%;
+  /* Legacy mappings para compatibilidade */
+  --primary: 198 100% 14%;
   --primary-foreground: 0 0% 98%;
-  --primary-hover: 240 5.9% 15%;
-  --primary-light: 240 4.8% 95.9%;
+  --primary-hover: 198 100% 18%;
+  --primary-light: 198 50% 95%;
 
-  /* Subtle Secondary */
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --secondary-light: 240 4.8% 98%;
+  --secondary: 229 18% 88%;
+  --secondary-foreground: 198 100% 14%;
+  --secondary-light: 229 18% 95%;
 
-  /* Minimal Accent */
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --accent-light: 240 4.8% 98%;
+  --destructive: 355 70% 56%;
+  --destructive-foreground: 0 0% 98%;
+  --destructive-light: 355 70% 95%;
 
-  /* Clean Status Colors */
-  --success: 142 76% 36%;
-  --success-foreground: 355.7 100% 97.3%;
-  --success-light: 142 76% 95%;
-  
-  --warning: 47.9 95.8% 53.1%;
-  --warning-foreground: 26 83.3% 14.1%;
-  --warning-light: 47.9 95.8% 95%;
-  
-  --destructive: 0 72.2% 50.6%;
-  --destructive-foreground: 0 85.7% 97.3%;
-  --destructive-light: 0 72.2% 95%;
+  /* Borders */
+  --border: 220 13% 91%; /* #E8EBF2 */
+  --input: 220 13% 91%;
+  --ring: 45 65% 53%;
 
-  /* Grifo Brand Colors */
-  --grifo-gold: 45 60% 52%;
-  --grifo-gold-hover: 45 60% 47%;
-  --grifo-gold-light: 45 60% 95%;
-  --grifo-text: 219 39% 11%;
-
-  /* Neutral System */
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-
-  /* Clean Design Tokens */
-  --radius: 8px;
+  /* Design Tokens */
+  --radius: 16px; /* raio padrão para cards */
   
   /* Glass Morphism */
   --glass-bg: rgba(255, 255, 255, 0.7);
@@ -180,7 +182,7 @@
   }
   
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-alt text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }

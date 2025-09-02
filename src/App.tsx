@@ -4,7 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
-import Header from "@/components/Header";
+import GrifoHeader from "@/components/ui/grifo-header";
+import GrifoSidebar from "@/components/ui/grifo-sidebar";
 import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
@@ -12,7 +13,6 @@ import NotFound from "@/pages/NotFound";
 import { useState, useEffect } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import CustomSidebar from '@/components/CustomSidebar';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,16 +30,18 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
 
   return (
-    <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-gray-50' : ''} font-sans`}>
-      {!isAuthPage && <Header />}
+    <div className="flex flex-col min-h-screen font-sans">
+      {!isAuthPage && <GrifoHeader />}
       
-      <div className="flex flex-1 w-full">
-        {!isAuthPage && !isObrasPage && <CustomSidebar />}
+      <div className="flex flex-1 w-full relative">
+        {!isAuthPage && !isObrasPage && <GrifoSidebar />}
         
-        <main className="flex-1 overflow-hidden">
+        <main className={`flex-1 overflow-hidden transition-all duration-200 ${
+          !isAuthPage && !isObrasPage ? 'lg:ml-60' : ''
+        }`}>
           {!isAuthPage && !isObrasPage ? (
-            <ScrollArea className="h-[calc(100vh-64px)]">
-              <div className="py-6">
+            <ScrollArea className="h-[calc(100vh-4rem)]">
+              <div className="py-6 px-6">
                 {children}
               </div>
             </ScrollArea>
