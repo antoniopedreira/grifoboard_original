@@ -10,11 +10,6 @@ export default {
 		"./src/**/*.{ts,tsx}",
 	],
 	prefix: "",
-	safelist: [
-		// Grifo brand colors - prevent purging
-		{ pattern: /^(bg|text|border)-(brand|accent|surface|alt|muted|success|warning|danger)$/ },
-		{ pattern: /^(bg|text|border)-(brand|accent|surface|alt|muted|success|warning|danger)-(light|foreground)$/ },
-	],
 	theme: {
 		container: {
 			center: true,
@@ -29,40 +24,6 @@ export default {
 				mono: ['Geist Mono', 'monospace'],
 			},
 			colors: {
-				// Grifo Brand Colors
-				brand: {
-					DEFAULT: 'hsl(var(--brand))',
-					foreground: 'hsl(var(--brand-foreground))',
-				},
-				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))',
-				},
-				surface: {
-					DEFAULT: 'hsl(var(--surface))',
-					foreground: 'hsl(var(--surface-foreground))',
-				},
-				alt: {
-					DEFAULT: 'hsl(var(--alt))',
-					foreground: 'hsl(var(--alt-foreground))',
-				},
-				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))',
-				},
-				success: {
-					DEFAULT: 'hsl(var(--success))',
-					foreground: 'hsl(var(--success-foreground))',
-				},
-				warning: {
-					DEFAULT: 'hsl(var(--warning))',
-					foreground: 'hsl(var(--warning-foreground))',
-				},
-				danger: {
-					DEFAULT: 'hsl(var(--danger))',
-					foreground: 'hsl(var(--danger-foreground))',
-				},
-				// System Colors
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -83,6 +44,25 @@ export default {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))',
 					light: 'hsl(var(--destructive-light))'
+				},
+				muted: {
+					DEFAULT: 'hsl(var(--muted))',
+					foreground: 'hsl(var(--muted-foreground))'
+				},
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))',
+					light: 'hsl(var(--accent-light))'
+				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))',
+					light: 'hsl(var(--success-light))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))',
+					light: 'hsl(var(--warning-light))'
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
@@ -106,8 +86,7 @@ export default {
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)',
-				'grifo': '12px',
+				sm: 'calc(var(--radius) - 4px)'
 			},
 			boxShadow: {
 				'xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -116,7 +95,6 @@ export default {
 				'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
 				'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
 				'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-				'grifo': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
 			},
 			keyframes: {
 				'accordion-down': {
