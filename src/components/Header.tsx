@@ -44,10 +44,10 @@ const Header = () => {
               {userSession.obraAtiva && <Button 
                 variant="outline" 
                 size="sm" 
-                className="smooth-button border-text-on-dark/20 text-text-on-dark hover:bg-brand-2 hover:border-text-on-dark/30" 
+                className="smooth-button bg-transparent border-text-on-dark/30 text-text-on-dark hover:bg-brand-2 hover:border-text-on-dark/40 hover:text-text-on-dark" 
                 onClick={handleMudarObra}
               >
-                  <Building2 className="h-4 w-4 mr-2 text-text-on-dark" />
+                  <Building2 className="h-4 w-4 mr-2" />
                   Mudar Obra
                 </Button>}
               
