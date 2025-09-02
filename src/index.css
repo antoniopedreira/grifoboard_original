@@ -96,7 +96,7 @@
   --ring: 45 65% 53%;
 
   /* Design Tokens */
-  --radius: 16px; /* raio padrão para cards */
+  --radius: 12px; /* raio padrão para cards */
   
   /* Glass Morphism */
   --glass-bg: rgba(255, 255, 255, 0.7);

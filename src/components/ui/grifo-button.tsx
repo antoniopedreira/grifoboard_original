@@ -8,15 +8,15 @@ const grifoButtonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-accent text-accent-foreground hover:bg-accent/90",
-        ghost: "hover:bg-surface hover:text-surface-foreground",
-        danger: "bg-danger text-danger-foreground hover:bg-danger/90",
-        neutral: "bg-surface text-surface-foreground hover:bg-surface/80 border border-border",
+        primary: "bg-accent text-accent-foreground hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+        ghost: "text-accent hover:bg-accent/10 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+        danger: "bg-danger text-danger-foreground hover:bg-danger/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+        neutral: "bg-card text-card-foreground hover:bg-surface/80 border border-border focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
+        sm: "h-8 px-3",
+        lg: "h-11 px-8",
         icon: "h-10 w-10",
       },
     },

@@ -22,9 +22,9 @@ const TasksSection: React.FC<TasksSectionProps> = ({
 }) => {
   return (
     <>
-      <div className="flex items-center mb-6">
-        <ClipboardList className="h-6 w-6 mr-3 text-primary" />
-        <h2 className="text-xl font-heading font-semibold">Tarefas da Semana</h2>
+      <div className="flex items-center mb-4">
+        <ClipboardList className="h-5 w-5 mr-3 text-brand" />
+        <h2 className="text-lg font-semibold text-foreground">Tarefas da Semana</h2>
       </div>
       
       {isLoading ? (

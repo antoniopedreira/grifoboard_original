@@ -3,9 +3,9 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Task } from "@/types";
 import TaskDetails from "./task/TaskDetails";
 import TaskStatusDisplay from "./task/TaskStatusDisplay";
-import TaskHeader from "./task-card/TaskHeader";
+import TaskHeaderUpdated from "./task-card/TaskHeaderUpdated";
 import TaskFooter from "./task-card/TaskFooter";
-import EditTaskDialog from "./task-card/EditTaskDialog";
+import EditTaskDialogUpdated from "./task-card/EditTaskDialogUpdated";
 import DeleteConfirmDialog from "./task-card/DeleteConfirmDialog";
 import MaterialsSection from "./materials/MaterialsSection";
 import { useTaskStatus } from "./task-card/useTaskStatus";
@@ -76,9 +76,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <>
-      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100/60 overflow-hidden hover:-translate-y-1 flex flex-col">
+      <Card className="w-full bg-card rounded-grifo border border-border shadow-grifo hover:shadow-md transition-all duration-200 overflow-hidden hover:-translate-y-1 flex flex-col">
         <CardHeader className="pb-3 pt-4 px-4 flex-shrink-0">
-          <TaskHeader 
+          <TaskHeaderUpdated 
             task={task} 
             onCompletionStatusChange={handleCompletionStatusChange} 
           />
@@ -116,16 +116,16 @@ const TaskCard: React.FC<TaskCardProps> = ({
       </Card>
 
       {/* Edit Dialog */}
-      <EditTaskDialog
+      <EditTaskDialogUpdated
         isOpen={isRouteOpen}
         onOpenChange={handleOpenChange}
         task={task}
         editFormData={editFormData}
-        onEditFormChange={handleEditFormChange}
+        onEditFormChange={editFormData => handleEditFormChange("", editFormData)}
         onDayToggle={handleDayToggle}
         onDelete={() => setIsDeleteDialogOpen(true)}
         onSave={handleSaveAndClose}
-        isFormValid={isFormValid}
+        isFormValid={typeof isFormValid === 'function' ? isFormValid() : isFormValid}
         onWeekDateChange={handleWeekDateChange}
       />
 
