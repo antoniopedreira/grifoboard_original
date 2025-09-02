@@ -81,10 +81,11 @@
   --destructive-light: 0 72.2% 95%;
 
   /* Grifo Brand Colors */
-  --grifo-gold: 45 60% 52%;
-  --grifo-gold-hover: 45 60% 47%;
-  --grifo-gold-light: 45 60% 95%;
-  --grifo-text: 219 39% 11%;
+  --brand: 207 75% 9%;           /* #081C2C - dark blue-teal */
+  --brand-2: 207 65% 15%;        /* brand +12% luminosity */
+  --accent: 45 60% 52%;          /* #C8A04B - gold */
+  --text-on-dark: 210 40% 98%;   /* #F8FAFC - almost white */
+  --muted-on-dark: 215 25% 82%;  /* #C8D1DD - secondary text on dark */
 
   /* Neutral System */
   --muted: 240 4.8% 95.9%;

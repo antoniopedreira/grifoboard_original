@@ -26,10 +26,10 @@ import { useAuth } from "@/context/AuthContext";
 
 const sidebarVariants = {
   open: {
-    width: "15rem",
+    width: "248px", // 15.5rem
   },
   closed: {
-    width: "3.05rem",
+    width: "60px", // 3.75rem
   },
 };
 
@@ -104,7 +104,7 @@ export function SessionNavBar() {
       onMouseLeave={() => setIsCollapsed(true)}
     >
       <motion.div
-        className={`relative z-30 flex text-muted-foreground h-full shrink-0 flex-col bg-white transition-all`}
+        className={`relative z-30 flex text-muted-on-dark h-full shrink-0 flex-col bg-brand transition-all`}
         variants={contentVariants}
       >
         <motion.ul variants={staggerVariants} className="flex h-full flex-col">
@@ -116,12 +116,14 @@ export function SessionNavBar() {
                     <Button
                       variant="ghost"
                       className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start",
-                        isDashboardActive && "bg-muted text-blue-600"
+                        "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
+                        isDashboardActive && "bg-brand-2 text-text-on-dark before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-accent before:content-['']"
                       )}
                       onClick={() => navigate("/dashboard")}
+                      aria-current={isDashboardActive ? "page" : undefined}
+                      title={isCollapsed ? "Dashboard" : undefined}
                     >
-                      <LayoutDashboard className="h-4 w-4" />{" "}
+                      <LayoutDashboard className="h-5 w-5" />{" "}
                       <motion.li variants={variants}>
                         {!isCollapsed && (
                           <p className="ml-2 text-sm font-medium">Dashboard</p>
@@ -131,12 +133,14 @@ export function SessionNavBar() {
                     <Button
                       variant="ghost"
                       className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start",
-                        isTasksActive && "bg-muted text-blue-600"
+                        "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
+                        isTasksActive && "bg-brand-2 text-text-on-dark before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-accent before:content-['']"
                       )}
                       onClick={() => navigate("/tarefas")}
+                      aria-current={isTasksActive ? "page" : undefined}
+                      title={isCollapsed ? "Tarefas" : undefined}
                     >
-                      <LayoutList className="h-4 w-4" />{" "}
+                      <LayoutList className="h-5 w-5" />{" "}
                       <motion.li variants={variants}>
                         {!isCollapsed && (
                           <p className="ml-2 text-sm font-medium">Tarefas</p>
@@ -146,12 +150,14 @@ export function SessionNavBar() {
                     <Button
                       variant="ghost"
                       className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start",
-                        isChecklistActive && "bg-muted text-blue-600"
+                        "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
+                        isChecklistActive && "bg-brand-2 text-text-on-dark before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-accent before:content-['']"
                       )}
                       onClick={() => navigate("/checklist")}
+                      aria-current={isChecklistActive ? "page" : undefined}
+                      title={isCollapsed ? "Checklist" : undefined}
                     >
-                      <CheckSquare className="h-4 w-4" />{" "}
+                      <CheckSquare className="h-5 w-5" />{" "}
                       <motion.li variants={variants}>
                         {!isCollapsed && (
                           <p className="ml-2 text-sm font-medium">Checklist</p>
@@ -162,15 +168,17 @@ export function SessionNavBar() {
                 </ScrollArea>
               </div>
               <div className="flex flex-col p-2">
+                <Separator className="mb-2 bg-text-on-dark/20" />
                 <div>
                   <DropdownMenu>
                     <DropdownMenuTrigger className="w-full" asChild>
                       <Button 
                         variant="ghost" 
-                        className="flex h-8 w-full flex-row items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary justify-start"
+                        className="flex h-[46px] w-full flex-row items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                        title={isCollapsed ? "Conta" : undefined}
                       >
-                        <Avatar className="size-4">
-                          <AvatarFallback>
+                        <Avatar className="size-5">
+                          <AvatarFallback className="bg-accent text-brand text-sm">
                             {userInitial}
                           </AvatarFallback>
                         </Avatar>
