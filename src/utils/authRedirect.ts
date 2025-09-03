@@ -4,11 +4,13 @@
 export const handleAuthRedirect = () => {
   const hash = window.location.hash;
   
-  // Check if this is a password reset link
-  if (hash.includes('type=recovery')) {
-    // Clear the hash and redirect to reset password page
-    window.history.replaceState({}, document.title, window.location.pathname);
-    window.location.href = '/reset-password';
+  // Check if this is a password reset link (success or error)
+  if (hash.includes('type=recovery') || 
+      hash.includes('error_code=otp_expired') || 
+      hash.includes('error_description=Email+link+is+invalid') ||
+      (hash.includes('error=access_denied') && window.location.pathname.includes('reset-password'))) {
+    // Keep the hash for error handling and redirect to reset password page
+    window.location.href = '/reset-password' + hash;
     return true;
   }
   

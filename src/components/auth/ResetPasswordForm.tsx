@@ -32,6 +32,31 @@ const ResetPasswordForm = ({ onBackToLogin }: ResetPasswordFormProps) => {
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
+        const error = hashParams.get('error');
+        const errorCode = hashParams.get('error_code');
+        const errorDescription = hashParams.get('error_description');
+
+        // Se há erro na URL, mostra a mensagem de erro
+        if (error || errorCode) {
+          setIsValidToken(false);
+          let errorMessage = "O link de recuperação de senha não é válido ou já expirou.";
+          
+          if (errorCode === 'otp_expired') {
+            errorMessage = "O link de recuperação de senha expirou. Solicite um novo link.";
+          } else if (errorDescription) {
+            errorMessage = decodeURIComponent(errorDescription.replace(/\+/g, ' '));
+          }
+          
+          toast({
+            title: "Link inválido ou expirado",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          
+          // Remove os parâmetros da URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
 
         // Verifica se é um link de recuperação válido
         if (type === 'recovery' && accessToken && refreshToken) {
