@@ -25,20 +25,60 @@ const ResetPasswordForm = ({ onBackToLogin }: ResetPasswordFormProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if there's a valid session from the password reset link
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+    const handlePasswordReset = async () => {
+      try {
+        // Captura os parâmetros da URL (hash fragments)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        // Verifica se é um link de recuperação válido
+        if (type === 'recovery' && accessToken && refreshToken) {
+          // Estabelece a sessão usando os tokens da URL
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (error) {
+            console.error('Erro ao estabelecer sessão:', error);
+            setIsValidToken(false);
+            toast({
+              title: "Link inválido ou expirado",
+              description: "O link de recuperação de senha não é válido ou já expirou.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Remove os parâmetros da URL para maior segurança
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+        } else {
+          // Verifica se já existe uma sessão válida
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            setIsValidToken(false);
+            toast({
+              title: "Link inválido ou expirado",
+              description: "O link de recuperação de senha não é válido ou já expirou.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao processar reset de senha:', error);
         setIsValidToken(false);
         toast({
-          title: "Link inválido ou expirado",
-          description: "O link de recuperação de senha não é válido ou já expirou.",
+          title: "Erro inesperado",
+          description: "Ocorreu um erro ao processar o link de recuperação.",
           variant: "destructive",
         });
       }
     };
 
-    checkSession();
+    handlePasswordReset();
   }, [toast]);
   
   const handleSubmit = async (e: React.FormEvent) => {
