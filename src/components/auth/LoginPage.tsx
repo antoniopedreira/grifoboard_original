@@ -1,31 +1,20 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AuthLayout from './AuthLayout';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
-import ResetPasswordForm from './ResetPasswordForm';
 
-type AuthView = 'login' | 'signup' | 'forgot' | 'reset';
+
+type AuthView = 'login' | 'signup' | 'forgot';
 
 const LoginPage = () => {
   const [currentView, setCurrentView] = useState<AuthView>('login');
-  const location = useLocation();
-  
-  // Check URL hash for password reset
-  useEffect(() => {
-    const hash = location.hash;
-    if (hash.includes('type=recovery') || hash.includes('reset-password')) {
-      setCurrentView('reset');
-    }
-  }, [location.hash]);
   
   const getTitle = () => {
     switch (currentView) {
       case 'signup': return 'Criar conta';
       case 'forgot': return 'Recuperar senha';
-      case 'reset': return 'Nova senha';
       default: return 'Entrar';
     }
   };
@@ -88,10 +77,6 @@ const LoginPage = () => {
       
       {currentView === 'forgot' && (
         <ForgotPasswordForm onBackToLogin={() => setCurrentView('login')} />
-      )}
-      
-      {currentView === 'reset' && (
-        <ResetPasswordForm onBackToLogin={() => setCurrentView('login')} />
       )}
     </AuthLayout>
   );

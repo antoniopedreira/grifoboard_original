@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
 import Header from "@/components/Header";
 import Auth from "@/pages/Auth";
+import ResetPassword from "@/pages/ResetPassword";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
 import NotFound from "@/pages/NotFound";
@@ -26,7 +27,7 @@ const queryClient = new QueryClient({
 // Component to determine if sidebar should be shown based on route
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/auth';
+  const isAuthPage = location.pathname === '/auth' || location.pathname === '/reset-password';
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
 
   return (
@@ -61,7 +62,7 @@ const RouteRestorer = () => {
 
   // Save the current route to sessionStorage for restoration later, but only for app routes
   useEffect(() => {
-    if (location.pathname !== '/auth') {
+    if (location.pathname !== '/auth' && location.pathname !== '/reset-password') {
       sessionStorage.setItem('lastRoute', location.pathname);
     }
   }, [location.pathname]);
@@ -86,6 +87,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/obras" replace />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
