@@ -237,21 +237,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       
       if (data?.session) {
+        // Email confirmation disabled: user is already logged in
         toast({
           title: "Conta criada",
-          description: "Cadastro concluído! Redirecionando...",
+          description: "Bem-vindo!",
         });
       } else {
+        // Email confirmation enabled
         toast({
-          title: "Cadastro realizado",
-          description: "Sua conta foi criada. Você já pode acessar o app.",
+          title: "Cadastro iniciado",
+          description: `Enviamos um email de confirmação para ${email}. Verifique sua caixa de entrada e o spam.`,
         });
       }
     } catch (error: any) {
+      const msg = typeof error?.message === 'string' ? error.message : String(error);
+      let friendly = msg;
+      if (msg.includes('over_email_send_rate_limit') || msg.includes('request this after')) {
+        friendly = 'Por segurança, aguarde alguns segundos antes de tentar novamente.';
+      } else if (msg.toLowerCase().includes('already registered')) {
+        friendly = 'Já existe uma conta para este email. Tente fazer login ou recuperar a senha.';
+      }
       toast({
-        title: "Erro no cadastro",
-        description: error.message,
-        variant: "destructive",
+        title: 'Erro no cadastro',
+        description: friendly,
+        variant: 'destructive',
       });
       throw error;
     } finally {
