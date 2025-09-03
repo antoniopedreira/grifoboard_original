@@ -5,7 +5,6 @@ import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
 
-
 type AuthView = 'login' | 'signup' | 'forgot';
 
 const LoginPage = () => {

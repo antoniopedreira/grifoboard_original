@@ -51,13 +51,12 @@ const SignupForm = () => {
     
     try {
       await signUp(email, password);
-      // Clear form after successful signup
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setShowPassword(false);
     } catch (error: any) {
-      // Error toast handled by AuthContext.signUp
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Não foi possível concluir seu cadastro.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
