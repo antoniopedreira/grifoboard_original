@@ -155,7 +155,7 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   }
 
   return (
-    <div className="flex-1 container max-w-7xl py-4 bg-background">
+    <div className="w-full max-w-7xl mx-auto">
       <Card className="bg-white border border-gray-100 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-gray-900">Minhas Obras</CardTitle>
