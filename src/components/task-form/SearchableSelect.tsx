@@ -51,7 +51,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
-          <Command className="relative">
+          <Command>
             <div className="flex items-center border-b px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <CommandInput 
@@ -59,57 +59,49 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0"
               />
             </div>
-            <div 
-              className="max-h-[200px] overflow-y-auto overscroll-contain"
-              style={{ 
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
-              }}
-            >
-              <CommandList>
-                {validOptions.length > 0 ? (
-                  <CommandGroup>
-                    {validOptions.map((option) => (
-                      <CommandItem
-                        key={option}
-                        value={option}
-                        onSelect={(currentValue) => {
-                          onValueChange(currentValue === value ? "" : currentValue);
+            <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain">
+              {validOptions.length > 0 ? (
+                <CommandGroup>
+                  {validOptions.map((option) => (
+                    <CommandItem
+                      key={option}
+                      value={option}
+                      onSelect={(currentValue) => {
+                        onValueChange(currentValue === value ? "" : currentValue);
+                        setOpen(false);
+                      }}
+                      className="px-3 py-2 text-sm cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === option ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <span className="truncate">{option}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ) : (
+                <CommandEmpty className="py-6 text-center text-sm">
+                  <div className="text-muted-foreground">
+                    <p>Nenhum {label.toLowerCase()} cadastrado</p>
+                    {onOpenRegistryDialog && (
+                      <Button 
+                        variant="link" 
+                        className="mt-2 p-0 h-auto text-primary text-sm"
+                        onClick={() => {
                           setOpen(false);
+                          onOpenRegistryDialog();
                         }}
-                        className="px-3 py-2 text-sm cursor-pointer"
                       >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === option ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        <span className="truncate">{option}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                ) : (
-                  <CommandEmpty className="py-6 text-center text-sm">
-                    <div className="text-muted-foreground">
-                      <p>Nenhum {label.toLowerCase()} cadastrado</p>
-                      {onOpenRegistryDialog && (
-                        <Button 
-                          variant="link" 
-                          className="mt-2 p-0 h-auto text-primary text-sm"
-                          onClick={() => {
-                            setOpen(false);
-                            onOpenRegistryDialog();
-                          }}
-                        >
-                          Adicione através do botão "Cadastro"
-                        </Button>
-                      )}
-                    </div>
-                  </CommandEmpty>
-                )}
-              </CommandList>
-            </div>
+                        Adicione através do botão "Cadastro"
+                      </Button>
+                    )}
+                  </div>
+                </CommandEmpty>
+              )}
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
