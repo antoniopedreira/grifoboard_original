@@ -32,6 +32,7 @@ const DashboardInner = () => {
     currentWeekPcpData,
     prevWeekTasks,
     prevWeekPcpData,
+    allTasks,
     isLoading,
     weekStartDate,
     setWeekStartDate
