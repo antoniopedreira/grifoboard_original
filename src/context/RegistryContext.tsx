@@ -76,10 +76,18 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await registrosService.editarRegistro(id, newValue);
     },
     onSuccess: () => {
+      // Invalidate all queries that might display registry data
       queryClient.invalidateQueries({ queryKey: ['registros', selectedObraId] });
+      queryClient.invalidateQueries({ queryKey: ['tarefas'] });
+      queryClient.invalidateQueries({ queryKey: ['atividades_checklist'] });
+      queryClient.invalidateQueries({ queryKey: ['materiais_tarefa'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-data'] });
+      // Force refresh of all queries to ensure UI updates
+      queryClient.refetchQueries();
+      
       toast({
         title: "Cadastro atualizado",
-        description: "O item foi atualizado com sucesso.",
+        description: "O item foi atualizado em todo o sistema.",
       });
     },
     onError: (error: Error) => {
