@@ -33,17 +33,17 @@ const PCPChart: React.FC<PCPChartProps> = ({ pcpData, weeklyData, tasks, onCause
         </div>
       </div>
       
-      {/* PCP by Responsible */}
+      {/* PCP by Executor */}
       <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/50 shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-fade-in">        
         <div className="relative p-6">
           <div className="flex items-center mb-4">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg">
-              <UserCheck className="h-5 w-5 text-white" />
+              <Users className="h-5 w-5 text-white" />
             </div>
-            <h3 className="text-base font-semibold text-slate-800 ml-3 truncate">PCP por Responsável</h3>
+            <h3 className="text-base font-semibold text-slate-800 ml-3 truncate">PCP por Executante</h3>
           </div>
           <div className="space-y-3">
-            <PCPBreakdownCard title="" data={pcpData.byResponsible || {}} />
+            <PCPBreakdownCard title="" data={pcpData.byExecutor || {}} />
           </div>
         </div>
       </div>

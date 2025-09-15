@@ -17,7 +17,7 @@ export interface PCPData {
 export interface PCPBreakdown {
   overall: PCPData;
   bySector: Record<string, PCPData>;
-  byResponsible: Record<string, PCPData>;
+  byExecutor: Record<string, PCPData>;
   byDiscipline: Record<string, PCPData>;
 }
 

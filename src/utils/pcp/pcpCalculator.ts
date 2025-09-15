@@ -9,7 +9,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
     return {
       overall: { completedTasks: 0, totalTasks: 0, percentage: 0 },
       bySector: {},
-      byResponsible: {},
+      byExecutor: {},
       byDiscipline: {}
     };
   }
@@ -33,17 +33,17 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
     };
   });
 
-  // By responsible
-  const responsibles = Array.from(new Set(tasksWithPlannedDays.map(task => task.responsible)));
-  const byResponsible: Record<string, { completedTasks: number; totalTasks: number; percentage: number }> = {};
+  // By executor
+  const executors = Array.from(new Set(tasksWithPlannedDays.map(task => task.executor).filter(Boolean)));
+  const byExecutor: Record<string, { completedTasks: number; totalTasks: number; percentage: number }> = {};
   
-  responsibles.forEach(responsible => {
-    const responsibleTasks = tasksWithPlannedDays.filter(task => task.responsible === responsible);
-    const responsibleCompletedTasks = responsibleTasks.filter(task => task.isFullyCompleted).length;
-    byResponsible[responsible] = {
-      completedTasks: responsibleCompletedTasks,
-      totalTasks: responsibleTasks.length,
-      percentage: (responsibleCompletedTasks / responsibleTasks.length) * 100
+  executors.forEach(executor => {
+    const executorTasks = tasksWithPlannedDays.filter(task => task.executor === executor);
+    const executorCompletedTasks = executorTasks.filter(task => task.isFullyCompleted).length;
+    byExecutor[executor!] = {
+      completedTasks: executorCompletedTasks,
+      totalTasks: executorTasks.length,
+      percentage: (executorCompletedTasks / executorTasks.length) * 100
     };
   });
   
@@ -64,7 +64,7 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
   return {
     overall: { completedTasks, totalTasks, percentage },
     bySector,
-    byResponsible,
+    byExecutor,
     byDiscipline
   };
 };
