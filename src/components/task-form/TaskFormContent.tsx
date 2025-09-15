@@ -24,6 +24,13 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
   currentWeekStartDate 
 }) => {
   const { sectors, disciplines, teams, responsibles, executors } = useRegistry();
+  
+  // Sort all registry arrays alphabetically
+  const sortedSectors = [...sectors].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedDisciplines = [...disciplines].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedTeams = [...teams].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedResponsibles = [...responsibles].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedExecutors = [...executors].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
   const { toast } = useToast();
   
   const [sector, setSector] = useState("");
@@ -119,7 +126,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
               label="Setor"
               value={sector}
               onValueChange={setSector}
-              options={sectors}
+              options={sortedSectors}
               placeholder="Selecione o setor"
               onOpenRegistryDialog={handleOpenRegistryDialog}
             />
@@ -129,7 +136,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
               label="Disciplina"
               value={discipline}
               onValueChange={setDiscipline}
-              options={disciplines}
+              options={sortedDisciplines}
               placeholder="Selecione a disciplina"
             />
           </div>
@@ -141,7 +148,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
               label="Executante"
               value={team}
               onValueChange={setTeam}
-              options={teams}
+              options={sortedTeams}
               placeholder="Selecione o executante"
             />
           </div>
@@ -153,7 +160,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
               label="Responsável"
               value={responsible}
               onValueChange={setResponsible}
-              options={responsibles}
+              options={sortedResponsibles}
               placeholder="Selecione o responsável"
             />
             
@@ -162,7 +169,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
               label="Encarregado"
               value={executor}
               onValueChange={setExecutor}
-              options={executors}
+              options={sortedExecutors}
               placeholder="Selecione o encarregado"
             />
           </div>
