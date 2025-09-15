@@ -18,7 +18,7 @@ const SessionMonitor = () => {
     if (!userSession.user) return;
     
     let lastCheckTime = 0;
-    const CHECK_COOLDOWN = 5000; // 5 second cooldown to prevent frequent checks
+    const CHECK_COOLDOWN = 30000; // 30 second cooldown to minimize checks
     
     const checkSessionStatus = () => {
       const now = Date.now();
@@ -49,7 +49,7 @@ const SessionMonitor = () => {
           newShowAlert = true;
         }
         
-        // Only update state if values actually changed
+        // Only update state if values actually changed to prevent re-renders
         setSessionInfo(prev => {
           if (!prev || prev.id !== info.id || prev.lastActivity !== info.lastActivity) {
             return info;
@@ -62,19 +62,21 @@ const SessionMonitor = () => {
       }
     };
 
-    // Check immediately
+    // Check immediately only once
     checkSessionStatus();
 
-    // Check every minute
-    const interval = setInterval(checkSessionStatus, 60000);
+    // Reduce check frequency to every 5 minutes for performance
+    const interval = setInterval(checkSessionStatus, 300000);
 
-    // Listen for storage changes (multiple tabs)
+    // Only listen for direct storage changes, not visibility changes
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'current_session_id' || e.key === 'last_activity') {
-        checkSessionStatus();
+        // Debounce storage change handling
+        setTimeout(checkSessionStatus, 100);
       }
     };
     window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);

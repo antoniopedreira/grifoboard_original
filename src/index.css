@@ -40,6 +40,15 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: rgb(148 163 184);
   }
+
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 :root {
@@ -187,28 +196,28 @@
 }
 
 @layer components {
-  /* Glass Card */
+  /* Glass Card - Use specific transitions */
   .glass-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     backdrop-filter: var(--glass-backdrop);
     -webkit-backdrop-filter: var(--glass-backdrop);
-    @apply rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl;
+    @apply rounded-lg shadow-lg transition-shadow duration-300 hover:shadow-xl;
   }
 
-  /* Minimal Card */
+  /* Minimal Card - Use specific transitions */
   .minimal-card {
-    @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-200;
+    @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
   }
 
-  /* Interactive Element */
+  /* Interactive Element - Use specific transitions only */
   .interactive {
-    @apply hover:scale-[1.02] transition-all duration-200 ease-out;
+    @apply hover:scale-[1.02] transition-transform duration-200 ease-out;
   }
 
-  /* Smooth Button */
+  /* Smooth Button - Use only transform transition */
   .smooth-button {
-    @apply transition-all duration-200 ease-out hover:scale-105;
+    @apply transition-transform duration-200 ease-out hover:scale-105;
   }
 
   /* Frosted Glass */

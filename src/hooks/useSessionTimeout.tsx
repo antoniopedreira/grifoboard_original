@@ -52,30 +52,16 @@ export const useSessionTimeout = ({
       document.addEventListener(event, handleActivity, true);
     });
 
-    // Handle visibility change (tab switching) with throttling
-    let visibilityTimeout: NodeJS.Timeout;
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Throttle visibility change to prevent excessive updates
-        clearTimeout(visibilityTimeout);
-        visibilityTimeout = setTimeout(() => {
-          resetTimeout();
-        }, 200);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Remove visibility change listener to prevent layout shifts on tab focus
 
     // Cleanup
     return () => {
       events.forEach(event => {
         document.removeEventListener(event, handleActivity, true);
       });
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (warningRef.current) clearTimeout(warningRef.current);
-      if (visibilityTimeout) clearTimeout(visibilityTimeout);
     };
   }, [userSession.user, signOut, timeoutMinutes, warningMinutes]);
 

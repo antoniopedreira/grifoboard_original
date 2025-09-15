@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from 'recharts';
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
@@ -13,10 +13,8 @@ const ExecutorChart = ({
   weekStartDate,
   tasks
 }: ExecutorChartProps) => {
-  const [executorData, setExecutorData] = useState<{ name: string; percentual: number; }[]>([]);
-
-  useEffect(() => {
-    // Use the tasks passed as props directly
+  // Memoize executor data calculation to prevent recalculations
+  const executorData = useMemo(() => {
     const tasksForWeek = tasks;
 
     // Group tasks by executor
@@ -38,15 +36,13 @@ const ExecutorChart = ({
       };
     });
 
-    // Sort by percentage descending
+    // Sort by percentage descending and limit to top 10
     data.sort((a, b) => b.percentual - a.percentual);
-    
-    const processedData = data.slice(0, 10); // Limit to top 10
-    setExecutorData(processedData);
-  }, [tasks]); // Changed dependency from allTasks to tasks
+    return data.slice(0, 10);
+  }, [tasks]);
 
   return (
-    <div className="w-full h-[380px] border border-gray-200 rounded-lg p-4">
+    <div className="w-full min-h-[380px] h-[380px] border border-gray-200 rounded-lg p-4">
       <div className="flex items-center mb-4">
         <BarChart2 className="h-5 w-5 mr-2 text-primary" />
         <h3 className="text-lg font-medium font-heading">PCP por Encarregado</h3>
@@ -81,7 +77,8 @@ const ExecutorChart = ({
             <Bar 
               dataKey="percentual" 
               fill="#021C2F" 
-              radius={[0, 4, 4, 0]} 
+              radius={[0, 4, 4, 0]}
+              isAnimationActive={false}
             >
               <LabelList 
                 dataKey="percentual" 
@@ -101,4 +98,4 @@ const ExecutorChart = ({
   );
 };
 
-export default ExecutorChart;
+export default React.memo(ExecutorChart);

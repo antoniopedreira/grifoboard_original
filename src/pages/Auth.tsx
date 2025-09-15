@@ -14,7 +14,8 @@ const Auth = () => {
       return; // Will redirect to reset password page
     }
     
-    if (!isLoading && userSession.user) {
+    // Only navigate if we're not already on the root path and user is authenticated
+    if (!isLoading && userSession.user && window.location.pathname !== '/') {
       navigate('/', { replace: true });
     }
   }, [isLoading, userSession.user, navigate]);

@@ -124,26 +124,26 @@ const DashboardInner = () => {
             <div className="h-12 bg-muted rounded"></div>
           </div>
           
-          {/* Loading Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="glass-card p-6 animate-pulse">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 bg-muted rounded-lg"></div>
-                  <div className="text-right">
-                    <div className="h-8 w-12 bg-muted rounded"></div>
-                    <div className="h-3 w-16 bg-muted/60 rounded mt-1"></div>
-                  </div>
-                </div>
-                <div className="h-4 w-24 bg-muted rounded"></div>
+      {/* Loading Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={`skeleton-${i}`} className="glass-card p-6 animate-pulse min-h-[140px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-muted rounded-lg"></div>
+              <div className="text-right">
+                <div className="h-8 w-12 bg-muted rounded"></div>
+                <div className="h-3 w-16 bg-muted/60 rounded mt-1"></div>
               </div>
-            ))}
+            </div>
+            <div className="h-4 w-24 bg-muted rounded"></div>
           </div>
-          
-          {/* Loading Chart */}
-          <div className="glass-card p-6 animate-pulse">
-            <div className="h-64 bg-muted rounded"></div>
-          </div>
+        ))}
+      </div>
+      
+      {/* Loading Chart */}
+      <div className="glass-card p-6 animate-pulse min-h-[280px]">
+        <div className="h-64 bg-muted rounded"></div>
+      </div>
         </div>
       </div>
     );
@@ -184,7 +184,7 @@ const DashboardInner = () => {
         
         {/* KPIs with WoW Comparison */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="minimal-card p-6 interactive">
+          <div className="minimal-card p-6 interactive min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Activity className="w-5 h-5 text-primary" />
@@ -203,7 +203,7 @@ const DashboardInner = () => {
             </div>
           </div>
           
-          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform" onClick={handleCompletedTasksClick}>
+          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform min-h-[140px]" onClick={handleCompletedTasksClick}>
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5 text-success" />
@@ -222,7 +222,7 @@ const DashboardInner = () => {
             </div>
           </div>
           
-          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform" onClick={handlePendingTasksClick}>
+          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform min-h-[140px]" onClick={handlePendingTasksClick}>
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-destructive" />
@@ -241,7 +241,7 @@ const DashboardInner = () => {
             </div>
           </div>
           
-          <div className="minimal-card p-6 interactive">
+          <div className="minimal-card p-6 interactive min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-primary" />

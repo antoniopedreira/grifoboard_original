@@ -159,20 +159,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       document.addEventListener(event, handleActivity, true);
     });
 
-    // Handle tab/window visibility changes with throttling
-    let visibilityTimeout: NodeJS.Timeout;
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Throttle visibility change handling to prevent excessive re-renders
-        clearTimeout(visibilityTimeout);
-        visibilityTimeout = setTimeout(() => {
-          updateActivity();
-          checkSessionHealth();
-        }, 100); // Small delay to prevent flickering
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Remove visibility change listener to prevent layout shifts
+    // Only track activity through user interactions, not tab switching
 
     // Cleanup
     return () => {
@@ -180,13 +168,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (healthCheckInterval) {
         clearInterval(healthCheckInterval);
       }
-      if (visibilityTimeout) {
-        clearTimeout(visibilityTimeout);
-      }
       activityEvents.forEach(event => {
         document.removeEventListener(event, handleActivity, true);
       });
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
