@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardContent } from "@/components/ui/card";
 import { Task } from "@/types";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertTriangle, TrendingDown } from "lucide-react";
 interface CausesCountCardProps {
   tasks: Task[];
@@ -58,21 +59,23 @@ const CausesCountCard: React.FC<CausesCountCardProps> = ({
           <h3 className="text-base font-semibold text-slate-800 ml-3 truncate">Causas</h3>
         </div>
         
-        <div className="space-y-1">
-          {causesArray.map(({
-          cause,
-          count
-        }, index) => <div key={cause} className="flex items-center justify-between py-2 cursor-pointer hover:bg-slate-50 transition-all duration-200 animate-fade-in" style={{
-          animationDelay: `${index * 100}ms`
-        }} onClick={() => onCauseSelect(cause)}>
-              <span className="text-sm font-medium text-slate-700 flex-1 mr-2 break-words">
-                {cause}
-              </span>
-              <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-red-600 text-xs font-bold">{count}</span>
-              </div>
-            </div>)}
-        </div>
+        <ScrollArea className="max-h-[200px]">
+          <div className="space-y-1">
+            {causesArray.map(({
+            cause,
+            count
+          }, index) => <div key={cause} className="flex items-center justify-between py-2 cursor-pointer hover:bg-slate-50 transition-all duration-200 animate-fade-in" style={{
+            animationDelay: `${index * 100}ms`
+          }} onClick={() => onCauseSelect(cause)}>
+                <span className="text-sm font-medium text-slate-700 flex-1 mr-2 break-words">
+                  {cause}
+                </span>
+                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-red-600 text-xs font-bold">{count}</span>
+                </div>
+              </div>)}
+          </div>
+        </ScrollArea>
       </div>
     </div>;
 };
