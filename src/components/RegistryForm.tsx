@@ -94,43 +94,49 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
 
   // Render list of items with delete buttons
   const renderItemsList = (type: string, items: string[]) => {
-    if (isLoading) return <div className="text-sm text-muted-foreground py-2">Carregando...</div>;
-    if (items.length === 0) return <div className="text-sm text-muted-foreground py-2">Nenhum item cadastrado</div>;
+    if (isLoading) return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Carregando...</span>
+      </div>
+    );
+    
+    if (items.length === 0) return (
+      <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+        <div className="text-muted-foreground/60 text-4xl mb-2">📋</div>
+        <div className="text-sm text-muted-foreground font-medium">Nenhum item cadastrado</div>
+        <div className="text-xs text-muted-foreground/75 mt-1">Adicione o primeiro item acima</div>
+      </div>
+    );
+
+    // Sort items alphabetically (case insensitive)
+    const sortedItems = [...items].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
     return (
-      <ScrollArea className="h-[200px] mt-4">
-        <div className="space-y-2 pr-4">
-          {items.map((item, index) => (
+      <ScrollArea className="h-[240px] mt-6">
+        <div className="space-y-3 pr-4">
+          {sortedItems.map((item, index) => (
             <div 
               key={index} 
-              className="flex items-center justify-between bg-muted/50 p-2 rounded-md"
-              style={{
-                overflow: 'hidden',
-                whiteSpace: 'normal',
-                wordWrap: 'break-word',
-                width: '100%'
-              }}
+              className="group flex items-center justify-between bg-card border border-border hover:border-primary/30 p-4 rounded-lg transition-all duration-200 hover:shadow-sm"
             >
-              <span 
-                className="text-sm flex-1"
-                style={{
-                  overflow: 'hidden',
-                  whiteSpace: 'normal',
-                  wordWrap: 'break-word'
-                }}
-              >
-                {item}
-              </span>
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-2 h-2 rounded-full bg-primary/60 flex-shrink-0"></div>
+                <span className="text-sm font-medium text-foreground truncate">
+                  {item}
+                </span>
+              </div>
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={() => handleDelete(type, item)}
                 disabled={deletingItem?.type === type && deletingItem?.value === item}
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
               >
                 {deletingItem?.type === type && deletingItem?.value === item ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <Trash2 className="h-4 w-4" />
                 )}
               </Button>
             </div>
@@ -142,54 +148,46 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
 
   return (
     <Tabs defaultValue="sector" className="w-full">
-      <TabsList className="flex flex-wrap mb-6 w-full">
-        <TabsTrigger value="sector" className="flex-1 px-3 py-2 text-sm">
-          <div className="flex flex-col items-center">
-            <span>Setor</span>
-            <div className="ml-1 mt-1">{renderItemsCount(sectors)}</div>
-          </div>
+      <TabsList className="grid w-full grid-cols-5 mb-8 h-auto p-1 bg-muted/50">
+        <TabsTrigger value="sector" className="flex flex-col py-3 px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <span className="font-medium text-xs sm:text-sm">Setor</span>
+          <div className="mt-1 text-xs opacity-75">{renderItemsCount(sectors)}</div>
         </TabsTrigger>
-        <TabsTrigger value="discipline" className="flex-1 px-3 py-2 text-sm">
-          <div className="flex flex-col items-center">
-            <span>Disciplina</span>
-            <div className="ml-1 mt-1">{renderItemsCount(disciplines)}</div>
-          </div>
+        <TabsTrigger value="discipline" className="flex flex-col py-3 px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <span className="font-medium text-xs sm:text-sm">Disciplina</span>
+          <div className="mt-1 text-xs opacity-75">{renderItemsCount(disciplines)}</div>
         </TabsTrigger>
-        <TabsTrigger value="team" className="flex-1 px-3 py-2 text-sm">
-          <div className="flex flex-col items-center">
-            <span>Executante</span>
-            <div className="ml-1 mt-1">{renderItemsCount(teams)}</div>
-          </div>
+        <TabsTrigger value="team" className="flex flex-col py-3 px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <span className="font-medium text-xs sm:text-sm">Executante</span>
+          <div className="mt-1 text-xs opacity-75">{renderItemsCount(teams)}</div>
         </TabsTrigger>
-        <TabsTrigger value="responsible" className="flex-1 px-3 py-2 text-sm">
-          <div className="flex flex-col items-center">
-            <span>Resp.</span>
-            <div className="ml-1 mt-1">{renderItemsCount(responsibles)}</div>
-          </div>
+        <TabsTrigger value="responsible" className="flex flex-col py-3 px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <span className="font-medium text-xs sm:text-sm">Resp.</span>
+          <div className="mt-1 text-xs opacity-75">{renderItemsCount(responsibles)}</div>
         </TabsTrigger>
-        <TabsTrigger value="executor" className="flex-1 px-3 py-2 text-sm">
-          <div className="flex flex-col items-center">
-            <span>Encarregado</span>
-            <div className="ml-1 mt-1">{renderItemsCount(executors)}</div>
-          </div>
+        <TabsTrigger value="executor" className="flex flex-col py-3 px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <span className="font-medium text-xs sm:text-sm">Encarregado</span>
+          <div className="mt-1 text-xs opacity-75">{renderItemsCount(executors)}</div>
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="sector" className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new-sector" className="font-medium">Novo Setor</Label>
+      <TabsContent value="sector" className="space-y-6">
+        <div className="bg-muted/30 border rounded-lg p-6">
+          <Label htmlFor="new-sector" className="text-base font-semibold text-foreground mb-4 block">
+            Novo Setor
+          </Label>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               id="new-sector"
               value={newSector}
               onChange={(e) => setNewSector(e.target.value)}
               placeholder="Digite o nome do setor"
-              className="flex-1"
+              className="flex-1 h-11"
             />
             <Button 
               onClick={() => handleSubmit("sector")} 
               disabled={isSaving || newSector.trim() === ""}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap h-11 px-6"
             >
               {isSaving ? (
                 <>
@@ -205,21 +203,23 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
         {renderItemsList("sector", sectors)}
       </TabsContent>
       
-      <TabsContent value="discipline" className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new-discipline" className="font-medium">Nova Disciplina</Label>
+      <TabsContent value="discipline" className="space-y-6">
+        <div className="bg-muted/30 border rounded-lg p-6">
+          <Label htmlFor="new-discipline" className="text-base font-semibold text-foreground mb-4 block">
+            Nova Disciplina
+          </Label>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               id="new-discipline"
               value={newDiscipline}
               onChange={(e) => setNewDiscipline(e.target.value)}
               placeholder="Digite o nome da disciplina"
-              className="flex-1"
+              className="flex-1 h-11"
             />
             <Button 
               onClick={() => handleSubmit("discipline")} 
               disabled={isSaving || newDiscipline.trim() === ""}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap h-11 px-6"
             >
               {isSaving ? (
                 <>
@@ -235,21 +235,23 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
         {renderItemsList("discipline", disciplines)}
       </TabsContent>
       
-      <TabsContent value="team" className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new-team" className="font-medium">Novo Executante</Label>
+      <TabsContent value="team" className="space-y-6">
+        <div className="bg-muted/30 border rounded-lg p-6">
+          <Label htmlFor="new-team" className="text-base font-semibold text-foreground mb-4 block">
+            Novo Executante
+          </Label>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               id="new-team"
               value={newTeam}
               onChange={(e) => setNewTeam(e.target.value)}
               placeholder="Digite o nome do executante"
-              className="flex-1"
+              className="flex-1 h-11"
             />
             <Button 
               onClick={() => handleSubmit("team")} 
               disabled={isSaving || newTeam.trim() === ""}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap h-11 px-6"
             >
               {isSaving ? (
                 <>
@@ -265,21 +267,23 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
         {renderItemsList("team", teams)}
       </TabsContent>
       
-      <TabsContent value="responsible" className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new-responsible" className="font-medium">Novo Responsável</Label>
+      <TabsContent value="responsible" className="space-y-6">
+        <div className="bg-muted/30 border rounded-lg p-6">
+          <Label htmlFor="new-responsible" className="text-base font-semibold text-foreground mb-4 block">
+            Novo Responsável
+          </Label>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               id="new-responsible"
               value={newResponsible}
               onChange={(e) => setNewResponsible(e.target.value)}
               placeholder="Digite o nome do responsável"
-              className="flex-1"
+              className="flex-1 h-11"
             />
             <Button 
               onClick={() => handleSubmit("responsible")} 
               disabled={isSaving || newResponsible.trim() === ""}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap h-11 px-6"
             >
               {isSaving ? (
                 <>
@@ -295,21 +299,23 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
         {renderItemsList("responsible", responsibles)}
       </TabsContent>
       
-      <TabsContent value="executor" className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new-executor" className="font-medium">Novo Encarregado</Label>
+      <TabsContent value="executor" className="space-y-6">
+        <div className="bg-muted/30 border rounded-lg p-6">
+          <Label htmlFor="new-executor" className="text-base font-semibold text-foreground mb-4 block">
+            Novo Encarregado
+          </Label>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               id="new-executor"
               value={newExecutor}
               onChange={(e) => setNewExecutor(e.target.value)}
               placeholder="Digite o nome do encarregado"
-              className="flex-1"
+              className="flex-1 h-11"
             />
             <Button 
               onClick={() => handleSubmit("executor")} 
               disabled={isSaving || newExecutor.trim() === ""}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap h-11 px-6"
             >
               {isSaving ? (
                 <>
