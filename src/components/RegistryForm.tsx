@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { useRegistry } from "@/context/RegistryContext";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Edit2, Check, X } from "lucide-react";
 
 interface RegistryFormProps {
   onClose: () => void;
@@ -26,7 +26,8 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
   const [newTeam, setNewTeam] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
   const [newExecutor, setNewExecutor] = useState("");
-  const { sectors, disciplines, teams, responsibles, executors, isLoading, deleteRegistry } = useRegistry();
+  const [editingItem, setEditingItem] = useState<{type: string, value: string, newValue: string} | null>(null);
+  const { sectors, disciplines, teams, responsibles, executors, isLoading, deleteRegistry, editRegistry, getRegistryItemId } = useRegistry();
   const [deletingItem, setDeletingItem] = useState<{type: string, value: string} | null>(null);
 
   const handleSubmit = async (type: string) => {
@@ -74,6 +75,35 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     }
   };
 
+  const handleEdit = (type: string, value: string) => {
+    setEditingItem({ type, value, newValue: value });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingItem) return;
+    
+    const itemId = getRegistryItemId(editingItem.type, editingItem.value);
+    if (!itemId) {
+      toast({
+        title: "Erro",
+        description: "Item não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await editRegistry(itemId, editingItem.newValue);
+      setEditingItem(null);
+    } catch (error) {
+      // Error is handled by the context
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+  };
+
   const handleDelete = async (type: string, value: string) => {
     setDeletingItem({type, value});
     try {
@@ -115,32 +145,84 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     return (
       <ScrollArea className="h-[240px] mt-6">
         <div className="space-y-3 pr-4">
-          {sortedItems.map((item, index) => (
-            <div 
-              key={index} 
-              className="group flex items-center justify-between bg-card border border-border hover:border-primary/30 p-4 rounded-lg transition-all duration-200 hover:shadow-sm"
-            >
-              <div className="flex items-center space-x-3 flex-1 min-w-0">
-                <div className="w-2 h-2 rounded-full bg-primary/60 flex-shrink-0"></div>
-                <span className="text-sm font-medium text-foreground truncate">
-                  {item}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(type, item)}
-                disabled={deletingItem?.type === type && deletingItem?.value === item}
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+          {sortedItems.map((item, index) => {
+            const isEditing = editingItem?.type === type && editingItem?.value === item;
+            const isDeleting = deletingItem?.type === type && deletingItem?.value === item;
+            
+            return (
+              <div 
+                key={index} 
+                className="group flex items-center justify-between bg-card border border-border hover:border-primary/30 p-4 rounded-lg transition-all duration-200 hover:shadow-sm"
               >
-                {deletingItem?.type === type && deletingItem?.value === item ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          ))}
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="w-2 h-2 rounded-full bg-primary/60 flex-shrink-0"></div>
+                  {isEditing ? (
+                    <Input
+                      value={editingItem.newValue}
+                      onChange={(e) => setEditingItem({...editingItem, newValue: e.target.value})}
+                      className="text-sm font-medium flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {item}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center space-x-1">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSaveEdit}
+                        disabled={isSaving}
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50 h-8 w-8 p-0"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancelEdit}
+                        className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(type, item)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8 p-0"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(type, item)}
+                        disabled={isDeleting}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                      >
+                        {isDeleting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
     );

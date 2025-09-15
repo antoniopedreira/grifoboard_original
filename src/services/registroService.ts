@@ -49,6 +49,20 @@ export const registrosService = {
     return data;
   },
 
+  async editarRegistro(id: string, novoValor: string): Promise<Registro> {
+    const { data, error } = await supabase
+      .from('registros')
+      .update({ valor: novoValor })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    return data;
+  },
+
   async excluirRegistro(obra_id: string, tipo: string, valor: string): Promise<void> {
     const { error } = await supabase
       .from('registros')
