@@ -27,8 +27,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
         <h2 className="text-xl font-heading font-semibold">Tarefas da Semana</h2>
       </div>
       
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4 rounded-xl bg-white border border-gray-100 shadow-sm animate-pulse">
+      {isLoading && tasks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 px-4 rounded-xl bg-white border border-gray-100 shadow-sm animate-pulse min-h-[280px]">
           <div className="h-12 w-12 rounded-full bg-gray-200 mb-3"></div>
           <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
           <div className="h-4 w-64 bg-gray-200 rounded"></div>
@@ -41,7 +41,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
           onTaskDuplicate={onTaskDuplicate}
           selectedCause={selectedCause}
         />
-      )}
+      )
     </>
   );
 };

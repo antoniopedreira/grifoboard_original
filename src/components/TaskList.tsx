@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Task } from "@/types";
 import TaskFilters from "./task/TaskFilters";
 import TaskGrid from "./task/TaskGrid";
@@ -80,4 +80,4 @@ const TaskList: React.FC<TaskListProps> = ({
   );
 };
 
-export default TaskList;
+export default React.memo(TaskList);

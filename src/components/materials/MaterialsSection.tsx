@@ -18,7 +18,7 @@ const MaterialsSection: React.FC<MaterialsSectionProps> = ({ tarefaId }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newMaterial, setNewMaterial] = useState({ descricao: '', responsavel: '' });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const loadMaterials = async () => {
@@ -94,16 +94,11 @@ const MaterialsSection: React.FC<MaterialsSectionProps> = ({ tarefaId }) => {
   };
 
   useEffect(() => {
-    loadMaterials();
-  }, [tarefaId]);
+    if (isExpanded) {
+      loadMaterials();
+    }
+  }, [isExpanded, tarefaId]);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        <div className="h-4 bg-muted rounded animate-pulse" />
-      </div>
-    );
-  }
 
   return (
     <div className="mt-3">
