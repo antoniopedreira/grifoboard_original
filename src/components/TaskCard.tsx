@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Task } from "@/types";
 import TaskDetails from "./task/TaskDetails";
@@ -76,7 +77,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <>
-      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100/60 overflow-hidden hover:-translate-y-1 flex flex-col">
+      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100/60 overflow-hidden flex flex-col transition-transform duration-200 motion-reduce:transition-none min-h-[280px]">
         <CardHeader className="pb-3 pt-4 px-4 flex-shrink-0">
           <TaskHeader 
             task={task} 
@@ -139,4 +140,4 @@ const TaskCard: React.FC<TaskCardProps> = ({
   );
 };
 
-export default TaskCard;
+export default React.memo(TaskCard);

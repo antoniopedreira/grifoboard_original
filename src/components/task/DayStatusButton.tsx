@@ -45,7 +45,7 @@ const DayStatusButton: React.FC<DayStatusButtonProps> = ({ day, status, isPlanne
   return (
     <button
       onClick={handleClick}
-      className={`h-7 w-7 rounded-md ${statusColorMap[status]} flex items-center justify-center ${statusTextMap[status]} transition-all duration-150 shadow-sm hover:shadow border`}
+      className={`h-7 w-7 rounded-md ${statusColorMap[status]} flex items-center justify-center ${statusTextMap[status]} transition-colors duration-150 shadow-sm border motion-reduce:transition-none`}
       aria-label={`Status para ${day}: ${status}`}
     >
       {status === "completed" && <span className="text-xs font-bold">✓</span>}

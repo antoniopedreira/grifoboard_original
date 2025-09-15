@@ -1,4 +1,4 @@
-
+import React from "react";
 import TaskCard from "../TaskCard";
 import { Task } from "@/types";
 import { ClipboardX } from "lucide-react";
@@ -41,4 +41,4 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
   );
 };
 
-export default TaskGrid;
+export default React.memo(TaskGrid);
