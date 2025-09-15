@@ -21,7 +21,7 @@ export const convertTarefaToTask = (tarefa: Tarefa): Task => {
     discipline: tarefa.disciplina,
     team: tarefa.executante,
     responsible: tarefa.responsavel,
-    executor: tarefa.encarregado,
+    executor: tarefa.executante,
     // Convert daily status fields to plannedDays array
     plannedDays: [],
     dailyStatus: [], 
@@ -57,9 +57,9 @@ export const convertTaskStatusToTarefa = (task: Task): Partial<Tarefa> => {
     item: task.item,
     descricao: task.description,
     disciplina: task.discipline,
-    executante: task.team,
+    executante: task.executor,
     responsavel: task.responsible,
-    encarregado: task.executor,
+    encarregado: task.team,
     percentual_executado: task.isFullyCompleted ? 1 : 0,
     causa_nao_execucao: task.causeIfNotDone,
     // Convert Date to string format for database
