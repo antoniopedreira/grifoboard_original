@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 import TaskDescriptionInput from "./TaskDescriptionInput";
 import WeekDatePicker from "./WeekDatePicker";
-import RegistrySelect from "./RegistrySelect";
+import SearchableSelect from "./SearchableSelect";
 import PlannedDaysSelector from "./PlannedDaysSelector";
 import TaskFormFooter from "./TaskFormFooter";
 
@@ -121,7 +121,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
 
           {/* Two columns layout for sector and discipline */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <RegistrySelect
+            <SearchableSelect
               id="sector"
               label="Setor"
               value={sector}
@@ -131,7 +131,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
               onOpenRegistryDialog={handleOpenRegistryDialog}
             />
             
-            <RegistrySelect
+            <SearchableSelect
               id="discipline"
               label="Disciplina"
               value={discipline}
@@ -143,7 +143,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
           
           {/* Single column layout for executante */}
           <div className="grid grid-cols-1 gap-4">
-            <RegistrySelect
+            <SearchableSelect
               id="team"
               label="Executante"
               value={team}
@@ -155,7 +155,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
           
           {/* Two columns layout for responsible and executor */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <RegistrySelect
+            <SearchableSelect
               id="responsible"
               label="Responsável"
               value={responsible}
@@ -164,7 +164,7 @@ const TaskFormContent: React.FC<TaskFormContentProps> = ({
               placeholder="Selecione o responsável"
             />
             
-            <RegistrySelect
+            <SearchableSelect
               id="executor"
               label="Encarregado"
               value={executor}
