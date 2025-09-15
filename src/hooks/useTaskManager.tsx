@@ -59,7 +59,8 @@ export const useTaskManager = (weekStartDate: Date) => {
       setTasks([]);
       setFilteredTasks([]);
     }
-  }, [session.obraAtiva, loadTasks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.obraAtiva]);
 
   // Quando a semana muda, atualizar a lista filtrada
   useEffect(() => {

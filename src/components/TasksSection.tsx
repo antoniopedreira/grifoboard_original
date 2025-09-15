@@ -41,7 +41,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
           onTaskDuplicate={onTaskDuplicate}
           selectedCause={selectedCause}
         />
-      )
+      )}
     </>
   );
 };
