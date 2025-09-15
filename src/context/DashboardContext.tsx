@@ -85,7 +85,8 @@ export const DashboardProvider = ({ children, initialWeekStartDate }: DashboardP
         () => setIsLoading(false) // Set loading false when done
       );
     }
-  }, [session.obraAtiva, weekStartDate, loadTasks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.obraAtiva]);
   
   const value: DashboardContextType = {
     currentWeekTasks,

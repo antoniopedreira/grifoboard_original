@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -169,4 +169,4 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({
       </Dialog>
     </div>;
 };
-export default WeeklyCausesChart;
+export default React.memo(WeeklyCausesChart);

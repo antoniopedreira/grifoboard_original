@@ -104,7 +104,7 @@ const DashboardInner = () => {
     setModalOpen(true);
   };
 
-  if (isLoading) {
+  if (isLoading && currentWeekTasks.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-muted/20 to-background p-6">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -203,7 +203,7 @@ const DashboardInner = () => {
             </div>
           </div>
           
-          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform min-h-[140px]" onClick={handleCompletedTasksClick}>
+          <div className="minimal-card p-6 interactive cursor-pointer hover:shadow-lg transition-shadow min-h-[140px]" onClick={handleCompletedTasksClick}>
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5 text-success" />
@@ -222,7 +222,7 @@ const DashboardInner = () => {
             </div>
           </div>
           
-          <div className="minimal-card p-6 interactive cursor-pointer hover:scale-[1.02] transition-transform min-h-[140px]" onClick={handlePendingTasksClick}>
+          <div className="minimal-card p-6 interactive cursor-pointer hover:shadow-lg transition-shadow min-h-[140px]" onClick={handlePendingTasksClick}>
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-destructive" />

@@ -1,4 +1,5 @@
 
+import React, { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
 
 interface TaskProgressChartProps {
@@ -38,7 +39,7 @@ const TaskProgressChart: React.FC<TaskProgressChartProps> = ({ pcpData }) => {
         <YAxis tickFormatter={(tick) => `${tick}%`} tick={{ fontSize: 12 }} />
         <Tooltip formatter={(value) => `${value}%`} />
         <Legend />
-        <Bar dataKey="Planejado" fill="#e2e8f0" radius={[4, 4, 0, 0]}>
+        <Bar dataKey="Planejado" fill="#e2e8f0" radius={[4, 4, 0, 0]} isAnimationActive={false}>
           <LabelList 
             dataKey="Planejado" 
             position="top" 
@@ -46,7 +47,7 @@ const TaskProgressChart: React.FC<TaskProgressChartProps> = ({ pcpData }) => {
             style={{ fontSize: 11, fill: '#64748b' }}
           />
         </Bar>
-        <Bar dataKey="Executado" fill="#0c4a6e" radius={[4, 4, 0, 0]}>
+        <Bar dataKey="Executado" fill="#0c4a6e" radius={[4, 4, 0, 0]} isAnimationActive={false}>
           <LabelList 
             dataKey="Executado" 
             position="top" 
@@ -59,4 +60,4 @@ const TaskProgressChart: React.FC<TaskProgressChartProps> = ({ pcpData }) => {
   );
 };
 
-export default TaskProgressChart;
+export default React.memo(TaskProgressChart);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
@@ -71,4 +71,4 @@ const WeeklyProgressWithAverage = () => {
   );
 };
 
-export default WeeklyProgressWithAverage;
+export default React.memo(WeeklyProgressWithAverage);
