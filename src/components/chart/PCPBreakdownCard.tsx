@@ -23,39 +23,41 @@ const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
         </CardHeader>
       )}
       <div>
-        <div className="space-y-1">
-          {sortedEntries.length > 0 && sortedEntries.map(([key, value], index) => (
-            <div 
-              key={key} 
-              className="py-2 animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-slate-700 truncate flex-1 mr-2 uppercase">{key}</span>
-                <span className="text-sm font-bold text-slate-800 flex-shrink-0">{Math.round(value.percentage)}%</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out"
-                    style={{ width: `${value.percentage}%` }}
-                  ></div>
+        <ScrollArea className="max-h-[280px]">
+          <div className="space-y-1 pr-4">
+            {sortedEntries.length > 0 && sortedEntries.map(([key, value], index) => (
+              <div 
+                key={key} 
+                className="py-2 animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-medium text-slate-700 truncate flex-1 mr-2 uppercase">{key}</span>
+                  <span className="text-sm font-bold text-slate-800 flex-shrink-0">{Math.round(value.percentage)}%</span>
                 </div>
-                <span className="text-xs text-slate-600 font-medium flex-shrink-0">
-                  {value.completedTasks}/{value.totalTasks}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out"
+                      style={{ width: `${value.percentage}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs text-slate-600 font-medium flex-shrink-0">
+                    {value.completedTasks}/{value.totalTasks}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
-          {(!data || Object.keys(data).length === 0) && (
-            <div className="flex flex-col items-center justify-center py-4 space-y-2">
-              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                <span className="text-slate-400 text-sm">📊</span>
+            ))}
+            {(!data || Object.keys(data).length === 0) && (
+              <div className="flex flex-col items-center justify-center py-8 space-y-2">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                  <span className="text-slate-400 text-sm">📊</span>
+                </div>
+                <p className="text-xs text-slate-500 text-center">Sem dados disponíveis</p>
               </div>
-              <p className="text-xs text-slate-500 text-center">Sem dados disponíveis</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </ScrollArea>
       </div>
     </>
   );
