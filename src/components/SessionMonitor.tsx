@@ -16,7 +16,15 @@ const SessionMonitor = () => {
   const [sessionStatus, setSessionStatus] = useState<'active' | 'conflict' | 'expired'>('active');
   useEffect(() => {
     if (!userSession.user) return;
+    
+    let lastCheckTime = 0;
+    const CHECK_COOLDOWN = 5000; // 5 second cooldown to prevent frequent checks
+    
     const checkSessionStatus = () => {
+      const now = Date.now();
+      if (now - lastCheckTime < CHECK_COOLDOWN) return; // Skip if checked recently
+      lastCheckTime = now;
+      
       const currentSessionId = localStorage.getItem('current_session_id');
       const lastActivity = localStorage.getItem('last_activity');
       if (currentSessionId && lastActivity) {
@@ -25,23 +33,32 @@ const SessionMonitor = () => {
           lastActivity: parseInt(lastActivity, 10),
           isCurrentSession: true
         };
-        setSessionInfo(info);
-
-        // Check for session expiry
+        
         const timeSinceActivity = Date.now() - info.lastActivity;
         const thirtyMinutes = 30 * 60 * 1000;
         const fiveMinutes = 5 * 60 * 1000;
+        
+        let newStatus: 'active' | 'conflict' | 'expired' = 'active';
+        let newShowAlert = false;
+        
         if (timeSinceActivity > thirtyMinutes) {
-          setSessionStatus('expired');
-          setShowSessionAlert(true);
+          newStatus = 'expired';
+          newShowAlert = true;
         } else if (timeSinceActivity > thirtyMinutes - fiveMinutes) {
-          // Show warning 5 minutes before expiry
-          setSessionStatus('active');
-          setShowSessionAlert(true);
-        } else {
-          setSessionStatus('active');
-          setShowSessionAlert(false);
+          newStatus = 'active';
+          newShowAlert = true;
         }
+        
+        // Only update state if values actually changed
+        setSessionInfo(prev => {
+          if (!prev || prev.id !== info.id || prev.lastActivity !== info.lastActivity) {
+            return info;
+          }
+          return prev;
+        });
+        
+        setSessionStatus(prev => prev !== newStatus ? newStatus : prev);
+        setShowSessionAlert(prev => prev !== newShowAlert ? newShowAlert : prev);
       }
     };
 

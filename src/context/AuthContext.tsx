@@ -159,11 +159,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       document.addEventListener(event, handleActivity, true);
     });
 
-    // Handle tab/window visibility changes
+    // Handle tab/window visibility changes with throttling
+    let visibilityTimeout: NodeJS.Timeout;
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        updateActivity();
-        checkSessionHealth();
+        // Throttle visibility change handling to prevent excessive re-renders
+        clearTimeout(visibilityTimeout);
+        visibilityTimeout = setTimeout(() => {
+          updateActivity();
+          checkSessionHealth();
+        }, 100); // Small delay to prevent flickering
       }
     };
     
@@ -174,6 +179,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
       if (healthCheckInterval) {
         clearInterval(healthCheckInterval);
+      }
+      if (visibilityTimeout) {
+        clearTimeout(visibilityTimeout);
       }
       activityEvents.forEach(event => {
         document.removeEventListener(event, handleActivity, true);
