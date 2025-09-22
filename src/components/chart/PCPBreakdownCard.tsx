@@ -23,8 +23,8 @@ const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
         </CardHeader>
       )}
       <div>
-        <ScrollArea className="h-[200px] w-full">
-          <div className="space-y-1 pr-3">
+        <ScrollArea className="h-[200px] w-full [&>[data-radix-scroll-area-scrollbar]]:w-2 [&>[data-radix-scroll-area-scrollbar]]:bg-transparent [&>[data-radix-scroll-area-scrollbar]]:border-0 [&_[data-radix-scroll-area-thumb]]:bg-slate-300/60 [&_[data-radix-scroll-area-thumb]]:hover:bg-slate-400/80 [&_[data-radix-scroll-area-thumb]]:rounded-full [&_[data-radix-scroll-area-thumb]]:transition-colors [&_[data-radix-scroll-area-thumb]]:duration-200">
+          <div className="space-y-1 pr-2">
             {sortedEntries.length > 0 && sortedEntries.map(([key, value], index) => (
               <div 
                 key={key} 
