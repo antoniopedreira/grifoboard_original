@@ -43,7 +43,7 @@ const CausesDropdown: React.FC<CausesDropdownProps> = ({ onCauseSelect, currentC
                     <ChevronDown className="h-3 w-3 ml-1 opacity-70 absolute right-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="max-h-[250px] overflow-y-auto bg-white rounded-lg shadow-md border border-gray-200 w-[280px] z-50">
+                <DropdownMenuContent className="max-h-[250px] overflow-y-auto scrollbar-thin bg-white rounded-lg shadow-md border border-gray-200 w-[280px] z-50">
                   {standardCauses.map(cause => (
                     <DropdownMenuItem 
                       key={cause} 

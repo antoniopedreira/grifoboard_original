@@ -72,7 +72,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 
   return (
     <>
-      <div className="overflow-y-auto p-6 pt-4 max-h-[calc(90vh-200px)]">
+      <div className="overflow-y-auto scrollbar-thin p-6 pt-4 max-h-[calc(90vh-200px)] pr-4">
         <div className="grid gap-5 py-2 pb-6">
           {/* Description - first position */}
           <div className="space-y-2 w-full">

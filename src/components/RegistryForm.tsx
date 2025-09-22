@@ -143,7 +143,7 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     const sortedItems = [...items].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
     return (
-      <ScrollArea className="h-[240px] mt-6">
+      <ScrollArea className="h-[240px] w-full mt-6">
         <div className="space-y-3 pr-4">
           {sortedItems.map((item, index) => {
             const isEditing = editingItem?.type === type && editingItem?.value === item;

@@ -44,7 +44,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[60vh] pr-4">
+        <ScrollArea className="max-h-[60vh] w-full pr-2">
           <div className="space-y-4">
             {tasks.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">

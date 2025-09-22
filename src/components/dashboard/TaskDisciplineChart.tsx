@@ -37,7 +37,7 @@ const TaskDisciplineChart: React.FC<TaskDisciplineChartProps> = ({ tasks }) => {
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[250px]">
+        <ScrollArea className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height={230}>
             <PieChart>
               <Pie

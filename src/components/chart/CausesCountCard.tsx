@@ -59,7 +59,7 @@ const CausesCountCard: React.FC<CausesCountCardProps> = ({
           <h3 className="text-base font-semibold text-slate-800 ml-3 truncate">Causas</h3>
         </div>
         
-        <ScrollArea className="max-h-[200px]">
+        <ScrollArea className="max-h-[200px] w-full">
           <div className="space-y-1">
             {causesArray.map(({
             cause,

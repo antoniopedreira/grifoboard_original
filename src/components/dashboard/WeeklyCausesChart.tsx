@@ -98,7 +98,7 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({
       </div>
 
       {/* Causes List */}
-      <div className="space-y-2 max-h-64 overflow-y-auto">
+      <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin pr-2">
         {causesData.length === 0 ? <div className="text-center py-8 text-muted-foreground">
             <Filter className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>Nenhuma causa encontrada</p>
@@ -126,7 +126,7 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({
 
       {/* Task Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span>Atividades com a causa: {selectedCause?.causa}</span>

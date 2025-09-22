@@ -59,7 +59,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0"
               />
             </div>
-            <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain">
+            <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain scrollbar-thin">
               {validOptions.length > 0 ? (
                 <CommandGroup>
                   {validOptions.map((option) => (
