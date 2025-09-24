@@ -142,10 +142,10 @@ const AuthLayout = ({
         </div>
       </div>
       
-      {/* Mobile Layout - Stacked */}
-      <div className="lg:hidden h-full flex flex-col">
+      {/* Mobile Layout - Stacked with Scroll */}
+      <div className="lg:hidden min-h-full flex flex-col overflow-y-auto">
         {/* Top - Hero Content */}
-        <div className="flex-1 relative flex items-center justify-center p-6">
+        <div className="flex-shrink-0 relative flex items-center justify-center p-6 pt-8">
           <div className="text-center space-y-6">
             {/* Logo */}
             <div className="flex items-center justify-center space-x-3">
@@ -184,7 +184,7 @@ const AuthLayout = ({
         </div>
         
         {/* Bottom - Form Card */}
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-shrink-0 flex items-start justify-center p-4 pb-8">
           <motion.div initial={{
           opacity: 0,
           y: 50
