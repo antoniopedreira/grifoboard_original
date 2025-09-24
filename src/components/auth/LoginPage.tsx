@@ -11,6 +11,28 @@ type AuthView = 'login' | 'signup' | 'forgot';
 const LoginPage = () => {
   const [currentView, setCurrentView] = useState<AuthView>('login');
   
+  // Mobile-only: ensure background matches desktop and avoid white safe-area
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 640px)');
+    const apply = () => {
+      if (mql.matches) {
+        const gradient = 'linear-gradient(to bottom right, #0f172a, #1f2937, #0f172a)';
+        document.body.style.background = gradient;
+        document.documentElement.style.background = gradient;
+      } else {
+        document.body.style.background = '';
+        document.documentElement.style.background = '';
+      }
+    };
+    apply();
+    mql.addEventListener('change', apply);
+    return () => {
+      mql.removeEventListener('change', apply);
+      document.body.style.background = '';
+      document.documentElement.style.background = '';
+    };
+  }, []);
+  
   const getTitle = () => {
     switch (currentView) {
       case 'signup': return 'Criar conta';
@@ -18,7 +40,6 @@ const LoginPage = () => {
       default: return 'Entrar';
     }
   };
-  
 
   return (
     <AuthLayout title={getTitle()}>
