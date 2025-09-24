@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AuthLayout from './AuthLayout';
 import LoginForm from './LoginForm';
@@ -19,7 +19,6 @@ const LoginPage = () => {
     }
   };
   
-
   return (
     <AuthLayout title={getTitle()}>
       {currentView === 'login' && (

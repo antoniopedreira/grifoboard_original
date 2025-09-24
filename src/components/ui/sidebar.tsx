@@ -91,14 +91,9 @@ export function SessionNavBar() {
     await signOut();
   };
 
-  const handleNavigation = (path: string) => {
-    console.log("Navigation clicked:", path);
-    navigate(path);
-  };
-
   // Mobile Bottom Navigation
-  const renderMobileBottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-brand border-t border-brand-2 pb-[env(safe-area-inset-bottom)]">
+  const MobileBottomNav = () => (
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-brand border-t border-brand-2 pb-[env(safe-area-inset-bottom)]">
       <div className="flex justify-around items-center py-2">
         <Button
           variant="ghost"
@@ -106,11 +101,7 @@ export function SessionNavBar() {
             "flex flex-col items-center p-2 h-auto min-h-[44px] w-20 rounded-md transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark",
             isDashboardActive && "bg-brand-2 text-text-on-dark"
           )}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleNavigation("/dashboard");
-          }}
+          onClick={() => navigate("/dashboard")}
           aria-current={isDashboardActive ? "page" : undefined}
         >
           <LayoutDashboard className="h-5 w-5" />
@@ -123,11 +114,7 @@ export function SessionNavBar() {
             "flex flex-col items-center p-2 h-auto min-h-[44px] w-20 rounded-md transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark",
             isTasksActive && "bg-brand-2 text-text-on-dark"
           )}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleNavigation("/tarefas");
-          }}
+          onClick={() => navigate("/tarefas")}
           aria-current={isTasksActive ? "page" : undefined}
         >
           <LayoutList className="h-5 w-5" />
@@ -140,11 +127,7 @@ export function SessionNavBar() {
             "flex flex-col items-center p-2 h-auto min-h-[44px] w-20 rounded-md transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark",
             isChecklistActive && "bg-brand-2 text-text-on-dark"
           )}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleNavigation("/checklist");
-          }}
+          onClick={() => navigate("/checklist")}
           aria-current={isChecklistActive ? "page" : undefined}
         >
           <CheckSquare className="h-5 w-5" />
@@ -192,7 +175,7 @@ export function SessionNavBar() {
   );
 
   // Desktop Sidebar
-  const renderDesktopSidebar = () => (
+  const DesktopSidebar = () => (
     <motion.div
       className={cn(
         "sidebar fixed left-0 z-30 h-[calc(100vh-65px)] shrink-0 border-r top-[65px]",
@@ -220,11 +203,7 @@ export function SessionNavBar() {
                         "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
                         isDashboardActive && "bg-brand-2 text-text-on-dark before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-accent before:content-['']"
                       )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleNavigation("/dashboard");
-                      }}
+                      onClick={() => navigate("/dashboard")}
                       aria-current={isDashboardActive ? "page" : undefined}
                       title={isCollapsed ? "Dashboard" : undefined}
                     >
@@ -241,11 +220,7 @@ export function SessionNavBar() {
                         "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
                         isTasksActive && "bg-brand-2 text-text-on-dark before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-accent before:content-['']"
                       )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleNavigation("/tarefas");
-                      }}
+                      onClick={() => navigate("/tarefas")}
                       aria-current={isTasksActive ? "page" : undefined}
                       title={isCollapsed ? "Tarefas" : undefined}
                     >
@@ -262,11 +237,7 @@ export function SessionNavBar() {
                         "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
                         isChecklistActive && "bg-brand-2 text-text-on-dark before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-accent before:content-['']"
                       )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleNavigation("/checklist");
-                      }}
+                      onClick={() => navigate("/checklist")}
                       aria-current={isChecklistActive ? "page" : undefined}
                       title={isCollapsed ? "Checklist" : undefined}
                     >
@@ -339,10 +310,10 @@ export function SessionNavBar() {
   return (
     <>
       <div className="hidden lg:block">
-        {renderDesktopSidebar()}
+        <DesktopSidebar />
       </div>
       <div className="lg:hidden">
-        {renderMobileBottomNav()}
+        <MobileBottomNav />
       </div>
     </>
   );

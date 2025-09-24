@@ -190,13 +190,11 @@
     overflow: hidden;
     font-family: 'Inter', 'Geist', sans-serif;
   }
-
   
   #root {
     height: 100vh;
     overflow: hidden;
   }
-
   
   body {
     @apply bg-background text-foreground font-sans antialiased;

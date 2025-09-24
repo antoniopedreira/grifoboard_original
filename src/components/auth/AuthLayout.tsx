@@ -9,16 +9,16 @@ const AuthLayout = ({
   children,
   title
 }: AuthLayoutProps) => {
-  return <main className="min-h-[100dvh] md:min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-y-auto md:overflow-hidden">
+  return <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Construction grid pattern background - NO SHAPES */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none z-0">
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 10c0-1.1.9-2 2-2s2 .9 2 2-2 2-2 2-2-.9-2-2zm0 20c0-1.1.9-2 2-2s2 .9 2 2-2 2-2 2-2-.9-2-2zm0 20c0-1.1.9-2 2-2s2 .9 2 2-2 2-2 2-2-.9-2-2zM10 36c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm20 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm20 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }} />
       </div>
       
       {/* Desktop Layout - Side by Side 60/40 */}
-      <div className="hidden lg:flex h-full relative z-10">
+      <div className="hidden lg:flex h-full">
         {/* Left Side - Hero Content (60%) */}
         <div className="w-3/5 relative flex items-center">
           <div className="max-w-2xl ml-16 space-y-8">
@@ -142,10 +142,10 @@ const AuthLayout = ({
         </div>
       </div>
       
-      {/* Mobile Layout - Stacked with Scroll */}
-      <div className="lg:hidden min-h-[100dvh] flex flex-col relative z-10 overflow-y-auto">
+      {/* Mobile Layout - Stacked */}
+      <div className="lg:hidden h-full flex flex-col">
         {/* Top - Hero Content */}
-        <div className="shrink-0 flex items-center justify-center p-6">
+        <div className="flex-1 relative flex items-center justify-center p-6">
           <div className="text-center space-y-6">
             {/* Logo */}
             <div className="flex items-center justify-center space-x-3">
@@ -184,7 +184,7 @@ const AuthLayout = ({
         </div>
         
         {/* Bottom - Form Card */}
-        <div className="flex-1 flex flex-col justify-center items-center px-5 py-8 pb-[max(60px,calc(env(safe-area-inset-bottom)+60px))]">
+        <div className="flex-1 flex items-center justify-center p-4">
           <motion.div initial={{
           opacity: 0,
           y: 50
@@ -194,7 +194,7 @@ const AuthLayout = ({
         }} transition={{
           duration: 0.6,
           ease: "easeOut"
-        }} className="w-full max-w-[440px] bg-white rounded-2xl shadow-2xl p-6" style={{
+        }} className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6" style={{
           fontFamily: 'Inter, sans-serif'
         }}>
             <motion.h1 initial={{
@@ -225,6 +225,6 @@ const AuthLayout = ({
           </motion.div>
         </div>
       </div>
-    </main>;
+    </div>;
 };
 export default AuthLayout;
