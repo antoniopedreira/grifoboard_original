@@ -9,7 +9,7 @@ const AuthLayout = ({
   children,
   title
 }: AuthLayoutProps) => {
-  return <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+  return <div className="min-h-[100dvh] w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Construction grid pattern background - NO SHAPES */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{
@@ -143,9 +143,9 @@ const AuthLayout = ({
       </div>
       
       {/* Mobile Layout - Stacked with Scroll */}
-      <div className="lg:hidden h-full flex flex-col overflow-y-auto">
+      <div className="lg:hidden min-h-[100dvh] flex flex-col">
         {/* Top - Hero Content */}
-        <div className="flex-1 relative flex items-center justify-center p-6">
+        <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center space-y-6">
             {/* Logo */}
             <div className="flex items-center justify-center space-x-3">
@@ -184,7 +184,7 @@ const AuthLayout = ({
         </div>
         
         {/* Bottom - Form Card */}
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex flex-col justify-end pb-[max(24px,calc(env(safe-area-inset-bottom)+24px))] px-5">
           <motion.div initial={{
           opacity: 0,
           y: 50
@@ -194,7 +194,7 @@ const AuthLayout = ({
         }} transition={{
           duration: 0.6,
           ease: "easeOut"
-        }} className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6" style={{
+        }} className="w-full max-w-sm mx-auto bg-white rounded-2xl shadow-2xl p-6" style={{
           fontFamily: 'Inter, sans-serif'
         }}>
             <motion.h1 initial={{

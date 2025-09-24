@@ -141,26 +141,28 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       </div>
       
       {/* Login button */}
-      <Button 
-        type="submit" 
-        disabled={isLoading} 
-        className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
-        style={{ 
-          height: '48px',
-          backgroundColor: '#C7A347'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A347'}
-      >
-        {isLoading ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Entrando...
-          </div>
-        ) : (
-          'Entrar'
-        )}
-      </Button>
+      <div className="pb-[max(24px,calc(env(safe-area-inset-bottom)+24px))]">
+        <Button 
+          type="submit" 
+          disabled={isLoading} 
+          className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
+          style={{ 
+            height: '48px',
+            backgroundColor: '#C7A347'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A347'}
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Entrando...
+            </div>
+          ) : (
+            'Entrar'
+          )}
+        </Button>
+      </div>
     </form>
   );
 };
