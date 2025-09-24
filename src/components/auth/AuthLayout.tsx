@@ -143,7 +143,7 @@ const AuthLayout = ({
       </div>
       
       {/* Mobile Layout - Stacked with Scroll */}
-      <div className="lg:hidden min-h-[100dvh] flex flex-col relative z-10">
+      <div className="lg:hidden min-h-[100dvh] flex flex-col relative z-10 overflow-y-auto">
         {/* Top - Hero Content */}
         <div className="shrink-0 flex items-center justify-center p-6">
           <div className="text-center space-y-6">
@@ -184,7 +184,7 @@ const AuthLayout = ({
         </div>
         
         {/* Bottom - Form Card */}
-        <div className="flex flex-col justify-center items-center px-5 py-8">
+        <div className="flex-1 flex flex-col justify-center items-center px-5 py-8 pb-[max(60px,calc(env(safe-area-inset-bottom)+60px))]">
           <motion.div initial={{
           opacity: 0,
           y: 50
@@ -223,7 +223,6 @@ const AuthLayout = ({
               {children}
             </motion.div>
           </motion.div>
-          <div className="h-[max(16px,calc(env(safe-area-inset-bottom)+16px))] md:h-0"></div>
         </div>
       </div>
     </main>;

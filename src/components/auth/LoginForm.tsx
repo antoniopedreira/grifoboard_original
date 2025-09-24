@@ -141,7 +141,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       </div>
       
       {/* Login button */}
-      <div className="pb-[max(28px,calc(env(safe-area-inset-bottom)+28px))]">
+      <div className="pt-2">
         <Button 
           type="submit" 
           disabled={isLoading} 
