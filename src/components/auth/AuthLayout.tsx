@@ -184,7 +184,7 @@ const AuthLayout = ({
         </div>
         
         {/* Bottom - Form Card */}
-        <div className="flex flex-col justify-end pb-[max(24px,calc(env(safe-area-inset-bottom)+24px))] px-5">
+        <div className="flex-1 overflow-y-auto px-5 pb-[max(28px,calc(env(safe-area-inset-bottom)+28px))]">
           <motion.div initial={{
           opacity: 0,
           y: 50

@@ -58,7 +58,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" style={{ scrollMarginBottom: '140px' }}>
       <div className="space-y-4">
         {/* Email field */}
         <div className="space-y-2">
@@ -112,7 +112,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       </div>
       
       {/* Remember me & Forgot password */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center space-x-3">
           <Checkbox 
             id="remember-me" 
@@ -141,7 +141,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       </div>
       
       {/* Login button */}
-      <div className="pb-[max(24px,calc(env(safe-area-inset-bottom)+24px))]">
+      <div className="pb-[max(28px,calc(env(safe-area-inset-bottom)+28px))]">
         <Button 
           type="submit" 
           disabled={isLoading} 
@@ -163,6 +163,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
           )}
         </Button>
       </div>
+      <div className="h-[max(16px,calc(env(safe-area-inset-bottom)+16px))]"></div>
     </form>
   );
 };
