@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Task } from "@/types";
+import MobileTaskFilters from "../mobile/MobileTaskFilters";
 
 interface TaskFiltersProps {
   tasks: Task[];
@@ -65,7 +66,18 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   }, [selectedCause]);
   
   return (
-    <div className="flex flex-wrap gap-4 mb-6">
+    <>
+      {/* Mobile filters */}
+      <div className="lg:hidden">
+        <MobileTaskFilters 
+          tasks={tasks}
+          onFiltersChange={onFiltersChange}
+          selectedCause={selectedCause}
+        />
+      </div>
+
+      {/* Desktop filters */}
+      <div className="hidden lg:flex flex-wrap gap-4 mb-6">
       <div className="w-[200px]">
         <div className="text-xs text-gray-500 mb-1">Busca</div>
         <Input
@@ -164,8 +176,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
           </SelectContent>
         </Select>
       </div>
-
-    </div>
+      </div>
+      
+    </>
   );
 };
 

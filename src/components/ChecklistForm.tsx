@@ -82,7 +82,7 @@ const ChecklistForm: React.FC<ChecklistFormProps> = ({ onAtividadeCriada }) => {
         </Button>
       </DialogTrigger>
       <DialogContent 
-        className="max-w-md"
+        className="w-[95vw] max-w-md mx-auto"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
           // Only allow closing when clicking outside, not on focus loss
@@ -155,11 +155,20 @@ const ChecklistForm: React.FC<ChecklistFormProps> = ({ onAtividadeCriada }) => {
             />
           </div>
           
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsOpen(false)}
+              className="w-full sm:w-auto min-h-[44px]"
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full sm:w-auto min-h-[44px]"
+            >
               {isLoading ? "Criando..." : "Criar Atividade"}
             </Button>
           </div>

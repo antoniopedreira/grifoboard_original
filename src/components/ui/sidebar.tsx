@@ -91,7 +91,91 @@ export function SessionNavBar() {
     await signOut();
   };
 
-  return (
+  // Mobile Bottom Navigation
+  const MobileBottomNav = () => (
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-brand border-t border-brand-2 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex justify-around items-center py-2">
+        <Button
+          variant="ghost"
+          className={cn(
+            "flex flex-col items-center p-2 h-auto min-h-[44px] w-20 rounded-md transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark",
+            isDashboardActive && "bg-brand-2 text-text-on-dark"
+          )}
+          onClick={() => navigate("/dashboard")}
+          aria-current={isDashboardActive ? "page" : undefined}
+        >
+          <LayoutDashboard className="h-5 w-5" />
+          <span className="text-xs mt-1 font-medium">Dashboard</span>
+        </Button>
+        
+        <Button
+          variant="ghost"
+          className={cn(
+            "flex flex-col items-center p-2 h-auto min-h-[44px] w-20 rounded-md transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark",
+            isTasksActive && "bg-brand-2 text-text-on-dark"
+          )}
+          onClick={() => navigate("/tarefas")}
+          aria-current={isTasksActive ? "page" : undefined}
+        >
+          <LayoutList className="h-5 w-5" />
+          <span className="text-xs mt-1 font-medium">Tarefas</span>
+        </Button>
+        
+        <Button
+          variant="ghost"
+          className={cn(
+            "flex flex-col items-center p-2 h-auto min-h-[44px] w-20 rounded-md transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark",
+            isChecklistActive && "bg-brand-2 text-text-on-dark"
+          )}
+          onClick={() => navigate("/checklist")}
+          aria-current={isChecklistActive ? "page" : undefined}
+        >
+          <CheckSquare className="h-5 w-5" />
+          <span className="text-xs mt-1 font-medium">Checklist</span>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="flex flex-col items-center p-2 h-auto min-h-[44px] w-20 rounded-md transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark"
+            >
+              <Avatar className="size-5">
+                <AvatarFallback className="bg-accent text-brand text-sm">
+                  {userInitial}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs mt-1 font-medium">Conta</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" sideOffset={8} className="mb-2">
+            <div className="flex flex-row items-center gap-2 p-2">
+              <Avatar className="size-6">
+                <AvatarFallback>
+                  {userInitial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-medium">
+                  {userSession?.user?.email || "Usuário"}
+                </span>
+              </div>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="flex items-center gap-2"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4" /> Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+
+  // Desktop Sidebar
+  const DesktopSidebar = () => (
     <motion.div
       className={cn(
         "sidebar fixed left-0 z-30 h-[calc(100vh-65px)] shrink-0 border-r top-[65px]",
@@ -221,6 +305,17 @@ export function SessionNavBar() {
         </motion.ul>
       </motion.div>
     </motion.div>
+  );
+
+  return (
+    <>
+      <div className="hidden lg:block">
+        <DesktopSidebar />
+      </div>
+      <div className="lg:hidden">
+        <MobileBottomNav />
+      </div>
+    </>
   );
 }
 

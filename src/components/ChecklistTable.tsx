@@ -24,6 +24,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
+import MobileChecklistCard from "./mobile/MobileChecklistCard";
 
 interface ChecklistTableProps {
   atividades: AtividadeChecklist[];
@@ -75,83 +76,98 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({
   }
 
   return (
-    <div className="p-4" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">Status</TableHead>
-            <TableHead>Descrição</TableHead>
-            <TableHead>Local</TableHead>
-            <TableHead>Setor</TableHead>
-            <TableHead>Responsável</TableHead>
-            <TableHead>Data de Início</TableHead>
-            <TableHead>Data de Término</TableHead>
-            <TableHead className="w-12"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {atividades.map((atividade) => (
-            <TableRow key={atividade.id}>
-              <TableCell>
-                <Checkbox
-                  checked={atividade.concluida}
-                  onCheckedChange={(checked) => 
-                    onAtividadeToggle(atividade.id, checked as boolean)
-                  }
-                />
-              </TableCell>
-              <TableCell 
-                className="font-medium" 
-                style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
-              >
-                {atividade.descricao || "-"}
-              </TableCell>
-              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-                {atividade.local}
-              </TableCell>
-              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-                {atividade.setor}
-              </TableCell>
-              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-                {atividade.responsavel}
-              </TableCell>
-              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-                {formatDate(atividade.data_inicio)}
-              </TableCell>
-              <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-                {formatDate(atividade.data_termino)}
-              </TableCell>
-              <TableCell>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir atividade</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja excluir esta atividade? Esta ação não pode ser desfeita.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => onAtividadeDelete(atividade.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Excluir
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </TableCell>
+    <>
+      {/* Mobile Cards View */}
+      <div className="lg:hidden p-4 space-y-3">
+        {atividades.map((atividade) => (
+          <MobileChecklistCard
+            key={atividade.id}
+            atividade={atividade}
+            onAtividadeToggle={onAtividadeToggle}
+            onAtividadeDelete={onAtividadeDelete}
+          />
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block p-4" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word', width: '100%' }}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12">Status</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Local</TableHead>
+              <TableHead>Setor</TableHead>
+              <TableHead>Responsável</TableHead>
+              <TableHead>Data de Início</TableHead>
+              <TableHead>Data de Término</TableHead>
+              <TableHead className="w-12"></TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {atividades.map((atividade) => (
+              <TableRow key={atividade.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={atividade.concluida}
+                    onCheckedChange={(checked) => 
+                      onAtividadeToggle(atividade.id, checked as boolean)
+                    }
+                  />
+                </TableCell>
+                <TableCell 
+                  className="font-medium" 
+                  style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
+                >
+                  {atividade.descricao || "-"}
+                </TableCell>
+                <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                  {atividade.local}
+                </TableCell>
+                <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                  {atividade.setor}
+                </TableCell>
+                <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                  {atividade.responsavel}
+                </TableCell>
+                <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                  {formatDate(atividade.data_inicio)}
+                </TableCell>
+                <TableCell style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                  {formatDate(atividade.data_termino)}
+                </TableCell>
+                <TableCell>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir atividade</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir esta atividade? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onAtividadeDelete(atividade.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>  
+    </>
   );
 };
 
