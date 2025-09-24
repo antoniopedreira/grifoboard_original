@@ -143,7 +143,7 @@ const AuthLayout = ({
       </div>
       
       {/* Mobile Layout - Stacked with Scroll */}
-      <div className="lg:hidden min-h-[100dvh] flex flex-col relative z-10">
+      <div className="lg:hidden min-h-[100dvh] flex flex-col relative z-10 overflow-y-auto">
         {/* Top - Hero Content */}
         <div className="shrink-0 flex items-center justify-center p-6">
           <div className="text-center space-y-6">
