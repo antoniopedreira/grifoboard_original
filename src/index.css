@@ -191,26 +191,12 @@
     font-family: 'Inter', 'Geist', sans-serif;
   }
 
-  /* Login-only overrides applied when body.auth-dark-bg is set */
-  body.auth-dark-bg {
-    background-color: hsl(var(--brand));
-    background-image: radial-gradient(1200px 600px at 10% 0%, hsl(var(--brand-2) / 0.35) 0%, transparent 70%),
-      radial-gradient(1200px 600px at 90% 10%, hsl(var(--brand-2) / 0.3) 0%, transparent 70%),
-      linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)), hsl(var(--brand)));
-  }
   
   #root {
     height: 100vh;
     overflow: hidden;
   }
 
-  /* Allow scroll on login page only (without affecting the rest) */
-  body.auth-dark-bg, body.auth-dark-bg #root {
-    height: auto;
-    min-height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
   
   body {
     @apply bg-background text-foreground font-sans antialiased;

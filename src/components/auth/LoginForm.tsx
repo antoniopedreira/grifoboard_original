@@ -163,7 +163,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
           )}
         </Button>
       </div>
-      <div className="h-[max(16px,calc(env(safe-area-inset-bottom)+16px))]"></div>
+      
     </form>
   );
 };

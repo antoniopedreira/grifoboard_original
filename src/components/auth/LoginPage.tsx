@@ -19,35 +19,6 @@ const LoginPage = () => {
     }
   };
   
-  useEffect(() => {
-    // Apply login-only body styles to allow scroll and dark background without affecting other pages
-    const htmlEl = document.documentElement;
-    const bodyEl = document.body;
-
-    const prevHtmlStyle = { height: htmlEl.style.height, overflowX: htmlEl.style.overflowX, overflowY: htmlEl.style.overflowY };
-    const prevBodyStyle = { height: bodyEl.style.height, minHeight: bodyEl.style.minHeight, overflowX: bodyEl.style.overflowX, overflowY: bodyEl.style.overflowY };
-
-    htmlEl.style.height = 'auto';
-    htmlEl.style.overflowX = 'hidden';
-    htmlEl.style.overflowY = 'auto';
-    bodyEl.style.height = 'auto';
-    bodyEl.style.minHeight = '100%';
-    bodyEl.style.overflowX = 'hidden';
-    bodyEl.style.overflowY = 'auto';
-
-    bodyEl.classList.add('auth-dark-bg');
-
-    return () => {
-      htmlEl.style.height = prevHtmlStyle.height;
-      htmlEl.style.overflowX = prevHtmlStyle.overflowX;
-      htmlEl.style.overflowY = prevHtmlStyle.overflowY;
-      bodyEl.style.height = prevBodyStyle.height;
-      bodyEl.style.minHeight = prevBodyStyle.minHeight;
-      bodyEl.style.overflowX = prevBodyStyle.overflowX;
-      bodyEl.style.overflowY = prevBodyStyle.overflowY;
-      bodyEl.classList.remove('auth-dark-bg');
-    };
-  }, []);
 
   return (
     <AuthLayout title={getTitle()}>
