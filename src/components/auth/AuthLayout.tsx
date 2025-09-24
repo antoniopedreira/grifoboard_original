@@ -145,8 +145,8 @@ const AuthLayout = ({
       {/* Mobile Layout - Stacked */}
       <div className="lg:hidden h-full flex flex-col">
         {/* Top - Hero Content */}
-        <div className="flex-1 relative flex items-center justify-center p-6">
-          <div className="text-center space-y-6">
+        <div className="flex-none relative flex items-center justify-center p-6 pb-4">
+          <div className="text-center space-y-4">
             {/* Logo */}
             <div className="flex items-center justify-center space-x-3">
               <div className="w-10 h-10 bg-[#C7A347] rounded-xl flex items-center justify-center">
@@ -164,27 +164,11 @@ const AuthLayout = ({
                 Gestão Inteligente de Obras
               </h3>
             </div>
-
-            {/* Compact bullets for mobile */}
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <Calendar className="w-4 h-4 text-[#C7A347]" />
-                <span>Planejamento semanal — 100% visual</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <BarChart3 className="w-4 h-4 text-[#C7A347]" />
-                <span>PCP em tempo real — decisões rápidas</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <Users className="w-4 h-4 text-[#C7A347]" />
-                <span>Fast Construction — entrega ágil</span>
-              </div>
-            </div>
           </div>
         </div>
         
         {/* Bottom - Form Card */}
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex items-start justify-center p-4 pt-2">
           <motion.div initial={{
           opacity: 0,
           y: 50
