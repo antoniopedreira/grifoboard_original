@@ -58,8 +58,8 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
         {/* Email field */}
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1E2836' }}>
@@ -112,8 +112,8 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       </div>
       
       {/* Remember me & Forgot password */}
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center space-x-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
           <Checkbox 
             id="remember-me" 
             checked={rememberMe} 
@@ -122,7 +122,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
           />
           <Label 
             htmlFor="remember-me" 
-            className="text-xs cursor-pointer select-none font-medium"
+            className="text-sm cursor-pointer select-none font-medium"
             style={{ color: '#1E2836' }}
           >
             Manter-me conectado
@@ -131,7 +131,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
         <button 
           type="button"
           onClick={onForgotPassword}
-          className="text-xs font-medium hover:underline transition-all duration-200"
+          className="text-sm font-medium hover:underline transition-all duration-200"
           style={{ color: '#1E2836' }}
           onMouseEnter={(e) => e.currentTarget.style.color = '#C7A347'}
           onMouseLeave={(e) => e.currentTarget.style.color = '#1E2836'}
@@ -140,29 +140,27 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
         </button>
       </div>
       
-      {/* Login button - Guaranteed visibility */}
-      <div className="pt-2">
-        <Button 
-          type="submit" 
-          disabled={isLoading} 
-          className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
-          style={{ 
-            height: '48px',
-            backgroundColor: '#C7A347'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A347'}
-        >
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Entrando...
-            </div>
-          ) : (
-            'Entrar'
-          )}
-        </Button>
-      </div>
+      {/* Login button */}
+      <Button 
+        type="submit" 
+        disabled={isLoading} 
+        className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
+        style={{ 
+          height: '48px',
+          backgroundColor: '#C7A347'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A347'}
+      >
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Entrando...
+          </div>
+        ) : (
+          'Entrar'
+        )}
+      </Button>
     </form>
   );
 };

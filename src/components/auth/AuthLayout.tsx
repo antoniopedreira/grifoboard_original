@@ -9,7 +9,7 @@ const AuthLayout = ({
   children,
   title
 }: AuthLayoutProps) => {
-  return <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+  return <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Construction grid pattern background - NO SHAPES */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{
@@ -142,11 +142,11 @@ const AuthLayout = ({
         </div>
       </div>
       
-      {/* Mobile Layout - Stacked with Safe Scroll */}
-      <div className="lg:hidden min-h-screen flex flex-col">
+      {/* Mobile Layout - Stacked with Scroll */}
+      <div className="lg:hidden h-full flex flex-col overflow-y-auto">
         {/* Top - Hero Content */}
-        <div className="flex-shrink-0 relative flex items-center justify-center p-4 pt-6 pb-2">
-          <div className="text-center space-y-4">
+        <div className="flex-1 relative flex items-center justify-center p-6">
+          <div className="text-center space-y-6">
             {/* Logo */}
             <div className="flex items-center justify-center space-x-3">
               <div className="w-10 h-10 bg-[#C7A347] rounded-xl flex items-center justify-center">
@@ -156,75 +156,73 @@ const AuthLayout = ({
             </div>
 
             {/* Headlines */}
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold text-white">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-white">
                 Grifo Engenharia
               </h1>
-              <h3 className="text-base text-slate-300">
+              <h3 className="text-lg text-slate-300">
                 Gestão Inteligente de Obras
               </h3>
             </div>
 
             {/* Compact bullets for mobile */}
-            <div className="space-y-2 text-xs">
+            <div className="space-y-3 text-sm">
               <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <Calendar className="w-3 h-3 text-[#C7A347]" />
+                <Calendar className="w-4 h-4 text-[#C7A347]" />
                 <span>Planejamento semanal — 100% visual</span>
               </div>
               <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <BarChart3 className="w-3 h-3 text-[#C7A347]" />
+                <BarChart3 className="w-4 h-4 text-[#C7A347]" />
                 <span>PCP em tempo real — decisões rápidas</span>
               </div>
               <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <Users className="w-3 h-3 text-[#C7A347]" />
+                <Users className="w-4 h-4 text-[#C7A347]" />
                 <span>Fast Construction — entrega ágil</span>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Bottom - Form Card with guaranteed space */}
-        <div className="flex-1 flex items-start justify-center p-4 pb-safe-area-inset-bottom">
-          <div className="w-full min-h-0">
-            <motion.div initial={{
+        {/* Bottom - Form Card */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <motion.div initial={{
+          opacity: 0,
+          y: 50
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.6,
+          ease: "easeOut"
+        }} className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6" style={{
+          fontFamily: 'Inter, sans-serif'
+        }}>
+            <motion.h1 initial={{
             opacity: 0,
-            y: 50
+            y: 20
           }} animate={{
             opacity: 1,
             y: 0
           }} transition={{
-            duration: 0.6,
-            ease: "easeOut"
-          }} className="w-full max-w-sm mx-auto bg-white rounded-2xl shadow-2xl p-6 mb-8" style={{
-            fontFamily: 'Inter, sans-serif'
+            delay: 0.2
+          }} className="text-2xl font-bold mb-6 text-center" style={{
+            color: '#0A1D33'
           }}>
-              <motion.h1 initial={{
-              opacity: 0,
-              y: 20
-            }} animate={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              delay: 0.2
-            }} className="text-xl font-bold mb-4 text-center" style={{
-              color: '#0A1D33'
-            }}>
-                {title}
-              </motion.h1>
-              
-              <motion.div initial={{
-              opacity: 0,
-              y: 20
-            }} animate={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              delay: 0.3
-            }}>
-                {children}
-              </motion.div>
+              {title}
+            </motion.h1>
+            
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            delay: 0.3
+          }}>
+              {children}
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>;
