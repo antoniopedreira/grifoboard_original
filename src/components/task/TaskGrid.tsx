@@ -26,7 +26,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 auto-rows-fr">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 auto-rows-fr">
       {tasks.map(task => (
         <div key={task.id} className="h-full">
           <TaskCard

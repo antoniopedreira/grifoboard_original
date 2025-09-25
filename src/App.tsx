@@ -35,39 +35,24 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {!isAuthPage && <Header />}
       
       <div className="flex flex-1 w-full">
-        {/* Desktop Sidebar */}
-        {!isAuthPage && !isObrasPage && (
-          <div className="hidden lg:block">
-            <CustomSidebar />
-          </div>
-        )}
+        {!isAuthPage && !isObrasPage && <CustomSidebar />}
         
-        <main className="flex-1 flex flex-col">
-          {/* Main Content Area */}
-          <div className="flex-1">
-            {!isAuthPage && !isObrasPage ? (
-              <ScrollArea className="h-[calc(100vh-64px-env(safe-area-inset-bottom))] lg:h-[calc(100vh-64px)]">
-                <div className="py-4 px-4 lg:py-6 lg:px-0 pb-20 lg:pb-6">
-                  {children}
-                </div>
-              </ScrollArea>
-            ) : !isAuthPage ? (
-              <ScrollArea className="h-[calc(100vh-64px-env(safe-area-inset-bottom))] lg:h-[calc(100vh-64px)]">
-                <div className="container mx-auto px-4 py-4 lg:py-6 pb-20 lg:pb-6">
-                  {children}
-                </div>
-              </ScrollArea>
-            ) : (
+        <main className="flex-1">
+          {!isAuthPage && !isObrasPage ? (
+            <ScrollArea className="h-[calc(100vh-64px)]">
+              <div className="py-6">
+                {children}
+              </div>
+            </ScrollArea>
+          ) : !isAuthPage ? (
+            <ScrollArea className="h-[calc(100vh-64px)]">
               <div className="container mx-auto px-4 py-6">
                 {children}
               </div>
-            )}
-          </div>
-          
-          {/* Mobile Bottom Navigation */}
-          {!isAuthPage && !isObrasPage && (
-            <div className="lg:hidden">
-              <CustomSidebar />
+            </ScrollArea>
+          ) : (
+            <div className="container mx-auto px-4 py-6">
+              {children}
             </div>
           )}
         </main>

@@ -77,15 +77,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <>
-      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100/60 overflow-hidden flex flex-col transition-transform duration-200 motion-reduce:transition-none min-h-[260px] lg:min-h-[280px]">
-        <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4 flex-shrink-0">
+      <Card className="w-full bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100/60 overflow-hidden flex flex-col transition-transform duration-200 motion-reduce:transition-none min-h-[280px]">
+        <CardHeader className="pb-3 pt-4 px-4 flex-shrink-0">
           <TaskHeader 
             task={task} 
             onCompletionStatusChange={handleCompletionStatusChange} 
           />
         </CardHeader>
         
-        <CardContent className="px-3 lg:px-4 pb-2 lg:pb-3 flex-1 flex flex-col text-sm lg:text-base">
+        <CardContent className="px-4 pb-3 flex-1 flex flex-col">
           <TaskDetails 
             sector={task.sector}
             discipline={task.discipline}
@@ -104,7 +104,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           )}
         </CardContent>
         
-        <CardFooter className="px-3 lg:px-4 pt-1 lg:pt-2 pb-3 lg:pb-4 flex-shrink-0 mt-auto">
+        <CardFooter className="px-4 pt-2 pb-4 flex-shrink-0 mt-auto">
           <TaskFooter 
             isCompleted={task.isFullyCompleted}
             currentCause={task.causeIfNotDone}
