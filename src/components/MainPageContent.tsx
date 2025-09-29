@@ -77,7 +77,7 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   };
   
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-6 bg-background">
+    <div className="container mx-auto max-w-7xl px-8 py-6 bg-background">
       {/* Header com título e botões */}
       <MainHeader 
         onNewTaskClick={() => setIsFormOpen(true)}
