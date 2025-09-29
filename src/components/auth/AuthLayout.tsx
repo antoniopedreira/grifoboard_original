@@ -152,33 +152,17 @@ const AuthLayout = ({
               <div className="w-10 h-10 bg-[#C7A347] rounded-xl flex items-center justify-center">
                 <Building2 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-[#C7A347] text-lg font-semibold">GRIFO</span>
+              <span className="text-[#C7A347] text-lg font-semibold">GRIFO ENGENHARIA</span>
             </div>
 
             {/* Headlines */}
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-white">
-                Grifo Engenharia
+                GrifoBoard
               </h1>
               <h3 className="text-lg text-slate-300">
                 Gestão Inteligente de Obras
               </h3>
-            </div>
-
-            {/* Compact bullets for mobile */}
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <Calendar className="w-4 h-4 text-[#C7A347]" />
-                <span>Planejamento semanal — 100% visual</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <BarChart3 className="w-4 h-4 text-[#C7A347]" />
-                <span>PCP em tempo real — decisões rápidas</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2 text-slate-300">
-                <Users className="w-4 h-4 text-[#C7A347]" />
-                <span>Fast Construction — entrega ágil</span>
-              </div>
             </div>
           </div>
         </div>
