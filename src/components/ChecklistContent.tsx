@@ -135,8 +135,8 @@ const ChecklistContent = () => {
 
   if (!userSession?.obraAtiva) {
     return (
-      <div className="container mx-auto px-12 py-8">
-        <div className="text-center text-muted-foreground">
+      <div className="flex-1 px-6 py-8 ml-4">
+        <div className="text-center text-muted-foreground mt-20">
           Selecione uma obra para visualizar o checklist
         </div>
       </div>
@@ -144,18 +144,25 @@ const ChecklistContent = () => {
   }
 
   return (
-    <div className="container mx-auto px-12 py-8">
-      <div className="flex items-center mb-6">
-        <CheckSquare className="h-6 w-6 mr-3 text-primary" />
-        <h1 className="text-2xl font-heading font-semibold">Checklist de Atividades</h1>
+    <div className="flex-1 px-6 py-8 ml-4">
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex items-center mb-2">
+          <CheckSquare className="h-7 w-7 mr-3 text-primary" />
+          <h1 className="text-3xl font-heading font-bold text-foreground">Checklist de Atividades</h1>
+        </div>
+        <p className="text-muted-foreground ml-10">Gerencie as atividades do projeto</p>
       </div>
       
-      <div className="glass-card rounded-xl shadow-sm">
-        <div className="p-4">
+      {/* Main Content Card */}
+      <div className="glass-card rounded-xl shadow-sm border border-border/50">
+        {/* Form Section */}
+        <div className="p-6 border-b border-border/20">
           <ChecklistForm onAtividadeCriada={loadAtividades} />
         </div>
         
-        <div className="p-4">
+        {/* Filters Section */}
+        <div className="p-6 border-b border-border/20 bg-muted/20">
           <ChecklistFilters 
             onFiltersChange={applyFilters}
             uniqueLocais={uniqueValues.uniqueLocais}
@@ -164,16 +171,20 @@ const ChecklistContent = () => {
           />
         </div>
         
-        <div className="p-4">
+        {/* Stats Section */}
+        <div className="p-6 border-b border-border/20">
           <ChecklistStats atividades={filteredAtividades} />
         </div>
         
-        <ChecklistTable 
-          atividades={filteredAtividades} 
-          isLoading={isLoading}
-          onAtividadeToggle={handleAtividadeToggle}
-          onAtividadeDelete={handleAtividadeDelete}
-        />
+        {/* Table Section */}
+        <div className="rounded-b-xl overflow-hidden">
+          <ChecklistTable 
+            atividades={filteredAtividades} 
+            isLoading={isLoading}
+            onAtividadeToggle={handleAtividadeToggle}
+            onAtividadeDelete={handleAtividadeDelete}
+          />
+        </div>
       </div>
     </div>
   );
