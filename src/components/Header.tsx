@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Building2, LogOut } from "lucide-react";
+import grifoLogo from '@/assets/grifo-logo.png';
 const Header = () => {
   const {
     userSession,
@@ -17,8 +18,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-accent rounded-lg flex items-center justify-center">
-              <span className="text-brand font-semibold text-sm">G</span>
+            <div className="w-9 h-9 flex items-center justify-center">
+              <img src={grifoLogo} alt="Grifo Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-lg font-semibold text-text-on-dark">GrifoBoard</h1>
