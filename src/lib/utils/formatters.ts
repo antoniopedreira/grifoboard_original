@@ -29,7 +29,11 @@ export const formatPercentage = (value: number, decimals = 1): string => {
  * Capitalizes first letter of each word
  */
 export const capitalizeWords = (str: string): string => {
-  return str.replace(/\b\w/g, letter => letter.toUpperCase());
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 /**
