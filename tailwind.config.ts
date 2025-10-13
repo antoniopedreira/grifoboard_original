@@ -19,10 +19,11 @@ export default {
 			}
 		},
 		extend: {
-			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
-				mono: ['Geist Mono', 'monospace'],
-			},
+		fontFamily: {
+			sans: ['Inter', 'system-ui', 'sans-serif'],
+			mono: ['Geist Mono', 'monospace'],
+			'diskette': ['Diskette Mono', 'monospace'],
+		},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

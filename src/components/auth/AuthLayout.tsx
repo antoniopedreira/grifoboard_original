@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Calendar, BarChart3, Users } from 'lucide-react';
+import { Calendar, BarChart3, Users } from 'lucide-react';
+import grifoLogo from '@/assets/grifo-logo.png';
 interface AuthLayoutProps {
   children: ReactNode;
   title: string;
@@ -9,7 +10,7 @@ const AuthLayout = ({
   children,
   title
 }: AuthLayoutProps) => {
-  return <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+  return <div className="h-screen w-full fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 font-diskette">
       {/* Construction grid pattern background - NO SHAPES */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{
@@ -32,8 +33,8 @@ const AuthLayout = ({
           }} transition={{
             duration: 0.6
           }} className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-[#C7A347] rounded-xl flex items-center justify-center">
-                <Building2 className="w-7 h-7 text-white" />
+              <div className="w-12 h-12 bg-[#C7A347] rounded-xl flex items-center justify-center p-2">
+                <img src={grifoLogo} alt="Grifo Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-[#C7A347] text-lg font-semibold">GRIFO ENGENHARIA</span>
             </motion.div>
@@ -110,9 +111,7 @@ const AuthLayout = ({
         }} transition={{
           duration: 0.6,
           ease: "easeOut"
-        }} className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8" style={{
-          fontFamily: 'Inter, sans-serif'
-        }}>
+        }} className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
             <motion.h1 initial={{
             opacity: 0,
             y: 20
@@ -149,8 +148,8 @@ const AuthLayout = ({
           <div className="text-center space-y-6">
             {/* Logo */}
             <div className="flex items-center justify-center space-x-3">
-              <div className="w-10 h-10 bg-[#C7A347] rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-[#C7A347] rounded-xl flex items-center justify-center p-2">
+                <img src={grifoLogo} alt="Grifo Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-[#C7A347] text-lg font-semibold">GRIFO ENGENHARIA</span>
             </div>
@@ -178,9 +177,7 @@ const AuthLayout = ({
         }} transition={{
           duration: 0.6,
           ease: "easeOut"
-        }} className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6" style={{
-          fontFamily: 'Inter, sans-serif'
-        }}>
+        }} className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
             <motion.h1 initial={{
             opacity: 0,
             y: 20
