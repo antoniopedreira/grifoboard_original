@@ -81,8 +81,8 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
               }}
               className="space-y-6"
             >
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center mt-1">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Calendar className="w-5 h-5 text-[#C7A347]" />
                 </div>
                 <div>
@@ -90,8 +90,8 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center mt-1">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center flex-shrink-0">
                   <BarChart3 className="w-5 h-5 text-[#C7A347]" />
                 </div>
                 <div>
@@ -99,8 +99,8 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center mt-1">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-[#C7A347]/20 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Users className="w-5 h-5 text-[#C7A347]" />
                 </div>
                 <div>
