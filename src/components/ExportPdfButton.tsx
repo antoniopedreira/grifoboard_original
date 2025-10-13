@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { FileDown } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Utility function to normalize any date to Monday of its week
 function toMondayISO(date: Date): string {
@@ -19,21 +21,45 @@ interface ExportPdfButtonProps {
 const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonProps) => {
   const weekStartISO = toMondayISO(weekStartDate);
 
-  const href = useMemo(() => {
-    const q = new URLSearchParams({ obraId, obraNome, weekStart: weekStartISO }).toString();
-    return `https://qacaerwosglbayjfskyx.supabase.co/functions/v1/export-pdf?${q}`;
-  }, [obraId, obraNome, weekStartISO]);
-
   const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}.html`;
 
-  const handleDownload = () => {
-    // Create a temporary link to trigger download
-    const link = document.createElement('a');
-    link.href = href;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async () => {
+    try {
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Você precisa estar autenticado para exportar relatórios");
+        return;
+      }
+
+      // Call the edge function with authentication
+      const { data, error } = await supabase.functions.invoke('export-pdf', {
+        body: { obraId, obraNome, weekStart: weekStartISO },
+      });
+
+      if (error) {
+        console.error("Export error:", error);
+        toast.error("Erro ao exportar relatório");
+        return;
+      }
+
+      // Create blob from response and download
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Relatório exportado com sucesso");
+    } catch (err) {
+      console.error("Download error:", err);
+      toast.error("Erro ao baixar relatório");
+    }
   };
 
   return (

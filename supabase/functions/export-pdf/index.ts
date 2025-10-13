@@ -190,7 +190,31 @@ serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Variáveis de ambiente do Supabase ausentes (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).");
     }
+    
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("[export-pdf] Missing Authorization header");
+      return new Response(JSON.stringify({ error: "Unauthorized - No authentication token provided" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Validate JWT and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      console.error("[export-pdf] Authentication failed:", authError?.message);
+      return new Response(JSON.stringify({ error: "Unauthorized - Invalid or expired token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+    console.log(`[export-pdf] Request from user: ${user.id}`);
 
     // Params (GET ou POST)
     let obraId = "", obraNome = "", weekStart = "";
@@ -211,6 +235,36 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Authorization check - verify user owns the obra
+    const { data: obra, error: obraError } = await supabase
+      .from("obras")
+      .select("usuario_id, nome_obra")
+      .eq("id", obraId)
+      .single();
+
+    if (obraError || !obra) {
+      console.error(`[export-pdf] Obra not found: ${obraId}`, obraError?.message);
+      return new Response(JSON.stringify({ error: "Obra not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (obra.usuario_id !== user.id) {
+      console.error(`[export-pdf] Unauthorized access attempt: user ${user.id} tried to access obra ${obraId} owned by ${obra.usuario_id}`);
+      return new Response(JSON.stringify({ error: "Forbidden - You do not have access to this obra" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`[export-pdf] Authorized export for obra: ${obraId}, week: ${weekStart}`);
+
+    // Use the obra name from database if not provided
+    if (!obraNome) {
+      obraNome = obra.nome_obra || "Obra";
     }
 
     // Dados
