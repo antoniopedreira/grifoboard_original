@@ -1,27 +1,38 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Obra } from '@/types/supabase';
+
+class ObraServiceError extends Error {
+  constructor(message: string, public readonly originalError?: unknown) {
+    super(message);
+    this.name = 'ObraServiceError';
+  }
+}
 
 export const obrasService = {
   async listarObras(): Promise<Obra[]> {
     const { data, error } = await supabase
       .from('obras')
-      .select('*')
+      .select('id, nome_obra, localizacao, status, data_inicio, created_at, usuario_id')
       .order('created_at', { ascending: false });
     
     if (error) {
-      throw error;
+      throw new ObraServiceError('Erro ao listar obras', error);
     }
-    return data || [];
+    
+    return data ?? [];
   },
 
   async criarObra(obra: Omit<Obra, 'id' | 'usuario_id' | 'created_at'>): Promise<Obra> {
-    // Get the current user
+    if (!obra.nome_obra?.trim()) {
+      throw new ObraServiceError('Nome da obra é obrigatório');
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) throw new Error('Usuário não autenticado');
+    if (!user) {
+      throw new ObraServiceError('Usuário não autenticado');
+    }
     
-    // Add the user_id to the obra data
     const obraWithUserId = {
       ...obra,
       usuario_id: user.id
@@ -34,12 +45,25 @@ export const obrasService = {
       .single();
     
     if (error) {
-      throw error;
+      throw new ObraServiceError('Erro ao criar obra', error);
     }
+
+    if (!data) {
+      throw new ObraServiceError('Nenhum dado retornado ao criar obra');
+    }
+    
     return data;
   },
 
   async atualizarObra(id: string, obra: Partial<Obra>): Promise<Obra> {
+    if (!id) {
+      throw new ObraServiceError('ID da obra é obrigatório');
+    }
+
+    if (Object.keys(obra).length === 0) {
+      throw new ObraServiceError('Nenhum dado para atualizar');
+    }
+
     const { data, error } = await supabase
       .from('obras')
       .update(obra)
@@ -48,19 +72,28 @@ export const obrasService = {
       .single();
     
     if (error) {
-      throw error;
+      throw new ObraServiceError('Erro ao atualizar obra', error);
     }
+
+    if (!data) {
+      throw new ObraServiceError('Obra não encontrada');
+    }
+    
     return data;
   },
 
   async excluirObra(id: string): Promise<void> {
+    if (!id) {
+      throw new ObraServiceError('ID da obra é obrigatório');
+    }
+
     const { error } = await supabase
       .from('obras')
       .delete()
       .eq('id', id);
     
     if (error) {
-      throw error;
+      throw new ObraServiceError('Erro ao excluir obra', error);
     }
   }
 };
