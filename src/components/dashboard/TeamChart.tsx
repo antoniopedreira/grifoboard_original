@@ -3,6 +3,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { calculatePCP } from "@/utils/pcp";
 import { Task } from "@/types";
 import { BarChart2 } from "lucide-react";
+import { capitalizeWords } from "@/lib/utils/formatters";
 
 interface TeamChartProps {
   weekStartDate: Date;
@@ -31,7 +32,7 @@ const TeamChart = ({
     const data = Object.entries(teamGroups).map(([team, tasks]) => {
       const pcpData = calculatePCP(tasks);
       return {
-        name: team.toUpperCase(),
+        name: capitalizeWords(team.toLowerCase()),
         percentual: Math.round(pcpData.overall.percentage)
       };
     });

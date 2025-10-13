@@ -3,6 +3,7 @@ import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PCPData } from "@/types";
 import PCPProgress from "./PCPProgress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { capitalizeWords } from "@/lib/utils/formatters";
 
 interface PCPBreakdownCardProps {
   title: string;
@@ -32,7 +33,7 @@ const PCPBreakdownCard: React.FC<PCPBreakdownCardProps> = ({ title, data }) => {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium text-slate-700 truncate flex-1 mr-2 uppercase">{key}</span>
+                  <span className="text-sm font-medium text-slate-700 truncate flex-1 mr-2">{capitalizeWords(key.toLowerCase())}</span>
                   <span className="text-sm font-bold text-slate-800 flex-shrink-0">{Math.round(value.percentage)}%</span>
                 </div>
                 <div className="flex items-center space-x-2">
