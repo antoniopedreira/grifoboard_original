@@ -61,8 +61,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 bg-white z-50" align="start">
-          <Command>
+        <PopoverContent className="w-full p-0 bg-white z-50 pointer-events-auto" align="start">
+          <Command className="pointer-events-auto">
             <div className="flex items-center border-b px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <CommandInput 
@@ -70,7 +70,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0"
               />
             </div>
-            <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain scrollbar-thin">
+            <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain touch-auto pointer-events-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/80">
               {validOptions.length > 0 ? (
                 <CommandGroup>
                   {value && (
