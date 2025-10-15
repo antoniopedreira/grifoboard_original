@@ -1,7 +1,24 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import TaskCard from "../TaskCard";
 import { Task } from "@/types";
-import { ClipboardX } from "lucide-react";
+import { ClipboardX, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TaskGridProps {
   tasks: Task[];
@@ -10,8 +27,78 @@ interface TaskGridProps {
   onTaskDuplicate?: (task: Task) => void;
 }
 
+interface SortableTaskCardProps {
+  task: Task;
+  onTaskUpdate: (updatedTask: Task) => void;
+  onTaskDelete?: (taskId: string) => void;
+  onTaskDuplicate?: (task: Task) => void;
+}
+
+const SortableTaskCard: React.FC<SortableTaskCardProps> = ({ task, onTaskUpdate, onTaskDelete, onTaskDuplicate }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="h-full relative group">
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-1.5 shadow-md border border-border"
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <TaskCard
+        task={task}
+        onTaskUpdate={onTaskUpdate}
+        onTaskDelete={onTaskDelete}
+        onTaskDuplicate={onTaskDuplicate}
+      />
+    </div>
+  );
+};
+
 const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, onTaskDuplicate }) => {
-  if (tasks.length === 0) {
+  const [orderedTasks, setOrderedTasks] = useState<Task[]>(tasks);
+
+  useEffect(() => {
+    setOrderedTasks(tasks);
+  }, [tasks]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setOrderedTasks((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+  if (orderedTasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-6 rounded-xl bg-white border border-gray-100 shadow-sm">
         <div className="bg-gray-50 p-3 rounded-full mb-4">
@@ -26,18 +113,25 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 auto-rows-fr">
-      {tasks.map(task => (
-        <div key={task.id} className="h-full">
-          <TaskCard
-            task={task}
-            onTaskUpdate={onTaskUpdate}
-            onTaskDelete={onTaskDelete}
-            onTaskDuplicate={onTaskDuplicate}
-          />
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={orderedTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 auto-rows-fr">
+          {orderedTasks.map(task => (
+            <SortableTaskCard
+              key={task.id}
+              task={task}
+              onTaskUpdate={onTaskUpdate}
+              onTaskDelete={onTaskDelete}
+              onTaskDuplicate={onTaskDuplicate}
+            />
+          ))}
         </div>
-      ))}
-    </div>
+      </SortableContext>
+    </DndContext>
   );
 };
 
