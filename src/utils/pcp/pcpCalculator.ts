@@ -33,12 +33,12 @@ export const calculatePCP = (tasks: Task[]): PCPBreakdown => {
     };
   });
 
-  // By executor
-  const executors = Array.from(new Set(tasksWithPlannedDays.map(task => task.executor).filter(Boolean)));
+  // By executor (using team field which maps to executante)
+  const executors = Array.from(new Set(tasksWithPlannedDays.map(task => task.team).filter(Boolean)));
   const byExecutor: Record<string, { completedTasks: number; totalTasks: number; percentage: number }> = {};
   
   executors.forEach(executor => {
-    const executorTasks = tasksWithPlannedDays.filter(task => task.executor === executor);
+    const executorTasks = tasksWithPlannedDays.filter(task => task.team === executor);
     const executorCompletedTasks = executorTasks.filter(task => task.isFullyCompleted).length;
     byExecutor[executor!] = {
       completedTasks: executorCompletedTasks,
