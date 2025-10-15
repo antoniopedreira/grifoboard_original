@@ -45,18 +45,24 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
 
   const weekStartISO = toMondayISO(weekStartDate);
 
-  // Load executantes when dialog opens and executante option is selected
+  // Load executantes when dialog opens
   const loadExecutantes = async () => {
     try {
+      console.log("Loading executantes for obra:", obraId);
       const { data, error } = await supabase
         .from("registros")
         .select("valor")
         .eq("obra_id", obraId)
         .eq("tipo", "executante");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading executantes:", error);
+        throw error;
+      }
 
-      const uniqueExecutantes = Array.from(new Set(data.map(r => r.valor))).sort();
+      console.log("Executantes data:", data);
+      const uniqueExecutantes = Array.from(new Set(data?.map(r => r.valor) || [])).sort();
+      console.log("Unique executantes:", uniqueExecutantes);
       setExecutantes(uniqueExecutantes);
     } catch (err) {
       console.error("Error loading executantes:", err);
@@ -64,11 +70,15 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
     }
   };
 
-  const handleExportTypeChange = (value: string) => {
-    setExportType(value as "setor" | "executante");
-    if (value === "executante" && executantes.length === 0) {
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) {
       loadExecutantes();
     }
+  };
+
+  const handleExportTypeChange = (value: string) => {
+    setExportType(value as "setor" | "executante");
   };
 
   const handleExport = async () => {
@@ -129,7 +139,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border border-primary/20 rounded-md hover:bg-primary/5 transition-colors">
           <FileDown className="h-4 w-4" />
