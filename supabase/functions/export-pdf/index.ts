@@ -21,7 +21,7 @@ interface TaskData {
   sab: string | null;
   dom: string | null;
 }
-interface GroupedTasks { [setor: string]: TaskData[]; }
+interface GroupedTasks { [key: string]: TaskData[]; }
 
 const DOW_PT = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 
@@ -55,26 +55,33 @@ function generateHtmlContent(
   tasks: TaskData[],
   obraNome: string,
   weekStart: Date,
-  weekEnd: Date
+  weekEnd: Date,
+  groupBy: 'setor' | 'executante' = 'setor',
+  executanteFilter?: string
 ): string {
-  // Agrupa por setor
+  // Agrupa por setor ou executante
   const grouped: GroupedTasks = {};
-  for (const t of tasks) (grouped[t.setor] ||= []).push(t);
-  const setores = sortSetores(Object.keys(grouped));
+  for (const t of tasks) {
+    const key = groupBy === 'executante' ? t.executante : t.setor;
+    (grouped[key] ||= []).push(t);
+  }
+  const keys = groupBy === 'setor' ? sortSetores(Object.keys(grouped)) : Object.keys(grouped).sort();
 
-  // Tabelas por setor
+  // Tabelas por setor ou executante
   let sections = "";
-  if (setores.length === 0) {
+  if (keys.length === 0) {
     sections = `<p style="text-align:center; color:#666; font-style:italic; margin:40px 0">Nenhuma atividade planejada para a semana.</p>`;
   } else {
-    for (const setor of setores) {
-      const rows = grouped[setor];
+    for (const key of keys) {
+      const rows = grouped[key];
+      const isExecutanteGroup = groupBy === 'executante';
 
       const body = rows.map(r => `
         <tr>
           <td class="text">${r.descricao ?? ""}</td>
+          ${isExecutanteGroup ? `<td class="text">${r.setor ?? ""}</td>` : ''}
           <td class="text">${r.disciplina ?? ""}</td>
-          <td class="text">${r.executante ?? ""}</td>
+          ${!isExecutanteGroup ? `<td class="text">${r.executante ?? ""}</td>` : ''}
           <td class="text">${r.responsavel ?? ""}</td>
           <td class="text">${r.encarregado ?? ""}</td>
           <td class="day">${getStatusSymbol(r.seg)}</td>
@@ -87,21 +94,32 @@ function generateHtmlContent(
         </tr>
       `).join("");
 
+      const groupLabel = isExecutanteGroup ? 'Executante' : 'Setor';
+      const groupValue = key || (isExecutanteGroup ? "Sem Executante" : "Sem Setor");
+      
       sections += `
         <section class="sector">
           <div class="sector-title">
-            <h2>Setor: ${setor || "Sem Setor"}</h2>
+            <h2>${groupLabel}: ${groupValue}</h2>
             <span class="pill">${rows.length} atividade${rows.length !== 1 ? "s" : ""}</span>
           </div>
 
           <table class="grid">
-            <!-- COLUNAS EM % — iguais em TODAS as tabelas -->
+            <!-- COLUNAS EM % — ajustadas conforme tipo de agrupamento -->
             <colgroup>
-              <col style="width:28%"> <!-- Atividade -->
-              <col style="width:12%"> <!-- Disciplina -->
-              <col style="width:12%"> <!-- Executante -->
-              <col style="width:12%"> <!-- Responsável -->
-              <col style="width:12%"> <!-- Encarregado -->
+              ${isExecutanteGroup ? `
+                <col style="width:26%"> <!-- Atividade -->
+                <col style="width:12%"> <!-- Setor -->
+                <col style="width:12%"> <!-- Disciplina -->
+                <col style="width:12%"> <!-- Responsável -->
+                <col style="width:12%"> <!-- Encarregado -->
+              ` : `
+                <col style="width:28%"> <!-- Atividade -->
+                <col style="width:12%"> <!-- Disciplina -->
+                <col style="width:12%"> <!-- Executante -->
+                <col style="width:12%"> <!-- Responsável -->
+                <col style="width:12%"> <!-- Encarregado -->
+              `}
               <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
               <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
             </colgroup>
@@ -109,8 +127,9 @@ function generateHtmlContent(
             <thead>
               <tr>
                 <th>Atividade</th>
+                ${isExecutanteGroup ? '<th>Setor</th>' : ''}
                 <th>Disciplina</th>
-                <th>Executante</th>
+                ${!isExecutanteGroup ? '<th>Executante</th>' : ''}
                 <th>Responsável</th>
                 <th>Encarregado</th>
                 ${DOW_PT.map(n => `<th class="center nowrap">${n}</th>`).join("")}
@@ -217,17 +236,21 @@ serve(async (req) => {
     console.log(`[export-pdf] Request from user: ${user.id}`);
 
     // Params (GET ou POST)
-    let obraId = "", obraNome = "", weekStart = "";
+    let obraId = "", obraNome = "", weekStart = "", groupBy: 'setor' | 'executante' = 'setor', executante = "";
     if (req.method === "GET") {
       const u = new URL(req.url);
       obraId = u.searchParams.get("obraId") || "";
       obraNome = u.searchParams.get("obraNome") || "";
       weekStart = u.searchParams.get("weekStart") || "";
+      groupBy = (u.searchParams.get("groupBy") as 'setor' | 'executante') || 'setor';
+      executante = u.searchParams.get("executante") || "";
     } else {
       const body = await req.json();
       obraId = body.obraId;
       obraNome = body.obraNome;
       weekStart = body.weekStart;
+      groupBy = body.groupBy || 'setor';
+      executante = body.executante || "";
     }
 
     if (!obraId || !weekStart) {
@@ -268,13 +291,21 @@ serve(async (req) => {
     }
 
     // Dados
-    const { data: tasks, error } = await supabase
+    let query = supabase
       .from("tarefas")
       .select("setor, descricao, disciplina, executante, responsavel, encarregado, seg, ter, qua, qui, sex, sab, dom")
       .eq("obra_id", obraId)
-      .eq("semana", weekStart)
-      .order("setor", { ascending: true })
+      .eq("semana", weekStart);
+    
+    // Filter by executante if specified
+    if (groupBy === 'executante' && executante) {
+      query = query.eq("executante", executante);
+    }
+    
+    query = query.order(groupBy === 'executante' ? "executante" : "setor", { ascending: true })
       .order("descricao", { ascending: true });
+    
+    const { data: tasks, error } = await query;
     if (error) throw error;
 
     // Período
@@ -283,7 +314,7 @@ serve(async (req) => {
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
     // HTML alinhado com margem pequena + gutter
-    const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate);
+    const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
 
     const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.html`;
     return new Response(html, {

@@ -7,7 +7,7 @@ import {
   getNextWeekDates
 } from "@/utils/pcp";
 import { useAuth } from "@/context/AuthContext";
-import ExportPdfButton from "@/components/ExportPdfButton";
+import ExportDialog from "@/components/ExportDialog";
 
 interface WeekNavigationProps {
   weekStartDate: Date;
@@ -53,7 +53,7 @@ const WeekNavigation = ({
       </div>
       
       <div className="flex items-center gap-2">
-        <ExportPdfButton
+        <ExportDialog
           obraId={userSession.obraAtiva?.id || ""}
           obraNome={userSession.obraAtiva?.nome_obra || ""}
           weekStartDate={weekStartDate}
