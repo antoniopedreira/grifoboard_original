@@ -43,7 +43,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
   const [selectedExecutante, setSelectedExecutante] = useState<string>("");
   const [loading, setLoading] = useState(false);
   
-  const { executors } = useRegistry();
+  const { teams } = useRegistry();
 
   const weekStartISO = toMondayISO(weekStartDate);
 
@@ -161,7 +161,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
                   <SelectValue placeholder="Escolha um executante" />
                 </SelectTrigger>
                 <SelectContent>
-                  {executors.map((exec) => (
+                  {teams.map((exec) => (
                     <SelectItem key={exec} value={exec}>
                       {exec}
                     </SelectItem>
