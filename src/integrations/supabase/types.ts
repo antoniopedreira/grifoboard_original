@@ -240,6 +240,66 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_accounts: {
+        Row: {
+          created_at: string | null
+          is_active: boolean | null
+          label: string | null
+          phone_e164: string
+          wa_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          is_active?: boolean | null
+          label?: string | null
+          phone_e164: string
+          wa_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          is_active?: boolean | null
+          label?: string | null
+          phone_e164?: string
+          wa_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_obras: {
+        Row: {
+          created_at: string | null
+          obra_id: string
+          role: string | null
+          wa_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          obra_id: string
+          role?: string | null
+          wa_id: string
+        }
+        Update: {
+          created_at?: string | null
+          obra_id?: string
+          role?: string | null
+          wa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_obras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_obras_wa_id_fkey"
+            columns: ["wa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["wa_id"]
+          },
+        ]
+      }
     }
     Views: {
       resumo_execucao_semanal: {
