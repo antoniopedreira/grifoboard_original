@@ -4,13 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Trash2, CalendarIcon } from "lucide-react";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { dayNameMap, getWeekStartDate } from "@/utils/pcp";
 import { useRegistry } from "@/context/RegistryContext";
 import { 
@@ -21,6 +14,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import SearchableSelect from "@/components/task-form/SearchableSelect";
 
 interface EditTaskFormProps {
   editFormData: any;
@@ -44,12 +38,12 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 }) => {
   const { sectors, disciplines, teams, responsibles, executors } = useRegistry();
 
-  // Filter out any empty values from the registry arrays
-  const validSectors = sectors.filter(item => item && item.trim() !== "");
-  const validDisciplines = disciplines.filter(item => item && item.trim() !== "");
-  const validTeams = teams.filter(item => item && item.trim() !== "");
-  const validResponsibles = responsibles.filter(item => item && item.trim() !== "");
-  const validExecutors = executors.filter(item => item && item.trim() !== "");
+  // Sort all registry arrays alphabetically
+  const sortedSectors = [...sectors].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedDisciplines = [...disciplines].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedTeams = [...teams].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedResponsibles = [...responsibles].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const sortedExecutors = [...executors].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
   
 
   // Helper function to evaluate isFormValid regardless of type
@@ -124,129 +118,56 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 
           {/* Two columns layout for sector and discipline */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Setor */}
-            <div className="space-y-2">
-              <Label htmlFor="edit-sector" className="font-medium">Setor</Label>
-              <Select 
-                value={safeEditFormData.sector} 
-                onValueChange={(value) => onEditFormChange("sector", value)}
-              >
-                <SelectTrigger id="edit-sector">
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {validSectors.length > 0 ? (
-                    validSectors.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum setor cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <SearchableSelect
+              id="edit-sector"
+              label="Setor"
+              value={safeEditFormData.sector}
+              onValueChange={(value) => onEditFormChange("sector", value)}
+              options={sortedSectors}
+              placeholder="Selecione o setor"
+            />
             
-            {/* Disciplina */}
-            <div className="space-y-2">
-              <Label htmlFor="edit-discipline" className="font-medium">Disciplina</Label>
-              <Select 
-                value={safeEditFormData.discipline} 
-                onValueChange={(value) => onEditFormChange("discipline", value)}
-              >
-                <SelectTrigger id="edit-discipline">
-                  <SelectValue placeholder="Selecione a disciplina" />
-                </SelectTrigger>
-                <SelectContent>
-                  {validDisciplines.length > 0 ? (
-                    validDisciplines.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhuma disciplina cadastrada</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <SearchableSelect
+              id="edit-discipline"
+              label="Disciplina"
+              value={safeEditFormData.discipline}
+              onValueChange={(value) => onEditFormChange("discipline", value)}
+              options={sortedDisciplines}
+              placeholder="Selecione a disciplina"
+            />
           </div>
           
           {/* Single column layout for executante */}
           <div className="grid grid-cols-1 gap-4">
-            {/* Executante */}
-            <div className="space-y-2">
-              <Label htmlFor="edit-team" className="font-medium">Executante</Label>
-              <Select 
-                value={safeEditFormData.team} 
-                onValueChange={(value) => onEditFormChange("team", value)}
-              >
-                <SelectTrigger id="edit-team">
-                  <SelectValue placeholder="Selecione o executante" />
-                </SelectTrigger>
-                <SelectContent>
-                  {validTeams.length > 0 ? (
-                    validTeams.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum executante cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <SearchableSelect
+              id="edit-team"
+              label="Executante"
+              value={safeEditFormData.team}
+              onValueChange={(value) => onEditFormChange("team", value)}
+              options={sortedTeams}
+              placeholder="Selecione o executante"
+            />
           </div>
           
           {/* Two columns layout for responsible and executor */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-responsible" className="font-medium">Responsável</Label>
-              <Select 
-                value={safeEditFormData.responsible} 
-                onValueChange={(value) => onEditFormChange("responsible", value)}
-              >
-                <SelectTrigger id="edit-responsible">
-                  <SelectValue placeholder="Selecione o responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  {validResponsibles.length > 0 ? (
-                    validResponsibles.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum responsável cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <SearchableSelect
+              id="edit-responsible"
+              label="Responsável"
+              value={safeEditFormData.responsible}
+              onValueChange={(value) => onEditFormChange("responsible", value)}
+              options={sortedResponsibles}
+              placeholder="Selecione o responsável"
+            />
             
-            <div className="space-y-2">
-              <Label htmlFor="edit-executor" className="font-medium">Encarregado</Label>
-              <Select 
-                value={safeEditFormData.executor} 
-                onValueChange={(value) => onEditFormChange("executor", value)}
-              >
-                <SelectTrigger id="edit-executor">
-                  <SelectValue placeholder="Selecione o encarregado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {validExecutors.length > 0 ? (
-                    validExecutors.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      <p>Nenhum encarregado cadastrado</p>
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <SearchableSelect
+              id="edit-executor"
+              label="Encarregado"
+              value={safeEditFormData.executor}
+              onValueChange={(value) => onEditFormChange("executor", value)}
+              options={sortedExecutors}
+              placeholder="Selecione o encarregado"
+            />
           </div>
           
           {/* Planned days - centered with extra bottom margin */}

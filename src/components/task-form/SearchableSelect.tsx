@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { Check, ChevronsUpDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -47,10 +47,21 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             <span className="truncate">
               {value || placeholder}
             </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <div className="flex items-center gap-1">
+              {value && (
+                <X 
+                  className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 cursor-pointer" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onValueChange("");
+                  }}
+                />
+              )}
+              <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-full p-0 bg-white z-50" align="start">
           <Command>
             <div className="flex items-center border-b px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -62,6 +73,20 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain scrollbar-thin">
               {validOptions.length > 0 ? (
                 <CommandGroup>
+                  {value && (
+                    <CommandItem
+                      key="clear-option"
+                      value=""
+                      onSelect={() => {
+                        onValueChange("");
+                        setOpen(false);
+                      }}
+                      className="px-3 py-2 text-sm cursor-pointer text-muted-foreground italic border-b"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      <span>Limpar seleção</span>
+                    </CommandItem>
+                  )}
                   {validOptions.map((option) => (
                     <CommandItem
                       key={option}
