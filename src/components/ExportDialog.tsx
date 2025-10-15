@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useRegistry } from "@/context/RegistryContext";
 
 interface ExportDialogProps {
   obraId: string;
@@ -40,41 +41,14 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
   const [open, setOpen] = useState(false);
   const [exportType, setExportType] = useState<"setor" | "executante">("setor");
   const [selectedExecutante, setSelectedExecutante] = useState<string>("");
-  const [executantes, setExecutantes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  const { executors } = useRegistry();
 
   const weekStartISO = toMondayISO(weekStartDate);
 
-  // Load executantes when dialog opens
-  const loadExecutantes = async () => {
-    try {
-      console.log("Loading executantes for obra:", obraId);
-      const { data, error } = await supabase
-        .from("registros")
-        .select("valor")
-        .eq("obra_id", obraId)
-        .eq("tipo", "executante");
-
-      if (error) {
-        console.error("Error loading executantes:", error);
-        throw error;
-      }
-
-      console.log("Executantes data:", data);
-      const uniqueExecutantes = Array.from(new Set(data?.map(r => r.valor) || [])).sort();
-      console.log("Unique executantes:", uniqueExecutantes);
-      setExecutantes(uniqueExecutantes);
-    } catch (err) {
-      console.error("Error loading executantes:", err);
-      toast.error("Erro ao carregar executantes");
-    }
-  };
-
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
-    if (newOpen) {
-      loadExecutantes();
-    }
   };
 
   const handleExportTypeChange = (value: string) => {
@@ -187,7 +161,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
                   <SelectValue placeholder="Escolha um executante" />
                 </SelectTrigger>
                 <SelectContent>
-                  {executantes.map((exec) => (
+                  {executors.map((exec) => (
                     <SelectItem key={exec} value={exec}>
                       {exec}
                     </SelectItem>
