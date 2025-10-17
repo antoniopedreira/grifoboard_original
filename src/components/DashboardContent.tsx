@@ -16,7 +16,6 @@ import { Task } from "@/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
 import { ptBR } from "date-fns/locale";
 
 const DashboardContent = () => {
@@ -200,11 +199,7 @@ const DashboardInner = () => {
               <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
               <span>
                 {lastUpdateDate 
-                  ? `Atualizado: ${format(
-                      toZonedTime(lastUpdateDate, 'America/Sao_Paulo'),
-                      "dd/MM/yyyy 'às' HH:mm",
-                      { locale: ptBR }
-                    )}`
+                  ? `Atualizado: ${format(lastUpdateDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`
                   : 'Atualizado agora'
                 }
               </span>
