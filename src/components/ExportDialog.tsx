@@ -86,46 +86,27 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      // Criar iframe oculto para impressão
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = 'none';
-      document.body.appendChild(iframe);
-
-      // Carregar HTML no iframe
-      const iframeDoc = iframe.contentWindow?.document;
-      if (iframeDoc) {
-        iframeDoc.open();
-        iframeDoc.write(data);
-        iframeDoc.close();
-
-        // Aguardar o carregamento completo e abrir diálogo de impressão
-        iframe.onload = () => {
-          setTimeout(() => {
-            try {
-              iframe.contentWindow?.print();
-              toast.success("Diálogo de impressão aberto");
-              setOpen(false);
-              
-              // Limpar iframe após impressão/cancelamento
-              setTimeout(() => {
-                document.body.removeChild(iframe);
-              }, 1000);
-            } catch (printErr) {
-              console.error("Print error:", printErr);
-              toast.error("Erro ao abrir impressão");
-              document.body.removeChild(iframe);
-            }
-          }, 250);
-        };
-      }
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const filenameSuffix = exportType === "executante" 
+        ? `_${selectedExecutante.replace(/\s+/g, "_")}`
+        : "";
+      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.html`;
+      
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Relatório exportado com sucesso");
+      setOpen(false);
     } catch (err) {
-      console.error("Export error:", err);
-      toast.error("Erro ao exportar relatório");
+      console.error("Download error:", err);
+      toast.error("Erro ao baixar relatório");
     } finally {
       setLoading(false);
     }
