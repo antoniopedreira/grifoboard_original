@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { FileDown, Building2, User } from "lucide-react";
-import html2pdf from "html2pdf.js";
 import {
   Dialog,
   DialogContent,
@@ -87,39 +86,21 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      // Generate PDF from HTML using html2pdf.js
-      const { html, filename: baseFilename } = data;
-      const element = document.createElement('div');
-      element.innerHTML = html;
-      document.body.appendChild(element);
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
       
       const filenameSuffix = exportType === "executante" 
         ? `_${selectedExecutante.replace(/\s+/g, "_")}`
         : "";
-      const filename = baseFilename.replace('.pdf', `${filenameSuffix}.pdf`);
+      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.html`;
       
-      const options = {
-        margin: [8, 8, 8, 8] as [number, number, number, number],
-        filename,
-        image: { type: 'jpeg' as const, quality: 0.95 },
-        html2canvas: { 
-          scale: 2.5,
-          useCORS: true,
-          letterRendering: true,
-          logging: false,
-          windowWidth: 1200
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait' as const,
-          compress: true
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      await html2pdf().set(options).from(element).save();
-      document.body.removeChild(element);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast.success("Relatório exportado com sucesso");
       setOpen(false);

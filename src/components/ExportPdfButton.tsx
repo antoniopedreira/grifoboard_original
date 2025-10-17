@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import html2pdf from "html2pdf.js";
 
 // Utility function to normalize any date to Monday of its week
 function toMondayISO(date: Date): string {
@@ -20,11 +19,11 @@ interface ExportPdfButtonProps {
 }
 
 const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonProps) => {
-  const [loading, setLoading] = useState(false);
   const weekStartISO = toMondayISO(weekStartDate);
 
+  const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}.html`;
+
   const handleDownload = async () => {
-    setLoading(true);
     try {
       // Get the current session token
       const { data: { session } } = await supabase.auth.getSession();
@@ -42,56 +41,34 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
       if (error) {
         console.error("Export error:", error);
         toast.error("Erro ao exportar relatório");
-        setLoading(false);
         return;
       }
 
-      // Generate PDF from HTML using html2pdf.js
-      const { html, filename } = data;
-      const element = document.createElement('div');
-      element.innerHTML = html;
-      document.body.appendChild(element);
-      
-      const options = {
-        margin: [8, 8, 8, 8] as [number, number, number, number],
-        filename,
-        image: { type: 'jpeg' as const, quality: 0.95 },
-        html2canvas: { 
-          scale: 2.5,
-          useCORS: true,
-          letterRendering: true,
-          logging: false,
-          windowWidth: 1200
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait' as const,
-          compress: true
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      await html2pdf().set(options).from(element).save();
-      document.body.removeChild(element);
+      // Create blob from response and download
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast.success("Relatório exportado com sucesso");
     } catch (err) {
       console.error("Download error:", err);
       toast.error("Erro ao baixar relatório");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <button 
       onClick={handleDownload}
-      disabled={loading}
-      className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border border-primary/20 rounded-md hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border border-primary/20 rounded-md hover:bg-primary/5 transition-colors"
     >
       <FileDown className="h-4 w-4" />
-      {loading ? "Exportando..." : "Exportar PDF"}
+      Exportar PDF
     </button>
   );
 };

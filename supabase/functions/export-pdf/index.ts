@@ -105,22 +105,23 @@ function generateHtmlContent(
           </div>
 
           <table class="grid">
+            <!-- COLUNAS EM % — ajustadas conforme tipo de agrupamento -->
             <colgroup>
               ${isExecutanteGroup ? `
-                <col style="width:28%">
-                <col style="width:11%">
-                <col style="width:11%">
-                <col style="width:9%">
-                <col style="width:9%">
+                <col style="width:26%"> <!-- Atividade -->
+                <col style="width:12%"> <!-- Setor -->
+                <col style="width:12%"> <!-- Disciplina -->
+                <col style="width:12%"> <!-- Responsável -->
+                <col style="width:12%"> <!-- Encarregado -->
               ` : `
-                <col style="width:28%">
-                <col style="width:11%">
-                <col style="width:11%">
-                <col style="width:9%">
-                <col style="width:9%">
+                <col style="width:28%"> <!-- Atividade -->
+                <col style="width:12%"> <!-- Disciplina -->
+                <col style="width:12%"> <!-- Executante -->
+                <col style="width:12%"> <!-- Responsável -->
+                <col style="width:12%"> <!-- Encarregado -->
               `}
-              <col style="width:26px"><col style="width:26px"><col style="width:26px">
-              <col style="width:26px"><col style="width:26px"><col style="width:26px"><col style="width:26px">
+              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
+              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
             </colgroup>
 
             <thead>
@@ -131,7 +132,7 @@ function generateHtmlContent(
                 ${!isExecutanteGroup ? '<th>Executante</th>' : ''}
                 <th>Responsável</th>
                 <th>Encarregado</th>
-                ${DOW_PT.map(n => `<th class="day center nowrap">${n}</th>`).join("")}
+                ${DOW_PT.map(n => `<th class="center nowrap">${n}</th>`).join("")}
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -141,166 +142,59 @@ function generateHtmlContent(
     }
   }
 
+  // HTML completo
   return `<!doctype html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
   <title>Relatório Semanal de Atividades</title>
   <style>
-    * { 
-      box-sizing: border-box; 
-      margin: 0;
-      padding: 0;
-    }
-    
-    body { 
-      margin: 0;
-      padding: 15px;
-      color: #1f2937; 
-      font-family: Arial, sans-serif;
-      font-size: 9px;
-      line-height: 1.3;
-    }
+    /* MARGEM PEQUENA DOS LADOS + GUTTER INTERNO */
+    @page { size: A4; margin: 14mm 18mm 16mm 18mm; } /* top right bottom left */
+    .page { padding: 0 6mm; } /* respiro interno adicional nas laterais */
 
-    .header { 
-      text-align: center; 
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #374151;
-    }
-    
-    .header h1 { 
-      margin: 0 0 6px; 
-      font-size: 16px; 
-      font-weight: 700;
-      color: #111827;
-    }
-    
-    .meta { 
-      color: #6b7280; 
-      font-size: 8px; 
-      margin: 2px 0;
-    }
+    * { box-sizing: border-box; }
+    body { margin:0; color:#111; font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
 
-    .sector { 
-      page-break-inside: avoid; 
-      margin: 0 0 16px;
-    }
-    
-    .sector-title { 
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
-      padding: 4px 0;
-      background: #f9fafb;
-      border-left: 3px solid #3b82f6;
-      padding-left: 8px;
-    }
-    
-    .sector-title h2 { 
-      margin: 0; 
-      font-size: 11px; 
-      font-weight: 700; 
-      color: #111827;
-    }
-    
-    .pill { 
-      background: #dbeafe; 
-      color: #1e40af; 
-      font-size: 8px; 
-      padding: 2px 6px; 
-      border-radius: 8px;
-      white-space: nowrap;
-      font-weight: 600;
-    }
+    .header { text-align:center; margin-bottom:16px; }
+    .header h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
+    .meta { color:#666; font-size:12px; margin:4px 0 12px; }
+    hr { border:0; border-top:1px solid #e5e7eb; margin: 8px 0 18px; }
 
-    table.grid { 
-      width: 100%; 
-      border-collapse: collapse;
-      table-layout: fixed;
-      margin-bottom: 8px;
-      font-size: 8px;
-    }
-    
-    thead { 
-      display: table-header-group;
-    }
-    
-    th, td { 
-      border: 1px solid #d1d5db;
-      padding: 4px 3px;
-      vertical-align: middle;
-    }
-    
-    th { 
-      background: #f3f4f6;
-      font-weight: 700;
-      color: #374151;
-      text-align: left;
-      font-size: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    
-    tbody tr:nth-child(even) td { 
-      background: #f9fafb;
-    }
-    
-    tbody tr:hover td {
-      background: #f3f4f6;
-    }
+    .sector { page-break-inside: avoid; margin: 0 0 22px; }
+    .sector-title { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .sector-title h2 { margin:0; font-size:16px; font-weight:700; color:#1f2937; }
+    .pill { background:#e5e7eb; color:#374151; font-size:12px; padding:4px 8px; border-radius:12px; }
 
-    .center { 
-      text-align: center;
-    }
-    
-    .nowrap { 
-      white-space: nowrap;
-    }
-    
-    .text { 
-      word-break: normal;
-      overflow-wrap: anywhere;
-      hyphens: none;
-      line-height: 1.35;
-    }
-    
-    .day { 
-      text-align: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: #111827;
-    }
-    
-    .footer-legend {
-      margin-top: 20px;
-      padding-top: 10px;
-      border-top: 1px solid #e5e7eb;
-      text-align: center;
-      font-size: 8px;
-      color: #6b7280;
-      background: #f9fafb;
-      padding: 8px;
-      border-radius: 4px;
-    }
-    
-    .footer-legend strong {
-      color: #374151;
-    }
+    table.grid { width:100%; border-collapse: collapse; table-layout: fixed; }
+    thead { display: table-header-group; } /* mantém cabeçalho nas quebras */
+    th, td { border:1px solid #e5e7eb; padding:6px 8px; vertical-align: middle; }
+    th { background:#fafafa; font-weight:600; }
+    tbody tr:nth-child(even) td { background:#fbfcfe; }
+
+    .center { text-align:center; }
+    .nowrap { white-space:nowrap; }
+    .text { word-break: break-word; overflow-wrap:anywhere; }
+    thead th { word-break: keep-all; }
+    .day { text-align:center; }
+
+    td, th { line-height: 1.25; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
-    <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
-    <div class="meta">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
-  </div>
+  <div class="page">
+    <div class="header">
+      <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
+      <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
+      <div class="meta" style="font-size:11px;">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
+      <hr />
+    </div>
 
-  ${sections}
+    ${sections}
 
-  <div class="footer-legend">
-    <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
+    <div class="meta" style="text-align:center; border-top:1px solid #e5e7eb; padding-top:12px;">
+      <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
+    </div>
   </div>
 </body>
 </html>`;
@@ -419,15 +313,15 @@ serve(async (req) => {
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-    // Return HTML for client-side PDF generation
+    // HTML alinhado com margem pequena + gutter
     const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
 
-    console.log("[export-pdf] Returning HTML for client-side PDF generation");
-
-    return new Response(JSON.stringify({ html, filename: `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.pdf` }), {
+    const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.html`;
+    return new Response(html, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "application/json",
+        "Content-Type": "text/html",
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store",
       },
     });
