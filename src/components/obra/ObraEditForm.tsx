@@ -20,6 +20,7 @@ const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormP
   const [nomeObra, setNomeObra] = useState('');
   const [localizacao, setLocalizacao] = useState('');
   const [dataInicio, setDataInicio] = useState('');
+  const [dataTermino, setDataTermino] = useState('');
   const [status, setStatus] = useState('em_andamento');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -29,6 +30,7 @@ const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormP
       setNomeObra(obra.nome_obra || '');
       setLocalizacao(obra.localizacao || '');
       setDataInicio(obra.data_inicio ? obra.data_inicio.split('T')[0] : '');
+      setDataTermino((obra as any).data_termino ? (obra as any).data_termino.split('T')[0] : '');
       setStatus(obra.status || 'em_andamento');
     }
   }, [obra]);
@@ -37,6 +39,7 @@ const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormP
     setNomeObra('');
     setLocalizacao('');
     setDataInicio('');
+    setDataTermino('');
     setStatus('em_andamento');
     setIsSubmitting(false);
   };
@@ -55,6 +58,7 @@ const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormP
         nome_obra: nomeObra,
         localizacao,
         data_inicio: dataInicio,
+        data_termino: dataTermino || null,
         status
       };
       
@@ -131,6 +135,17 @@ const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormP
               type="date"
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="data_termino">Data de Término (Previsão)</Label>
+            <Input
+              id="data_termino"
+              type="date"
+              value={dataTermino}
+              onChange={(e) => setDataTermino(e.target.value)}
+              min={dataInicio}
             />
           </div>
           

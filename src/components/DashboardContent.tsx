@@ -11,6 +11,7 @@ import TeamChart from "@/components/dashboard/TeamChart";
 import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
 import TaskDetailsModal from "@/components/dashboard/TaskDetailsModal";
+import ProjectCountdown from "@/components/dashboard/ProjectCountdown";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 import { Task } from "@/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -300,6 +301,9 @@ const DashboardInner = () => {
             </div>
           </div>
         </div>
+
+        {/* Project Countdown */}
+        <ProjectCountdown />
 
         {/* Weekly Progress - All Weeks */}
         <WeeklyProgressWithAverage />

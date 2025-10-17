@@ -19,6 +19,7 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
   const [nomeObra, setNomeObra] = useState('');
   const [localizacao, setLocalizacao] = useState('');
   const [dataInicio, setDataInicio] = useState('');
+  const [dataTermino, setDataTermino] = useState('');
   const [status, setStatus] = useState('em_andamento');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -27,6 +28,7 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
     setNomeObra('');
     setLocalizacao('');
     setDataInicio('');
+    setDataTermino('');
     setStatus('em_andamento');
     setIsSubmitting(false);
   };
@@ -45,6 +47,7 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
         nome_obra: nomeObra,
         localizacao,
         data_inicio: dataInicio,
+        data_termino: dataTermino || null,
         status
       };
       
@@ -127,6 +130,17 @@ const ObraForm = ({ isOpen, onClose, onObraCriada }: ObraFormProps) => {
               type="date"
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="data_termino">Data de Término (Previsão)</Label>
+            <Input
+              id="data_termino"
+              type="date"
+              value={dataTermino}
+              onChange={(e) => setDataTermino(e.target.value)}
+              min={dataInicio}
             />
           </div>
           
