@@ -8,39 +8,79 @@ import { capitalizeWords } from "@/lib/utils/formatters";
 interface TeamChartProps {
   weekStartDate: Date;
   tasks: Task[];
+  analysisMode?: "weekly" | "overall";
 }
 
 const TeamChart = ({
   weekStartDate,
-  tasks
+  tasks,
+  analysisMode = "weekly"
 }: TeamChartProps) => {
   // Memoize team data calculation to prevent recalculations
   const teamData = useMemo(() => {
-    const tasksForWeek = tasks;
+    if (analysisMode === "weekly") {
+      const tasksForWeek = tasks;
 
-    // Group tasks by team
-    const teamGroups = tasksForWeek.reduce<Record<string, Task[]>>((acc, task) => {
-      const team = task.team || 'Não definido';
-      if (!acc[team]) {
-        acc[team] = [];
-      }
-      acc[team].push(task);
-      return acc;
-    }, {});
+      // Group tasks by team
+      const teamGroups = tasksForWeek.reduce<Record<string, Task[]>>((acc, task) => {
+        const team = task.team || 'Não definido';
+        if (!acc[team]) {
+          acc[team] = [];
+        }
+        acc[team].push(task);
+        return acc;
+      }, {});
 
-    // Calculate PCP for each team group
-    const data = Object.entries(teamGroups).map(([team, tasks]) => {
-      const pcpData = calculatePCP(tasks);
-      return {
-        name: capitalizeWords(team.toLowerCase()),
-        percentual: Math.round(pcpData.overall.percentage)
-      };
-    });
+      // Calculate PCP for each team group
+      const data = Object.entries(teamGroups).map(([team, tasks]) => {
+        const pcpData = calculatePCP(tasks);
+        return {
+          name: capitalizeWords(team.toLowerCase()),
+          percentual: Math.round(pcpData.overall.percentage)
+        };
+      });
 
-    // Sort by percentage descending and limit to top 10
-    data.sort((a, b) => b.percentual - a.percentual);
-    return data.slice(0, 10);
-  }, [tasks]);
+      // Sort by percentage descending and limit to top 10
+      data.sort((a, b) => b.percentual - a.percentual);
+      return data.slice(0, 10);
+    } else {
+      // Overall analysis - average PCP across all weeks
+      const weeklyData: Record<string, Record<string, Task[]>> = {};
+      
+      // Group tasks by week and team
+      tasks.forEach(task => {
+        const weekKey = task.weekStartDate?.toISOString() || 'unknown';
+        const team = task.team || 'Não definido';
+        
+        if (!weeklyData[team]) {
+          weeklyData[team] = {};
+        }
+        if (!weeklyData[team][weekKey]) {
+          weeklyData[team][weekKey] = [];
+        }
+        weeklyData[team][weekKey].push(task);
+      });
+
+      // Calculate average PCP for each team
+      const data = Object.entries(weeklyData).map(([team, weeks]) => {
+        const weeklyPCPs = Object.values(weeks).map(weekTasks => {
+          const pcpData = calculatePCP(weekTasks);
+          return pcpData.overall.percentage;
+        });
+        
+        const avgPCP = weeklyPCPs.reduce((sum, pcp) => sum + pcp, 0) / weeklyPCPs.length;
+        
+        return {
+          name: capitalizeWords(team.toLowerCase()),
+          percentual: Math.round(avgPCP)
+        };
+      });
+
+      // Sort by percentage descending and limit to top 10
+      data.sort((a, b) => b.percentual - a.percentual);
+      return data.slice(0, 10);
+    }
+  }, [tasks, analysisMode]);
 
   return (
     <div className="w-full min-h-[380px] h-[380px] border border-gray-200 rounded-lg p-4">

@@ -280,15 +280,15 @@ const DashboardInner = () => {
         {/* Analytics Charts Grid 2x2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="minimal-card p-6">
-            <ExecutorChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} />
+            <ExecutorChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} analysisMode={analysisMode} />
           </div>
           
           <div className="minimal-card p-6">
-            <TeamChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} />
+            <TeamChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} analysisMode={analysisMode} />
           </div>
           
           <div className="minimal-card p-6">
-            <ResponsibleChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} />
+            <ResponsibleChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} analysisMode={analysisMode} />
           </div>
           
           <div className="minimal-card p-6">

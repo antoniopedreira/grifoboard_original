@@ -8,39 +8,79 @@ import { capitalizeWords } from "@/lib/utils/formatters";
 interface ExecutorChartProps {
   weekStartDate: Date;
   tasks: Task[];
+  analysisMode?: "weekly" | "overall";
 }
 
 const ExecutorChart = ({
   weekStartDate,
-  tasks
+  tasks,
+  analysisMode = "weekly"
 }: ExecutorChartProps) => {
   // Memoize executor data calculation to prevent recalculations
   const executorData = useMemo(() => {
-    const tasksForWeek = tasks;
+    if (analysisMode === "weekly") {
+      const tasksForWeek = tasks;
 
-    // Group tasks by executor
-    const executorGroups = tasksForWeek.reduce<Record<string, Task[]>>((acc, task) => {
-      const executor = task.executor || 'Não definido';
-      if (!acc[executor]) {
-        acc[executor] = [];
-      }
-      acc[executor].push(task);
-      return acc;
-    }, {});
+      // Group tasks by executor
+      const executorGroups = tasksForWeek.reduce<Record<string, Task[]>>((acc, task) => {
+        const executor = task.executor || 'Não definido';
+        if (!acc[executor]) {
+          acc[executor] = [];
+        }
+        acc[executor].push(task);
+        return acc;
+      }, {});
 
-    // Calculate PCP for each executor group
-    const data = Object.entries(executorGroups).map(([executor, tasks]) => {
-      const pcpData = calculatePCP(tasks);
-      return {
-        name: capitalizeWords(executor.toLowerCase()),
-        percentual: Math.round(pcpData.overall.percentage)
-      };
-    });
+      // Calculate PCP for each executor group
+      const data = Object.entries(executorGroups).map(([executor, tasks]) => {
+        const pcpData = calculatePCP(tasks);
+        return {
+          name: capitalizeWords(executor.toLowerCase()),
+          percentual: Math.round(pcpData.overall.percentage)
+        };
+      });
 
-    // Sort by percentage descending and limit to top 10
-    data.sort((a, b) => b.percentual - a.percentual);
-    return data.slice(0, 10);
-  }, [tasks]);
+      // Sort by percentage descending and limit to top 10
+      data.sort((a, b) => b.percentual - a.percentual);
+      return data.slice(0, 10);
+    } else {
+      // Overall analysis - average PCP across all weeks
+      const weeklyData: Record<string, Record<string, Task[]>> = {};
+      
+      // Group tasks by week and executor
+      tasks.forEach(task => {
+        const weekKey = task.weekStartDate?.toISOString() || 'unknown';
+        const executor = task.executor || 'Não definido';
+        
+        if (!weeklyData[executor]) {
+          weeklyData[executor] = {};
+        }
+        if (!weeklyData[executor][weekKey]) {
+          weeklyData[executor][weekKey] = [];
+        }
+        weeklyData[executor][weekKey].push(task);
+      });
+
+      // Calculate average PCP for each executor
+      const data = Object.entries(weeklyData).map(([executor, weeks]) => {
+        const weeklyPCPs = Object.values(weeks).map(weekTasks => {
+          const pcpData = calculatePCP(weekTasks);
+          return pcpData.overall.percentage;
+        });
+        
+        const avgPCP = weeklyPCPs.reduce((sum, pcp) => sum + pcp, 0) / weeklyPCPs.length;
+        
+        return {
+          name: capitalizeWords(executor.toLowerCase()),
+          percentual: Math.round(avgPCP)
+        };
+      });
+
+      // Sort by percentage descending and limit to top 10
+      data.sort((a, b) => b.percentual - a.percentual);
+      return data.slice(0, 10);
+    }
+  }, [tasks, analysisMode]);
 
   return (
     <div className="w-full min-h-[380px] h-[380px] border border-gray-200 rounded-lg p-4">
