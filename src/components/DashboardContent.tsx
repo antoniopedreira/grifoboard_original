@@ -14,6 +14,10 @@ import TaskDetailsModal from "@/components/dashboard/TaskDetailsModal";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 import { Task } from "@/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { ptBR } from "date-fns/locale";
 
 const DashboardContent = () => {
   const { userSession } = useAuth();
@@ -44,6 +48,7 @@ const DashboardInner = () => {
   const [modalType, setModalType] = useState<"completed" | "pending">("completed");
   const [modalTasks, setModalTasks] = useState<Task[]>([]);
   const [analysisMode, setAnalysisMode] = useState<"weekly" | "overall">("weekly");
+  const [lastUpdateDate, setLastUpdateDate] = useState<Date | null>(null);
 
   // Calculate end of week when start date changes
   useEffect(() => {
@@ -51,6 +56,27 @@ const DashboardInner = () => {
     endDate.setDate(endDate.getDate() + 6);
     setWeekEndDate(endDate);
   }, [weekStartDate]);
+
+  // Fetch last update date from tasks
+  useEffect(() => {
+    const fetchLastUpdate = async () => {
+      if (!userSession?.obraAtiva?.id) return;
+
+      const { data, error } = await supabase
+        .from('tarefas')
+        .select('created_at')
+        .eq('obra_id', userSession.obraAtiva.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data && !error) {
+        setLastUpdateDate(new Date(data.created_at));
+      }
+    };
+
+    fetchLastUpdate();
+  }, [userSession?.obraAtiva?.id, allTasks]);
 
   // Navigate to previous and next weeks
   const navigateToPreviousWeek = () => {
@@ -172,7 +198,16 @@ const DashboardInner = () => {
             
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-              <span>Atualizado agora</span>
+              <span>
+                {lastUpdateDate 
+                  ? `Atualizado: ${format(
+                      toZonedTime(lastUpdateDate, 'America/Sao_Paulo'),
+                      "dd/MM/yyyy 'às' HH:mm",
+                      { locale: ptBR }
+                    )}`
+                  : 'Atualizado agora'
+                }
+              </span>
             </div>
           </div>
         </div>
