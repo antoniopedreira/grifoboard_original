@@ -117,6 +117,13 @@ const DashboardInner = () => {
     return "text-destructive";
   };
 
+  // Format date in São Paulo timezone without extra libs
+  const formatInSaoPaulo = (d: Date) => {
+    const date = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(d);
+    const time = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+    return `${date} às ${time}`;
+  };
+
   // Handlers for opening modals
   const handleCompletedTasksClick = () => {
     const completed = currentWeekTasks.filter(task => task.isFullyCompleted);
@@ -199,7 +206,7 @@ const DashboardInner = () => {
               <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
               <span>
                 {lastUpdateDate 
-                  ? `Atualizado: ${format(lastUpdateDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`
+                  ? `Atualizado: ${formatInSaoPaulo(lastUpdateDate)}`
                   : 'Atualizado agora'
                 }
               </span>

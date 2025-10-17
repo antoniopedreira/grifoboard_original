@@ -10,7 +10,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
 import NotFound from "@/pages/NotFound";
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CustomSidebar from '@/components/CustomSidebar';
@@ -77,10 +77,8 @@ const RouteRestorer = () => {
 };
 
 function App() {
-  const [selectedObraId, setSelectedObraId] = useState<string | null>(null);
-  
   const handleObraSelect = (obra: Obra) => {
-    setSelectedObraId(obra.id);
+    // no-op; selection handled within pages/contexts
   };
 
   return (
