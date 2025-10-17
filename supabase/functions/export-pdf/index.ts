@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -314,39 +313,15 @@ serve(async (req) => {
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-    // HTML alinhado com margem pequena + gutter
+    // Return HTML for client-side PDF generation
     const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
 
-    // Convert HTML to PDF using Puppeteer
-    console.log("[export-pdf] Starting PDF generation with Puppeteer");
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '14mm',
-        right: '18mm',
-        bottom: '16mm',
-        left: '18mm',
-      },
-    });
-    
-    await browser.close();
-    console.log("[export-pdf] PDF generated successfully");
+    console.log("[export-pdf] Returning HTML for client-side PDF generation");
 
-    const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.pdf`;
-    return new Response(pdfBuffer, {
+    return new Response(JSON.stringify({ html, filename: `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.pdf` }), {
       headers: {
         ...corsHeaders,
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Type": "application/json",
         "Cache-Control": "no-store",
       },
     });

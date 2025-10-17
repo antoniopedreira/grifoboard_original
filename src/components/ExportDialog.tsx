@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FileDown, Building2, User } from "lucide-react";
+import html2pdf from "html2pdf.js";
 import {
   Dialog,
   DialogContent,
@@ -86,21 +87,25 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      const blob = new Blob([data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
+      // Generate PDF from HTML using html2pdf.js
+      const { html, filename: baseFilename } = data;
+      const element = document.createElement('div');
+      element.innerHTML = html;
       
       const filenameSuffix = exportType === "executante" 
         ? `_${selectedExecutante.replace(/\s+/g, "_")}`
         : "";
-      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.pdf`;
+      const filename = baseFilename.replace('.pdf', `${filenameSuffix}.pdf`);
       
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const options = {
+        margin: [14, 18, 16, 18] as [number, number, number, number],
+        filename,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+      };
+
+      await html2pdf().set(options).from(element).save();
       
       toast.success("Relatório exportado com sucesso");
       setOpen(false);
