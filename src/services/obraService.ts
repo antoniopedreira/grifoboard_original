@@ -12,7 +12,7 @@ export const obrasService = {
   async listarObras(): Promise<Obra[]> {
     const { data, error } = await supabase
       .from('obras')
-      .select('id, nome_obra, localizacao, status, data_inicio, created_at, usuario_id')
+      .select('id, nome_obra, localizacao, status, data_inicio, data_termino, created_at, usuario_id')
       .order('created_at', { ascending: false });
     
     if (error) {
