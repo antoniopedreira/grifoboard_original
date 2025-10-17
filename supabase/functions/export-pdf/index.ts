@@ -119,8 +119,8 @@ function generateHtmlContent(
                 <col style="width:9%">
                 <col style="width:9%">
               `}
-              <col style="width:2.7%"><col style="width:2.7%"><col style="width:2.7%">
-              <col style="width:2.7%"><col style="width:2.7%"><col style="width:2.7%"><col style="width:2.7%">
+              <col style="width:26px"><col style="width:26px"><col style="width:26px">
+              <col style="width:26px"><col style="width:26px"><col style="width:26px"><col style="width:26px">
             </colgroup>
 
             <thead>
@@ -131,7 +131,7 @@ function generateHtmlContent(
                 ${!isExecutanteGroup ? '<th>Executante</th>' : ''}
                 <th>Responsável</th>
                 <th>Encarregado</th>
-                ${DOW_PT.map(n => `<th class="center nowrap">${n}</th>`).join("")}
+                ${DOW_PT.map(n => `<th class="day center nowrap">${n}</th>`).join("")}
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -218,6 +218,7 @@ function generateHtmlContent(
     table.grid { 
       width: 100%; 
       border-collapse: collapse;
+      table-layout: fixed;
       margin-bottom: 8px;
       font-size: 8px;
     }
@@ -259,9 +260,10 @@ function generateHtmlContent(
     }
     
     .text { 
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      line-height: 1.4;
+      word-break: normal;
+      overflow-wrap: anywhere;
+      hyphens: none;
+      line-height: 1.35;
     }
     
     .day { 
