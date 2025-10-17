@@ -107,20 +107,20 @@ function generateHtmlContent(
           <table class="grid">
             <colgroup>
               ${isExecutanteGroup ? `
-                <col style="width:30%">
-                <col style="width:12%">
-                <col style="width:10%">
-                <col style="width:10%">
-                <col style="width:10%">
+                <col style="width:28%">
+                <col style="width:11%">
+                <col style="width:11%">
+                <col style="width:9%">
+                <col style="width:9%">
               ` : `
-                <col style="width:30%">
-                <col style="width:12%">
-                <col style="width:12%">
-                <col style="width:10%">
-                <col style="width:10%">
+                <col style="width:28%">
+                <col style="width:11%">
+                <col style="width:11%">
+                <col style="width:9%">
+                <col style="width:9%">
               `}
-              <col style="width:3%"><col style="width:3%"><col style="width:3%">
-              <col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%">
+              <col style="width:2.7%"><col style="width:2.7%"><col style="width:2.7%">
+              <col style="width:2.7%"><col style="width:2.7%"><col style="width:2.7%"><col style="width:2.7%">
             </colgroup>
 
             <thead>
@@ -155,66 +155,71 @@ function generateHtmlContent(
     
     body { 
       margin: 0;
-      padding: 20px;
-      color: #111; 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      font-size: 11px;
-      line-height: 1.4;
+      padding: 15px;
+      color: #1f2937; 
+      font-family: Arial, sans-serif;
+      font-size: 9px;
+      line-height: 1.3;
     }
 
     .header { 
       text-align: center; 
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #374151;
     }
     
     .header h1 { 
-      margin: 0 0 8px; 
-      font-size: 18px; 
+      margin: 0 0 6px; 
+      font-size: 16px; 
       font-weight: 700;
-      color: #1f2937;
+      color: #111827;
     }
     
     .meta { 
-      color: #666; 
-      font-size: 10px; 
-      margin: 4px 0;
+      color: #6b7280; 
+      font-size: 8px; 
+      margin: 2px 0;
     }
 
     .sector { 
       page-break-inside: avoid; 
-      margin: 0 0 25px;
+      margin: 0 0 16px;
     }
     
     .sector-title { 
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-      padding: 8px 0;
+      gap: 6px;
+      margin-bottom: 6px;
+      padding: 4px 0;
+      background: #f9fafb;
+      border-left: 3px solid #3b82f6;
+      padding-left: 8px;
     }
     
     .sector-title h2 { 
       margin: 0; 
-      font-size: 14px; 
+      font-size: 11px; 
       font-weight: 700; 
-      color: #1f2937;
+      color: #111827;
     }
     
     .pill { 
-      background: #e5e7eb; 
-      color: #374151; 
-      font-size: 10px; 
-      padding: 3px 8px; 
-      border-radius: 10px;
+      background: #dbeafe; 
+      color: #1e40af; 
+      font-size: 8px; 
+      padding: 2px 6px; 
+      border-radius: 8px;
       white-space: nowrap;
+      font-weight: 600;
     }
 
     table.grid { 
       width: 100%; 
       border-collapse: collapse;
-      margin-bottom: 15px;
+      margin-bottom: 8px;
+      font-size: 8px;
     }
     
     thead { 
@@ -223,20 +228,26 @@ function generateHtmlContent(
     
     th, td { 
       border: 1px solid #d1d5db;
-      padding: 6px 5px;
+      padding: 4px 3px;
       vertical-align: middle;
-      font-size: 10px;
     }
     
     th { 
       background: #f3f4f6;
-      font-weight: 600;
+      font-weight: 700;
       color: #374151;
       text-align: left;
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
     
     tbody tr:nth-child(even) td { 
-      background: #fafbfc;
+      background: #f9fafb;
+    }
+    
+    tbody tr:hover td {
+      background: #f3f4f6;
     }
 
     .center { 
@@ -250,21 +261,30 @@ function generateHtmlContent(
     .text { 
       word-wrap: break-word;
       overflow-wrap: break-word;
+      line-height: 1.4;
     }
     
     .day { 
       text-align: center;
-      font-size: 14px;
-      font-weight: bold;
+      font-size: 12px;
+      font-weight: 700;
+      color: #111827;
     }
     
     .footer-legend {
-      margin-top: 30px;
-      padding-top: 15px;
+      margin-top: 20px;
+      padding-top: 10px;
       border-top: 1px solid #e5e7eb;
       text-align: center;
-      font-size: 10px;
-      color: #666;
+      font-size: 8px;
+      color: #6b7280;
+      background: #f9fafb;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    
+    .footer-legend strong {
+      color: #374151;
     }
   </style>
 </head>

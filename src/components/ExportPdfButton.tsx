@@ -53,14 +53,15 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
       document.body.appendChild(element);
       
       const options = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
+        margin: [8, 8, 8, 8] as [number, number, number, number],
         filename,
-        image: { type: 'jpeg' as const, quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.95 },
         html2canvas: { 
-          scale: 2,
+          scale: 2.5,
           useCORS: true,
           letterRendering: true,
-          logging: false
+          logging: false,
+          windowWidth: 1200
         },
         jsPDF: { 
           unit: 'mm', 
