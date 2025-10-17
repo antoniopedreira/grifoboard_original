@@ -13,6 +13,7 @@ import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
 import TaskDetailsModal from "@/components/dashboard/TaskDetailsModal";
 import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
 import { Task } from "@/types";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DashboardContent = () => {
   const { userSession } = useAuth();
@@ -42,6 +43,7 @@ const DashboardInner = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"completed" | "pending">("completed");
   const [modalTasks, setModalTasks] = useState<Task[]>([]);
+  const [analysisMode, setAnalysisMode] = useState<"weekly" | "overall">("weekly");
 
   // Calculate end of week when start date changes
   useEffect(() => {
@@ -265,22 +267,32 @@ const DashboardInner = () => {
         {/* Weekly Progress - All Weeks */}
         <WeeklyProgressWithAverage />
         
+        {/* Analysis Mode Selector */}
+        <div className="glass-card p-6">
+          <Tabs value={analysisMode} onValueChange={(value) => setAnalysisMode(value as "weekly" | "overall")}>
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="weekly">Análise Semanal</TabsTrigger>
+              <TabsTrigger value="overall">Análise Geral</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        
         {/* Analytics Charts Grid 2x2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="minimal-card p-6">
-            <ExecutorChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
+            <ExecutorChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} />
           </div>
           
           <div className="minimal-card p-6">
-            <TeamChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
+            <TeamChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} />
           </div>
           
           <div className="minimal-card p-6">
-            <ResponsibleChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
+            <ResponsibleChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} />
           </div>
           
           <div className="minimal-card p-6">
-            <WeeklyCausesChart weekStartDate={weekStartDate} tasks={currentWeekTasks} />
+            <WeeklyCausesChart weekStartDate={weekStartDate} tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks} />
           </div>
         </div>
       </div>
