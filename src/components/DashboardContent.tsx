@@ -63,14 +63,14 @@ const DashboardInner = () => {
 
       const { data, error } = await supabase
         .from('tarefas')
-        .select('created_at')
+        .select('updated_at')
         .eq('obra_id', userSession.obraAtiva.id)
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
-        setLastUpdateDate(new Date(data.created_at));
+        setLastUpdateDate(new Date(data.updated_at));
       }
     };
 

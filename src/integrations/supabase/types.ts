@@ -167,6 +167,7 @@ export type Database = {
           setor: string
           sex: string | null
           ter: string | null
+          updated_at: string | null
         }
         Insert: {
           causa_nao_execucao?: string | null
@@ -189,6 +190,7 @@ export type Database = {
           setor: string
           sex?: string | null
           ter?: string | null
+          updated_at?: string | null
         }
         Update: {
           causa_nao_execucao?: string | null
@@ -211,6 +213,7 @@ export type Database = {
           setor?: string
           sex?: string | null
           ter?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
