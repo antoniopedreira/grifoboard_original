@@ -105,23 +105,22 @@ function generateHtmlContent(
           </div>
 
           <table class="grid">
-            <!-- COLUNAS EM % — ajustadas conforme tipo de agrupamento -->
             <colgroup>
               ${isExecutanteGroup ? `
-                <col style="width:26%"> <!-- Atividade -->
-                <col style="width:12%"> <!-- Setor -->
-                <col style="width:12%"> <!-- Disciplina -->
-                <col style="width:12%"> <!-- Responsável -->
-                <col style="width:12%"> <!-- Encarregado -->
+                <col style="width:30%">
+                <col style="width:12%">
+                <col style="width:10%">
+                <col style="width:10%">
+                <col style="width:10%">
               ` : `
-                <col style="width:28%"> <!-- Atividade -->
-                <col style="width:12%"> <!-- Disciplina -->
-                <col style="width:12%"> <!-- Executante -->
-                <col style="width:12%"> <!-- Responsável -->
-                <col style="width:12%"> <!-- Encarregado -->
+                <col style="width:30%">
+                <col style="width:12%">
+                <col style="width:12%">
+                <col style="width:10%">
+                <col style="width:10%">
               `}
-              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
-              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
+              <col style="width:3%"><col style="width:3%"><col style="width:3%">
+              <col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%">
             </colgroup>
 
             <thead>
@@ -142,59 +141,144 @@ function generateHtmlContent(
     }
   }
 
-  // HTML completo
   return `<!doctype html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
   <title>Relatório Semanal de Atividades</title>
   <style>
-    /* MARGEM PEQUENA DOS LADOS + GUTTER INTERNO */
-    @page { size: A4; margin: 14mm 18mm 16mm 18mm; } /* top right bottom left */
-    .page { padding: 0 6mm; } /* respiro interno adicional nas laterais */
+    * { 
+      box-sizing: border-box; 
+      margin: 0;
+      padding: 0;
+    }
+    
+    body { 
+      margin: 0;
+      padding: 20px;
+      color: #111; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.4;
+    }
 
-    * { box-sizing: border-box; }
-    body { margin:0; color:#111; font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    .header { 
+      text-align: center; 
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .header h1 { 
+      margin: 0 0 8px; 
+      font-size: 18px; 
+      font-weight: 700;
+      color: #1f2937;
+    }
+    
+    .meta { 
+      color: #666; 
+      font-size: 10px; 
+      margin: 4px 0;
+    }
 
-    .header { text-align:center; margin-bottom:16px; }
-    .header h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
-    .meta { color:#666; font-size:12px; margin:4px 0 12px; }
-    hr { border:0; border-top:1px solid #e5e7eb; margin: 8px 0 18px; }
+    .sector { 
+      page-break-inside: avoid; 
+      margin: 0 0 25px;
+    }
+    
+    .sector-title { 
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 8px 0;
+    }
+    
+    .sector-title h2 { 
+      margin: 0; 
+      font-size: 14px; 
+      font-weight: 700; 
+      color: #1f2937;
+    }
+    
+    .pill { 
+      background: #e5e7eb; 
+      color: #374151; 
+      font-size: 10px; 
+      padding: 3px 8px; 
+      border-radius: 10px;
+      white-space: nowrap;
+    }
 
-    .sector { page-break-inside: avoid; margin: 0 0 22px; }
-    .sector-title { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-    .sector-title h2 { margin:0; font-size:16px; font-weight:700; color:#1f2937; }
-    .pill { background:#e5e7eb; color:#374151; font-size:12px; padding:4px 8px; border-radius:12px; }
+    table.grid { 
+      width: 100%; 
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    
+    thead { 
+      display: table-header-group;
+    }
+    
+    th, td { 
+      border: 1px solid #d1d5db;
+      padding: 6px 5px;
+      vertical-align: middle;
+      font-size: 10px;
+    }
+    
+    th { 
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #374151;
+      text-align: left;
+    }
+    
+    tbody tr:nth-child(even) td { 
+      background: #fafbfc;
+    }
 
-    table.grid { width:100%; border-collapse: collapse; table-layout: fixed; }
-    thead { display: table-header-group; } /* mantém cabeçalho nas quebras */
-    th, td { border:1px solid #e5e7eb; padding:6px 8px; vertical-align: middle; }
-    th { background:#fafafa; font-weight:600; }
-    tbody tr:nth-child(even) td { background:#fbfcfe; }
-
-    .center { text-align:center; }
-    .nowrap { white-space:nowrap; }
-    .text { word-break: break-word; overflow-wrap:anywhere; }
-    thead th { word-break: keep-all; }
-    .day { text-align:center; }
-
-    td, th { line-height: 1.25; }
+    .center { 
+      text-align: center;
+    }
+    
+    .nowrap { 
+      white-space: nowrap;
+    }
+    
+    .text { 
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    .day { 
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .footer-legend {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 10px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="header">
-      <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
-      <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
-      <div class="meta" style="font-size:11px;">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
-      <hr />
-    </div>
+  <div class="header">
+    <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
+    <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
+    <div class="meta">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
+  </div>
 
-    ${sections}
+  ${sections}
 
-    <div class="meta" style="text-align:center; border-top:1px solid #e5e7eb; padding-top:12px;">
-      <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
-    </div>
+  <div class="footer-legend">
+    <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
   </div>
 </body>
 </html>`;

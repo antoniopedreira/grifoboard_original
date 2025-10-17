@@ -91,6 +91,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
       const { html, filename: baseFilename } = data;
       const element = document.createElement('div');
       element.innerHTML = html;
+      document.body.appendChild(element);
       
       const filenameSuffix = exportType === "executante" 
         ? `_${selectedExecutante.replace(/\s+/g, "_")}`
@@ -98,14 +99,26 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
       const filename = baseFilename.replace('.pdf', `${filenameSuffix}.pdf`);
       
       const options = {
-        margin: [14, 18, 16, 18] as [number, number, number, number],
+        margin: [10, 10, 10, 10] as [number, number, number, number],
         filename,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' as const,
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       await html2pdf().set(options).from(element).save();
+      document.body.removeChild(element);
       
       toast.success("Relatório exportado com sucesso");
       setOpen(false);
