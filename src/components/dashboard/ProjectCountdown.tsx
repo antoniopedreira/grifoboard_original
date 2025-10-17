@@ -12,7 +12,7 @@ const ProjectCountdown = () => {
     if (!obra?.data_inicio) return null;
 
     const startDate = new Date(obra.data_inicio);
-    const endDate = (obra as any).data_termino ? new Date((obra as any).data_termino) : null;
+    const endDate = obra.data_termino ? new Date(obra.data_termino) : null;
     const today = new Date();
 
     if (!endDate) {

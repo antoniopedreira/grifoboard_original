@@ -4,6 +4,7 @@ export interface Obra {
   nome_obra: string;
   localizacao: string;
   data_inicio: string;
+  data_termino?: string;
   status: string;
   usuario_id: string;
   created_at: string;

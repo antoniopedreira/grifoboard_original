@@ -30,7 +30,7 @@ const ObraEditForm = ({ isOpen, onClose, onObraAtualizada, obra }: ObraEditFormP
       setNomeObra(obra.nome_obra || '');
       setLocalizacao(obra.localizacao || '');
       setDataInicio(obra.data_inicio ? obra.data_inicio.split('T')[0] : '');
-      setDataTermino((obra as any).data_termino ? (obra as any).data_termino.split('T')[0] : '');
+      setDataTermino(obra.data_termino ? obra.data_termino.split('T')[0] : '');
       setStatus(obra.status || 'em_andamento');
     }
   }, [obra]);
