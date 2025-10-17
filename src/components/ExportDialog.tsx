@@ -86,7 +86,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      const blob = new Blob([data], { type: 'text/html' });
+      const blob = new Blob([data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -94,7 +94,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
       const filenameSuffix = exportType === "executante" 
         ? `_${selectedExecutante.replace(/\s+/g, "_")}`
         : "";
-      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.html`;
+      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.pdf`;
       
       link.download = filename;
       document.body.appendChild(link);

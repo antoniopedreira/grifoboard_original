@@ -21,7 +21,7 @@ interface ExportPdfButtonProps {
 const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonProps) => {
   const weekStartISO = toMondayISO(weekStartDate);
 
-  const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}.html`;
+  const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}.pdf`;
 
   const handleDownload = async () => {
     try {
@@ -45,7 +45,7 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
       }
 
       // Create blob from response and download
-      const blob = new Blob([data], { type: 'text/html' });
+      const blob = new Blob([data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
