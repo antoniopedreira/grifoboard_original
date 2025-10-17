@@ -22,8 +22,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ["react", "react-dom"]
   },
   optimizeDeps: {
-    exclude: ['lovable-tagger']
+    exclude: ['lovable-tagger'],
+    include: ["react", "react-dom"]
   }
 }));
