@@ -316,11 +316,48 @@ serve(async (req) => {
     // HTML alinhado com margem pequena + gutter
     const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
 
-    const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.html`;
-    return new Response(html, {
+    // Convert HTML to PDF using PDFShift
+    const pdfshiftApiKey = Deno.env.get("PDFSHIFT_API_KEY");
+    if (!pdfshiftApiKey) {
+      console.error("[export-pdf] PDFShift API key not configured");
+      return new Response(JSON.stringify({ error: "PDF conversion service not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("[export-pdf] Converting HTML to PDF via PDFShift");
+    
+    const pdfResponse = await fetch("https://api.pdfshift.io/v3/convert/pdf", {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${btoa(pdfshiftApiKey + ":")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        source: html,
+        landscape: false,
+        use_print: false,
+      }),
+    });
+
+    if (!pdfResponse.ok) {
+      const errorText = await pdfResponse.text();
+      console.error("[export-pdf] PDFShift error:", errorText);
+      return new Response(JSON.stringify({ error: "Failed to convert HTML to PDF" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const pdfBuffer = await pdfResponse.arrayBuffer();
+    console.log(`[export-pdf] PDF generated successfully, size: ${pdfBuffer.byteLength} bytes`);
+
+    const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.pdf`;
+    return new Response(pdfBuffer, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "text/html",
+        "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store",
       },
