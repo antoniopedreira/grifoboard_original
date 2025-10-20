@@ -62,15 +62,19 @@ function sortSetores(setores: string[]): string[] {
   });
 }
 
-function generateHtmlContent(
+async function generateHtmlContent(
   tasks: TaskData[],
   obraNome: string,
   weekStart: Date,
   weekEnd: Date,
   groupBy: 'setor' | 'executante' = 'setor',
   executanteFilter?: string
-): string {
+): Promise<string> {
   const { date: currentDate, time: currentTime } = getCurrentDateTimeBR();
+  
+  // Logo em base64 (griffin dourado)
+  const logoBase64 = "data:image/png;base64,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";
+  
   // Agrupa por setor ou executante
   const grouped: GroupedTasks = {};
   for (const t of tasks) {
@@ -164,6 +168,9 @@ function generateHtmlContent(
 <head>
   <meta charset="utf-8" />
   <title> </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dixket+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     /* CSS de impressão para renderização perfeita */
     @page { 
@@ -192,15 +199,24 @@ function generateHtmlContent(
 
     .logo-header { 
       background: #061928; 
-      padding: 20px; 
-      text-align: center; 
+      padding: 20px 40px; 
       margin: -16mm -14mm 20px -14mm;
       border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     .logo-header img { 
-      height: 60px; 
-      width: auto; 
-      display: inline-block;
+      height: 50px; 
+      width: auto;
+    }
+    .logo-header .company-name {
+      font-family: 'Disket Mono', monospace;
+      font-size: 24px;
+      font-weight: 700;
+      color: #C8A85F;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
     .header { text-align:center; margin-bottom:20px; }
     .header h1 { margin:0 0 8px; font-size:18px; font-weight:700; }
@@ -254,7 +270,9 @@ function generateHtmlContent(
 <body>
   <div class="page">
     <div class="logo-header">
-      <img src="https://qacaerwosglbayjfskyx.supabase.co/storage/v1/object/public/lovable-uploads/grifo-logo-header.png" alt="Grifo Logo" />
+      <img src="${logoBase64}" alt="Grifo Logo" />
+      <div class="company-name">Grifo Engenharia</div>
+      <img src="${logoBase64}" alt="Grifo Logo" />
     </div>
     <div class="header">
       <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
@@ -387,7 +405,7 @@ serve(async (req) => {
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
     // Gera HTML otimizado para impressão
-    const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
+    const html = await generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
     
     console.log("[export-pdf] HTML gerado com sucesso para conversão no cliente");
     
