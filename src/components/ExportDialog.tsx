@@ -97,25 +97,26 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      // Get PDF as blob
-      const pdfBlob = await response.blob();
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
+      // Get HTML content
+      const htmlContent = await response.text();
       
-      const filenameSuffix = exportType === "executante" 
-        ? `_${selectedExecutante.replace(/\s+/g, "_")}`
-        : "";
-      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.pdf`;
-      
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success("Relatório exportado com sucesso");
-      setOpen(false);
+      // Open in new window and trigger print dialog
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load then print
+        printWindow.onload = () => {
+          printWindow.focus();
+          printWindow.print();
+        };
+        
+        toast.success("Abrindo janela de impressão...");
+        setOpen(false);
+      } else {
+        toast.error("Não foi possível abrir a janela de impressão. Verifique se pop-ups estão bloqueados.");
+      }
     } catch (err) {
       console.error("Download error:", err);
       toast.error("Erro ao baixar relatório");
