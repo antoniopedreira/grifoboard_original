@@ -107,24 +107,24 @@ function generateHtmlContent(
           <table class="grid">
             <colgroup>
               ${isExecutanteGroup ? `
-                <col style="width:22%">
-                <col style="width:12%">
+                <col style="width:20%">
+                <col style="width:14%">
                 <col style="width:10%">
                 <col style="width:10%">
               ` : `
-                <col style="width:22%">
-                <col style="width:12%">
-                <col style="width:12%">
-                <col style="width:10%">
-                <col style="width:10%">
+                <col style="width:20%">
+                <col style="width:14%">
+                <col style="width:13%">
+                <col style="width:9%">
+                <col style="width:9%">
               `}
-              <col style="width:4.86%">
-              <col style="width:4.86%">
-              <col style="width:4.86%">
-              <col style="width:4.86%">
-              <col style="width:4.86%">
-              <col style="width:4.85%">
-              <col style="width:4.85%">
+              <col style="width:5%">
+              <col style="width:5%">
+              <col style="width:5%">
+              <col style="width:5%">
+              <col style="width:5%">
+              <col style="width:5%">
+              <col style="width:5%">
             </colgroup>
 
             <thead>
@@ -193,7 +193,7 @@ function generateHtmlContent(
     tr { break-inside: avoid; page-break-inside: avoid; }
     th, td { 
       border:1px solid #d1d5db; 
-      padding: 5px 4px; 
+      padding: 4px 3px; 
       vertical-align: middle; 
       text-align: left;
       overflow: hidden;
@@ -221,7 +221,7 @@ function generateHtmlContent(
     .day { 
       text-align:center; 
       font-size: 14px;
-      padding: 5px 2px;
+      padding: 4px 1px;
       white-space: nowrap;
     }
   </style>
