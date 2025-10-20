@@ -71,8 +71,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
       }
 
       // Get Supabase URL from environment
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const functionUrl = `${supabaseUrl}/functions/v1/export-pdf`;
+      const functionUrl = 'https://qacaerwosglbayjfskyx.supabase.co/functions/v1/export-pdf';
 
       // Call the edge function with fetch to get binary data
       const response = await fetch(functionUrl, {

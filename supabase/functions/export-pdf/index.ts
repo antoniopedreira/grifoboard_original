@@ -108,7 +108,7 @@ function generateHtmlContent(
             <!-- COLUNAS EM % — ajustadas conforme tipo de agrupamento -->
             <colgroup>
               ${isExecutanteGroup ? `
-                <col style="width:26%"> <!-- Atividade -->
+                <col style="width:28%"> <!-- Atividade -->
                 <col style="width:12%"> <!-- Setor -->
                 <col style="width:12%"> <!-- Disciplina -->
                 <col style="width:12%"> <!-- Responsável -->
@@ -120,8 +120,8 @@ function generateHtmlContent(
                 <col style="width:12%"> <!-- Responsável -->
                 <col style="width:12%"> <!-- Encarregado -->
               `}
-              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
-              <col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%"><col style="width:3.43%">
+              <col style="width:3.4286%"><col style="width:3.4286%"><col style="width:3.4286%">
+              <col style="width:3.4286%"><col style="width:3.4286%"><col style="width:3.4286%"><col style="width:3.4286%">
             </colgroup>
 
             <thead>
@@ -150,7 +150,7 @@ function generateHtmlContent(
   <title>Relatório Semanal de Atividades</title>
   <style>
     /* CSS de impressão para renderização perfeita */
-    @page { size: A4; margin: 16mm 14mm; }
+    @page { size: A4; margin: 0; }
     html, body { 
       -webkit-print-color-adjust: exact; 
       print-color-adjust: exact;
@@ -159,7 +159,8 @@ function generateHtmlContent(
       font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
     * { box-sizing: border-box; }
-    .page { padding: 0 6mm; }
+    .page { padding: 16mm 14mm; }
+    @media print { html, body { margin: 0; } }
 
     .header { text-align:center; margin-bottom:16px; }
     .header h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
