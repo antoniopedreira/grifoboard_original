@@ -28,6 +28,17 @@ const DOW_PT = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 function formatDate(d: Date) { return d.toLocaleDateString("pt-BR"); }
 function formatDateRange(a: Date, b: Date) { return `${formatDate(a)} a ${formatDate(b)}`; }
 
+function getCurrentDateTimeBR(): { date: string; time: string } {
+  // Cria uma data no timezone do Brasil (UTC-3)
+  const now = new Date();
+  const brazilTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  
+  return {
+    date: brazilTime.toLocaleDateString("pt-BR"),
+    time: brazilTime.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })
+  };
+}
+
 function getStatusSymbol(status: string | null): string {
   if (!status || !status.trim()) return "";
   const s = status.toLowerCase().trim();
@@ -59,6 +70,7 @@ function generateHtmlContent(
   groupBy: 'setor' | 'executante' = 'setor',
   executanteFilter?: string
 ): string {
+  const { date: currentDate, time: currentTime } = getCurrentDateTimeBR();
   // Agrupa por setor ou executante
   const grouped: GroupedTasks = {};
   for (const t of tasks) {
@@ -150,7 +162,7 @@ function generateHtmlContent(
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <title>Relatório Semanal de Atividades</title>
+  <title></title>
   <style>
     /* CSS de impressão para renderização perfeita */
     @page { 
@@ -231,7 +243,7 @@ function generateHtmlContent(
     <div class="header">
       <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
       <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
-      <div class="meta" style="font-size:11px;">Gerado em: ${formatDate(new Date())} às ${new Date().toLocaleTimeString("pt-BR")}</div>
+      <div class="meta" style="font-size:11px;">Gerado em: ${currentDate} às ${currentTime}</div>
       <hr />
     </div>
 
