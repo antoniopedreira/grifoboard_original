@@ -162,7 +162,7 @@ function generateHtmlContent(
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <title></title>
+  <title> </title>
   <style>
     /* CSS de impressão para renderização perfeita */
     @page { 
