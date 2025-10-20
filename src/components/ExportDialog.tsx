@@ -96,31 +96,34 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      // Create a Blob URL to avoid "about:blank" in footer
+      // Get HTML content
       const htmlContent = await response.text();
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const blobUrl = URL.createObjectURL(blob);
       
-      const printWindow = window.open(blobUrl, '_blank');
+      // Open in new window and trigger print dialog (about:blank allows Save as PDF reliably)
+      const printWindow = window.open('', '_blank');
       if (printWindow) {
-        // Wait for the window to fully load before printing
+        printWindow.document.open();
+        // Add a meaningful title to avoid showing raw about:blank in headers if enabled
+        const htmlWithTitle = htmlContent.replace('<head>', '<head><title>Relatório Semanal</title>');
+        printWindow.document.write(htmlWithTitle);
+        printWindow.document.close();
+        
+        // Wait for content to load then print
         printWindow.addEventListener('load', () => {
           setTimeout(() => {
             printWindow.focus();
             printWindow.print();
           }, 250);
         });
-        
-        // Clean up the blob URL after printing
+
+        // Close the window after printing
         printWindow.addEventListener('afterprint', () => {
-          URL.revokeObjectURL(blobUrl);
           printWindow.close();
         });
         
         toast.success("Abrindo janela de impressão...");
         setOpen(false);
       } else {
-        URL.revokeObjectURL(blobUrl);
         toast.error("Não foi possível abrir a janela de impressão. Verifique se pop-ups estão bloqueados.");
       }
     } catch (err) {
