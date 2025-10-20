@@ -190,6 +190,18 @@ function generateHtmlContent(
       thead { display: table-header-group; }
     }
 
+    .logo-header { 
+      background: #061928; 
+      padding: 20px; 
+      text-align: center; 
+      margin: -16mm -14mm 20px -14mm;
+      border-radius: 0;
+    }
+    .logo-header img { 
+      height: 60px; 
+      width: auto; 
+      display: inline-block;
+    }
     .header { text-align:center; margin-bottom:20px; }
     .header h1 { margin:0 0 8px; font-size:18px; font-weight:700; }
     .meta { color:#666; font-size:11px; margin:4px 0 14px; }
@@ -241,6 +253,9 @@ function generateHtmlContent(
 </head>
 <body>
   <div class="page">
+    <div class="logo-header">
+      <img src="https://qacaerwosglbayjfskyx.supabase.co/storage/v1/object/public/lovable-uploads/grifo-logo-header.png" alt="Grifo Logo" />
+    </div>
     <div class="header">
       <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
       <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
