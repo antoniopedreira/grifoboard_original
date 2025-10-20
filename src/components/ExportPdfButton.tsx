@@ -59,14 +59,20 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
       
       const printWindow = window.open(blobUrl, '_blank');
       if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.focus();
-          printWindow.print();
-          // Clean up the blob URL after printing
-          printWindow.onafterprint = () => {
-            URL.revokeObjectURL(blobUrl);
-          };
-        };
+        // Wait for the window to fully load before printing
+        printWindow.addEventListener('load', () => {
+          setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+          }, 250);
+        });
+        
+        // Clean up the blob URL after printing
+        printWindow.addEventListener('afterprint', () => {
+          URL.revokeObjectURL(blobUrl);
+          printWindow.close();
+        });
+        
         toast.success("Abrindo janela de impressão...");
       } else {
         URL.revokeObjectURL(blobUrl);
