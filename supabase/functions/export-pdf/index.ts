@@ -200,11 +200,12 @@ async function generateHtmlContent(
     .logo-header { 
       background: #061928; 
       padding: 20px 40px; 
-      margin: -16mm -14mm 20px -14mm;
+      margin: 0 -14mm 20px -14mm;
       border-radius: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      color: #ffffff;
     }
     .logo-header img { 
       height: 50px; 
@@ -270,9 +271,9 @@ async function generateHtmlContent(
 <body>
   <div class="page">
     <div class="logo-header">
-      <img src="https://qacaerwosglbayjfskyx.supabase.co/storage/v1/object/public/lovable-uploads/grifo-logo-header.png" alt="Grifo Logo" />
+      <img src="${logoBase64}" alt="Grifo Logo" />
       <div class="company-name">Grifo Engenharia</div>
-      <img src="https://qacaerwosglbayjfskyx.supabase.co/storage/v1/object/public/lovable-uploads/grifo-logo-header.png" alt="Grifo Logo" />
+      <img src="${logoBase64}" alt="Grifo Logo" />
     </div>
     <div class="header">
       <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
