@@ -70,7 +70,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      const { data, error } = await (supabase.functions as any).invoke('export-pdf', {
+      const { data, error } = await supabase.functions.invoke('export-pdf', {
         body: { 
           obraId, 
           obraNome, 
@@ -78,7 +78,6 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
           groupBy: exportType,
           executante: exportType === "executante" ? selectedExecutante : undefined
         },
-        responseType: 'arrayBuffer'
       });
 
       if (error) {
@@ -87,7 +86,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      const blob = new Blob([data], { type: 'application/pdf' });
+      const blob = new Blob([data], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -95,7 +94,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
       const filenameSuffix = exportType === "executante" 
         ? `_${selectedExecutante.replace(/\s+/g, "_")}`
         : "";
-      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.pdf`;
+      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.html`;
       
       link.download = filename;
       document.body.appendChild(link);

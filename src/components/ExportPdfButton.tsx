@@ -34,9 +34,8 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
       }
 
       // Call the edge function with authentication
-      const { data, error } = await (supabase.functions as any).invoke('export-pdf', {
+      const { data, error } = await supabase.functions.invoke('export-pdf', {
         body: { obraId, obraNome, weekStart: weekStartISO },
-        responseType: 'arrayBuffer'
       });
 
       if (error) {
@@ -46,11 +45,11 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
       }
 
       // Create blob from response and download
-      const blob = new Blob([data], { type: 'application/pdf' });
+      const blob = new Blob([data], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = filename.replace('.html', '.pdf');
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
