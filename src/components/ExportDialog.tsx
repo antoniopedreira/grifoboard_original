@@ -70,31 +70,43 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('export-pdf', {
-        body: { 
+      // Get Supabase URL from environment
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const functionUrl = `${supabaseUrl}/functions/v1/export-pdf`;
+
+      // Call the edge function with fetch to get binary data
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
           obraId, 
           obraNome, 
           weekStart: weekStartISO,
           groupBy: exportType,
           executante: exportType === "executante" ? selectedExecutante : undefined
-        },
+        }),
       });
 
-      if (error) {
-        console.error("Export error:", error);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error("Export error:", errorData);
         toast.error("Erro ao exportar relatório");
         return;
       }
 
-      const blob = new Blob([data], { type: 'text/html' });
-      const url = window.URL.createObjectURL(blob);
+      // Get PDF as blob
+      const pdfBlob = await response.blob();
+      const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
       
       const filenameSuffix = exportType === "executante" 
         ? `_${selectedExecutante.replace(/\s+/g, "_")}`
         : "";
-      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.html`;
+      const filename = `Relatorio_Semanal_${obraNome.replace(/\s+/g,"_")}_${weekStartISO}${filenameSuffix}.pdf`;
       
       link.download = filename;
       document.body.appendChild(link);

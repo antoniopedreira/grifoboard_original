@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,25 +150,32 @@ function generateHtmlContent(
   <meta charset="utf-8" />
   <title>Relatório Semanal de Atividades</title>
   <style>
-    /* MARGEM PEQUENA DOS LADOS + GUTTER INTERNO */
-    @page { size: A4; margin: 14mm 18mm 16mm 18mm; } /* top right bottom left */
-    .page { padding: 0 6mm; } /* respiro interno adicional nas laterais */
-
+    /* CSS de impressão para renderização perfeita */
+    @page { size: A4; margin: 16mm 14mm; }
+    html, body { 
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact;
+      margin: 0;
+      color: #111;
+      font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
     * { box-sizing: border-box; }
-    body { margin:0; color:#111; font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    .page { padding: 0 6mm; }
 
     .header { text-align:center; margin-bottom:16px; }
     .header h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
     .meta { color:#666; font-size:12px; margin:4px 0 12px; }
     hr { border:0; border-top:1px solid #e5e7eb; margin: 8px 0 18px; }
 
-    .sector { page-break-inside: avoid; margin: 0 0 22px; }
+    .sector { page-break-inside: avoid; break-inside: avoid; margin: 0 0 22px; }
     .sector-title { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
     .sector-title h2 { margin:0; font-size:16px; font-weight:700; color:#1f2937; }
     .pill { background:#e5e7eb; color:#374151; font-size:12px; padding:4px 8px; border-radius:12px; }
 
     table.grid { width:100%; border-collapse: collapse; table-layout: fixed; }
     thead { display: table-header-group; } /* mantém cabeçalho nas quebras */
+    tfoot { display: table-footer-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
     th, td { border:1px solid #e5e7eb; padding:6px 8px; vertical-align: middle; }
     th { background:#fafafa; font-weight:600; }
     tbody tr:nth-child(even) td { background:#fbfcfe; }
@@ -313,18 +321,49 @@ serve(async (req) => {
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-    // HTML alinhado com margem pequena + gutter
+    // Gera HTML
     const html = generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
-
-    const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.html`;
-    return new Response(html, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/html",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "no-store",
-      },
+    
+    console.log("[export-pdf] Gerando PDF com Puppeteer...");
+    
+    // Renderiza PDF com Puppeteer
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
+    
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        preferCSSPageSize: true,
+        margin: {
+          top: '0',
+          right: '0',
+          bottom: '0',
+          left: '0'
+        }
+      });
+      
+      await browser.close();
+      
+      console.log("[export-pdf] PDF gerado com sucesso");
+      
+      const filename = `Relatorio_Semanal_${(obraNome || "Obra").replace(/\s+/g, "_")}_${weekStart}.pdf`;
+      return new Response(pdfBuffer, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    } catch (pdfError) {
+      await browser.close();
+      throw pdfError;
+    }
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || "Erro inesperado" }), {
       status: 500,
