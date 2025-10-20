@@ -70,7 +70,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('export-pdf', {
+      const { data, error } = await (supabase.functions as any).invoke('export-pdf', {
         body: { 
           obraId, 
           obraNome, 
@@ -78,6 +78,7 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
           groupBy: exportType,
           executante: exportType === "executante" ? selectedExecutante : undefined
         },
+        responseType: 'arrayBuffer'
       });
 
       if (error) {

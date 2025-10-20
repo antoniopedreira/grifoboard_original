@@ -34,8 +34,9 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
       }
 
       // Call the edge function with authentication
-      const { data, error } = await supabase.functions.invoke('export-pdf', {
+      const { data, error } = await (supabase.functions as any).invoke('export-pdf', {
         body: { obraId, obraNome, weekStart: weekStartISO },
+        responseType: 'arrayBuffer'
       });
 
       if (error) {
