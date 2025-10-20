@@ -107,25 +107,25 @@ function generateHtmlContent(
           <table class="grid">
             <colgroup>
               ${isExecutanteGroup ? `
-                <col style="width:26%">
-                <col style="width:11%">
-                <col style="width:11%">
-                <col style="width:11%">
-                <col style="width:11%">
+                <col style="width:24%">
+                <col style="width:10.5%">
+                <col style="width:10.5%">
+                <col style="width:10.5%">
+                <col style="width:10.5%">
               ` : `
-                <col style="width:26%">
-                <col style="width:11%">
-                <col style="width:11%">
-                <col style="width:11%">
-                <col style="width:11%">
+                <col style="width:24%">
+                <col style="width:10.5%">
+                <col style="width:10.5%">
+                <col style="width:10.5%">
+                <col style="width:10.5%">
               `}
-              <col style="width:4.29%">
-              <col style="width:4.29%">
-              <col style="width:4.29%">
-              <col style="width:4.29%">
-              <col style="width:4.29%">
-              <col style="width:4.28%">
-              <col style="width:4.28%">
+              <col style="width:4.71%">
+              <col style="width:4.71%">
+              <col style="width:4.72%">
+              <col style="width:4.71%">
+              <col style="width:4.71%">
+              <col style="width:4.72%">
+              <col style="width:4.71%">
             </colgroup>
 
             <thead>
@@ -205,6 +205,8 @@ function generateHtmlContent(
       font-weight:600; 
       font-size: 10px;
       white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
     }
     tbody tr:nth-child(even) td { background:#fafbfc; }
 
@@ -220,7 +222,8 @@ function generateHtmlContent(
     .day { 
       text-align:center; 
       font-size: 14px;
-      padding: 7px 3px;
+      padding: 7px 2px;
+      white-space: nowrap;
     }
   </style>
 </head>

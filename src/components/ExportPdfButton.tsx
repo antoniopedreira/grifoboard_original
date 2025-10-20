@@ -52,23 +52,24 @@ const ExportPdfButton = ({ obraId, obraNome, weekStartDate }: ExportPdfButtonPro
         return;
       }
 
-      // Get HTML content
+      // Create a Blob URL to avoid "about:blank" in footer
       const htmlContent = await response.text();
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
       
-      // Open in new window and trigger print dialog
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open(blobUrl, '_blank');
       if (printWindow) {
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        
-        // Wait for content to load then print
         printWindow.onload = () => {
           printWindow.focus();
           printWindow.print();
+          // Clean up the blob URL after printing
+          printWindow.onafterprint = () => {
+            URL.revokeObjectURL(blobUrl);
+          };
         };
-        
         toast.success("Abrindo janela de impressão...");
       } else {
+        URL.revokeObjectURL(blobUrl);
         toast.error("Não foi possível abrir a janela de impressão. Verifique se pop-ups estão bloqueados.");
       }
     } catch (err) {
