@@ -105,23 +105,27 @@ function generateHtmlContent(
           </div>
 
           <table class="grid">
-            <!-- COLUNAS EM % — ajustadas conforme tipo de agrupamento -->
             <colgroup>
               ${isExecutanteGroup ? `
-                <col style="width:28%"> <!-- Atividade -->
-                <col style="width:12%"> <!-- Setor -->
-                <col style="width:12%"> <!-- Disciplina -->
-                <col style="width:12%"> <!-- Responsável -->
-                <col style="width:12%"> <!-- Encarregado -->
+                <col style="width:26%">
+                <col style="width:11%">
+                <col style="width:11%">
+                <col style="width:11%">
+                <col style="width:11%">
               ` : `
-                <col style="width:28%"> <!-- Atividade -->
-                <col style="width:12%"> <!-- Disciplina -->
-                <col style="width:12%"> <!-- Executante -->
-                <col style="width:12%"> <!-- Responsável -->
-                <col style="width:12%"> <!-- Encarregado -->
+                <col style="width:26%">
+                <col style="width:11%">
+                <col style="width:11%">
+                <col style="width:11%">
+                <col style="width:11%">
               `}
-              <col style="width:3.4286%"><col style="width:3.4286%"><col style="width:3.4286%">
-              <col style="width:3.4286%"><col style="width:3.4286%"><col style="width:3.4286%"><col style="width:3.4286%">
+              <col style="width:4.29%">
+              <col style="width:4.29%">
+              <col style="width:4.29%">
+              <col style="width:4.29%">
+              <col style="width:4.29%">
+              <col style="width:4.28%">
+              <col style="width:4.28%">
             </colgroup>
 
             <thead>
@@ -150,43 +154,74 @@ function generateHtmlContent(
   <title>Relatório Semanal de Atividades</title>
   <style>
     /* CSS de impressão para renderização perfeita */
-    @page { size: A4; margin: 0; }
+    @page { 
+      size: A4; 
+      margin: 16mm 14mm; 
+    }
+    @page :first { 
+      margin-top: 16mm; 
+    }
+    
     html, body { 
       -webkit-print-color-adjust: exact; 
       print-color-adjust: exact;
       margin: 0;
       color: #111;
-      font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font: 11px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
     * { box-sizing: border-box; }
-    .page { padding: 16mm 14mm; }
-    @media print { html, body { margin: 0; } }
+    .page { padding: 0; }
+    
+    @media print { 
+      html, body { margin: 0; }
+      .sector { page-break-inside: avoid; }
+      thead { display: table-header-group; }
+    }
 
-    .header { text-align:center; margin-bottom:16px; }
-    .header h1 { margin:0 0 6px; font-size:20px; font-weight:700; }
-    .meta { color:#666; font-size:12px; margin:4px 0 12px; }
-    hr { border:0; border-top:1px solid #e5e7eb; margin: 8px 0 18px; }
+    .header { text-align:center; margin-bottom:20px; }
+    .header h1 { margin:0 0 8px; font-size:18px; font-weight:700; }
+    .meta { color:#666; font-size:11px; margin:4px 0 14px; }
+    hr { border:0; border-top:1px solid #e5e7eb; margin: 10px 0 20px; }
 
-    .sector { page-break-inside: avoid; break-inside: avoid; margin: 0 0 22px; }
-    .sector-title { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-    .sector-title h2 { margin:0; font-size:16px; font-weight:700; color:#1f2937; }
-    .pill { background:#e5e7eb; color:#374151; font-size:12px; padding:4px 8px; border-radius:12px; }
+    .sector { page-break-inside: avoid; break-inside: avoid; margin: 0 0 24px; }
+    .sector-title { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .sector-title h2 { margin:0; font-size:15px; font-weight:700; color:#1f2937; }
+    .pill { background:#e5e7eb; color:#374151; font-size:11px; padding:3px 8px; border-radius:12px; }
 
     table.grid { width:100%; border-collapse: collapse; table-layout: fixed; }
-    thead { display: table-header-group; } /* mantém cabeçalho nas quebras */
+    thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
     tr { break-inside: avoid; page-break-inside: avoid; }
-    th, td { border:1px solid #e5e7eb; padding:6px 8px; vertical-align: middle; }
-    th { background:#fafafa; font-weight:600; }
-    tbody tr:nth-child(even) td { background:#fbfcfe; }
+    th, td { 
+      border:1px solid #d1d5db; 
+      padding: 7px 6px; 
+      vertical-align: middle; 
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    th { 
+      background:#f3f4f6; 
+      font-weight:600; 
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    tbody tr:nth-child(even) td { background:#fafbfc; }
 
     .center { text-align:center; }
     .nowrap { white-space:nowrap; }
-    .text { word-break: break-word; overflow-wrap:anywhere; }
+    .text { 
+      word-break: break-word; 
+      overflow-wrap: anywhere;
+      font-size: 10px;
+      line-height: 1.3;
+    }
     thead th { word-break: keep-all; }
-    .day { text-align:center; }
-
-    td, th { line-height: 1.25; }
+    .day { 
+      text-align:center; 
+      font-size: 14px;
+      padding: 7px 3px;
+    }
   </style>
 </head>
 <body>
