@@ -21,6 +21,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useRegistry } from "@/context/RegistryContext";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface ExportDialogProps {
   obraId: string;
@@ -70,10 +72,12 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
+      toast.info("Gerando PDF...");
+
       // Get Supabase URL from environment
       const functionUrl = 'https://qacaerwosglbayjfskyx.supabase.co/functions/v1/export-pdf';
 
-      // Call the edge function with fetch to get binary data
+      // Call the edge function to get HTML
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -99,36 +103,54 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
       // Get HTML content
       const htmlContent = await response.text();
       
-      // Open in new window and trigger print dialog (about:blank allows Save as PDF reliably)
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.open();
-        // Add a meaningful title to avoid showing raw about:blank in headers if enabled
-        const htmlWithTitle = htmlContent.replace('<head>', '<head><title>Relatório Semanal</title>');
-        printWindow.document.write(htmlWithTitle);
-        printWindow.document.close();
-        
-        // Wait for content to load then print
-        printWindow.addEventListener('load', () => {
-          setTimeout(() => {
-            printWindow.focus();
-            printWindow.print();
-          }, 250);
-        });
+      // Create a temporary container to render HTML
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.width = '210mm'; // A4 width
+      container.innerHTML = htmlContent;
+      document.body.appendChild(container);
 
-        // Close the window after printing
-        printWindow.addEventListener('afterprint', () => {
-          printWindow.close();
-        });
-        
-        toast.success("Abrindo janela de impressão...");
-        setOpen(false);
-      } else {
-        toast.error("Não foi possível abrir a janela de impressão. Verifique se pop-ups estão bloqueados.");
-      }
+      // Wait for fonts and images to load
+      await document.fonts.ready;
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Convert HTML to canvas
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: 794, // A4 width in pixels at 96 DPI
+      });
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+      // Clean up
+      document.body.removeChild(container);
+
+      // Create blob and open in new window
+      const pdfBlob = pdf.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      
+      // Open PDF in new window with browser's PDF viewer
+      window.open(pdfUrl, '_blank');
+      
+      toast.success("PDF gerado com sucesso!");
+      setOpen(false);
     } catch (err) {
-      console.error("Download error:", err);
-      toast.error("Erro ao baixar relatório");
+      console.error("Export error:", err);
+      toast.error("Erro ao gerar PDF");
     } finally {
       setLoading(false);
     }
