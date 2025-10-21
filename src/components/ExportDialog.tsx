@@ -21,8 +21,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useRegistry } from "@/context/RegistryContext";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 interface ExportDialogProps {
   obraId: string;
@@ -72,12 +70,10 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
         return;
       }
 
-      toast.info("Gerando PDF...");
-
       // Get Supabase URL from environment
       const functionUrl = 'https://qacaerwosglbayjfskyx.supabase.co/functions/v1/export-pdf';
 
-      // Call the edge function to get HTML
+      // Call the edge function with fetch to get HTML
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -103,51 +99,31 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
       // Get HTML content
       const htmlContent = await response.text();
       
-      // Create a temporary container to render HTML
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.width = '210mm'; // A4 width
-      container.innerHTML = htmlContent;
-      document.body.appendChild(container);
+      // Open in new window with the PDF viewer
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load then trigger print dialog
+        printWindow.addEventListener('load', () => {
+          setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+          }, 250);
+        });
 
-      // Wait for fonts and images to load
-      await document.fonts.ready;
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Convert HTML to canvas
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 794, // A4 width in pixels at 96 DPI
-      });
-
-      // Create PDF
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-      // Clean up
-      document.body.removeChild(container);
-
-      // Create blob and open in new window
-      const pdfBlob = pdf.output('blob');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      
-      // Open PDF in new window with browser's PDF viewer
-      window.open(pdfUrl, '_blank');
-      
-      toast.success("PDF gerado com sucesso!");
-      setOpen(false);
+        // Close after printing
+        printWindow.addEventListener('afterprint', () => {
+          printWindow.close();
+        });
+        
+        toast.success("Abrindo visualização do PDF...");
+        setOpen(false);
+      } else {
+        toast.error("Não foi possível abrir a janela. Verifique se pop-ups estão bloqueados.");
+      }
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Erro ao gerar PDF");
