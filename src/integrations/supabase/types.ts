@@ -56,6 +56,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_obras_yyyymmdd: {
+        Row: {
+          created_at: string | null
+          data_inicio: string | null
+          data_termino: string | null
+          id: string | null
+          localizacao: string | null
+          nome_obra: string | null
+          status: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_inicio?: string | null
+          data_termino?: string | null
+          id?: string | null
+          localizacao?: string | null
+          nome_obra?: string | null
+          status?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_inicio?: string | null
+          data_termino?: string | null
+          id?: string | null
+          localizacao?: string | null
+          nome_obra?: string | null
+          status?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
+      empresas: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       materiais_tarefa: {
         Row: {
           created_at: string
@@ -86,8 +137,10 @@ export type Database = {
       obras: {
         Row: {
           created_at: string | null
+          created_by: string | null
           data_inicio: string | null
           data_termino: string | null
+          empresa_id: string | null
           id: string
           localizacao: string | null
           nome_obra: string
@@ -96,8 +149,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           data_inicio?: string | null
           data_termino?: string | null
+          empresa_id?: string | null
           id?: string
           localizacao?: string | null
           nome_obra: string
@@ -106,15 +161,25 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           data_inicio?: string | null
           data_termino?: string | null
+          empresa_id?: string | null
           id?: string
           localizacao?: string | null
           nome_obra?: string
           status?: string | null
           usuario_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "obras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registros: {
         Row: {
@@ -231,78 +296,32 @@ export type Database = {
       usuarios: {
         Row: {
           email: string | null
+          empresa_id: string | null
           id: string
           nome: string | null
+          role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
           email?: string | null
+          empresa_id?: string | null
           id: string
           nome?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
           email?: string | null
+          empresa_id?: string | null
           id?: string
           nome?: string | null
-        }
-        Relationships: []
-      }
-      whatsapp_accounts: {
-        Row: {
-          created_at: string | null
-          is_active: boolean | null
-          label: string | null
-          phone_e164: string
-          wa_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          is_active?: boolean | null
-          label?: string | null
-          phone_e164: string
-          wa_id?: string
-        }
-        Update: {
-          created_at?: string | null
-          is_active?: boolean | null
-          label?: string | null
-          phone_e164?: string
-          wa_id?: string
-        }
-        Relationships: []
-      }
-      whatsapp_obras: {
-        Row: {
-          created_at: string | null
-          obra_id: string
-          role: string | null
-          wa_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          obra_id: string
-          role?: string | null
-          wa_id: string
-        }
-        Update: {
-          created_at?: string | null
-          obra_id?: string
-          role?: string | null
-          wa_id?: string
+          role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: [
           {
-            foreignKeyName: "whatsapp_obras_obra_id_fkey"
-            columns: ["obra_id"]
+            foreignKeyName: "usuarios_empresa_id_fkey"
+            columns: ["empresa_id"]
             isOneToOne: false
-            referencedRelation: "obras"
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_obras_wa_id_fkey"
-            columns: ["wa_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_accounts"
-            referencedColumns: ["wa_id"]
           },
         ]
       }
@@ -326,10 +345,11 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      current_empresa_id: { Args: never; Returns: string }
+      is_company_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -456,6 +476,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "member"],
+    },
   },
 } as const
