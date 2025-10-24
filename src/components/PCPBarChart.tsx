@@ -6,6 +6,7 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import { CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -75,6 +76,7 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                 axisLine={false}
                 tickLine={false}
               />
+              <Tooltip content={() => null} cursor={false} />
               <PCPChartBars chartData={chartData} colors={chartColors} />
             </BarChart>
           </ResponsiveContainer>
