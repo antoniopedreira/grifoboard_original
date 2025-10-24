@@ -5,14 +5,12 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChartContainer } from "@/components/ui/chart";
-import PCPChartTooltip from "./chart/PCPChartTooltip";
 import PCPChartBars from "./chart/PCPChartBars";
 
 interface PCPBarChartProps {
@@ -77,7 +75,6 @@ const PCPBarChart: React.FC<PCPBarChartProps> = ({ weeklyData }) => {
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={<PCPChartTooltip />} />
               <PCPChartBars chartData={chartData} colors={chartColors} />
             </BarChart>
           </ResponsiveContainer>
