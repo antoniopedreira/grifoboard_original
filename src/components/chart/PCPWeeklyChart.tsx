@@ -6,7 +6,6 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   ResponsiveContainer,
   Cell,
   LabelList
@@ -124,10 +123,6 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = () => {
           tick={{ fontSize: 12 }}
           axisLine={false}
           tickLine={false}
-        />
-        <Tooltip 
-          formatter={(value) => [`${value}%`, 'Progresso']}
-          labelFormatter={(name) => `Semana: ${name}`}
         />
         <Bar 
           dataKey="value" 
