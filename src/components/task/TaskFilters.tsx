@@ -17,8 +17,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   const [filterResponsible, setFilterResponsible] = useState("all");
   const [filterTeam, setFilterTeam] = useState("all");
   const [filterExecutor, setFilterExecutor] = useState("all");
-  
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
   
   // Extract unique values for filters and filter out empty values
   const sectors = Array.from(new Set(tasks.map(task => task.sector))).filter(Boolean);
@@ -49,8 +49,30 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
       return matchesSearch && matchesSector && matchesDiscipline && matchesResponsible && matchesTeam && matchesExecutor && matchesStatus;
     });
 
-    onFiltersChange(filteredTasks);
-  }, [searchTerm, filterSector, filterDiscipline, filterResponsible, filterTeam, filterExecutor, filterStatus, tasks, onFiltersChange]);
+    // Apply sorting/grouping
+    let sortedTasks = [...filteredTasks];
+    if (sortBy !== "none") {
+      sortedTasks.sort((a, b) => {
+        let valueA = "";
+        let valueB = "";
+        
+        if (sortBy === "sector") {
+          valueA = a.sector || "";
+          valueB = b.sector || "";
+        } else if (sortBy === "executor") {
+          valueA = a.executor || "";
+          valueB = b.executor || "";
+        } else if (sortBy === "discipline") {
+          valueA = a.discipline || "";
+          valueB = b.discipline || "";
+        }
+        
+        return valueA.localeCompare(valueB);
+      });
+    }
+
+    onFiltersChange(sortedTasks);
+  }, [searchTerm, filterSector, filterDiscipline, filterResponsible, filterTeam, filterExecutor, filterStatus, sortBy, tasks, onFiltersChange]);
 
   // Reset filters when selectedCause changes
   useEffect(() => {
@@ -60,111 +82,127 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
     setFilterResponsible("all");
     setFilterTeam("all");
     setFilterExecutor("all");
-    
     setFilterStatus("all");
+    setSortBy("none");
   }, [selectedCause]);
   
   return (
-    <div className="flex flex-wrap gap-4 mb-6">
-      <div className="w-[200px]">
-        <div className="text-xs text-gray-500 mb-1">Busca</div>
-        <Input
-          placeholder="Buscar tarefas..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full"
-        />
-      </div>
-      
-      <div className="w-full sm:w-auto">
-        <div className="text-xs text-gray-500 mb-1">Status</div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="completed">Concluídas</SelectItem>
-            <SelectItem value="not_completed">Não Concluídas</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="w-full sm:w-auto">
-        <div className="text-xs text-gray-500 mb-1">Setor</div>
-        <Select value={filterSector} onValueChange={setFilterSector}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Setor" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Todos</SelectItem>
-            {sectors.map(sector => (
-              <SelectItem key={sector} value={sector}>{sector}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="w-full sm:w-auto">
-        <div className="text-xs text-gray-500 mb-1">Disciplina</div>
-        <Select value={filterDiscipline} onValueChange={setFilterDiscipline}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Disciplina" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Todos</SelectItem>
-            {disciplines.map(discipline => (
-              <SelectItem key={discipline} value={discipline}>{discipline}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="w-full sm:w-auto">
-        <div className="text-xs text-gray-500 mb-1">Responsável</div>
-        <Select value={filterResponsible} onValueChange={setFilterResponsible}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Responsável" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Todos</SelectItem>
-            {responsibles.map(responsible => (
-              <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="flex flex-col gap-4 mb-6">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex-shrink-0 w-[200px]">
+          <div className="text-xs text-muted-foreground mb-1">Busca</div>
+          <Input
+            placeholder="Buscar tarefas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        
+        <div className="flex-shrink-0">
+          <div className="text-xs text-muted-foreground mb-1">Status</div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="completed">Concluídas</SelectItem>
+              <SelectItem value="not_completed">Não Concluídas</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex-shrink-0">
+          <div className="text-xs text-muted-foreground mb-1">Setor</div>
+          <Select value={filterSector} onValueChange={setFilterSector}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Setor" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">Todos</SelectItem>
+              {sectors.map(sector => (
+                <SelectItem key={sector} value={sector}>{sector}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex-shrink-0">
+          <div className="text-xs text-muted-foreground mb-1">Disciplina</div>
+          <Select value={filterDiscipline} onValueChange={setFilterDiscipline}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Disciplina" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">Todos</SelectItem>
+              {disciplines.map(discipline => (
+                <SelectItem key={discipline} value={discipline}>{discipline}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex-shrink-0">
+          <div className="text-xs text-muted-foreground mb-1">Responsável</div>
+          <Select value={filterResponsible} onValueChange={setFilterResponsible}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">Todos</SelectItem>
+              {responsibles.map(responsible => (
+                <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="w-full sm:w-auto">
-        <div className="text-xs text-gray-500 mb-1">Executante</div>
-        <Select value={filterTeam} onValueChange={setFilterTeam}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Executante" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Todos</SelectItem>
-            {teams.map(team => (
-              <SelectItem key={team} value={team}>{team}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="flex-shrink-0">
+          <div className="text-xs text-muted-foreground mb-1">Executante</div>
+          <Select value={filterTeam} onValueChange={setFilterTeam}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Executante" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">Todos</SelectItem>
+              {teams.map(team => (
+                <SelectItem key={team} value={team}>{team}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="w-full sm:w-auto">
-        <div className="text-xs text-gray-500 mb-1">Encarregado</div>
-        <Select value={filterExecutor} onValueChange={setFilterExecutor}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Encarregado" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Todos</SelectItem>
-            {executors.map(executor => (
-              <SelectItem key={executor} value={executor}>{executor}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="flex-shrink-0">
+          <div className="text-xs text-muted-foreground mb-1">Encarregado</div>
+          <Select value={filterExecutor} onValueChange={setFilterExecutor}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Encarregado" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">Todos</SelectItem>
+              {executors.map(executor => (
+                <SelectItem key={executor} value={executor}>{executor}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
+        <div className="flex-shrink-0">
+          <div className="text-xs text-muted-foreground mb-1">Organizar por</div>
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Organizar" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="none">Nenhum</SelectItem>
+              <SelectItem value="sector">Setor</SelectItem>
+              <SelectItem value="executor">Executante</SelectItem>
+              <SelectItem value="discipline">Disciplina</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </div>
   );
 };
