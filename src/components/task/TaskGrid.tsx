@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import TaskCard from "../TaskCard";
 import { Task } from "@/types";
 import { ClipboardX, GripVertical } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { tarefasService } from "@/services/tarefaService";
 import {
   DndContext,
   closestCenter,
@@ -71,6 +73,7 @@ const SortableTaskCard: React.FC<SortableTaskCardProps> = ({ task, onTaskUpdate,
 
 const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, onTaskDuplicate }) => {
   const [orderedTasks, setOrderedTasks] = useState<Task[]>(tasks);
+  const { toast } = useToast();
 
   useEffect(() => {
     setOrderedTasks(tasks);
@@ -87,15 +90,34 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setOrderedTasks((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      const oldIndex = orderedTasks.findIndex((item) => item.id === active.id);
+      const newIndex = orderedTasks.findIndex((item) => item.id === over.id);
+      
+      const newOrderedTasks = arrayMove(orderedTasks, oldIndex, newIndex);
+      setOrderedTasks(newOrderedTasks);
+
+      // Save the new order to the database
+      try {
+        const ordersToUpdate = newOrderedTasks.map((task, index) => ({
+          id: task.id,
+          ordem: index
+        }));
+
+        await tarefasService.atualizarOrdens(ordersToUpdate);
+      } catch (error) {
+        console.error('Erro ao salvar ordenação:', error);
+        toast({
+          title: "Erro ao salvar ordenação",
+          description: "Não foi possível salvar a nova ordem das tarefas.",
+          variant: "destructive",
+        });
+        // Revert to original order on error
+        setOrderedTasks(tasks);
+      }
     }
   };
   if (orderedTasks.length === 0) {

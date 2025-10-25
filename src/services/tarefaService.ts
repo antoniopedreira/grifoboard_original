@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Tarefa } from '@/types/supabase';
 
-class TarefaServiceError extends Error {
+export class TarefaServiceError extends Error {
   constructor(message: string, public readonly originalError?: unknown) {
     super(message);
     this.name = 'TarefaServiceError';
@@ -19,6 +19,7 @@ export const tarefasService = {
       .select('*')
       .eq('obra_id', obra_id)
       .order('semana', { ascending: false })
+      .order('ordem', { ascending: true })
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -97,6 +98,27 @@ export const tarefasService = {
     
     if (error) {
       throw new TarefaServiceError('Erro ao excluir tarefa', error);
+    }
+  },
+
+  async atualizarOrdens(tarefas: { id: string; ordem: number }[]): Promise<void> {
+    if (!tarefas || tarefas.length === 0) {
+      return;
+    }
+
+    // Update each task's order individually
+    const updates = tarefas.map(({ id, ordem }) => 
+      supabase
+        .from('tarefas')
+        .update({ ordem })
+        .eq('id', id)
+    );
+
+    const results = await Promise.all(updates);
+    
+    const errors = results.filter(result => result.error);
+    if (errors.length > 0) {
+      throw new TarefaServiceError('Erro ao atualizar ordens das tarefas', errors[0].error);
     }
   }
 };

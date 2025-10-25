@@ -56,39 +56,6 @@ export type Database = {
         }
         Relationships: []
       }
-      backup_obras_yyyymmdd: {
-        Row: {
-          created_at: string | null
-          data_inicio: string | null
-          data_termino: string | null
-          id: string | null
-          localizacao: string | null
-          nome_obra: string | null
-          status: string | null
-          usuario_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          data_inicio?: string | null
-          data_termino?: string | null
-          id?: string | null
-          localizacao?: string | null
-          nome_obra?: string | null
-          status?: string | null
-          usuario_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          data_inicio?: string | null
-          data_termino?: string | null
-          id?: string | null
-          localizacao?: string | null
-          nome_obra?: string | null
-          status?: string | null
-          usuario_id?: string | null
-        }
-        Relationships: []
-      }
       empresas: {
         Row: {
           created_at: string | null
@@ -225,6 +192,7 @@ export type Database = {
           id: string
           item: string
           obra_id: string | null
+          ordem: number | null
           percentual_executado: number | null
           qua: string | null
           qui: string | null
@@ -248,6 +216,7 @@ export type Database = {
           id?: string
           item: string
           obra_id?: string | null
+          ordem?: number | null
           percentual_executado?: number | null
           qua?: string | null
           qui?: string | null
@@ -271,6 +240,7 @@ export type Database = {
           id?: string
           item?: string
           obra_id?: string | null
+          ordem?: number | null
           percentual_executado?: number | null
           qua?: string | null
           qui?: string | null
