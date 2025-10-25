@@ -84,8 +84,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
     setFilterTeam("all");
     setFilterExecutor("all");
     setFilterStatus("all");
-    onSortChange("none");
-  }, [selectedCause, onSortChange]);
+    // Don't reset sortBy when cause changes
+  }, [selectedCause]);
   
   return (
     <div className="flex flex-col gap-4 mb-6">

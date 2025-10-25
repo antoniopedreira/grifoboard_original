@@ -34,9 +34,12 @@ const TasksSection: React.FC<TasksSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Organizar por:</span>
-          <Select value={sortBy} onValueChange={(value) => onSortChange(value as typeof sortBy)}>
+          <Select 
+            value={sortBy} 
+            onValueChange={onSortChange}
+          >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Organizar" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
               <SelectItem value="none">Nenhum</SelectItem>

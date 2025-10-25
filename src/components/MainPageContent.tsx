@@ -78,6 +78,7 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   };
 
   const handleSortChange = (newSortBy: "none" | "sector" | "executor" | "discipline") => {
+    console.log("Sort change:", newSortBy);
     setSortBy(newSortBy);
   };
   
