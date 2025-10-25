@@ -50,7 +50,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
       return matchesSearch && matchesSector && matchesDiscipline && matchesResponsible && matchesTeam && matchesExecutor && matchesStatus;
     });
 
-    // Apply sorting/grouping
+    // Apply sorting/grouping in alphabetical order
     let sortedTasks = [...filteredTasks];
     if (sortBy !== "none") {
       sortedTasks.sort((a, b) => {
@@ -58,17 +58,17 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
         let valueB = "";
         
         if (sortBy === "sector") {
-          valueA = a.sector || "";
-          valueB = b.sector || "";
+          valueA = (a.sector || "").toLowerCase();
+          valueB = (b.sector || "").toLowerCase();
         } else if (sortBy === "executor") {
-          valueA = a.executor || "";
-          valueB = b.executor || "";
+          valueA = (a.team || "").toLowerCase(); // Note: team is the Executante field
+          valueB = (b.team || "").toLowerCase();
         } else if (sortBy === "discipline") {
-          valueA = a.discipline || "";
-          valueB = b.discipline || "";
+          valueA = (a.discipline || "").toLowerCase();
+          valueB = (b.discipline || "").toLowerCase();
         }
         
-        return valueA.localeCompare(valueB);
+        return valueA.localeCompare(valueB, 'pt-BR');
       });
     }
 
