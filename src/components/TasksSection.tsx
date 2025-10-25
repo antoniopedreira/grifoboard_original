@@ -2,6 +2,7 @@
 import { Task } from "@/types";
 import TaskList from "@/components/TaskList";
 import { ClipboardList } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TasksSectionProps {
   tasks: Task[];
@@ -10,6 +11,8 @@ interface TasksSectionProps {
   onTaskDelete: (taskId: string) => void;
   onTaskDuplicate: (task: Task) => void;
   selectedCause: string | null;
+  sortBy: "none" | "sector" | "executor" | "discipline";
+  onSortChange: (sortBy: "none" | "sector" | "executor" | "discipline") => void;
 }
 
 const TasksSection: React.FC<TasksSectionProps> = ({ 
@@ -18,13 +21,31 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   onTaskUpdate, 
   onTaskDelete,
   onTaskDuplicate,
-  selectedCause 
+  selectedCause,
+  sortBy,
+  onSortChange
 }) => {
   return (
     <>
-      <div className="flex items-center mb-6">
-        <ClipboardList className="h-6 w-6 mr-3 text-primary" />
-        <h2 className="text-xl font-heading font-semibold">Tarefas da Semana</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <ClipboardList className="h-6 w-6 mr-3 text-primary" />
+          <h2 className="text-xl font-heading font-semibold">Tarefas da Semana</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Organizar por:</span>
+          <Select value={sortBy} onValueChange={(value) => onSortChange(value as typeof sortBy)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Organizar" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="none">Nenhum</SelectItem>
+              <SelectItem value="sector">Setor</SelectItem>
+              <SelectItem value="executor">Executante</SelectItem>
+              <SelectItem value="discipline">Disciplina</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       {isLoading && tasks.length === 0 ? (
@@ -40,6 +61,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
           onTaskDelete={onTaskDelete}
           onTaskDuplicate={onTaskDuplicate}
           selectedCause={selectedCause}
+          sortBy={sortBy}
+          onSortChange={onSortChange}
         />
       )}
     </>

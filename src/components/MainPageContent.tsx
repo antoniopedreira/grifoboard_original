@@ -19,6 +19,7 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
   
   // Initialize with the current week's Monday
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
@@ -75,6 +76,10 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   const clearCauseFilter = () => {
     setSelectedCause(null);
   };
+
+  const handleSortChange = (newSortBy: "none" | "sector" | "executor" | "discipline") => {
+    setSortBy(newSortBy);
+  };
   
   return (
     <div className="container mx-auto max-w-7xl px-8 py-6 bg-background">
@@ -110,6 +115,8 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
         onTaskDelete={handleTaskDelete}
         onTaskDuplicate={handleTaskDuplicate}
         selectedCause={selectedCause}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
       />
       
       {/* Dialogs */}

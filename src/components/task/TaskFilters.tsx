@@ -8,9 +8,11 @@ interface TaskFiltersProps {
   tasks: Task[];
   onFiltersChange: (filteredTasks: Task[]) => void;
   selectedCause: string | null;
+  sortBy: "none" | "sector" | "executor" | "discipline";
+  onSortChange: (sortBy: "none" | "sector" | "executor" | "discipline") => void;
 }
 
-const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selectedCause }) => {
+const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selectedCause, sortBy, onSortChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSector, setFilterSector] = useState("all");
   const [filterDiscipline, setFilterDiscipline] = useState("all");
@@ -18,7 +20,6 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
   const [filterTeam, setFilterTeam] = useState("all");
   const [filterExecutor, setFilterExecutor] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
   
   // Extract unique values for filters and filter out empty values
   const sectors = Array.from(new Set(tasks.map(task => task.sector))).filter(Boolean);
@@ -83,8 +84,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
     setFilterTeam("all");
     setFilterExecutor("all");
     setFilterStatus("all");
-    setSortBy("none");
-  }, [selectedCause]);
+    onSortChange("none");
+  }, [selectedCause, onSortChange]);
   
   return (
     <div className="flex flex-col gap-4 mb-6">
@@ -184,21 +185,6 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
               {executors.map(executor => (
                 <SelectItem key={executor} value={executor}>{executor}</SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-shrink-0">
-          <div className="text-xs text-muted-foreground mb-1">Organizar por</div>
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Organizar" />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="none">Nenhum</SelectItem>
-              <SelectItem value="sector">Setor</SelectItem>
-              <SelectItem value="executor">Executante</SelectItem>
-              <SelectItem value="discipline">Disciplina</SelectItem>
             </SelectContent>
           </Select>
         </div>

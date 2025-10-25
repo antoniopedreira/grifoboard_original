@@ -13,6 +13,8 @@ interface TaskListProps {
   onTaskDelete: (taskId: string) => void;
   onTaskDuplicate: (task: Task) => void;
   selectedCause: string | null;
+  sortBy: "none" | "sector" | "executor" | "discipline";
+  onSortChange: (sortBy: "none" | "sector" | "executor" | "discipline") => void;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ 
@@ -20,7 +22,9 @@ const TaskList: React.FC<TaskListProps> = ({
   onTaskUpdate, 
   onTaskDelete, 
   onTaskDuplicate,
-  selectedCause 
+  selectedCause,
+  sortBy,
+  onSortChange
 }) => {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
   const { toast } = useToast();
@@ -55,6 +59,8 @@ const TaskList: React.FC<TaskListProps> = ({
           tasks={tasksAfterCauseFilter} 
           onFiltersChange={setFilteredTasks} 
           selectedCause={selectedCause}
+          sortBy={sortBy}
+          onSortChange={onSortChange}
         />
       </div>
       
