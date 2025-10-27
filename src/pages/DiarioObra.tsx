@@ -29,20 +29,21 @@ export default function DiarioObra() {
   const [filterStartDate, setFilterStartDate] = useState<Date | undefined>();
   const [filterEndDate, setFilterEndDate] = useState<Date | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const obraId = userSession?.obraAtiva?.id || undefined;
   const [selectedDiario, setSelectedDiario] = useState<DiarioObra | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     loadDiarios();
-  }, [userSession?.obraAtiva?.id, filterStartDate, filterEndDate]);
+  }, [obraId, filterStartDate, filterEndDate]);
 
   const loadDiarios = async () => {
-    if (!userSession?.obraAtiva?.id) return;
+    if (!obraId) return;
 
     try {
       setLoading(true);
       const data = await diarioService.getByObra(
-        userSession.obraAtiva.id,
+        obraId,
         filterStartDate ? format(filterStartDate, "yyyy-MM-dd") : undefined,
         filterEndDate ? format(filterEndDate, "yyyy-MM-dd") : undefined
       );
@@ -62,7 +63,7 @@ export default function DiarioObra() {
     console.log("Obra Ativa:", userSession?.obraAtiva);
     console.log("User:", userSession?.user);
     
-    if (!userSession?.obraAtiva?.id) {
+    if (!obraId) {
       toast.error("Selecione uma obra primeiro");
       return;
     }
@@ -76,7 +77,7 @@ export default function DiarioObra() {
       setLoading(true);
       
       const diarioData = {
-        obra_id: userSession.obraAtiva.id,
+        obra_id: obraId,
         data: format(date, "yyyy-MM-dd"),
         clima,
         mao_de_obra: maoDeObra,
@@ -178,6 +179,7 @@ export default function DiarioObra() {
                         selected={date}
                         onSelect={(date) => date && setDate(date)}
                         initialFocus
+                        className={cn("p-3 pointer-events-auto")}
                       />
                     </PopoverContent>
                   </Popover>
@@ -244,7 +246,7 @@ export default function DiarioObra() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button type="submit" className="flex-1" disabled={loading}>
+                  <Button type="submit" className="flex-1" disabled={loading || !obraId}>
                     <Plus className="h-4 w-4 mr-2" />
                     {loading ? "Salvando..." : "Salvar Registro"}
                   </Button>
@@ -357,7 +359,11 @@ export default function DiarioObra() {
               )}
 
               <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                {loading ? (
+                {!obraId ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Selecione uma obra para ver os registros
+                  </p>
+                ) : loading ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     Carregando...
                   </p>
