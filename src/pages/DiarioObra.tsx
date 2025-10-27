@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, FileText, Trash2, Filter } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CalendarIcon, Plus, FileText, Trash2, Filter, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,8 @@ export default function DiarioObra() {
   const [filterStartDate, setFilterStartDate] = useState<Date | undefined>();
   const [filterEndDate, setFilterEndDate] = useState<Date | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedDiario, setSelectedDiario] = useState<DiarioObra | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     loadDiarios();
@@ -109,6 +112,11 @@ export default function DiarioObra() {
   const clearFilters = () => {
     setFilterStartDate(undefined);
     setFilterEndDate(undefined);
+  };
+
+  const handleViewDetails = (diario: DiarioObra) => {
+    setSelectedDiario(diario);
+    setDetailsOpen(true);
   };
 
   return (
@@ -333,7 +341,7 @@ export default function DiarioObra() {
                 </div>
               )}
 
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="space-y-2 max-h-[600px] overflow-y-auto">
                 {loading ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     Carregando...
@@ -344,41 +352,30 @@ export default function DiarioObra() {
                   </p>
                 ) : (
                   diarios.map((diario) => (
-                    <Card key={diario.id} className="p-3">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold text-sm">
-                            {format(new Date(diario.data), "dd/MM/yyyy", { locale: ptBR })}
-                          </p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(diario.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                        
-                        {diario.clima && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground">Clima</p>
-                            <p className="text-sm">{diario.clima}</p>
-                          </div>
-                        )}
-                        
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Atividades</p>
-                          <p className="text-sm line-clamp-3">{diario.atividades}</p>
-                        </div>
-
-                        {diario.observacoes && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground">Observações</p>
-                            <p className="text-sm line-clamp-2">{diario.observacoes}</p>
-                          </div>
-                        )}
+                    <div
+                      key={diario.id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => handleViewDetails(diario)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          Registro {format(new Date(diario.data), "dd/MM/yyyy")}
+                        </span>
                       </div>
-                    </Card>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(diario.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
                   ))
                 )}
               </div>
@@ -401,6 +398,81 @@ export default function DiarioObra() {
           </Card>
         </div>
       </div>
+
+      {/* Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Registro - {selectedDiario && format(new Date(selectedDiario.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedDiario && (
+            <div className="space-y-4">
+              {selectedDiario.clima && (
+                <div>
+                  <Label className="text-sm font-semibold">Condições Climáticas</Label>
+                  <p className="mt-1 text-sm text-muted-foreground">{selectedDiario.clima}</p>
+                </div>
+              )}
+
+              {selectedDiario.mao_de_obra && (
+                <div>
+                  <Label className="text-sm font-semibold">Mão de Obra</Label>
+                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                    {selectedDiario.mao_de_obra}
+                  </p>
+                </div>
+              )}
+
+              {selectedDiario.equipamentos && (
+                <div>
+                  <Label className="text-sm font-semibold">Equipamentos Utilizados</Label>
+                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                    {selectedDiario.equipamentos}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-sm font-semibold">Atividades Realizadas</Label>
+                <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                  {selectedDiario.atividades}
+                </p>
+              </div>
+
+              {selectedDiario.observacoes && (
+                <div>
+                  <Label className="text-sm font-semibold">Observações e Ocorrências</Label>
+                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                    {selectedDiario.observacoes}
+                  </p>
+                </div>
+              )}
+
+              <Separator />
+
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                <span>
+                  Criado em: {format(new Date(selectedDiario.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    handleDelete(selectedDiario.id);
+                    setDetailsOpen(false);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Registro
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
