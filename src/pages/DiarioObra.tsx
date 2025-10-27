@@ -58,14 +58,24 @@ export default function DiarioObra() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!userSession?.obraAtiva?.id || !userSession?.user?.id) {
+    console.log("UserSession:", userSession);
+    console.log("Obra Ativa:", userSession?.obraAtiva);
+    console.log("User:", userSession?.user);
+    
+    if (!userSession?.obraAtiva?.id) {
       toast.error("Selecione uma obra primeiro");
+      return;
+    }
+
+    if (!userSession?.user?.id) {
+      toast.error("Usuário não autenticado");
       return;
     }
 
     try {
       setLoading(true);
-      await diarioService.create({
+      
+      const diarioData = {
         obra_id: userSession.obraAtiva.id,
         data: format(date, "yyyy-MM-dd"),
         clima,
@@ -74,7 +84,11 @@ export default function DiarioObra() {
         atividades,
         observacoes,
         created_by: userSession.user.id,
-      });
+      };
+      
+      console.log("Tentando salvar diário:", diarioData);
+      
+      await diarioService.create(diarioData);
 
       toast.success("Registro do diário salvo com sucesso!");
       
@@ -88,9 +102,10 @@ export default function DiarioObra() {
 
       // Reload diarios
       loadDiarios();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving diario:", error);
-      toast.error("Erro ao salvar diário");
+      console.error("Error details:", error?.message, error?.details, error?.hint);
+      toast.error(`Erro ao salvar diário: ${error?.message || "Erro desconhecido"}`);
     } finally {
       setLoading(false);
     }
