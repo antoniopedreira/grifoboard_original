@@ -9,6 +9,7 @@ import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
+import DiarioObra from "@/pages/DiarioObra";
 import NotFound from "@/pages/NotFound";
 import { useEffect } from 'react';
 import { Obra } from './types/supabase';
@@ -95,6 +96,7 @@ function App() {
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
+                <Route path="/diarioobra" element={<DiarioObra />} />
                 <Route path="/checklist" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

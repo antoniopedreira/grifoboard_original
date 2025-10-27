@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LayoutList,
   CheckSquare,
+  FileText,
   LogOut,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -77,6 +78,7 @@ export function SessionNavBar() {
   // Check the current path to determine active tab
   const isDashboardActive = location.pathname.includes("/dashboard");
   const isTasksActive = location.pathname.includes("/tarefas");
+  const isDiarioActive = location.pathname.includes("/diarioobra");
   const isChecklistActive = location.pathname.includes("/checklist");
   
   // Extract the first letter for the avatar fallback
@@ -144,6 +146,23 @@ export function SessionNavBar() {
                       <motion.li variants={variants}>
                         {!isCollapsed && (
                           <p className="ml-2 text-sm font-medium">Tarefas</p>
+                        )}
+                      </motion.li>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
+                        isDiarioActive && "bg-brand-2 text-text-on-dark before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-accent before:content-['']"
+                      )}
+                      onClick={() => navigate("/diarioobra")}
+                      aria-current={isDiarioActive ? "page" : undefined}
+                      title={isCollapsed ? "Diário de Obra" : undefined}
+                    >
+                      <FileText className="h-5 w-5" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                          <p className="ml-2 text-sm font-medium">Diário de Obra</p>
                         )}
                       </motion.li>
                     </Button>
