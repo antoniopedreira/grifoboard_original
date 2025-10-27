@@ -56,6 +56,56 @@ export type Database = {
         }
         Relationships: []
       }
+      diarios_obra: {
+        Row: {
+          atividades: string
+          clima: string | null
+          created_at: string
+          created_by: string
+          data: string
+          equipamentos: string | null
+          id: string
+          mao_de_obra: string | null
+          obra_id: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          atividades: string
+          clima?: string | null
+          created_at?: string
+          created_by: string
+          data: string
+          equipamentos?: string | null
+          id?: string
+          mao_de_obra?: string | null
+          obra_id: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atividades?: string
+          clima?: string | null
+          created_at?: string
+          created_by?: string
+          data?: string
+          equipamentos?: string | null
+          id?: string
+          mao_de_obra?: string | null
+          obra_id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diarios_obra_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           created_at: string | null

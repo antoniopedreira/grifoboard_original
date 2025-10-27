@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,35 +7,108 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, FileText } from "lucide-react";
+import { CalendarIcon, Plus, FileText, Trash2, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { diarioService, type DiarioObra } from "@/services/diarioService";
+import { Separator } from "@/components/ui/separator";
 
 export default function DiarioObra() {
   const { userSession } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
-  const [descricao, setDescricao] = useState("");
   const [clima, setClima] = useState("");
   const [equipamentos, setEquipamentos] = useState("");
   const [maoDeObra, setMaoDeObra] = useState("");
   const [atividades, setAtividades] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [diarios, setDiarios] = useState<DiarioObra[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filterStartDate, setFilterStartDate] = useState<Date | undefined>();
+  const [filterEndDate, setFilterEndDate] = useState<Date | undefined>();
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    loadDiarios();
+  }, [userSession?.obraAtiva?.id, filterStartDate, filterEndDate]);
+
+  const loadDiarios = async () => {
+    if (!userSession?.obraAtiva?.id) return;
+
+    try {
+      setLoading(true);
+      const data = await diarioService.getByObra(
+        userSession.obraAtiva.id,
+        filterStartDate ? format(filterStartDate, "yyyy-MM-dd") : undefined,
+        filterEndDate ? format(filterEndDate, "yyyy-MM-dd") : undefined
+      );
+      setDiarios(data);
+    } catch (error) {
+      console.error("Error loading diarios:", error);
+      toast.error("Erro ao carregar diários");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Implement saving to database
-    toast.success("Registro do diário salvo com sucesso!");
-    
-    // Clear form
-    setDescricao("");
-    setClima("");
-    setEquipamentos("");
-    setMaoDeObra("");
-    setAtividades("");
-    setObservacoes("");
+    if (!userSession?.obraAtiva?.id || !userSession?.user?.id) {
+      toast.error("Selecione uma obra primeiro");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await diarioService.create({
+        obra_id: userSession.obraAtiva.id,
+        data: format(date, "yyyy-MM-dd"),
+        clima,
+        mao_de_obra: maoDeObra,
+        equipamentos,
+        atividades,
+        observacoes,
+        created_by: userSession.user.id,
+      });
+
+      toast.success("Registro do diário salvo com sucesso!");
+      
+      // Clear form
+      setClima("");
+      setEquipamentos("");
+      setMaoDeObra("");
+      setAtividades("");
+      setObservacoes("");
+      setDate(new Date());
+
+      // Reload diarios
+      loadDiarios();
+    } catch (error) {
+      console.error("Error saving diario:", error);
+      toast.error("Erro ao salvar diário");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Deseja realmente excluir este registro?")) return;
+
+    try {
+      await diarioService.delete(id);
+      toast.success("Registro excluído com sucesso");
+      loadDiarios();
+    } catch (error) {
+      console.error("Error deleting diario:", error);
+      toast.error("Erro ao excluir registro");
+    }
+  };
+
+  const clearFilters = () => {
+    setFilterStartDate(undefined);
+    setFilterEndDate(undefined);
   };
 
   return (
@@ -148,20 +221,20 @@ export default function DiarioObra() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button type="submit" className="flex-1">
+                  <Button type="submit" className="flex-1" disabled={loading}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Salvar Registro
+                    {loading ? "Salvando..." : "Salvar Registro"}
                   </Button>
                   <Button 
                     type="button" 
                     variant="outline"
                     onClick={() => {
-                      setDescricao("");
                       setClima("");
                       setEquipamentos("");
                       setMaoDeObra("");
                       setAtividades("");
                       setObservacoes("");
+                      setDate(new Date());
                     }}
                   >
                     Limpar
@@ -176,16 +249,138 @@ export default function DiarioObra() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Registros Recentes
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Registros
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Nenhum registro encontrado
-                </p>
+              {showFilters && (
+                <div className="space-y-3 mb-4 p-3 bg-muted rounded-lg">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Data Inicial</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !filterStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {filterStartDate ? format(filterStartDate, "dd/MM/yyyy") : "Selecionar"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={filterStartDate}
+                          onSelect={setFilterStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">Data Final</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !filterEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {filterEndDate ? format(filterEndDate, "dd/MM/yyyy") : "Selecionar"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={filterEndDate}
+                          onSelect={setFilterEndDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {(filterStartDate || filterEndDate) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={clearFilters}
+                    >
+                      Limpar Filtros
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {loading ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Carregando...
+                  </p>
+                ) : diarios.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Nenhum registro encontrado
+                  </p>
+                ) : (
+                  diarios.map((diario) => (
+                    <Card key={diario.id} className="p-3">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-sm">
+                            {format(new Date(diario.data), "dd/MM/yyyy", { locale: ptBR })}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(diario.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                        
+                        {diario.clima && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Clima</p>
+                            <p className="text-sm">{diario.clima}</p>
+                          </div>
+                        )}
+                        
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Atividades</p>
+                          <p className="text-sm line-clamp-3">{diario.atividades}</p>
+                        </div>
+
+                        {diario.observacoes && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Observações</p>
+                            <p className="text-sm line-clamp-2">{diario.observacoes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
