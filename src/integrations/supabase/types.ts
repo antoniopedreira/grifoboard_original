@@ -56,6 +56,44 @@ export type Database = {
         }
         Relationships: []
       }
+      diario_fotos: {
+        Row: {
+          criado_em: string
+          criado_por: string
+          data: string
+          id: string
+          legenda: string | null
+          obra_id: string
+          path: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por: string
+          data: string
+          id?: string
+          legenda?: string | null
+          obra_id: string
+          path: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string
+          data?: string
+          id?: string
+          legenda?: string | null
+          obra_id?: string
+          path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diario_fotos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diarios_obra: {
         Row: {
           atividades: string

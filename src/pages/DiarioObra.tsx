@@ -8,13 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CalendarIcon, Plus, FileText, Trash2, Filter, Eye } from "lucide-react";
+import { CalendarIcon, Plus, FileText, Trash2, Filter, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { diarioService, type DiarioObra } from "@/services/diarioService";
+import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhotoGallery } from "@/components/diario/PhotoGallery";
+import { PhotoUploader } from "@/components/diario/PhotoUploader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function DiarioObra() {
   const { userSession } = useAuth();
@@ -32,10 +37,23 @@ export default function DiarioObra() {
   const obraId = userSession?.obraAtiva?.id || undefined;
   const [selectedDiario, setSelectedDiario] = useState<DiarioObra | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  
+  // Estados para fotos
+  const [photoDate, setPhotoDate] = useState<Date>(new Date());
+  const [userFilter, setUserFilter] = useState<"todos" | string>("todos");
+  const [photos, setPhotos] = useState<DiarioFoto[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPhotos, setTotalPhotos] = useState(0);
+  const pageSize = 30;
 
   useEffect(() => {
     loadDiarios();
   }, [obraId, filterStartDate, filterEndDate]);
+
+  useEffect(() => {
+    loadPhotos();
+  }, [obraId, photoDate, userFilter, currentPage]);
 
   const loadDiarios = async () => {
     if (!obraId) return;
@@ -135,12 +153,78 @@ export default function DiarioObra() {
     setDetailsOpen(true);
   };
 
+  // Funções para fotos
+  const loadPhotos = async () => {
+    if (!obraId) {
+      setPhotos([]);
+      return;
+    }
+
+    try {
+      setPhotosLoading(true);
+      const isoDate = diarioFotosService.toISODateBahia(photoDate);
+      
+      const [photosData, count] = await Promise.all([
+        diarioFotosService.loadPhotos(obraId, isoDate, userFilter, currentPage, pageSize),
+        diarioFotosService.countPhotos(obraId, isoDate, userFilter),
+      ]);
+      
+      setPhotos(photosData);
+      setTotalPhotos(count);
+    } catch (error) {
+      console.error("Error loading photos:", error);
+      toast.error("Erro ao carregar fotos");
+    } finally {
+      setPhotosLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (files: File[], legenda?: string) => {
+    if (!obraId) {
+      toast.error("Selecione uma obra primeiro");
+      return;
+    }
+
+    const isoDate = diarioFotosService.toISODateBahia(photoDate);
+    await diarioFotosService.uploadDailyPhotos(obraId, isoDate, files, legenda);
+    
+    // Recarregar galeria
+    setCurrentPage(0);
+    await loadPhotos();
+  };
+
+  const handlePhotoDelete = async (id: string, path: string) => {
+    try {
+      await diarioFotosService.deletePhoto(id, path);
+      toast.success("Foto excluída com sucesso");
+      await loadPhotos();
+    } catch (error: any) {
+      console.error("Error deleting photo:", error);
+      toast.error(`Erro ao excluir foto: ${error?.message || "Erro desconhecido"}`);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Diário de Obra</h1>
-        <p className="text-gray-600">Registre todos os eventos e atividades do dia</p>
+        <p className="text-gray-600">Registre eventos, atividades e fotos do dia</p>
       </div>
+
+      <Tabs defaultValue="registro" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="registro">
+            <FileText className="h-4 w-4 mr-2" />
+            Registro Diário
+          </TabsTrigger>
+          <TabsTrigger value="fotos">
+            <ImageIcon className="h-4 w-4 mr-2" />
+            Fotos do Dia
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ABA DE REGISTRO DIÁRIO */}
+        <TabsContent value="registro" className="mt-6">
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Form Section */}
@@ -419,6 +503,151 @@ export default function DiarioObra() {
           </Card>
         </div>
       </div>
+        </TabsContent>
+
+        {/* ABA DE FOTOS */}
+        <TabsContent value="fotos" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Controles e Upload */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Filtros */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Filter className="h-5 w-5" />
+                    Filtros
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Seletor de Data */}
+                  <div className="space-y-2">
+                    <Label>Data das Fotos</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !photoDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {photoDate ? format(photoDate, "PPP", { locale: ptBR }) : "Selecione uma data"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={photoDate}
+                          onSelect={(date) => {
+                            if (date) {
+                              setPhotoDate(date);
+                              setCurrentPage(0);
+                            }
+                          }}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Filtro de Usuário */}
+                  <div className="space-y-2">
+                    <Label>Filtrar por Usuário</Label>
+                    <Select value={userFilter} onValueChange={(value) => {
+                      setUserFilter(value);
+                      setCurrentPage(0);
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos os usuários</SelectItem>
+                        <SelectItem value={userSession?.user?.id || ""}>
+                          Somente eu
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Info de resultados */}
+                  {totalPhotos > 0 && (
+                    <div className="pt-2 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        {totalPhotos} foto(s) encontrada(s)
+                      </p>
+                      {totalPhotos > pageSize && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Página {currentPage + 1} de {Math.ceil(totalPhotos / pageSize)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Upload de Fotos */}
+              <PhotoUploader
+                onUpload={handlePhotoUpload}
+                disabled={!obraId}
+              />
+            </div>
+
+            {/* Galeria de Fotos */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    Galeria - {format(photoDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </CardTitle>
+                  <CardDescription>
+                    {userFilter === "todos" ? "Todas as fotos" : "Apenas suas fotos"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!obraId ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">Selecione uma obra para ver as fotos</p>
+                    </div>
+                  ) : (
+                    <>
+                      <PhotoGallery
+                        photos={photos}
+                        currentUserId={userSession?.user?.id}
+                        onDelete={handlePhotoDelete}
+                        loading={photosLoading}
+                      />
+
+                      {/* Paginação */}
+                      {totalPhotos > pageSize && (
+                        <div className="flex justify-center gap-2 mt-6 pt-6 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage === 0}
+                            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                          >
+                            Anterior
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={(currentPage + 1) * pageSize >= totalPhotos}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                          >
+                            Próxima
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
