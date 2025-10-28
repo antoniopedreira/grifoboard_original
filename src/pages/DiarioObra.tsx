@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PhotoGallery } from "@/components/diario/PhotoGallery";
 import { PhotoUploader } from "@/components/diario/PhotoUploader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatISODateToBR, formatISODateToLongBR } from "@/lib/utils/formatters";
 
 export default function DiarioObra() {
   const { userSession } = useAuth();
@@ -487,7 +488,7 @@ export default function DiarioObra() {
                       <div className="flex items-center gap-3">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">
-                          Registro {format(new Date(diario.data), "dd/MM/yyyy")}
+                          Registro {formatISODateToBR(diario.data)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -676,7 +677,7 @@ export default function DiarioObra() {
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Registro - {selectedDiario && format(new Date(selectedDiario.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              Registro - {selectedDiario && formatISODateToLongBR(selectedDiario.data)}
             </DialogTitle>
           </DialogHeader>
 

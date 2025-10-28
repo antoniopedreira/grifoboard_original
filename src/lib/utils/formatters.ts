@@ -19,6 +19,29 @@ export const formatDateToBR = (date: Date): string => {
 };
 
 /**
+ * Formats an ISO date string (YYYY-MM-DD) to Brazilian format (DD/MM/YYYY)
+ * Avoids timezone issues by parsing the date components directly
+ */
+export const formatISODateToBR = (isoDate: string): string => {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+/**
+ * Formats an ISO date string (YYYY-MM-DD) to Brazilian long format (DD de MMMM de YYYY)
+ * Avoids timezone issues by parsing the date components directly
+ */
+export const formatISODateToLongBR = (isoDate: string): string => {
+  const [year, month, day] = isoDate.split('-');
+  const months = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+  ];
+  const monthName = months[parseInt(month) - 1];
+  return `${parseInt(day)} de ${monthName} de ${year}`;
+};
+
+/**
  * Formats percentage value with locale
  */
 export const formatPercentage = (value: number, decimals = 1): string => {
