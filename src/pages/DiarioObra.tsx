@@ -37,6 +37,8 @@ export default function DiarioObra() {
   const obraId = userSession?.obraAtiva?.id || undefined;
   const [selectedDiario, setSelectedDiario] = useState<DiarioObra | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedDiarioPhotos, setSelectedDiarioPhotos] = useState<DiarioFoto[]>([]);
+  const [selectedDiarioPhotosLoading, setSelectedDiarioPhotosLoading] = useState(false);
   
   // Estados para fotos
   const [photoDate, setPhotoDate] = useState<Date>(new Date());
@@ -148,9 +150,29 @@ export default function DiarioObra() {
     setFilterEndDate(undefined);
   };
 
-  const handleViewDetails = (diario: DiarioObra) => {
+  const handleViewDetails = async (diario: DiarioObra) => {
     setSelectedDiario(diario);
     setDetailsOpen(true);
+    
+    // Carregar fotos do dia
+    if (obraId) {
+      try {
+        setSelectedDiarioPhotosLoading(true);
+        const photosData = await diarioFotosService.loadPhotos(
+          obraId,
+          diario.data,
+          "todos", // Mostrar todas as fotos do dia
+          0,
+          100 // Carregar até 100 fotos
+        );
+        setSelectedDiarioPhotos(photosData);
+      } catch (error) {
+        console.error("Error loading photos for diario:", error);
+        setSelectedDiarioPhotos([]);
+      } finally {
+        setSelectedDiarioPhotosLoading(false);
+      }
+    }
   };
 
   // Funções para fotos
@@ -651,7 +673,7 @@ export default function DiarioObra() {
 
       {/* Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Registro - {selectedDiario && format(new Date(selectedDiario.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -659,47 +681,94 @@ export default function DiarioObra() {
           </DialogHeader>
 
           {selectedDiario && (
-            <div className="space-y-4">
-              {selectedDiario.clima && (
-                <div>
-                  <Label className="text-sm font-semibold">Condições Climáticas</Label>
-                  <p className="mt-1 text-sm text-muted-foreground">{selectedDiario.clima}</p>
-                </div>
-              )}
+            <div className="space-y-6">
+              {/* Informações Textuais */}
+              <div className="space-y-4">
+                {selectedDiario.clima && (
+                  <div>
+                    <Label className="text-sm font-semibold">Condições Climáticas</Label>
+                    <p className="mt-1 text-sm text-muted-foreground">{selectedDiario.clima}</p>
+                  </div>
+                )}
 
-              {selectedDiario.mao_de_obra && (
+                {selectedDiario.mao_de_obra && (
+                  <div>
+                    <Label className="text-sm font-semibold">Mão de Obra</Label>
+                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedDiario.mao_de_obra}
+                    </p>
+                  </div>
+                )}
+
+                {selectedDiario.equipamentos && (
+                  <div>
+                    <Label className="text-sm font-semibold">Equipamentos Utilizados</Label>
+                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedDiario.equipamentos}
+                    </p>
+                  </div>
+                )}
+
                 <div>
-                  <Label className="text-sm font-semibold">Mão de Obra</Label>
+                  <Label className="text-sm font-semibold">Atividades Realizadas</Label>
                   <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                    {selectedDiario.mao_de_obra}
+                    {selectedDiario.atividades}
                   </p>
                 </div>
-              )}
 
-              {selectedDiario.equipamentos && (
-                <div>
-                  <Label className="text-sm font-semibold">Equipamentos Utilizados</Label>
-                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                    {selectedDiario.equipamentos}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-sm font-semibold">Atividades Realizadas</Label>
-                <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                  {selectedDiario.atividades}
-                </p>
+                {selectedDiario.observacoes && (
+                  <div>
+                    <Label className="text-sm font-semibold">Observações e Ocorrências</Label>
+                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedDiario.observacoes}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {selectedDiario.observacoes && (
-                <div>
-                  <Label className="text-sm font-semibold">Observações e Ocorrências</Label>
-                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                    {selectedDiario.observacoes}
-                  </p>
+              {/* Fotos do Dia */}
+              <Separator />
+              
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <ImageIcon className="h-5 w-5" />
+                  <Label className="text-sm font-semibold">Fotos do Dia</Label>
+                  {!selectedDiarioPhotosLoading && selectedDiarioPhotos.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      ({selectedDiarioPhotos.length} foto{selectedDiarioPhotos.length !== 1 ? 's' : ''})
+                    </span>
+                  )}
                 </div>
-              )}
+                
+                {selectedDiarioPhotosLoading ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-muted-foreground">Carregando fotos...</p>
+                  </div>
+                ) : selectedDiarioPhotos.length === 0 ? (
+                  <div className="text-center py-8 bg-muted/30 rounded-lg">
+                    <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhuma foto neste dia</p>
+                  </div>
+                ) : (
+                  <PhotoGallery
+                    photos={selectedDiarioPhotos}
+                    currentUserId={userSession?.user?.id}
+                    onDelete={async (id, path) => {
+                      await handlePhotoDelete(id, path);
+                      // Recarregar fotos do modal
+                      const updatedPhotos = await diarioFotosService.loadPhotos(
+                        obraId!,
+                        selectedDiario.data,
+                        "todos",
+                        0,
+                        100
+                      );
+                      setSelectedDiarioPhotos(updatedPhotos);
+                    }}
+                    loading={false}
+                  />
+                )}
+              </div>
 
               <Separator />
 
