@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CalendarIcon, Plus, FileText, Trash2, Filter, Image as ImageIcon } from "lucide-react";
+import { CalendarIcon, Plus, FileText, Trash2, Filter, Image as ImageIcon, Pencil, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -40,6 +40,14 @@ export default function DiarioObra() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedDiarioPhotos, setSelectedDiarioPhotos] = useState<DiarioFoto[]>([]);
   const [selectedDiarioPhotosLoading, setSelectedDiarioPhotosLoading] = useState(false);
+  
+  // Estados para edição
+  const [isEditing, setIsEditing] = useState(false);
+  const [editClima, setEditClima] = useState("");
+  const [editMaoDeObra, setEditMaoDeObra] = useState("");
+  const [editEquipamentos, setEditEquipamentos] = useState("");
+  const [editAtividades, setEditAtividades] = useState("");
+  const [editObservacoes, setEditObservacoes] = useState("");
   
   // Estados para fotos
   const [photoDate, setPhotoDate] = useState<Date>(new Date());
@@ -154,6 +162,14 @@ export default function DiarioObra() {
   const handleViewDetails = async (diario: DiarioObra) => {
     setSelectedDiario(diario);
     setDetailsOpen(true);
+    setIsEditing(false);
+    
+    // Inicializar estados de edição
+    setEditClima(diario.clima || "");
+    setEditMaoDeObra(diario.mao_de_obra || "");
+    setEditEquipamentos(diario.equipamentos || "");
+    setEditAtividades(diario.atividades || "");
+    setEditObservacoes(diario.observacoes || "");
     
     // Carregar fotos do dia
     if (obraId) {
@@ -174,6 +190,53 @@ export default function DiarioObra() {
         setSelectedDiarioPhotosLoading(false);
       }
     }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedDiario) return;
+
+    try {
+      setLoading(true);
+      await diarioService.update(selectedDiario.id, {
+        clima: editClima,
+        mao_de_obra: editMaoDeObra,
+        equipamentos: editEquipamentos,
+        atividades: editAtividades,
+        observacoes: editObservacoes,
+      });
+
+      toast.success("Registro atualizado com sucesso!");
+      
+      // Atualizar o diário selecionado
+      setSelectedDiario({
+        ...selectedDiario,
+        clima: editClima,
+        mao_de_obra: editMaoDeObra,
+        equipamentos: editEquipamentos,
+        atividades: editAtividades,
+        observacoes: editObservacoes,
+      });
+      
+      setIsEditing(false);
+      loadDiarios();
+    } catch (error) {
+      console.error("Error updating diario:", error);
+      toast.error("Erro ao atualizar registro");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (!selectedDiario) return;
+    
+    // Restaurar valores originais
+    setEditClima(selectedDiario.clima || "");
+    setEditMaoDeObra(selectedDiario.mao_de_obra || "");
+    setEditEquipamentos(selectedDiario.equipamentos || "");
+    setEditAtividades(selectedDiario.atividades || "");
+    setEditObservacoes(selectedDiario.observacoes || "");
+    setIsEditing(false);
   };
 
   // Funções para fotos
@@ -673,56 +736,137 @@ export default function DiarioObra() {
       </Tabs>
 
       {/* Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+      <Dialog open={detailsOpen} onOpenChange={(open) => {
+        setDetailsOpen(open);
+        if (!open) setIsEditing(false);
+      }}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Registro - {selectedDiario && formatISODateToLongBR(selectedDiario.data)}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                Registro - {selectedDiario && formatISODateToLongBR(selectedDiario.data)}
+              </DialogTitle>
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              )}
+            </div>
           </DialogHeader>
 
           {selectedDiario && (
             <div className="space-y-6">
               {/* Informações Textuais */}
               <div className="space-y-4">
-                {selectedDiario.clima && (
-                  <div>
-                    <Label className="text-sm font-semibold">Condições Climáticas</Label>
-                    <p className="mt-1 text-sm text-muted-foreground">{selectedDiario.clima}</p>
-                  </div>
-                )}
-
-                {selectedDiario.mao_de_obra && (
-                  <div>
-                    <Label className="text-sm font-semibold">Mão de Obra</Label>
-                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                      {selectedDiario.mao_de_obra}
+                <div>
+                  <Label className="text-sm font-semibold">Condições Climáticas</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editClima}
+                      onChange={(e) => setEditClima(e.target.value)}
+                      placeholder="Ex: Ensolarado, Nublado, Chuvoso..."
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {selectedDiario.clima || "-"}
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {selectedDiario.equipamentos && (
-                  <div>
-                    <Label className="text-sm font-semibold">Equipamentos Utilizados</Label>
+                <div>
+                  <Label className="text-sm font-semibold">Mão de Obra</Label>
+                  {isEditing ? (
+                    <Textarea
+                      value={editMaoDeObra}
+                      onChange={(e) => setEditMaoDeObra(e.target.value)}
+                      placeholder="Descreva a quantidade e função dos trabalhadores presentes..."
+                      rows={3}
+                      className="mt-1"
+                    />
+                  ) : (
                     <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                      {selectedDiario.equipamentos}
+                      {selectedDiario.mao_de_obra || "-"}
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold">Equipamentos Utilizados</Label>
+                  {isEditing ? (
+                    <Textarea
+                      value={editEquipamentos}
+                      onChange={(e) => setEditEquipamentos(e.target.value)}
+                      placeholder="Liste os equipamentos e máquinas utilizados..."
+                      rows={3}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedDiario.equipamentos || "-"}
+                    </p>
+                  )}
+                </div>
 
                 <div>
                   <Label className="text-sm font-semibold">Atividades Realizadas</Label>
-                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                    {selectedDiario.atividades}
-                  </p>
+                  {isEditing ? (
+                    <Textarea
+                      value={editAtividades}
+                      onChange={(e) => setEditAtividades(e.target.value)}
+                      placeholder="Descreva as principais atividades executadas..."
+                      rows={4}
+                      className="mt-1"
+                      required
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedDiario.atividades}
+                    </p>
+                  )}
                 </div>
 
-                {selectedDiario.observacoes && (
-                  <div>
-                    <Label className="text-sm font-semibold">Observações e Ocorrências</Label>
+                <div>
+                  <Label className="text-sm font-semibold">Observações e Ocorrências</Label>
+                  {isEditing ? (
+                    <Textarea
+                      value={editObservacoes}
+                      onChange={(e) => setEditObservacoes(e.target.value)}
+                      placeholder="Registre qualquer observação importante, problemas, visitantes, entregas..."
+                      rows={4}
+                      className="mt-1"
+                    />
+                  ) : (
                     <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                      {selectedDiario.observacoes}
+                      {selectedDiario.observacoes || "-"}
                     </p>
+                  )}
+                </div>
+
+                {/* Botões de Edição */}
+                {isEditing && (
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={handleSaveEdit}
+                      disabled={loading || !editAtividades.trim()}
+                      className="flex-1"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      disabled={loading}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancelar
+                    </Button>
                   </div>
                 )}
               </div>
@@ -773,22 +917,24 @@ export default function DiarioObra() {
 
               <Separator />
 
-              <div className="flex justify-between items-center text-xs text-muted-foreground">
-                <span>
-                  Criado em: {format(new Date(selectedDiario.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    handleDelete(selectedDiario.id);
-                    setDetailsOpen(false);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir Registro
-                </Button>
-              </div>
+              {!isEditing && (
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                  <span>
+                    Criado em: {format(new Date(selectedDiario.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      handleDelete(selectedDiario.id);
+                      setDetailsOpen(false);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Registro
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
