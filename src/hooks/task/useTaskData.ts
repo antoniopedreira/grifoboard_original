@@ -44,10 +44,13 @@ export const useTaskData = (
       // Filter tasks for the current week
       const weekFilteredTasks = filterTasksByWeek(convertedTasks, weekStartDate);
       
-      setFilteredTasks(weekFilteredTasks);
+      // Ensure stable order by DB 'ordem' when no custom sort is applied
+      const orderedWeekTasks = [...weekFilteredTasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      
+      setFilteredTasks(orderedWeekTasks);
       
       // Calcular dados do PCP para o gráfico semanal com as tarefas filtradas
-      calculatePCPData(weekFilteredTasks);
+      calculatePCPData(orderedWeekTasks);
       
       // Execute callback if provided
       if (callback) callback();

@@ -30,6 +30,7 @@ export interface Tarefa {
   dom: string;
   percentual_executado: number;
   causa_nao_execucao?: string;
+  ordem?: number;
   created_at: string;
 }
 

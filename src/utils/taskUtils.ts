@@ -22,6 +22,7 @@ export const convertTarefaToTask = (tarefa: Tarefa): Task => {
     team: tarefa.executante,
     responsible: tarefa.responsavel,
     executor: tarefa.encarregado,
+    order: tarefa.ordem ?? 0,
     // Convert daily status fields to plannedDays array
     plannedDays: [],
     dailyStatus: [], 

@@ -42,4 +42,5 @@ export interface Task {
   isFullyCompleted: boolean;
   causeIfNotDone?: string;
   weekStartDate?: Date;
+  order?: number;
 }
