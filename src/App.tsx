@@ -11,6 +11,7 @@ import Index from "@/pages/Index";
 import Obras from "@/pages/Obras";
 import DiarioObra from "@/pages/DiarioObra";
 import NotFound from "@/pages/NotFound";
+import MasterAdmin from "@/pages/MasterAdmin";
 import { useEffect } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,7 +31,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/auth' || location.pathname === '/reset-password';
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
-  const isMasterAdminPage = location.pathname === '/master-admin';
 
   return (
     <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-gray-50' : ''} font-sans`}>
@@ -77,8 +77,6 @@ const RouteRestorer = () => {
 
   return null;
 };
-
-import MasterAdmin from "@/pages/MasterAdmin";
 
 function App() {
   const handleObraSelect = (obra: Obra) => {
