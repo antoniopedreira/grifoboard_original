@@ -44,12 +44,17 @@ interface FormSubmission {
 interface FormSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  submission: FormSubmission;
+  submission: FormSubmission | null;
 }
 
 export function FormSubmissionModal({ isOpen, onClose, submission }: FormSubmissionModalProps) {
   const { toast } = useToast();
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
+
+  // Se não há submission, não renderiza o modal
+  if (!submission) {
+    return null;
+  }
 
   const getTipoIcon = () => {
     switch (submission.tipo) {
