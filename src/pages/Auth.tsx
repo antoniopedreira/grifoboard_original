@@ -9,22 +9,24 @@ const Auth = () => {
   const { userSession, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [hasChecked, setHasChecked] = useState(false);
+  const [isCheckingRole, setIsCheckingRole] = useState(false);
 
   useEffect(() => {
-    const checkUserRole = async () => {
+    const checkAndRedirect = async () => {
       // Check for auth redirects first
       if (handleAuthRedirect()) {
         return;
       }
       
-      // Only check once when user becomes authenticated and we're on auth page
-      if (!isLoading && userSession.user && location.pathname === '/auth' && !hasChecked) {
-        setHasChecked(true);
+      // Only proceed if user is authenticated, not loading, on auth page, and not already checking
+      if (!isLoading && userSession.user && location.pathname === '/auth' && !isCheckingRole) {
+        setIsCheckingRole(true);
         
         try {
+          // Check role BEFORE any navigation
           const isMasterAdmin = await masterAdminService.isMasterAdmin();
           
+          // Navigate directly to the correct page based on role
           if (isMasterAdmin) {
             navigate('/master-admin', { replace: true });
           } else {
@@ -32,18 +34,19 @@ const Auth = () => {
           }
         } catch (error) {
           console.error('Error checking user role:', error);
+          // On error, default to obras
           navigate('/obras', { replace: true });
         }
       }
     };
 
-    checkUserRole();
-  }, [isLoading, userSession.user, location.pathname, navigate, hasChecked]);
+    checkAndRedirect();
+  }, [isLoading, userSession.user, location.pathname, navigate, isCheckingRole]);
 
-  // Reset hasChecked when user logs out
+  // Reset checking state when user logs out
   useEffect(() => {
     if (!userSession.user) {
-      setHasChecked(false);
+      setIsCheckingRole(false);
     }
   }, [userSession.user]);
 
