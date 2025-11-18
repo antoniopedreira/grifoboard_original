@@ -12,6 +12,7 @@ import {
   LogOut,
   Building2,
   FileSpreadsheet,
+  Database,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useState } from "react"
@@ -178,6 +179,27 @@ export function SessionNavBar() {
                             className="overflow-hidden text-ellipsis whitespace-nowrap text-sm"
                           >
                             Formulários
+                          </motion.span>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
+                          location.pathname === '/base-de-dados' && "bg-brand-2 text-text-on-dark"
+                        )}
+                        onClick={() => navigate("/base-de-dados")}
+                      >
+                        <Database className={cn("h-4 w-4 shrink-0", !isCollapsed && "mr-3")} />
+                        {!isCollapsed && (
+                          <motion.span
+                            variants={variants}
+                            initial="closed"
+                            animate="open"
+                            className="overflow-hidden text-ellipsis whitespace-nowrap text-sm"
+                          >
+                            Base de Dados
                           </motion.span>
                         )}
                       </Button>
