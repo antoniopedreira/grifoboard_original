@@ -387,11 +387,13 @@ const BaseDeDados = () => {
         </CardContent>
       </Card>
 
-      <FormSubmissionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        submission={selectedSubmission!}
-      />
+      {selectedSubmission && (
+        <FormSubmissionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          submission={selectedSubmission}
+        />
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
