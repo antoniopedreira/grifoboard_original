@@ -10,6 +10,7 @@ import {
   CheckSquare,
   FileText,
   LogOut,
+  Building2,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useState } from "react"
@@ -71,11 +72,30 @@ const staggerVariants = {
 
 export function SessionNavBar() {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isMasterAdmin, setIsMasterAdmin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { userSession, signOut } = useAuth();
   
+  // Check if user is master_admin
+  React.useEffect(() => {
+    const checkMasterAdmin = async () => {
+      if (userSession?.user) {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data } = await supabase.rpc('is_master_admin');
+          setIsMasterAdmin(data || false);
+        } catch (error) {
+          console.error('Error checking master admin status:', error);
+          setIsMasterAdmin(false);
+        }
+      }
+    };
+    checkMasterAdmin();
+  }, [userSession?.user]);
+  
   // Check the current path to determine active tab
+  const isMasterAdminActive = location.pathname.includes("/master-admin");
   const isDashboardActive = location.pathname.includes("/dashboard");
   const isTasksActive = location.pathname.includes("/tarefas");
   const isDiarioActive = location.pathname.includes("/diarioobra");
@@ -84,14 +104,118 @@ export function SessionNavBar() {
   // Extract the first letter for the avatar fallback
   const userInitial = userSession?.user?.email?.charAt(0).toUpperCase() || "U";
   
-  // If there's no user or active obra, don't show the sidebar
-  if (!userSession?.user || !userSession.obraAtiva) {
-    return null;
-  }
-  
+  // Sign out handler
   const handleSignOut = async () => {
     await signOut();
   };
+  
+  // If there's no user, don't show the sidebar
+  if (!userSession?.user) {
+    return null;
+  }
+  
+  // Master admin has different sidebar - no obra required
+  if (isMasterAdmin) {
+    return (
+      <motion.div
+        className={cn(
+          "sidebar fixed left-0 z-30 h-[calc(100vh-65px)] shrink-0 border-r top-[65px]",
+        )}
+        initial={isCollapsed ? "closed" : "open"}
+        animate={isCollapsed ? "closed" : "open"}
+        variants={sidebarVariants}
+        transition={transitionProps}
+        onMouseEnter={() => setIsCollapsed(false)}
+        onMouseLeave={() => setIsCollapsed(true)}
+      >
+        <motion.div
+          className={`relative z-30 flex text-muted-on-dark h-full shrink-0 flex-col bg-brand transition-all`}
+          variants={contentVariants}
+        >
+          <motion.ul variants={staggerVariants} className="flex h-full flex-col">
+            <div className="flex grow flex-col items-center">
+              <div className="flex h-full w-full flex-col">
+                <div className="flex grow flex-col gap-4">
+                  <ScrollArea className="h-16 grow p-2">
+                    <div className={cn("flex w-full flex-col gap-1 pt-10")}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
+                          isMasterAdminActive && "bg-brand-2 text-text-on-dark"
+                        )}
+                        onClick={() => navigate("/master-admin")}
+                      >
+                        <Building2 className={cn("h-4 w-4 shrink-0", !isCollapsed && "mr-3")} />
+                        {!isCollapsed && (
+                          <motion.span
+                            variants={variants}
+                            initial="closed"
+                            animate="open"
+                            className="overflow-hidden text-ellipsis whitespace-nowrap text-sm"
+                          >
+                            Empresas
+                          </motion.span>
+                        )}
+                      </Button>
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                <Separator className="bg-brand-2/30" />
+
+                <div className="flex flex-col gap-2 pb-4 pt-4">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start mx-2",
+                          !isCollapsed && "w-[calc(100%-1rem)]"
+                        )}
+                      >
+                        <Avatar className="h-7 w-7 shrink-0">
+                          <AvatarFallback className="bg-brand-3 text-text-on-dark text-sm">
+                            {userInitial}
+                          </AvatarFallback>
+                        </Avatar>
+                        {!isCollapsed && (
+                          <motion.div
+                            variants={variants}
+                            initial="closed"
+                            animate="open"
+                            className="ml-3 flex flex-col items-start overflow-hidden"
+                          >
+                            <span className="text-sm font-medium text-text-on-dark truncate w-full">
+                              Master Admin
+                            </span>
+                            <span className="text-xs text-text-on-dark/60 truncate w-full">
+                              {userSession?.user?.email}
+                            </span>
+                          </motion.div>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={handleSignOut}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Sair</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
+          </motion.ul>
+        </motion.div>
+      </motion.div>
+    );
+  }
+  
+  // Regular users need an active obra
+  if (!userSession.obraAtiva) {
+    return null;
+  }
 
   return (
     <motion.div
