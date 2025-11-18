@@ -512,6 +512,80 @@ const FormFornecedores = () => {
           </div>
         </div>
 
+        {/* 6. Documentos e Portfólio */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground border-b pb-2">6. Documentos e Portfólio</h2>
+          
+          <div>
+            <Label htmlFor="logo">Logo/foto da empresa (opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG (máx. 5MB)</p>
+            <Input 
+              id="logo" 
+              type="file" 
+              accept=".jpg,.jpeg,.png"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (file.size > 5 * 1024 * 1024) {
+                    toast.error("Arquivo muito grande. Tamanho máximo: 5MB");
+                    e.target.value = '';
+                    return;
+                  }
+                  setLogoFile(file);
+                }
+              }}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="portfolio">Portfólio de produtos ou serviços (opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, JPG, PNG (máx. 5MB por arquivo)</p>
+            <Input 
+              id="portfolio" 
+              type="file" 
+              accept=".pdf,.jpg,.jpeg,.png"
+              multiple
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files) {
+                  for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > 5 * 1024 * 1024) {
+                      toast.error(`Arquivo ${files[i].name} muito grande. Tamanho máximo: 5MB`);
+                      e.target.value = '';
+                      return;
+                    }
+                  }
+                  setPortfolioFiles(files);
+                }
+              }}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="certificacoes">Certificações / alvarás (opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, JPG, PNG (máx. 5MB por arquivo)</p>
+            <Input 
+              id="certificacoes" 
+              type="file" 
+              accept=".pdf,.jpg,.jpeg,.png"
+              multiple
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files) {
+                  for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > 5 * 1024 * 1024) {
+                      toast.error(`Arquivo ${files[i].name} muito grande. Tamanho máximo: 5MB`);
+                      e.target.value = '';
+                      return;
+                    }
+                  }
+                  setCertificacoesFiles(files);
+                }
+              }}
+            />
+          </div>
+        </div>
+
         {/* 7. Contato Comercial */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-foreground border-b pb-2">7. Contato Comercial</h2>

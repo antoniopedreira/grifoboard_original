@@ -423,13 +423,76 @@ const FormProfissionais = () => {
 
         {/* 7. Documentos e Portfólio */}
         <div className="space-y-4">
-          <FormSectionHeader label="7. Documentos e Portfólio" description="(Uploads de arquivos serão habilitados em breve)" />
+          <FormSectionHeader label="7. Documentos e Portfólio" />
           
-          <p className="text-sm text-muted-foreground italic">
-            • Currículo (opcional)<br />
-            • Fotos de trabalhos realizados (opcional)<br />
-            • Certificações / cursos (opcional)
-          </p>
+          <div>
+            <Label htmlFor="curriculo">Currículo (opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, DOCX (máx. 5MB)</p>
+            <Input 
+              id="curriculo" 
+              type="file" 
+              accept=".pdf,.docx"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (file.size > 5 * 1024 * 1024) {
+                    toast.error("Arquivo muito grande. Tamanho máximo: 5MB");
+                    e.target.value = '';
+                    return;
+                  }
+                  setCurriculoFile(file);
+                }
+              }}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="fotos">Fotos de trabalhos realizados (opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG (máx. 5MB por foto)</p>
+            <Input 
+              id="fotos" 
+              type="file" 
+              accept=".jpg,.jpeg,.png"
+              multiple
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files) {
+                  for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > 5 * 1024 * 1024) {
+                      toast.error(`Arquivo ${files[i].name} muito grande. Tamanho máximo: 5MB`);
+                      e.target.value = '';
+                      return;
+                    }
+                  }
+                  setFotosFiles(files);
+                }
+              }}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="certificacoes">Certificações / cursos (opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, JPG, PNG (máx. 5MB por arquivo)</p>
+            <Input 
+              id="certificacoes" 
+              type="file" 
+              accept=".pdf,.jpg,.jpeg,.png"
+              multiple
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files) {
+                  for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > 5 * 1024 * 1024) {
+                      toast.error(`Arquivo ${files[i].name} muito grande. Tamanho máximo: 5MB`);
+                      e.target.value = '';
+                      return;
+                    }
+                  }
+                  setCertificacoesFiles(files);
+                }
+              }}
+            />
+          </div>
         </div>
 
         {/* 8. Contato */}
