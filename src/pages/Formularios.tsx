@@ -16,19 +16,19 @@ const formularios: FormularioCard[] = [
     id: 'profissionais',
     titulo: 'Profissionais',
     descricao: 'Formulário de cadastro para profissionais',
-    url: 'https://grifocrm.com.br/form/profissionais'
+    url: 'https://grifoboard.com/form/profissionais'
   },
   {
     id: 'empresas',
     titulo: 'Empresas',
     descricao: 'Formulário de cadastro para empresas',
-    url: 'https://grifocrm.com.br/form/empresas'
+    url: 'https://grifoboard.com/form/empresas'
   },
   {
     id: 'fornecedores',
     titulo: 'Fornecedores',
     descricao: 'Formulário de cadastro para fornecedores',
-    url: 'https://grifocrm.com.br/form/fornecedores'
+    url: 'https://grifoboard.com/form/fornecedores'
   }
 ];
 
