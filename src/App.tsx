@@ -93,32 +93,39 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RegistryProvider>
-          <Router>
-            <RouteRestorer />
-            <AppLayout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/obras" replace />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
-                <Route path="/master-admin" element={<MasterAdmin />} />
-                <Route path="/formularios" element={<Formularios />} />
-                <Route path="/form/profissionais" element={<FormProfissionais />} />
-                <Route path="/form/empresas" element={<FormEmpresas />} />
-                <Route path="/form/fornecedores" element={<FormFornecedores />} />
-                <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
-                <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
-                <Route path="/diarioobra" element={<DiarioObra />} />
-                <Route path="/checklist" element={<Index onObraSelect={handleObraSelect} />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppLayout>
-          </Router>
-          <Toaster />
-        </RegistryProvider>
-      </AuthProvider>
+      <Router>
+        <Routes>
+          {/* Rotas públicas - SEM AuthProvider */}
+          <Route path="/form/profissionais" element={<FormProfissionais />} />
+          <Route path="/form/empresas" element={<FormEmpresas />} />
+          <Route path="/form/fornecedores" element={<FormFornecedores />} />
+          
+          {/* Rotas privadas - COM AuthProvider */}
+          <Route path="/*" element={
+            <AuthProvider>
+              <RegistryProvider>
+                <RouteRestorer />
+                <AppLayout>
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/obras" replace />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                    <Route path="/master-admin" element={<MasterAdmin />} />
+                    <Route path="/formularios" element={<Formularios />} />
+                    <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
+                    <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
+                    <Route path="/diarioobra" element={<DiarioObra />} />
+                    <Route path="/checklist" element={<Index onObraSelect={handleObraSelect} />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </AppLayout>
+              </RegistryProvider>
+            </AuthProvider>
+          } />
+        </Routes>
+        <Toaster />
+      </Router>
     </QueryClientProvider>
   );
 }
