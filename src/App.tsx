@@ -12,6 +12,7 @@ import Obras from "@/pages/Obras";
 import DiarioObra from "@/pages/DiarioObra";
 import NotFound from "@/pages/NotFound";
 import MasterAdmin from "@/pages/MasterAdmin";
+import Formularios from "@/pages/Formularios";
 import { useEffect } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -96,6 +97,7 @@ function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                 <Route path="/master-admin" element={<MasterAdmin />} />
+                <Route path="/formularios" element={<Formularios />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/diarioobra" element={<DiarioObra />} />

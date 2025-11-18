@@ -11,6 +11,7 @@ import {
   FileText,
   LogOut,
   Building2,
+  FileSpreadsheet,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useState } from "react"
@@ -95,7 +96,8 @@ export function SessionNavBar() {
   }, [userSession?.user]);
   
   // Check the current path to determine active tab
-  const isMasterAdminActive = location.pathname.includes("/master-admin");
+  const isMasterAdminActive = location.pathname === "/master-admin";
+  const isFormulariosActive = location.pathname.includes("/formularios");
   const isDashboardActive = location.pathname.includes("/dashboard");
   const isTasksActive = location.pathname.includes("/tarefas");
   const isDiarioActive = location.pathname.includes("/diarioobra");
@@ -155,6 +157,27 @@ export function SessionNavBar() {
                             className="overflow-hidden text-ellipsis whitespace-nowrap text-sm"
                           >
                             Empresas
+                          </motion.span>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "flex h-[46px] w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-brand-2 text-text-on-dark/80 hover:text-text-on-dark justify-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent relative",
+                          isFormulariosActive && "bg-brand-2 text-text-on-dark"
+                        )}
+                        onClick={() => navigate("/formularios")}
+                      >
+                        <FileSpreadsheet className={cn("h-4 w-4 shrink-0", !isCollapsed && "mr-3")} />
+                        {!isCollapsed && (
+                          <motion.span
+                            variants={variants}
+                            initial="closed"
+                            animate="open"
+                            className="overflow-hidden text-ellipsis whitespace-nowrap text-sm"
+                          >
+                            Formulários
                           </motion.span>
                         )}
                       </Button>
