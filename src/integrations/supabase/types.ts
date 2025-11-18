@@ -162,6 +162,87 @@ export type Database = {
         }
         Relationships: []
       }
+      formulario_fornecedores: {
+        Row: {
+          capacidade_atendimento: string
+          categorias_atendidas: string[]
+          categorias_outro: string | null
+          certificacoes_path: string | null
+          cidade: string
+          cidades_frequentes: string | null
+          cnpj_cpf: string
+          created_at: string | null
+          diferenciais: string[]
+          diferenciais_outro: string | null
+          email: string
+          estado: string
+          id: string
+          logo_path: string | null
+          nome_empresa: string
+          nome_responsavel: string
+          portfolio_path: string | null
+          regioes_atendidas: string[]
+          site: string | null
+          telefone: string
+          tempo_atuacao: string
+          ticket_medio: string
+          tipo_atuacao_outro: string | null
+          tipos_atuacao: string[]
+        }
+        Insert: {
+          capacidade_atendimento: string
+          categorias_atendidas: string[]
+          categorias_outro?: string | null
+          certificacoes_path?: string | null
+          cidade: string
+          cidades_frequentes?: string | null
+          cnpj_cpf: string
+          created_at?: string | null
+          diferenciais: string[]
+          diferenciais_outro?: string | null
+          email: string
+          estado: string
+          id?: string
+          logo_path?: string | null
+          nome_empresa: string
+          nome_responsavel: string
+          portfolio_path?: string | null
+          regioes_atendidas: string[]
+          site?: string | null
+          telefone: string
+          tempo_atuacao: string
+          ticket_medio: string
+          tipo_atuacao_outro?: string | null
+          tipos_atuacao: string[]
+        }
+        Update: {
+          capacidade_atendimento?: string
+          categorias_atendidas?: string[]
+          categorias_outro?: string | null
+          certificacoes_path?: string | null
+          cidade?: string
+          cidades_frequentes?: string | null
+          cnpj_cpf?: string
+          created_at?: string | null
+          diferenciais?: string[]
+          diferenciais_outro?: string | null
+          email?: string
+          estado?: string
+          id?: string
+          logo_path?: string | null
+          nome_empresa?: string
+          nome_responsavel?: string
+          portfolio_path?: string | null
+          regioes_atendidas?: string[]
+          site?: string | null
+          telefone?: string
+          tempo_atuacao?: string
+          ticket_medio?: string
+          tipo_atuacao_outro?: string | null
+          tipos_atuacao?: string[]
+        }
+        Relationships: []
+      }
       materiais_tarefa: {
         Row: {
           created_at: string
