@@ -162,6 +162,84 @@ export type Database = {
         }
         Relationships: []
       }
+      formulario_empresas: {
+        Row: {
+          ano_fundacao: string
+          apresentacao_path: string | null
+          cargo_contato: string
+          cidade: string
+          cnpj: string
+          created_at: string | null
+          desafios_outro: string | null
+          email_contato: string
+          estado: string
+          ferramentas_gestao: string | null
+          id: string
+          logo_path: string | null
+          nome_contato: string
+          nome_empresa: string
+          obras_andamento: string
+          planejamento_curto_prazo: string
+          principais_desafios: string[]
+          site: string | null
+          tamanho_empresa: string
+          ticket_medio: string
+          tipos_obras: string[]
+          tipos_obras_outro: string | null
+          whatsapp_contato: string
+        }
+        Insert: {
+          ano_fundacao: string
+          apresentacao_path?: string | null
+          cargo_contato: string
+          cidade: string
+          cnpj: string
+          created_at?: string | null
+          desafios_outro?: string | null
+          email_contato: string
+          estado: string
+          ferramentas_gestao?: string | null
+          id?: string
+          logo_path?: string | null
+          nome_contato: string
+          nome_empresa: string
+          obras_andamento: string
+          planejamento_curto_prazo: string
+          principais_desafios: string[]
+          site?: string | null
+          tamanho_empresa: string
+          ticket_medio: string
+          tipos_obras: string[]
+          tipos_obras_outro?: string | null
+          whatsapp_contato: string
+        }
+        Update: {
+          ano_fundacao?: string
+          apresentacao_path?: string | null
+          cargo_contato?: string
+          cidade?: string
+          cnpj?: string
+          created_at?: string | null
+          desafios_outro?: string | null
+          email_contato?: string
+          estado?: string
+          ferramentas_gestao?: string | null
+          id?: string
+          logo_path?: string | null
+          nome_contato?: string
+          nome_empresa?: string
+          obras_andamento?: string
+          planejamento_curto_prazo?: string
+          principais_desafios?: string[]
+          site?: string | null
+          tamanho_empresa?: string
+          ticket_medio?: string
+          tipos_obras?: string[]
+          tipos_obras_outro?: string | null
+          whatsapp_contato?: string
+        }
+        Relationships: []
+      }
       formulario_fornecedores: {
         Row: {
           capacidade_atendimento: string
