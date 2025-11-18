@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import FormSectionHeader from "@/components/task-form/FormSectionHeader";
+import { SuccessModal } from "@/components/SuccessModal";
 const ESTADOS_BRASILEIROS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
 const FUNCOES_PRINCIPAIS = ["Engenheiro", "Técnico de construção", "Mestre de obras", "Pedreiro", "Carpinteiro", "Eletricista", "Encanador", "Pintor", "Gesseiro", "Serralheiro", "Servente", "Arquiteto", "Outro"];
 const ESPECIALIDADES = ["Estrutura", "Alvenaria", "Acabamento", "Hidráulica", "Elétrica", "Drywall", "Pintura", "Revestimentos", "Impermeabilização", "Demolição", "Outra"];
