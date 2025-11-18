@@ -407,7 +407,19 @@ export type Database = {
     }
     Functions: {
       current_empresa_id: { Args: never; Returns: string }
+      get_empresas_stats: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          nome: string
+          total_obras: number
+          total_usuarios: number
+          ultimo_login: string
+        }[]
+      }
       is_company_admin: { Args: never; Returns: boolean }
+      is_master_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       user_role: "admin" | "member" | "master_admin"

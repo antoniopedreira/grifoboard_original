@@ -30,6 +30,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/auth' || location.pathname === '/reset-password';
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
+  const isMasterAdminPage = location.pathname === '/master-admin';
 
   return (
     <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-gray-50' : ''} font-sans`}>
@@ -77,6 +78,8 @@ const RouteRestorer = () => {
   return null;
 };
 
+import MasterAdmin from "@/pages/MasterAdmin";
+
 function App() {
   const handleObraSelect = (obra: Obra) => {
     // no-op; selection handled within pages/contexts
@@ -94,6 +97,7 @@ function App() {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                <Route path="/master-admin" element={<MasterAdmin />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/diarioobra" element={<DiarioObra />} />
