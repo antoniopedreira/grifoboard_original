@@ -1,47 +1,76 @@
-import { useState, FormEvent } from 'react';
-import FormTemplate from './FormTemplate';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
+import { useState, FormEvent } from "react";
+import FormTemplate from "./FormTemplate";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
+import { Loader2 } from "lucide-react";
 
 const ESTADOS_BR = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
 ];
 
 const FormFornecedores = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  
-  const [nomeEmpresa, setNomeEmpresa] = useState('');
-  const [cnpjCpf, setCnpjCpf] = useState('');
-  const [site, setSite] = useState('');
-  const [cidade, setCidade] = useState('');
-  const [estado, setEstado] = useState('');
-  const [tempoAtuacao, setTempoAtuacao] = useState('');
-  const [tiposAtuacao, setTiposAtuacao] = useState<string[]>([]);
-  const [tipoAtuacaoOutro, setTipoAtuacaoOutro] = useState('');
-  const [categoriasAtendidas, setCategoriasAtendidas] = useState<string[]>([]);
-  const [categoriasOutro, setCategoriasOutro] = useState('');
-  const [ticketMedio, setTicketMedio] = useState('');
-  const [capacidadeAtendimento, setCapacidadeAtendimento] = useState('');
-  const [regioesAtendidas, setRegioesAtendidas] = useState<string[]>([]);
-  const [cidadesFrequentes, setCidadesFrequentes] = useState('');
-  const [diferenciais, setDiferenciais] = useState<string[]>([]);
-  const [diferenciaisOutro, setDiferenciaisOutro] = useState('');
-  const [nomeResponsavel, setNomeResponsavel] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [email, setEmail] = useState('');
 
-  const handleCheckboxChange = (value: string, currentValues: string[], setter: (values: string[]) => void, max?: number) => {
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [cnpjCpf, setCnpjCpf] = useState("");
+  const [site, setSite] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
+  const [tempoAtuacao, setTempoAtuacao] = useState("");
+  const [tiposAtuacao, setTiposAtuacao] = useState<string[]>([]);
+  const [tipoAtuacaoOutro, setTipoAtuacaoOutro] = useState("");
+  const [categoriasAtendidas, setCategoriasAtendidas] = useState<string[]>([]);
+  const [categoriasOutro, setCategoriasOutro] = useState("");
+  const [ticketMedio, setTicketMedio] = useState("");
+  const [capacidadeAtendimento, setCapacidadeAtendimento] = useState("");
+  const [regioesAtendidas, setRegioesAtendidas] = useState<string[]>([]);
+  const [cidadesFrequentes, setCidadesFrequentes] = useState("");
+  const [diferenciais, setDiferenciais] = useState<string[]>([]);
+  const [diferenciaisOutro, setDiferenciaisOutro] = useState("");
+  const [nomeResponsavel, setNomeResponsavel] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [email, setEmail] = useState("");
+
+  const handleCheckboxChange = (
+    value: string,
+    currentValues: string[],
+    setter: (values: string[]) => void,
+    max?: number,
+  ) => {
     if (currentValues.includes(value)) {
-      setter(currentValues.filter(v => v !== value));
+      setter(currentValues.filter((v) => v !== value));
     } else {
       if (!max || currentValues.length < max) {
         setter([...currentValues, value]);
@@ -52,9 +81,9 @@ const FormFornecedores = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      const { error } = await supabase.from('formulario_fornecedores').insert({
+      const { error } = await supabase.from("formulario_fornecedores").insert({
         nome_empresa: nomeEmpresa,
         cnpj_cpf: cnpjCpf,
         site: site || null,
@@ -81,8 +110,8 @@ const FormFornecedores = () => {
       setSubmitted(true);
       window.scrollTo(0, 0);
     } catch (error) {
-      console.error('Erro ao enviar formulário:', error);
-      alert('Erro ao enviar formulário. Tente novamente mais tarde.');
+      console.error("Erro ao enviar formulário:", error);
+      alert("Erro ao enviar formulário. Tente novamente mais tarde.");
     } finally {
       setIsSubmitting(false);
     }
@@ -91,16 +120,12 @@ const FormFornecedores = () => {
   if (submitted) {
     return (
       <FormTemplate
-        title="GRIFO BUILDERS CLUB"
+        title="GRIFOBOARD MARKETPLACE"
         subtitle="Formulário de cadastro para fornecedores / distribuidores / lojas"
       >
         <div className="text-center py-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            Formulário enviado com sucesso!
-          </h2>
-          <p className="text-muted-foreground">
-            Obrigado por se cadastrar. Entraremos em contato em breve.
-          </p>
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Formulário enviado com sucesso!</h2>
+          <p className="text-muted-foreground">Obrigado por se cadastrar. Entraremos em contato em breve.</p>
         </div>
       </FormTemplate>
     );
@@ -108,32 +133,30 @@ const FormFornecedores = () => {
 
   return (
     <FormTemplate
-      title="GRIFO BUILDERS CLUB"
+      title="GRIFOBOARD MARKETPLACE"
       subtitle="Formulário de cadastro para fornecedores / distribuidores / lojas"
     >
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* 1. Informações da Empresa */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground border-b pb-2">
-            1. Informações da Empresa / Prestador
-          </h2>
-          
+          <h2 className="text-xl font-semibold text-foreground border-b pb-2">1. Informações da Empresa / Prestador</h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="nomeEmpresa">Nome da empresa ou nome completo (MEI / autônomo) *</Label>
-              <Input 
-                id="nomeEmpresa" 
+              <Input
+                id="nomeEmpresa"
                 value={nomeEmpresa}
                 onChange={(e) => setNomeEmpresa(e.target.value)}
                 placeholder="Nome da empresa"
                 required
               />
             </div>
-            
+
             <div>
               <Label htmlFor="cnpjCpf">CNPJ ou CPF *</Label>
-              <Input 
-                id="cnpjCpf" 
+              <Input
+                id="cnpjCpf"
                 value={cnpjCpf}
                 onChange={(e) => setCnpjCpf(e.target.value)}
                 placeholder="00.000.000/0000-00"
@@ -144,8 +167,8 @@ const FormFornecedores = () => {
 
           <div>
             <Label htmlFor="site">Site / Portfólio (opcional)</Label>
-            <Input 
-              id="site" 
+            <Input
+              id="site"
               value={site}
               onChange={(e) => setSite(e.target.value)}
               placeholder="https://..."
@@ -156,15 +179,15 @@ const FormFornecedores = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="cidade">Cidade *</Label>
-              <Input 
-                id="cidade" 
+              <Input
+                id="cidade"
                 value={cidade}
                 onChange={(e) => setCidade(e.target.value)}
                 placeholder="Nome da cidade"
                 required
               />
             </div>
-            
+
             <div>
               <Label htmlFor="estado">Estado *</Label>
               <Select value={estado} onValueChange={setEstado} required>
@@ -172,8 +195,10 @@ const FormFornecedores = () => {
                   <SelectValue placeholder="Selecione o estado" />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50">
-                  {ESTADOS_BR.map(e => (
-                    <SelectItem key={e} value={e}>{e}</SelectItem>
+                  {ESTADOS_BR.map((e) => (
+                    <SelectItem key={e} value={e}>
+                      {e}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -198,20 +223,18 @@ const FormFornecedores = () => {
 
         {/* 2. Tipo de Atuação */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground border-b pb-2">
-            2. Tipo de Atuação
-          </h2>
-          
+          <h2 className="text-xl font-semibold text-foreground border-b pb-2">2. Tipo de Atuação</h2>
+
           <div>
             <Label>Você é: (múltipla escolha) *</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
               {[
-                'Loja de materiais de construção',
-                'Distribuidor',
-                'Fabricante',
-                'Fornecedor de serviços',
-                'Transportadora / logística',
-                'Outro'
+                "Loja de materiais de construção",
+                "Distribuidor",
+                "Fabricante",
+                "Fornecedor de serviços",
+                "Transportadora / logística",
+                "Outro",
               ].map((tipo) => (
                 <div key={tipo} className="flex items-center space-x-2">
                   <Checkbox
@@ -219,14 +242,16 @@ const FormFornecedores = () => {
                     checked={tiposAtuacao.includes(tipo)}
                     onCheckedChange={() => handleCheckboxChange(tipo, tiposAtuacao, setTiposAtuacao)}
                   />
-                  <label htmlFor={`tipo-${tipo}`} className="text-sm cursor-pointer">{tipo}</label>
+                  <label htmlFor={`tipo-${tipo}`} className="text-sm cursor-pointer">
+                    {tipo}
+                  </label>
                 </div>
               ))}
             </div>
-            
-            {tiposAtuacao.includes('Outro') && (
+
+            {tiposAtuacao.includes("Outro") && (
               <div className="mt-3">
-                <Input 
+                <Input
                   value={tipoAtuacaoOutro}
                   onChange={(e) => setTipoAtuacaoOutro(e.target.value)}
                   placeholder="Especifique..."
@@ -239,10 +264,21 @@ const FormFornecedores = () => {
             <Label>Categorias atendidas (múltipla escolha) *</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
               {[
-                'Estrutura', 'Alvenaria', 'Impermeabilização', 'Acabamento',
-                'Hidráulica', 'Elétrica', 'Pintura', 'Drywall',
-                'Marcenaria', 'Gesso', 'Serralheria', 'Demolição',
-                'Locação de equipamentos', 'Entrega / logística', 'Outro'
+                "Estrutura",
+                "Alvenaria",
+                "Impermeabilização",
+                "Acabamento",
+                "Hidráulica",
+                "Elétrica",
+                "Pintura",
+                "Drywall",
+                "Marcenaria",
+                "Gesso",
+                "Serralheria",
+                "Demolição",
+                "Locação de equipamentos",
+                "Entrega / logística",
+                "Outro",
               ].map((cat) => (
                 <div key={cat} className="flex items-center space-x-2">
                   <Checkbox
@@ -250,14 +286,16 @@ const FormFornecedores = () => {
                     checked={categoriasAtendidas.includes(cat)}
                     onCheckedChange={() => handleCheckboxChange(cat, categoriasAtendidas, setCategoriasAtendidas)}
                   />
-                  <label htmlFor={`cat-${cat}`} className="text-sm cursor-pointer">{cat}</label>
+                  <label htmlFor={`cat-${cat}`} className="text-sm cursor-pointer">
+                    {cat}
+                  </label>
                 </div>
               ))}
             </div>
-            
-            {categoriasAtendidas.includes('Outro') && (
+
+            {categoriasAtendidas.includes("Outro") && (
               <div className="mt-3">
-                <Input 
+                <Input
                   value={categoriasOutro}
                   onChange={(e) => setCategoriasOutro(e.target.value)}
                   placeholder="Especifique..."
@@ -269,10 +307,8 @@ const FormFornecedores = () => {
 
         {/* 3. Faixa de Preço e Capacidade */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground border-b pb-2">
-            3. Faixa de Preço e Capacidade
-          </h2>
-          
+          <h2 className="text-xl font-semibold text-foreground border-b pb-2">3. Faixa de Preço e Capacidade</h2>
+
           <div>
             <Label htmlFor="ticketMedio">Ticket médio dos serviços/produtos *</Label>
             <Select value={ticketMedio} onValueChange={setTicketMedio} required>
@@ -306,29 +342,25 @@ const FormFornecedores = () => {
 
         {/* 4. Regiões Atendidas */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground border-b pb-2">
-            4. Regiões Atendidas
-          </h2>
-          
+          <h2 className="text-xl font-semibold text-foreground border-b pb-2">4. Regiões Atendidas</h2>
+
           <div>
             <Label>Regiões atendidas (múltipla escolha) *</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {[
-                'Região Norte',
-                'Região Nordeste',
-                'Região Centro-Oeste',
-                'Região Sudeste',
-                'Região Sul'
-              ].map((regiao) => (
-                <div key={regiao} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`regiao-${regiao}`}
-                    checked={regioesAtendidas.includes(regiao)}
-                    onCheckedChange={() => handleCheckboxChange(regiao, regioesAtendidas, setRegioesAtendidas)}
-                  />
-                  <label htmlFor={`regiao-${regiao}`} className="text-sm cursor-pointer">{regiao}</label>
-                </div>
-              ))}
+              {["Região Norte", "Região Nordeste", "Região Centro-Oeste", "Região Sudeste", "Região Sul"].map(
+                (regiao) => (
+                  <div key={regiao} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`regiao-${regiao}`}
+                      checked={regioesAtendidas.includes(regiao)}
+                      onCheckedChange={() => handleCheckboxChange(regiao, regioesAtendidas, setRegioesAtendidas)}
+                    />
+                    <label htmlFor={`regiao-${regiao}`} className="text-sm cursor-pointer">
+                      {regiao}
+                    </label>
+                  </div>
+                ),
+              )}
             </div>
           </div>
 
@@ -346,22 +378,20 @@ const FormFornecedores = () => {
 
         {/* 5. Diferenciais */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground border-b pb-2">
-            5. Diferenciais
-          </h2>
-          
+          <h2 className="text-xl font-semibold text-foreground border-b pb-2">5. Diferenciais</h2>
+
           <div>
             <Label>Selecione até 3 diferenciais *</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
               {[
-                'Entrega rápida',
-                'Equipe própria',
-                'Garantia formal',
-                'Preço competitivo',
-                'Certificações técnicas',
-                'Atendimento emergencial',
-                'Experiência com obras de grande porte',
-                'Outro'
+                "Entrega rápida",
+                "Equipe própria",
+                "Garantia formal",
+                "Preço competitivo",
+                "Certificações técnicas",
+                "Atendimento emergencial",
+                "Experiência com obras de grande porte",
+                "Outro",
               ].map((dif) => (
                 <div key={dif} className="flex items-center space-x-2">
                   <Checkbox
@@ -370,14 +400,19 @@ const FormFornecedores = () => {
                     onCheckedChange={() => handleCheckboxChange(dif, diferenciais, setDiferenciais, 3)}
                     disabled={!diferenciais.includes(dif) && diferenciais.length >= 3}
                   />
-                  <label htmlFor={`dif-${dif}`} className={`text-sm ${!diferenciais.includes(dif) && diferenciais.length >= 3 ? 'text-muted-foreground' : 'cursor-pointer'}`}>{dif}</label>
+                  <label
+                    htmlFor={`dif-${dif}`}
+                    className={`text-sm ${!diferenciais.includes(dif) && diferenciais.length >= 3 ? "text-muted-foreground" : "cursor-pointer"}`}
+                  >
+                    {dif}
+                  </label>
                 </div>
               ))}
             </div>
-            
-            {diferenciais.includes('Outro') && (
+
+            {diferenciais.includes("Outro") && (
               <div className="mt-3">
-                <Input 
+                <Input
                   value={diferenciaisOutro}
                   onChange={(e) => setDiferenciaisOutro(e.target.value)}
                   placeholder="Especifique..."
@@ -389,14 +424,12 @@ const FormFornecedores = () => {
 
         {/* 7. Contato Comercial */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground border-b pb-2">
-            7. Contato Comercial
-          </h2>
-          
+          <h2 className="text-xl font-semibold text-foreground border-b pb-2">7. Contato Comercial</h2>
+
           <div>
             <Label htmlFor="nomeResponsavel">Nome do responsável *</Label>
-            <Input 
-              id="nomeResponsavel" 
+            <Input
+              id="nomeResponsavel"
               value={nomeResponsavel}
               onChange={(e) => setNomeResponsavel(e.target.value)}
               placeholder="Nome completo"
@@ -407,20 +440,20 @@ const FormFornecedores = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="telefone">Telefone / WhatsApp *</Label>
-              <Input 
-                id="telefone" 
+              <Input
+                id="telefone"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
                 placeholder="(00) 00000-0000"
                 required
               />
             </div>
-            
+
             <div>
               <Label htmlFor="email">E-mail *</Label>
-              <Input 
-                id="email" 
-                type="email" 
+              <Input
+                id="email"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
