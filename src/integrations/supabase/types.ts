@@ -356,6 +356,7 @@ export type Database = {
           email: string | null
           empresa_id: string | null
           id: string
+          last_login: string | null
           nome: string | null
           role: Database["public"]["Enums"]["user_role"]
         }
@@ -363,6 +364,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           id: string
+          last_login?: string | null
           nome?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
@@ -370,6 +372,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           id?: string
+          last_login?: string | null
           nome?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
@@ -407,7 +410,7 @@ export type Database = {
       is_company_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      user_role: "admin" | "member"
+      user_role: "admin" | "member" | "master_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -535,7 +538,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: ["admin", "member"],
+      user_role: ["admin", "member", "master_admin"],
     },
   },
 } as const
