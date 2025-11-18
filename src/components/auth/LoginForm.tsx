@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { masterAdminService } from '@/services/masterAdminService';
 
 interface LoginFormProps {
   onForgotPassword?: () => void;
@@ -39,19 +40,25 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
     setIsLoading(true);
     
     try {
+      // Faz o login
       await signIn(email, password);
-      toast({
-        title: "Login bem-sucedido",
-        description: "Bem-vindo de volta!",
-      });
-      // Redirect to obras page after successful login
-      navigate('/obras');
+      
+      // Depois do login, verifica a role e redireciona UMA vez
+      let targetPath = '/obras';
+      try {
+        const isMasterAdmin = await masterAdminService.isMasterAdmin();
+        if (isMasterAdmin) {
+          targetPath = '/master-admin';
+        }
+      } catch (roleError) {
+        console.error('Erro ao verificar role do usuário:', roleError);
+        // Em caso de erro, mantém /obras como padrão
+      }
+      
+      navigate(targetPath, { replace: true });
     } catch (error: any) {
-      toast({
-        title: "Erro ao entrar",
-        description: error.message || "Falha na autenticação. Verifique suas credenciais.",
-        variant: "destructive",
-      });
+      // O signIn já exibe toast de erro, aqui apenas garantimos que não quebre o fluxo
+      console.error('Erro no login:', error);
     } finally {
       setIsLoading(false);
     }
