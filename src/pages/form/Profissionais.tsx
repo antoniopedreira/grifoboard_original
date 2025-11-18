@@ -20,6 +20,12 @@ const DIFERENCIAIS = ["Experiência com obras de médio/grande porte", "Especial
 const EQUIPAMENTOS_PROPRIOS = ["Sim", "Não", "Parcialmente"];
 const FormProfissionais = () => {
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [curriculoFile, setCurriculoFile] = useState<File | null>(null);
+  const [fotosFiles, setFotosFiles] = useState<FileList | null>(null);
+  const [certificacoesFiles, setCertificacoesFiles] = useState<FileList | null>(null);
+
   const [formData, setFormData] = useState({
     nomeCompleto: "",
     cpf: "",
@@ -52,7 +58,61 @@ const FormProfissionais = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setUploadingFiles(true);
+
     try {
+      let curriculoPath: string | null = null;
+      let fotosPath: string | null = null;
+      let certificacoesPath: string | null = null;
+
+      // Upload curriculo if provided
+      if (curriculoFile) {
+        const fileExt = curriculoFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('formularios-profissionais')
+          .upload(`curriculos/${fileName}`, curriculoFile);
+
+        if (uploadError) throw uploadError;
+        curriculoPath = `curriculos/${fileName}`;
+      }
+
+      // Upload fotos files if provided
+      if (fotosFiles && fotosFiles.length > 0) {
+        const uploadedPaths: string[] = [];
+        for (let i = 0; i < fotosFiles.length; i++) {
+          const file = fotosFiles[i];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('formularios-profissionais')
+            .upload(`fotos/${fileName}`, file);
+
+          if (uploadError) throw uploadError;
+          uploadedPaths.push(`fotos/${fileName}`);
+        }
+        fotosPath = uploadedPaths.join(',');
+      }
+
+      // Upload certificacoes files if provided
+      if (certificacoesFiles && certificacoesFiles.length > 0) {
+        const uploadedPaths: string[] = [];
+        for (let i = 0; i < certificacoesFiles.length; i++) {
+          const file = certificacoesFiles[i];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('formularios-profissionais')
+            .upload(`certificacoes/${fileName}`, file);
+
+          if (uploadError) throw uploadError;
+          uploadedPaths.push(`certificacoes/${fileName}`);
+        }
+        certificacoesPath = uploadedPaths.join(',');
+      }
+
+      setUploadingFiles(false);
+
       const {
         error
       } = await supabase.from("formulario_profissionais").insert({
@@ -76,43 +136,71 @@ const FormProfissionais = () => {
         diferenciais: formData.diferenciais,
         diferenciais_outro: formData.diferenciaisOutro,
         telefone: formData.telefone,
-        email: formData.email
+        email: formData.email,
+        curriculo_path: curriculoPath,
+        fotos_trabalhos_path: fotosPath,
+        certificacoes_path: certificacoesPath,
       });
       if (error) throw error;
-      toast.success("Formulário enviado com sucesso!");
 
-      // Reset form
-      setFormData({
-        nomeCompleto: "",
-        cpf: "",
-        dataNascimento: "",
-        cidade: "",
-        estado: "",
-        funcaoPrincipal: "",
-        funcaoPrincipalOutro: "",
-        especialidades: [],
-        especialidadesOutro: "",
-        tempoExperiencia: "",
-        obrasRelevantes: "",
-        disponibilidadeAtual: "",
-        modalidadeTrabalho: "",
-        regioesAtendidas: [],
-        cidadesFrequentes: "",
-        pretensaoValor: "",
-        equipamentosProprios: "",
-        diferenciais: [],
-        diferenciaisOutro: "",
-        telefone: "",
-        email: ""
-      });
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
       toast.error("Erro ao enviar formulário. Tente novamente.");
     } finally {
       setLoading(false);
+      setUploadingFiles(false);
     }
   };
-  return <FormTemplate title="GRIFOBOARD MARKETPLACE" subtitle="Formulário de cadastro para profissionais terceirizados">
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    
+    // Reset form
+    setFormData({
+      nomeCompleto: "",
+      cpf: "",
+      dataNascimento: "",
+      cidade: "",
+      estado: "",
+      funcaoPrincipal: "",
+      funcaoPrincipalOutro: "",
+      especialidades: [],
+      especialidadesOutro: "",
+      tempoExperiencia: "",
+      obrasRelevantes: "",
+      disponibilidadeAtual: "",
+      modalidadeTrabalho: "",
+      regioesAtendidas: [],
+      cidadesFrequentes: "",
+      pretensaoValor: "",
+      equipamentosProprios: "",
+      diferenciais: [],
+      diferenciaisOutro: "",
+      telefone: "",
+      email: ""
+    });
+    setCurriculoFile(null);
+    setFotosFiles(null);
+    setCertificacoesFiles(null);
+    
+    // Reset file inputs
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      (input as HTMLInputElement).value = '';
+    });
+  };
+
+  return (
+    <>
+      <SuccessModal 
+        open={showSuccessModal}
+        onClose={handleCloseModal}
+        title="Cadastro realizado com sucesso!"
+        message="Obrigado por se cadastrar no GRIFOBOARD MARKETPLACE. Em breve entraremos em contato."
+      />
+      
+      <FormTemplate title="GRIFOBOARD MARKETPLACE" subtitle="Formulário de cadastro para profissionais terceirizados">
       <form onSubmit={handleSubmit} className="space-y-8">
         <h2 className="text-2xl font-semibold text-foreground">
           Profissionais Terceirizados
