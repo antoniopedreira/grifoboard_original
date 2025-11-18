@@ -11,6 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 const Empresas = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [apresentacaoFile, setApresentacaoFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     // 1. Informações da Empresa
@@ -54,8 +57,34 @@ const Empresas = () => {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    setUploadingFiles(true);
     
     try {
+      let logoPath: string | null = null;
+      let apresentacaoPath: string | null = null;
+
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('formularios-empresas')
+          .upload(`logos/${fileName}`, logoFile);
+        if (uploadError) throw uploadError;
+        logoPath = `logos/${fileName}`;
+      }
+
+      if (apresentacaoFile) {
+        const fileExt = apresentacaoFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('formularios-empresas')
+          .upload(`apresentacoes/${fileName}`, apresentacaoFile);
+        if (uploadError) throw uploadError;
+        apresentacaoPath = `apresentacoes/${fileName}`;
+      }
+
+      setUploadingFiles(false);
+
       const { error } = await supabase
         .from("formulario_empresas")
         .insert({
@@ -76,9 +105,11 @@ const Empresas = () => {
           ticket_medio: formData.ticketMedio,
           planejamento_curto_prazo: formData.planejamentoCurtoPrazo,
           ferramentas_gestao: formData.ferramentasGestao || null,
-          principais_desafios: formData.principaisDesafios,
-          desafios_outro: formData.desafiosOutro || null,
-        });
+        principais_desafios: formData.principaisDesafios,
+        desafios_outro: formData.desafiosOutro || null,
+        logo_path: logoPath,
+        apresentacao_path: apresentacaoPath,
+      });
 
       if (error) throw error;
 
