@@ -13,16 +13,22 @@ interface FormularioCard {
 
 const formularios: FormularioCard[] = [
   {
-    id: 'gbc',
-    titulo: 'Formulário GBC',
-    descricao: 'Formulário de captação para o programa GBC',
-    url: 'https://grifocrm.com.br/form/gbc'
+    id: 'profissionais',
+    titulo: 'Profissionais',
+    descricao: 'Formulário de cadastro para profissionais',
+    url: 'https://grifocrm.com.br/form/profissionais'
   },
   {
-    id: 'mentoria-fast',
-    titulo: 'Formulário Mentoria Fast',
-    descricao: 'Formulário de captação para o programa Mentoria Fast',
-    url: 'https://grifocrm.com.br/form/fast'
+    id: 'empresas',
+    titulo: 'Empresas',
+    descricao: 'Formulário de cadastro para empresas',
+    url: 'https://grifocrm.com.br/form/empresas'
+  },
+  {
+    id: 'fornecedores',
+    titulo: 'Fornecedores',
+    descricao: 'Formulário de cadastro para fornecedores',
+    url: 'https://grifocrm.com.br/form/fornecedores'
   }
 ];
 
