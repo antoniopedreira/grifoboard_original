@@ -243,6 +243,93 @@ export type Database = {
         }
         Relationships: []
       }
+      formulario_profissionais: {
+        Row: {
+          certificacoes_path: string | null
+          cidade: string
+          cidades_frequentes: string | null
+          cpf: string
+          created_at: string | null
+          curriculo_path: string | null
+          data_nascimento: string
+          diferenciais: string[]
+          diferenciais_outro: string | null
+          disponibilidade_atual: string
+          email: string | null
+          equipamentos_proprios: string
+          especialidades: string[]
+          especialidades_outro: string | null
+          estado: string
+          fotos_trabalhos_path: string | null
+          funcao_principal: string
+          funcao_principal_outro: string | null
+          id: string
+          modalidade_trabalho: string
+          nome_completo: string
+          obras_relevantes: string | null
+          pretensao_valor: string
+          regioes_atendidas: string[]
+          telefone: string
+          tempo_experiencia: string
+        }
+        Insert: {
+          certificacoes_path?: string | null
+          cidade: string
+          cidades_frequentes?: string | null
+          cpf: string
+          created_at?: string | null
+          curriculo_path?: string | null
+          data_nascimento: string
+          diferenciais: string[]
+          diferenciais_outro?: string | null
+          disponibilidade_atual: string
+          email?: string | null
+          equipamentos_proprios: string
+          especialidades: string[]
+          especialidades_outro?: string | null
+          estado: string
+          fotos_trabalhos_path?: string | null
+          funcao_principal: string
+          funcao_principal_outro?: string | null
+          id?: string
+          modalidade_trabalho: string
+          nome_completo: string
+          obras_relevantes?: string | null
+          pretensao_valor: string
+          regioes_atendidas: string[]
+          telefone: string
+          tempo_experiencia: string
+        }
+        Update: {
+          certificacoes_path?: string | null
+          cidade?: string
+          cidades_frequentes?: string | null
+          cpf?: string
+          created_at?: string | null
+          curriculo_path?: string | null
+          data_nascimento?: string
+          diferenciais?: string[]
+          diferenciais_outro?: string | null
+          disponibilidade_atual?: string
+          email?: string | null
+          equipamentos_proprios?: string
+          especialidades?: string[]
+          especialidades_outro?: string | null
+          estado?: string
+          fotos_trabalhos_path?: string | null
+          funcao_principal?: string
+          funcao_principal_outro?: string | null
+          id?: string
+          modalidade_trabalho?: string
+          nome_completo?: string
+          obras_relevantes?: string | null
+          pretensao_valor?: string
+          regioes_atendidas?: string[]
+          telefone?: string
+          tempo_experiencia?: string
+        }
+        Relationships: []
+      }
       materiais_tarefa: {
         Row: {
           created_at: string
