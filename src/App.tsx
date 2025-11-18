@@ -13,6 +13,9 @@ import DiarioObra from "@/pages/DiarioObra";
 import NotFound from "@/pages/NotFound";
 import MasterAdmin from "@/pages/MasterAdmin";
 import Formularios from "@/pages/Formularios";
+import FormProfissionais from "@/pages/form/Profissionais";
+import FormEmpresas from "@/pages/form/Empresas";
+import FormFornecedores from "@/pages/form/Fornecedores";
 import { useEffect } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -32,16 +35,20 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/auth' || location.pathname === '/reset-password';
   const isObrasPage = location.pathname === '/obras' || location.pathname === '/';
+  const isFormPage = location.pathname.startsWith('/form/');
 
   return (
-    <div className={`flex flex-col min-h-screen ${!isAuthPage ? 'bg-gray-50' : ''} font-sans`}>
-      {!isAuthPage && <Header />}
+    <div className={`flex flex-col min-h-screen ${!isAuthPage && !isFormPage ? 'bg-gray-50' : ''} font-sans`}>
+      {!isAuthPage && !isFormPage && <Header />}
       
       <div className="flex flex-1 w-full">
-        {!isAuthPage && !isObrasPage && <CustomSidebar />}
+        {!isAuthPage && !isObrasPage && !isFormPage && <CustomSidebar />}
         
         <main className="flex-1">
-          {!isAuthPage && !isObrasPage ? (
+          {isFormPage ? (
+            // Form pages render full screen without container/scrollarea
+            children
+          ) : !isAuthPage && !isObrasPage ? (
             <ScrollArea className="h-[calc(100vh-64px)]">
               <div className="py-6">
                 {children}
@@ -98,6 +105,9 @@ function App() {
                 <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                 <Route path="/master-admin" element={<MasterAdmin />} />
                 <Route path="/formularios" element={<Formularios />} />
+                <Route path="/form/profissionais" element={<FormProfissionais />} />
+                <Route path="/form/empresas" element={<FormEmpresas />} />
+                <Route path="/form/fornecedores" element={<FormFornecedores />} />
                 <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                 <Route path="/diarioobra" element={<DiarioObra />} />
