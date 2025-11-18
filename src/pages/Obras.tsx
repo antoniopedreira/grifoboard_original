@@ -30,20 +30,16 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const { toast } = useToast();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // Check if user is master_admin and redirect accordingly (only if coming from elsewhere, not from auth)
+  // Check if user is master_admin and redirect accordingly
+  // This only runs when directly accessing /obras, not when redirected from /auth
   useEffect(() => {
     const checkMasterAdmin = async () => {
       if (userSession?.user && !redirectAttempted) {
-        // Don't check if we're still loading or if we just came from auth
-        const previousPath = sessionStorage.getItem('lastRoute');
-        if (previousPath === '/auth') {
-          return; // Auth page already handled the redirect
-        }
-        
         try {
           const isMasterAdmin = await masterAdminService.isMasterAdmin();
           
           if (isMasterAdmin) {
+            // Master admin should go to master-admin page
             navigate('/master-admin', { replace: true });
             setRedirectAttempted(true);
             return;
