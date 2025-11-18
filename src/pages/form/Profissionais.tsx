@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import FormSectionHeader from "@/components/task-form/FormSectionHeader";
 import { SuccessModal } from "@/components/SuccessModal";
+import { FileUploadButton } from "@/components/FileUploadButton";
 const ESTADOS_BRASILEIROS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
 const FUNCOES_PRINCIPAIS = ["Engenheiro", "Técnico de construção", "Mestre de obras", "Pedreiro", "Carpinteiro", "Eletricista", "Encanador", "Pintor", "Gesseiro", "Serralheiro", "Servente", "Arquiteto", "Outro"];
 const ESPECIALIDADES = ["Estrutura", "Alvenaria", "Acabamento", "Hidráulica", "Elétrica", "Drywall", "Pintura", "Revestimentos", "Impermeabilização", "Demolição", "Outra"];
@@ -428,9 +429,8 @@ const FormProfissionais = () => {
           <div>
             <Label htmlFor="curriculo">Currículo (opcional)</Label>
             <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, DOCX (máx. 5MB)</p>
-            <Input 
-              id="curriculo" 
-              type="file" 
+            <FileUploadButton
+              id="curriculo"
               accept=".pdf,.docx"
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -443,15 +443,15 @@ const FormProfissionais = () => {
                   setCurriculoFile(file);
                 }
               }}
+              selectedFiles={curriculoFile?.name || null}
             />
           </div>
 
           <div>
             <Label htmlFor="fotos">Fotos de trabalhos realizados (opcional)</Label>
             <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG (máx. 5MB por foto)</p>
-            <Input 
-              id="fotos" 
-              type="file" 
+            <FileUploadButton
+              id="fotos"
               accept=".jpg,.jpeg,.png"
               multiple
               onChange={(e) => {
@@ -467,15 +467,15 @@ const FormProfissionais = () => {
                   setFotosFiles(files);
                 }
               }}
+              selectedFiles={fotosFiles ? `${fotosFiles.length} arquivo(s)` : null}
             />
           </div>
 
           <div>
             <Label htmlFor="certificacoes">Certificações / cursos (opcional)</Label>
             <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, JPG, PNG (máx. 5MB por arquivo)</p>
-            <Input 
-              id="certificacoes" 
-              type="file" 
+            <FileUploadButton
+              id="certificacoes"
               accept=".pdf,.jpg,.jpeg,.png"
               multiple
               onChange={(e) => {
@@ -491,6 +491,7 @@ const FormProfissionais = () => {
                   setCertificacoesFiles(files);
                 }
               }}
+              selectedFiles={certificacoesFiles ? `${certificacoesFiles.length} arquivo(s)` : null}
             />
           </div>
         </div>
