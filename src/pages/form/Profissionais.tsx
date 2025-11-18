@@ -457,6 +457,9 @@ const FormProfissionais = () => {
           {loading ? "Enviando..." : "Enviar Cadastro"}
         </Button>
       </form>
-    </FormTemplate>;
+    </FormTemplate>
+    </>
+  );
 };
+
 export default FormProfissionais;
