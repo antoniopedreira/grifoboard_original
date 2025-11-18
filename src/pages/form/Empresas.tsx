@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { SuccessModal } from "@/components/SuccessModal";
+import { toast } from "sonner";
 
 const Empresas = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -515,11 +516,22 @@ const Empresas = () => {
             
             <div>
               <Label htmlFor="logo">Enviar logo da empresa</Label>
+              <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG (máx. 5MB)</p>
               <Input
                 id="logo"
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                accept=".jpg,.jpeg,.png"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error("Arquivo muito grande. Tamanho máximo: 5MB");
+                      e.target.value = '';
+                      return;
+                    }
+                    setLogoFile(file);
+                  }
+                }}
                 className="mt-1"
               />
               {logoFile && (
@@ -531,11 +543,22 @@ const Empresas = () => {
 
             <div>
               <Label htmlFor="apresentacao">Enviar apresentação institucional (PDF)</Label>
+              <p className="text-xs text-muted-foreground mb-2">Formato aceito: PDF, DOCX (máx. 5MB)</p>
               <Input
                 id="apresentacao"
                 type="file"
-                accept="application/pdf"
-                onChange={(e) => setApresentacaoFile(e.target.files?.[0] || null)}
+                accept=".pdf,.docx"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error("Arquivo muito grande. Tamanho máximo: 5MB");
+                      e.target.value = '';
+                      return;
+                    }
+                    setApresentacaoFile(file);
+                  }
+                }}
                 className="mt-1"
               />
               {apresentacaoFile && (
