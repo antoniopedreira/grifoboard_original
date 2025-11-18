@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { handleAuthRedirect } from '@/utils/authRedirect';
 import { masterAdminService } from '@/services/masterAdminService';
@@ -8,41 +8,44 @@ import LoginPage from '@/components/auth/LoginPage';
 const Auth = () => {
   const { userSession, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [checkingRole, setCheckingRole] = useState(false);
+  const location = useLocation();
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
     const checkUserRole = async () => {
       // Check for auth redirects first
       if (handleAuthRedirect()) {
-        return; // Will redirect to reset password page
+        return;
       }
       
-      // Only navigate if user is authenticated
-      if (!isLoading && userSession.user && window.location.pathname !== '/' && !checkingRole) {
-        setCheckingRole(true);
+      // Only check once when user becomes authenticated and we're on auth page
+      if (!isLoading && userSession.user && location.pathname === '/auth' && !hasChecked) {
+        setHasChecked(true);
+        
         try {
-          // Check if user is master_admin
           const isMasterAdmin = await masterAdminService.isMasterAdmin();
           
           if (isMasterAdmin) {
-            // Master admin goes directly to master-admin page
             navigate('/master-admin', { replace: true });
           } else {
-            // Regular users go to obras selection
-            navigate('/', { replace: true });
+            navigate('/obras', { replace: true });
           }
         } catch (error) {
           console.error('Error checking user role:', error);
-          // Default to obras page on error
-          navigate('/', { replace: true });
-        } finally {
-          setCheckingRole(false);
+          navigate('/obras', { replace: true });
         }
       }
     };
 
     checkUserRole();
-  }, [isLoading, userSession.user, navigate, checkingRole]);
+  }, [isLoading, userSession.user, location.pathname, navigate, hasChecked]);
+
+  // Reset hasChecked when user logs out
+  useEffect(() => {
+    if (!userSession.user) {
+      setHasChecked(false);
+    }
+  }, [userSession.user]);
 
   return <LoginPage />;
 };
