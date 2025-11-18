@@ -15,7 +15,7 @@ const ESTADOS_BR = [
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-const Fornecedores = () => {
+const FormFornecedores = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   
@@ -439,4 +439,4 @@ const Fornecedores = () => {
   );
 };
 
-export default Fornecedores;
+export default FormFornecedores;
