@@ -13,6 +13,7 @@ import DiarioObra from "@/pages/DiarioObra";
 import NotFound from "@/pages/NotFound";
 import MasterAdmin from "@/pages/MasterAdmin";
 import Formularios from "@/pages/Formularios";
+import BaseDeDados from "@/pages/BaseDeDados";
 import FormProfissionais from "@/pages/form/Profissionais";
 import FormEmpresas from "@/pages/form/Empresas";
 import FormFornecedores from "@/pages/form/Fornecedores";
