@@ -1,7 +1,4 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useState, FormEvent } from 'react';
 import FormTemplate from './FormTemplate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 
@@ -19,108 +15,103 @@ const ESTADOS_BR = [
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-const fornecedoresSchema = z.object({
-  nomeEmpresa: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres').max(100),
-  cnpjCpf: z.string().min(11, 'CNPJ/CPF inválido'),
-  site: z.string().url('URL inválida').optional().or(z.literal('')),
-  cidade: z.string().min(2, 'Cidade é obrigatória'),
-  estado: z.string().min(2, 'Estado é obrigatório'),
-  tempoAtuacao: z.string().min(1, 'Selecione o tempo de atuação'),
-  tiposAtuacao: z.array(z.string()).min(1, 'Selecione pelo menos uma opção'),
-  tipoAtuacaoOutro: z.string().optional(),
-  categoriasAtendidas: z.array(z.string()).min(1, 'Selecione pelo menos uma categoria'),
-  categoriasOutro: z.string().optional(),
-  ticketMedio: z.string().min(1, 'Selecione o ticket médio'),
-  capacidadeAtendimento: z.string().min(1, 'Selecione a capacidade'),
-  regioesAtendidas: z.array(z.string()).min(1, 'Selecione pelo menos uma região'),
-  cidadesFrequentes: z.string().optional(),
-  diferenciais: z.array(z.string()).min(1, 'Selecione pelo menos um diferencial').max(3, 'Máximo 3 diferenciais'),
-  diferenciaisOutro: z.string().optional(),
-  nomeResponsavel: z.string().min(3, 'Nome é obrigatório'),
-  telefone: z.string().min(10, 'Telefone inválido'),
-  email: z.string().email('Email inválido'),
-});
-
-type FornecedoresFormData = z.infer<typeof fornecedoresSchema>;
-
 const Fornecedores = () => {
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FornecedoresFormData>({
-    resolver: zodResolver(fornecedoresSchema),
-    defaultValues: {
-      tiposAtuacao: [],
-      categoriasAtendidas: [],
-      regioesAtendidas: [],
-      diferenciais: [],
+  const [nomeEmpresa, setNomeEmpresa] = useState('');
+  const [cnpjCpf, setCnpjCpf] = useState('');
+  const [site, setSite] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [estado, setEstado] = useState('');
+  const [tempoAtuacao, setTempoAtuacao] = useState('');
+  const [tiposAtuacao, setTiposAtuacao] = useState<string[]>([]);
+  const [tipoAtuacaoOutro, setTipoAtuacaoOutro] = useState('');
+  const [categoriasAtendidas, setCategoriasAtendidas] = useState<string[]>([]);
+  const [categoriasOutro, setCategoriasOutro] = useState('');
+  const [ticketMedio, setTicketMedio] = useState('');
+  const [capacidadeAtendimento, setCapacidadeAtendimento] = useState('');
+  const [regioesAtendidas, setRegioesAtendidas] = useState<string[]>([]);
+  const [cidadesFrequentes, setCidadesFrequentes] = useState('');
+  const [diferenciais, setDiferenciais] = useState<string[]>([]);
+  const [diferenciaisOutro, setDiferenciaisOutro] = useState('');
+  const [nomeResponsavel, setNomeResponsavel] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [email, setEmail] = useState('');
+
+  const handleCheckboxChange = (value: string, currentValues: string[], setter: (values: string[]) => void, max?: number) => {
+    if (currentValues.includes(value)) {
+      setter(currentValues.filter(v => v !== value));
+    } else {
+      if (!max || currentValues.length < max) {
+        setter([...currentValues, value]);
+      }
     }
-  });
-
-  const tiposAtuacao = watch('tiposAtuacao') || [];
-  const categoriasAtendidas = watch('categoriasAtendidas') || [];
-  const regioesAtendidas = watch('regioesAtendidas') || [];
-  const diferenciais = watch('diferenciais') || [];
-
-  const handleCheckboxChange = (field: 'tiposAtuacao' | 'categoriasAtendidas' | 'regioesAtendidas' | 'diferenciais', value: string, currentValues: string[]) => {
-    const newValues = currentValues.includes(value)
-      ? currentValues.filter(v => v !== value)
-      : [...currentValues, value];
-    setValue(field, newValues);
   };
 
-  const onSubmit = async (data: FornecedoresFormData) => {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
     
     try {
       const { error } = await supabase.from('formulario_fornecedores').insert({
-        nome_empresa: data.nomeEmpresa,
-        cnpj_cpf: data.cnpjCpf,
-        site: data.site || null,
-        cidade: data.cidade,
-        estado: data.estado,
-        tempo_atuacao: data.tempoAtuacao,
-        tipos_atuacao: data.tiposAtuacao,
-        tipo_atuacao_outro: data.tipoAtuacaoOutro || null,
-        categorias_atendidas: data.categoriasAtendidas,
-        categorias_outro: data.categoriasOutro || null,
-        ticket_medio: data.ticketMedio,
-        capacidade_atendimento: data.capacidadeAtendimento,
-        regioes_atendidas: data.regioesAtendidas,
-        cidades_frequentes: data.cidadesFrequentes || null,
-        diferenciais: data.diferenciais,
-        diferenciais_outro: data.diferenciaisOutro || null,
-        nome_responsavel: data.nomeResponsavel,
-        telefone: data.telefone,
-        email: data.email,
+        nome_empresa: nomeEmpresa,
+        cnpj_cpf: cnpjCpf,
+        site: site || null,
+        cidade,
+        estado,
+        tempo_atuacao: tempoAtuacao,
+        tipos_atuacao: tiposAtuacao,
+        tipo_atuacao_outro: tipoAtuacaoOutro || null,
+        categorias_atendidas: categoriasAtendidas,
+        categorias_outro: categoriasOutro || null,
+        ticket_medio: ticketMedio,
+        capacidade_atendimento: capacidadeAtendimento,
+        regioes_atendidas: regioesAtendidas,
+        cidades_frequentes: cidadesFrequentes || null,
+        diferenciais,
+        diferenciais_outro: diferenciaisOutro || null,
+        nome_responsavel: nomeResponsavel,
+        telefone,
+        email,
       });
 
       if (error) throw error;
 
-      toast({
-        title: 'Formulário enviado com sucesso!',
-        description: 'Obrigado por se cadastrar. Entraremos em contato em breve.',
-      });
-      
+      setSubmitted(true);
       window.scrollTo(0, 0);
     } catch (error) {
       console.error('Erro ao enviar formulário:', error);
-      toast({
-        title: 'Erro ao enviar formulário',
-        description: 'Tente novamente mais tarde.',
-        variant: 'destructive',
-      });
+      alert('Erro ao enviar formulário. Tente novamente mais tarde.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (submitted) {
+    return (
+      <FormTemplate
+        title="GRIFO BUILDERS CLUB"
+        subtitle="Formulário de cadastro para fornecedores / distribuidores / lojas"
+      >
+        <div className="text-center py-8">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">
+            Formulário enviado com sucesso!
+          </h2>
+          <p className="text-muted-foreground">
+            Obrigado por se cadastrar. Entraremos em contato em breve.
+          </p>
+        </div>
+      </FormTemplate>
+    );
+  }
 
   return (
     <FormTemplate
       title="GRIFO BUILDERS CLUB"
       subtitle="Formulário de cadastro para fornecedores / distribuidores / lojas"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {/* 1. Informações da Empresa */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-foreground border-b pb-2">
@@ -130,49 +121,68 @@ const Fornecedores = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="nomeEmpresa">Nome da empresa ou nome completo (MEI / autônomo) *</Label>
-              <Input id="nomeEmpresa" {...register('nomeEmpresa')} placeholder="Nome da empresa" />
-              {errors.nomeEmpresa && <p className="text-sm text-destructive mt-1">{errors.nomeEmpresa.message}</p>}
+              <Input 
+                id="nomeEmpresa" 
+                value={nomeEmpresa}
+                onChange={(e) => setNomeEmpresa(e.target.value)}
+                placeholder="Nome da empresa"
+                required
+              />
             </div>
             
             <div>
               <Label htmlFor="cnpjCpf">CNPJ ou CPF *</Label>
-              <Input id="cnpjCpf" {...register('cnpjCpf')} placeholder="00.000.000/0000-00" />
-              {errors.cnpjCpf && <p className="text-sm text-destructive mt-1">{errors.cnpjCpf.message}</p>}
+              <Input 
+                id="cnpjCpf" 
+                value={cnpjCpf}
+                onChange={(e) => setCnpjCpf(e.target.value)}
+                placeholder="00.000.000/0000-00"
+                required
+              />
             </div>
           </div>
 
           <div>
             <Label htmlFor="site">Site / Portfólio (opcional)</Label>
-            <Input id="site" {...register('site')} placeholder="https://..." />
-            {errors.site && <p className="text-sm text-destructive mt-1">{errors.site.message}</p>}
+            <Input 
+              id="site" 
+              value={site}
+              onChange={(e) => setSite(e.target.value)}
+              placeholder="https://..."
+              type="url"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="cidade">Cidade *</Label>
-              <Input id="cidade" {...register('cidade')} placeholder="Nome da cidade" />
-              {errors.cidade && <p className="text-sm text-destructive mt-1">{errors.cidade.message}</p>}
+              <Input 
+                id="cidade" 
+                value={cidade}
+                onChange={(e) => setCidade(e.target.value)}
+                placeholder="Nome da cidade"
+                required
+              />
             </div>
             
             <div>
               <Label htmlFor="estado">Estado *</Label>
-              <Select onValueChange={(value) => setValue('estado', value)}>
+              <Select value={estado} onValueChange={setEstado} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o estado" />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50">
-                  {ESTADOS_BR.map(estado => (
-                    <SelectItem key={estado} value={estado}>{estado}</SelectItem>
+                  {ESTADOS_BR.map(e => (
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.estado && <p className="text-sm text-destructive mt-1">{errors.estado.message}</p>}
             </div>
           </div>
 
           <div>
             <Label htmlFor="tempoAtuacao">Tempo de atuação *</Label>
-            <Select onValueChange={(value) => setValue('tempoAtuacao', value)}>
+            <Select value={tempoAtuacao} onValueChange={setTempoAtuacao} required>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -183,7 +193,6 @@ const Fornecedores = () => {
                 <SelectItem value="mais-5-anos">Mais de 5 anos</SelectItem>
               </SelectContent>
             </Select>
-            {errors.tempoAtuacao && <p className="text-sm text-destructive mt-1">{errors.tempoAtuacao.message}</p>}
           </div>
         </div>
 
@@ -208,17 +217,20 @@ const Fornecedores = () => {
                   <Checkbox
                     id={`tipo-${tipo}`}
                     checked={tiposAtuacao.includes(tipo)}
-                    onCheckedChange={() => handleCheckboxChange('tiposAtuacao', tipo, tiposAtuacao)}
+                    onCheckedChange={() => handleCheckboxChange(tipo, tiposAtuacao, setTiposAtuacao)}
                   />
                   <label htmlFor={`tipo-${tipo}`} className="text-sm cursor-pointer">{tipo}</label>
                 </div>
               ))}
             </div>
-            {errors.tiposAtuacao && <p className="text-sm text-destructive mt-1">{errors.tiposAtuacao.message}</p>}
             
             {tiposAtuacao.includes('Outro') && (
               <div className="mt-3">
-                <Input {...register('tipoAtuacaoOutro')} placeholder="Especifique..." />
+                <Input 
+                  value={tipoAtuacaoOutro}
+                  onChange={(e) => setTipoAtuacaoOutro(e.target.value)}
+                  placeholder="Especifique..."
+                />
               </div>
             )}
           </div>
@@ -236,17 +248,20 @@ const Fornecedores = () => {
                   <Checkbox
                     id={`cat-${cat}`}
                     checked={categoriasAtendidas.includes(cat)}
-                    onCheckedChange={() => handleCheckboxChange('categoriasAtendidas', cat, categoriasAtendidas)}
+                    onCheckedChange={() => handleCheckboxChange(cat, categoriasAtendidas, setCategoriasAtendidas)}
                   />
                   <label htmlFor={`cat-${cat}`} className="text-sm cursor-pointer">{cat}</label>
                 </div>
               ))}
             </div>
-            {errors.categoriasAtendidas && <p className="text-sm text-destructive mt-1">{errors.categoriasAtendidas.message}</p>}
             
             {categoriasAtendidas.includes('Outro') && (
               <div className="mt-3">
-                <Input {...register('categoriasOutro')} placeholder="Especifique..." />
+                <Input 
+                  value={categoriasOutro}
+                  onChange={(e) => setCategoriasOutro(e.target.value)}
+                  placeholder="Especifique..."
+                />
               </div>
             )}
           </div>
@@ -260,7 +275,7 @@ const Fornecedores = () => {
           
           <div>
             <Label htmlFor="ticketMedio">Ticket médio dos serviços/produtos *</Label>
-            <Select onValueChange={(value) => setValue('ticketMedio', value)}>
+            <Select value={ticketMedio} onValueChange={setTicketMedio} required>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -271,12 +286,11 @@ const Fornecedores = () => {
                 <SelectItem value="acima-50000">Acima de R$ 50.000</SelectItem>
               </SelectContent>
             </Select>
-            {errors.ticketMedio && <p className="text-sm text-destructive mt-1">{errors.ticketMedio.message}</p>}
           </div>
 
           <div>
             <Label htmlFor="capacidadeAtendimento">Capacidade de atendimento simultâneo *</Label>
-            <Select onValueChange={(value) => setValue('capacidadeAtendimento', value)}>
+            <Select value={capacidadeAtendimento} onValueChange={setCapacidadeAtendimento} required>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -287,7 +301,6 @@ const Fornecedores = () => {
                 <SelectItem value="6-mais-obras">6+ obras</SelectItem>
               </SelectContent>
             </Select>
-            {errors.capacidadeAtendimento && <p className="text-sm text-destructive mt-1">{errors.capacidadeAtendimento.message}</p>}
           </div>
         </div>
 
@@ -311,20 +324,20 @@ const Fornecedores = () => {
                   <Checkbox
                     id={`regiao-${regiao}`}
                     checked={regioesAtendidas.includes(regiao)}
-                    onCheckedChange={() => handleCheckboxChange('regioesAtendidas', regiao, regioesAtendidas)}
+                    onCheckedChange={() => handleCheckboxChange(regiao, regioesAtendidas, setRegioesAtendidas)}
                   />
                   <label htmlFor={`regiao-${regiao}`} className="text-sm cursor-pointer">{regiao}</label>
                 </div>
               ))}
             </div>
-            {errors.regioesAtendidas && <p className="text-sm text-destructive mt-1">{errors.regioesAtendidas.message}</p>}
           </div>
 
           <div>
             <Label htmlFor="cidadesFrequentes">Cidades atendidas com maior frequência</Label>
             <Textarea
               id="cidadesFrequentes"
-              {...register('cidadesFrequentes')}
+              value={cidadesFrequentes}
+              onChange={(e) => setCidadesFrequentes(e.target.value)}
               placeholder="Ex: São Paulo, Rio de Janeiro, Belo Horizonte..."
               rows={3}
             />
@@ -354,18 +367,21 @@ const Fornecedores = () => {
                   <Checkbox
                     id={`dif-${dif}`}
                     checked={diferenciais.includes(dif)}
-                    onCheckedChange={() => handleCheckboxChange('diferenciais', dif, diferenciais)}
+                    onCheckedChange={() => handleCheckboxChange(dif, diferenciais, setDiferenciais, 3)}
                     disabled={!diferenciais.includes(dif) && diferenciais.length >= 3}
                   />
                   <label htmlFor={`dif-${dif}`} className={`text-sm ${!diferenciais.includes(dif) && diferenciais.length >= 3 ? 'text-muted-foreground' : 'cursor-pointer'}`}>{dif}</label>
                 </div>
               ))}
             </div>
-            {errors.diferenciais && <p className="text-sm text-destructive mt-1">{errors.diferenciais.message}</p>}
             
             {diferenciais.includes('Outro') && (
               <div className="mt-3">
-                <Input {...register('diferenciaisOutro')} placeholder="Especifique..." />
+                <Input 
+                  value={diferenciaisOutro}
+                  onChange={(e) => setDiferenciaisOutro(e.target.value)}
+                  placeholder="Especifique..."
+                />
               </div>
             )}
           </div>
@@ -379,21 +395,37 @@ const Fornecedores = () => {
           
           <div>
             <Label htmlFor="nomeResponsavel">Nome do responsável *</Label>
-            <Input id="nomeResponsavel" {...register('nomeResponsavel')} placeholder="Nome completo" />
-            {errors.nomeResponsavel && <p className="text-sm text-destructive mt-1">{errors.nomeResponsavel.message}</p>}
+            <Input 
+              id="nomeResponsavel" 
+              value={nomeResponsavel}
+              onChange={(e) => setNomeResponsavel(e.target.value)}
+              placeholder="Nome completo"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="telefone">Telefone / WhatsApp *</Label>
-              <Input id="telefone" {...register('telefone')} placeholder="(00) 00000-0000" />
-              {errors.telefone && <p className="text-sm text-destructive mt-1">{errors.telefone.message}</p>}
+              <Input 
+                id="telefone" 
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+                placeholder="(00) 00000-0000"
+                required
+              />
             </div>
             
             <div>
               <Label htmlFor="email">E-mail *</Label>
-              <Input id="email" type="email" {...register('email')} placeholder="seu@email.com" />
-              {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+              <Input 
+                id="email" 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                required
+              />
             </div>
           </div>
         </div>
