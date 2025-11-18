@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obrasService } from '@/services/obraService';
+import { masterAdminService } from '@/services/masterAdminService';
 import { Obra } from '@/types/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useRegistry } from '@/context/RegistryContext';
@@ -28,6 +29,28 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+
+  // Check if user is master_admin and redirect accordingly
+  useEffect(() => {
+    const checkMasterAdmin = async () => {
+      if (userSession?.user && !redirectAttempted) {
+        try {
+          const isMasterAdmin = await masterAdminService.isMasterAdmin();
+          
+          if (isMasterAdmin) {
+            // Master admin should go to master-admin page
+            navigate('/master-admin', { replace: true });
+            setRedirectAttempted(true);
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking master admin status:', error);
+        }
+      }
+    };
+
+    checkMasterAdmin();
+  }, [userSession?.user, navigate, redirectAttempted]);
 
   // If there's no user, redirect to auth page (only once)
   useEffect(() => {
