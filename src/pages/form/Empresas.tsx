@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { SuccessModal } from "@/components/SuccessModal";
 import { toast } from "sonner";
+import { FileUploadButton } from "@/components/FileUploadButton";
 
 const Empresas = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -517,9 +518,8 @@ const Empresas = () => {
             <div>
               <Label htmlFor="logo">Enviar logo da empresa</Label>
               <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG (máx. 5MB)</p>
-              <Input
+              <FileUploadButton
                 id="logo"
-                type="file"
                 accept=".jpg,.jpeg,.png"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -532,21 +532,15 @@ const Empresas = () => {
                     setLogoFile(file);
                   }
                 }}
-                className="mt-1"
+                selectedFiles={logoFile?.name || null}
               />
-              {logoFile && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Arquivo selecionado: {logoFile.name} ({(logoFile.size / 1024 / 1024).toFixed(2)} MB)
-                </p>
-              )}
             </div>
 
             <div>
               <Label htmlFor="apresentacao">Enviar apresentação institucional (PDF)</Label>
               <p className="text-xs text-muted-foreground mb-2">Formato aceito: PDF, DOCX (máx. 5MB)</p>
-              <Input
+              <FileUploadButton
                 id="apresentacao"
-                type="file"
                 accept=".pdf,.docx"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -559,7 +553,7 @@ const Empresas = () => {
                     setApresentacaoFile(file);
                   }
                 }}
-                className="mt-1"
+                selectedFiles={apresentacaoFile?.name || null}
               />
               {apresentacaoFile && (
                 <p className="text-sm text-muted-foreground mt-1">

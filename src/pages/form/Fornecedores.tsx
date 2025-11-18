@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { SuccessModal } from "@/components/SuccessModal";
+import { FileUploadButton } from "@/components/FileUploadButton";
 
 const ESTADOS_BR = [
   "AC",
@@ -519,9 +520,8 @@ const FormFornecedores = () => {
           <div>
             <Label htmlFor="logo">Logo/foto da empresa (opcional)</Label>
             <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG (máx. 5MB)</p>
-            <Input 
-              id="logo" 
-              type="file" 
+            <FileUploadButton
+              id="logo"
               accept=".jpg,.jpeg,.png"
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -534,15 +534,15 @@ const FormFornecedores = () => {
                   setLogoFile(file);
                 }
               }}
+              selectedFiles={logoFile?.name || null}
             />
           </div>
 
           <div>
             <Label htmlFor="portfolio">Portfólio de produtos ou serviços (opcional)</Label>
             <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, JPG, PNG (máx. 5MB por arquivo)</p>
-            <Input 
-              id="portfolio" 
-              type="file" 
+            <FileUploadButton
+              id="portfolio"
               accept=".pdf,.jpg,.jpeg,.png"
               multiple
               onChange={(e) => {
@@ -558,15 +558,15 @@ const FormFornecedores = () => {
                   setPortfolioFiles(files);
                 }
               }}
+              selectedFiles={portfolioFiles ? `${portfolioFiles.length} arquivo(s)` : null}
             />
           </div>
 
           <div>
             <Label htmlFor="certificacoes">Certificações / alvarás (opcional)</Label>
             <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, JPG, PNG (máx. 5MB por arquivo)</p>
-            <Input 
-              id="certificacoes" 
-              type="file" 
+            <FileUploadButton
+              id="certificacoes"
               accept=".pdf,.jpg,.jpeg,.png"
               multiple
               onChange={(e) => {
@@ -582,6 +582,7 @@ const FormFornecedores = () => {
                   setCertificacoesFiles(files);
                 }
               }}
+              selectedFiles={certificacoesFiles ? `${certificacoesFiles.length} arquivo(s)` : null}
             />
           </div>
         </div>
