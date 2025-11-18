@@ -36,7 +36,7 @@ const FormTemplate = ({ children, title, subtitle }: FormTemplateProps) => {
         </div>
 
         {/* Card branco com conteúdo do formulário */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 max-h-[80vh] overflow-y-auto">
           {children}
         </div>
       </div>
