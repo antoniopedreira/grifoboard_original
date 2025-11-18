@@ -43,7 +43,11 @@ const ESTADOS_BR = [
 
 const FormFornecedores = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [portfolioFiles, setPortfolioFiles] = useState<FileList | null>(null);
+  const [certificacoesFiles, setCertificacoesFiles] = useState<FileList | null>(null);
 
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [cnpjCpf, setCnpjCpf] = useState("");
@@ -83,8 +87,61 @@ const FormFornecedores = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setUploadingFiles(true);
 
     try {
+      let logoPath: string | null = null;
+      let portfolioPath: string | null = null;
+      let certificacoesPath: string | null = null;
+
+      // Upload logo if provided
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('formularios-fornecedores')
+          .upload(`logos/${fileName}`, logoFile);
+
+        if (uploadError) throw uploadError;
+        logoPath = `logos/${fileName}`;
+      }
+
+      // Upload portfolio files if provided
+      if (portfolioFiles && portfolioFiles.length > 0) {
+        const uploadedPaths: string[] = [];
+        for (let i = 0; i < portfolioFiles.length; i++) {
+          const file = portfolioFiles[i];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('formularios-fornecedores')
+            .upload(`portfolios/${fileName}`, file);
+
+          if (uploadError) throw uploadError;
+          uploadedPaths.push(`portfolios/${fileName}`);
+        }
+        portfolioPath = uploadedPaths.join(',');
+      }
+
+      // Upload certificacoes files if provided
+      if (certificacoesFiles && certificacoesFiles.length > 0) {
+        const uploadedPaths: string[] = [];
+        for (let i = 0; i < certificacoesFiles.length; i++) {
+          const file = certificacoesFiles[i];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('formularios-fornecedores')
+            .upload(`certificacoes/${fileName}`, file);
+
+          if (uploadError) throw uploadError;
+          uploadedPaths.push(`certificacoes/${fileName}`);
+        }
+        certificacoesPath = uploadedPaths.join(',');
+      }
+
+      setUploadingFiles(false);
+
       const { error } = await supabase.from("formulario_fornecedores").insert({
         nome_empresa: nomeEmpresa,
         cnpj_cpf: cnpjCpf,
@@ -105,36 +162,67 @@ const FormFornecedores = () => {
         nome_responsavel: nomeResponsavel,
         telefone,
         email,
+        logo_path: logoPath,
+        portfolio_path: portfolioPath,
+        certificacoes_path: certificacoesPath,
       });
 
       if (error) throw error;
 
-      setSubmitted(true);
-      window.scrollTo(0, 0);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
-      alert("Erro ao enviar formulário. Tente novamente mais tarde.");
+      toast.error("Erro ao enviar formulário. Tente novamente.");
     } finally {
       setIsSubmitting(false);
+      setUploadingFiles(false);
     }
   };
 
-  if (submitted) {
-    return (
-      <FormTemplate
-        title="GRIFOBOARD MARKETPLACE"
-        subtitle="Formulário de cadastro para fornecedores / distribuidores / lojas"
-      >
-        <div className="text-center py-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">Formulário enviado com sucesso!</h2>
-          <p className="text-muted-foreground">Obrigado por se cadastrar. Entraremos em contato em breve.</p>
-        </div>
-      </FormTemplate>
-    );
-  }
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    
+    // Reset all fields
+    setNomeEmpresa("");
+    setCnpjCpf("");
+    setSite("");
+    setCidade("");
+    setEstado("");
+    setTempoAtuacao("");
+    setTiposAtuacao([]);
+    setTipoAtuacaoOutro("");
+    setCategoriasAtendidas([]);
+    setCategoriasOutro("");
+    setTicketMedio("");
+    setCapacidadeAtendimento("");
+    setRegioesAtendidas([]);
+    setCidadesFrequentes("");
+    setDiferenciais([]);
+    setDiferenciaisOutro("");
+    setNomeResponsavel("");
+    setTelefone("");
+    setEmail("");
+    setLogoFile(null);
+    setPortfolioFiles(null);
+    setCertificacoesFiles(null);
+    
+    // Reset file inputs
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      (input as HTMLInputElement).value = '';
+    });
+  };
 
   return (
-    <FormTemplate
+    <>
+      <SuccessModal 
+        open={showSuccessModal}
+        onClose={handleCloseModal}
+        title="Cadastro realizado com sucesso!"
+        message="Obrigado por se cadastrar no GRIFOBOARD MARKETPLACE. Em breve entraremos em contato."
+      />
+      
+      <FormTemplate
       title="GRIFOBOARD MARKETPLACE"
       subtitle="Formulário de cadastro para fornecedores / distribuidores / lojas"
     >
