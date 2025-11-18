@@ -114,6 +114,7 @@ function App() {
                     <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
                     <Route path="/master-admin" element={<MasterAdmin />} />
                     <Route path="/formularios" element={<Formularios />} />
+                    <Route path="/base-de-dados" element={<BaseDeDados />} />
                     <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                     <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                     <Route path="/diarioobra" element={<DiarioObra />} />
