@@ -13,10 +13,11 @@ import DiarioObra from "@/pages/DiarioObra";
 import NotFound from "@/pages/NotFound";
 import MasterAdmin from "@/pages/MasterAdmin";
 import Formularios from "@/pages/Formularios";
-import BaseDeDados from "@/pages/BaseDeDados";
-import FormProfissionais from "@/pages/form/Profissionais";
-import FormEmpresas from "@/pages/form/Empresas";
-import FormFornecedores from "@/pages/form/Fornecedores";
+import BaseDeDados from '@/pages/BaseDeDados';
+import Playbook from '@/pages/Playbook';
+import FormProfissionais from '@/pages/form/Profissionais';
+import FormEmpresas from '@/pages/form/Empresas';
+import FormFornecedores from '@/pages/form/Fornecedores';
 import { useEffect } from 'react';
 import { Obra } from './types/supabase';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -115,6 +116,7 @@ function App() {
                     <Route path="/master-admin" element={<MasterAdmin />} />
                     <Route path="/formularios" element={<Formularios />} />
                     <Route path="/base-de-dados" element={<BaseDeDados />} />
+                    <Route path="/playbook" element={<Playbook />} />
                     <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                     <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                     <Route path="/diarioobra" element={<DiarioObra />} />

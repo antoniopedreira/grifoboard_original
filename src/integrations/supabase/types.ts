@@ -482,6 +482,118 @@ export type Database = {
           },
         ]
       }
+      playbook_fornecimentos: {
+        Row: {
+          created_at: string | null
+          etapa: string
+          id: string
+          obra_id: string
+          observacao: string | null
+          orcamento_meta_unitario: number
+          proposta: string
+          quantidade: number
+          responsavel: string
+          status: string
+          unidade: string
+          updated_at: string | null
+          valor_contratado: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          etapa: string
+          id?: string
+          obra_id: string
+          observacao?: string | null
+          orcamento_meta_unitario: number
+          proposta: string
+          quantidade: number
+          responsavel: string
+          status: string
+          unidade: string
+          updated_at?: string | null
+          valor_contratado?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          etapa?: string
+          id?: string
+          obra_id?: string
+          observacao?: string | null
+          orcamento_meta_unitario?: number
+          proposta?: string
+          quantidade?: number
+          responsavel?: string
+          status?: string
+          unidade?: string
+          updated_at?: string | null
+          valor_contratado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playbook_fornecimentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      playbook_obra: {
+        Row: {
+          created_at: string | null
+          etapa: string
+          id: string
+          obra_id: string
+          observacao: string | null
+          orcamento_meta_unitario: number
+          proposta: string
+          quantidade: number
+          responsavel: string
+          status: string
+          unidade: string
+          updated_at: string | null
+          valor_contratado: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          etapa: string
+          id?: string
+          obra_id: string
+          observacao?: string | null
+          orcamento_meta_unitario: number
+          proposta: string
+          quantidade: number
+          responsavel: string
+          status: string
+          unidade: string
+          updated_at?: string | null
+          valor_contratado?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          etapa?: string
+          id?: string
+          obra_id?: string
+          observacao?: string | null
+          orcamento_meta_unitario?: number
+          proposta?: string
+          quantidade?: number
+          responsavel?: string
+          status?: string
+          unidade?: string
+          updated_at?: string | null
+          valor_contratado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playbook_obra_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registros: {
         Row: {
           created_at: string
