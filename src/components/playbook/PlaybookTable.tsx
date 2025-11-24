@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2 } from 'lucide-react';
+import { capitalizeWords } from '@/lib/utils/textUtils';
 
 interface PlaybookTableProps {
   data: PlaybookItem[];
@@ -88,11 +89,11 @@ export default function PlaybookTable({
 
             return (
               <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.etapa}</TableCell>
-                <TableCell>{item.proposta}</TableCell>
-                <TableCell>{item.responsavel}</TableCell>
+                <TableCell className="font-medium">{capitalizeWords(item.etapa)}</TableCell>
+                <TableCell>{capitalizeWords(item.proposta)}</TableCell>
+                <TableCell>{capitalizeWords(item.responsavel)}</TableCell>
                 <TableCell className="text-right">{item.quantidade}</TableCell>
-                <TableCell>{item.unidade}</TableCell>
+                <TableCell>{capitalizeWords(item.unidade)}</TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(item.orcamento_meta_unitario)}
                 </TableCell>
@@ -117,7 +118,7 @@ export default function PlaybookTable({
                   {formatCurrency(diferenca)}
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate">
-                  {item.observacao || '-'}
+                  {capitalizeWords(item.observacao) || '-'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex gap-2 justify-end">

@@ -230,7 +230,7 @@ export default function PlaybookForm({
                   <FormItem>
                     <FormLabel>Unidade</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Ex: M2, UNID., VB" />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
