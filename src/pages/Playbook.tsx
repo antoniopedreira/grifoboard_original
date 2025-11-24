@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlaybookTable from '@/components/playbook/PlaybookTable';
 import PlaybookForm from '@/components/playbook/PlaybookForm';
+import PlaybookSummary from '@/components/playbook/PlaybookSummary';
 
 export interface PlaybookItem {
   id: string;
@@ -153,7 +154,16 @@ export default function Playbook() {
         </TabsList>
 
         {/* Farol de Contratação de Fornecimentos */}
-        <TabsContent value="fornecimentos" className="mt-6">
+        <TabsContent value="fornecimentos" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumo Financeiro - Fornecimentos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PlaybookSummary data={fornecimentosData} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Farol de Contratação de Fornecimentos</CardTitle>
@@ -174,7 +184,16 @@ export default function Playbook() {
         </TabsContent>
 
         {/* Farol de Contratação de Obra */}
-        <TabsContent value="obra" className="mt-6">
+        <TabsContent value="obra" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumo Financeiro - Obra</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PlaybookSummary data={obraData} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Farol de Contratação de Obra</CardTitle>
