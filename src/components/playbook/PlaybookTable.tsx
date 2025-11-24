@@ -94,18 +94,18 @@ export default function PlaybookTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-[120px]">Etapa</TableHead>
-            <TableHead className="min-w-[150px]">Proposta</TableHead>
-            <TableHead className="min-w-[120px]">Responsável</TableHead>
-            <TableHead className="text-right min-w-[100px]">Qtd</TableHead>
-            <TableHead className="min-w-[80px]">Unidade</TableHead>
-            <TableHead className="text-right min-w-[140px]">Orç. Meta Unit.</TableHead>
-            <TableHead className="text-right min-w-[140px]">Orç. Meta Total</TableHead>
-            <TableHead className="text-right min-w-[140px]">Valor Contratado</TableHead>
-            <TableHead className="min-w-[130px]">Status</TableHead>
-            <TableHead className="text-right min-w-[120px]">Diferença</TableHead>
-            <TableHead className="min-w-[150px]">Observação</TableHead>
-            <TableHead className="text-right min-w-[100px]">Ações</TableHead>
+            <TableHead className="min-w-[120px] text-xs">Etapa</TableHead>
+            <TableHead className="min-w-[150px] text-xs">Proposta</TableHead>
+            <TableHead className="min-w-[120px] text-xs">Responsável</TableHead>
+            <TableHead className="text-right min-w-[80px] text-xs">Qtd</TableHead>
+            <TableHead className="min-w-[80px] text-xs">Unidade</TableHead>
+            <TableHead className="text-right min-w-[120px] text-xs">Orç. Meta Unit.</TableHead>
+            <TableHead className="text-right min-w-[120px] text-xs">Orç. Meta Total</TableHead>
+            <TableHead className="text-right min-w-[120px] text-xs">Valor Contratado</TableHead>
+            <TableHead className="min-w-[110px] text-xs">Status</TableHead>
+            <TableHead className="text-right min-w-[110px] text-xs">Diferença</TableHead>
+            <TableHead className="min-w-[120px] text-xs">Observação</TableHead>
+            <TableHead className="text-right min-w-[80px] text-xs">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -115,27 +115,27 @@ export default function PlaybookTable({
 
             return (
               <TableRow key={item.id}>
-                <TableCell className="font-medium">{capitalizeWords(item.etapa)}</TableCell>
-                <TableCell>{capitalizeWords(item.proposta)}</TableCell>
-                <TableCell>{capitalizeWords(item.responsavel)}</TableCell>
-                <TableCell className="text-right">{item.quantidade}</TableCell>
-                <TableCell>{capitalizeWords(item.unidade)}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="font-medium text-xs">{capitalizeWords(item.etapa)}</TableCell>
+                <TableCell className="text-xs">{capitalizeWords(item.proposta)}</TableCell>
+                <TableCell className="text-xs">{capitalizeWords(item.responsavel)}</TableCell>
+                <TableCell className="text-right text-xs">{item.quantidade}</TableCell>
+                <TableCell className="text-xs">{capitalizeWords(item.unidade)}</TableCell>
+                <TableCell className="text-right text-xs whitespace-nowrap">
                   {formatCurrency(item.orcamento_meta_unitario)}
                 </TableCell>
-                <TableCell className="text-right bg-yellow-50 dark:bg-yellow-950">
+                <TableCell className="text-right bg-yellow-50 dark:bg-yellow-950 text-xs whitespace-nowrap">
                   {formatCurrency(orcamentoMetaTotal)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right text-xs whitespace-nowrap">
                   {formatCurrency(item.valor_contratado)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-xs">
                   <Badge className={getStatusColor(item.status)} variant="outline">
                     {item.status}
                   </Badge>
                 </TableCell>
                 <TableCell
-                  className={`text-right font-semibold ${
+                  className={`text-right font-semibold text-xs whitespace-nowrap ${
                     item.valor_contratado
                       ? diferenca >= 0
                         ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950'
@@ -145,7 +145,7 @@ export default function PlaybookTable({
                 >
                   {item.valor_contratado ? formatCurrency(diferenca) : '-'}
                 </TableCell>
-                <TableCell className="max-w-[200px] truncate">
+                <TableCell className="max-w-[200px] truncate text-xs">
                   {capitalizeWords(item.observacao) || '-'}
                 </TableCell>
                 <TableCell className="text-right">
