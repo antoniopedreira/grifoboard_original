@@ -146,7 +146,7 @@ export default function Playbook() {
         <TabsContent value="fornecimentos" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Resumo das Negociações - Fornecimentos</CardTitle>
+              <CardTitle>Resumo das Negociações     </CardTitle>
             </CardHeader>
             <CardContent>
               <PlaybookSummary data={fornecimentosData} />
