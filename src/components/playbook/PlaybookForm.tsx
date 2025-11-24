@@ -238,35 +238,19 @@ export default function PlaybookForm({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="orcamento_meta_unitario"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Orçamento Meta Unitário (R$)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="valor_contratado"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor Contratado (R$)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="orcamento_meta_unitario"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Orçamento Meta Unitário (R$)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -274,7 +258,7 @@ export default function PlaybookForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o status" />
@@ -290,6 +274,22 @@ export default function PlaybookForm({
                 </FormItem>
               )}
             />
+
+            {form.watch('status') === 'Negociadas' && (
+              <FormField
+                control={form.control}
+                name="valor_contratado"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor Contratado (R$)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
