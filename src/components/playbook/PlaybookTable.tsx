@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { PlaybookItem } from '@/pages/Playbook';
 import {
   Table,
@@ -9,6 +10,16 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Pencil, Trash2 } from 'lucide-react';
 import { capitalizeWords } from '@/lib/utils/textUtils';
 
@@ -46,6 +57,22 @@ export default function PlaybookTable({
   onEdit,
   onDelete,
 }: PlaybookTableProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (id: string) => {
+    setItemToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      onDelete(itemToDelete);
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -125,15 +152,17 @@ export default function PlaybookTable({
                   <div className="flex gap-2 justify-end">
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={() => onEdit(item)}
+                      title="Editar"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      onClick={() => onDelete(item.id)}
+                      size="sm"
+                      onClick={() => handleDeleteClick(item.id)}
+                      title="Excluir"
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -144,6 +173,23 @@ export default function PlaybookTable({
           })}
         </TableBody>
       </Table>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
