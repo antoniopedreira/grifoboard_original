@@ -171,7 +171,7 @@ export default function Playbook() {
         <TabsContent value="obra" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Resumo Financeiro - Obra</CardTitle>
+              <CardTitle>Resumo das Negociações    </CardTitle>
             </CardHeader>
             <CardContent>
               <PlaybookSummary data={obraData} />
