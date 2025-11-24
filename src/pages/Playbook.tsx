@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlaybookTable from '@/components/playbook/PlaybookTable';
 import PlaybookForm from '@/components/playbook/PlaybookForm';
 
@@ -145,43 +146,54 @@ export default function Playbook() {
         <h1 className="text-3xl font-bold">Playbook - {userSession.obraAtiva.nome_obra}</h1>
       </div>
 
-      {/* Farol de Contratação de Fornecimentos */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle>Farol de Contratação de Fornecimentos</CardTitle>
-          <Button onClick={handleAddFornecimentos} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Item
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <PlaybookTable
-            data={fornecimentosData}
-            isLoading={isLoading}
-            onEdit={(item) => handleEdit(item, 'fornecimentos')}
-            onDelete={(id) => handleDelete(id, 'fornecimentos')}
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="fornecimentos" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="fornecimentos">Fornecimentos</TabsTrigger>
+          <TabsTrigger value="obra">Obra</TabsTrigger>
+        </TabsList>
 
-      {/* Farol de Contratação de Obra */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle>Farol de Contratação de Obra</CardTitle>
-          <Button onClick={handleAddObra} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Item
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <PlaybookTable
-            data={obraData}
-            isLoading={isLoading}
-            onEdit={(item) => handleEdit(item, 'obra')}
-            onDelete={(id) => handleDelete(id, 'obra')}
-          />
-        </CardContent>
-      </Card>
+        {/* Farol de Contratação de Fornecimentos */}
+        <TabsContent value="fornecimentos" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle>Farol de Contratação de Fornecimentos</CardTitle>
+              <Button onClick={handleAddFornecimentos} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Item
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <PlaybookTable
+                data={fornecimentosData}
+                isLoading={isLoading}
+                onEdit={(item) => handleEdit(item, 'fornecimentos')}
+                onDelete={(id) => handleDelete(id, 'fornecimentos')}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Farol de Contratação de Obra */}
+        <TabsContent value="obra" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle>Farol de Contratação de Obra</CardTitle>
+              <Button onClick={handleAddObra} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Item
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <PlaybookTable
+                data={obraData}
+                isLoading={isLoading}
+                onEdit={(item) => handleEdit(item, 'obra')}
+                onDelete={(id) => handleDelete(id, 'obra')}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Form Dialogs */}
       {showFornecimentosForm && (
