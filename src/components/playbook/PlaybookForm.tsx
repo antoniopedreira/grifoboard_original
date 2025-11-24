@@ -40,6 +40,14 @@ const formSchema = z.object({
   valor_contratado: z.string().optional(),
   status: z.enum(['Negociadas', 'Em Andamento', 'A Negociar']),
   observacao: z.string().optional(),
+}).refine((data) => {
+  if (data.status === 'Negociadas' && !data.valor_contratado) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Valor Contratado é obrigatório quando o status for Negociadas',
+  path: ['valor_contratado'],
 });
 
 interface PlaybookFormProps {

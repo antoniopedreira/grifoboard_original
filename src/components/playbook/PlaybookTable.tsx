@@ -84,8 +84,7 @@ export default function PlaybookTable({
         <TableBody>
           {data.map((item) => {
             const orcamentoMetaTotal = item.quantidade * item.orcamento_meta_unitario;
-            const diferenca = (item.valor_contratado || 0) - orcamentoMetaTotal;
-            const diferencaPositiva = diferenca >= 0;
+            const diferenca = orcamentoMetaTotal - (item.valor_contratado || 0);
 
             return (
               <TableRow key={item.id}>
@@ -110,12 +109,14 @@ export default function PlaybookTable({
                 </TableCell>
                 <TableCell
                   className={`text-right font-semibold ${
-                    diferencaPositiva
-                      ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950'
-                      : 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950'
+                    item.valor_contratado
+                      ? diferenca >= 0
+                        ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950'
+                        : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950'
+                      : ''
                   }`}
                 >
-                  {formatCurrency(diferenca)}
+                  {item.valor_contratado ? formatCurrency(diferenca) : '-'}
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {capitalizeWords(item.observacao) || '-'}
