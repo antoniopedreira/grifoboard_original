@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlaybookTable from '@/components/playbook/PlaybookTable';
 import PlaybookForm from '@/components/playbook/PlaybookForm';
 import PlaybookSummary from '@/components/playbook/PlaybookSummary';
+import PlaybookDetailsModal from '@/components/playbook/PlaybookDetailsModal';
 
 export interface PlaybookItem {
   id: string;
@@ -34,6 +35,8 @@ export default function Playbook() {
   const [showObraForm, setShowObraForm] = useState(false);
   const [editingItem, setEditingItem] = useState<PlaybookItem | null>(null);
   const [editingTable, setEditingTable] = useState<'fornecimentos' | 'obra' | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PlaybookItem | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     if (userSession?.obraAtiva?.id) {
@@ -88,6 +91,8 @@ export default function Playbook() {
   };
 
   const handleEdit = (item: PlaybookItem, table: 'fornecimentos' | 'obra') => {
+    setSelectedItem(null);
+    setDetailsModalOpen(false);
     setEditingItem(item);
     setEditingTable(table);
     if (table === 'fornecimentos') {
@@ -95,6 +100,12 @@ export default function Playbook() {
     } else {
       setShowObraForm(true);
     }
+  };
+
+  const handleRowClick = (item: PlaybookItem, table: 'fornecimentos' | 'obra') => {
+    setSelectedItem(item);
+    setEditingTable(table);
+    setDetailsModalOpen(true);
   };
 
   const handleDelete = async (id: string, table: 'fornecimentos' | 'obra') => {
@@ -176,8 +187,7 @@ export default function Playbook() {
               <PlaybookTable
                 data={fornecimentosData}
                 isLoading={isLoading}
-                onEdit={(item) => handleEdit(item, 'fornecimentos')}
-                onDelete={(id) => handleDelete(id, 'fornecimentos')}
+                onRowClick={(item) => handleRowClick(item, 'fornecimentos')}
               />
             </CardContent>
           </Card>
@@ -206,8 +216,7 @@ export default function Playbook() {
               <PlaybookTable
                 data={obraData}
                 isLoading={isLoading}
-                onEdit={(item) => handleEdit(item, 'obra')}
-                onDelete={(id) => handleDelete(id, 'obra')}
+                onRowClick={(item) => handleRowClick(item, 'obra')}
               />
             </CardContent>
           </Card>
@@ -242,6 +251,18 @@ export default function Playbook() {
           editingItem={editingItem}
         />
       )}
+
+      {/* Details Modal */}
+      <PlaybookDetailsModal
+        item={selectedItem}
+        isOpen={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedItem(null);
+        }}
+        onEdit={(item) => handleEdit(item, editingTable || 'fornecimentos')}
+        onDelete={(id) => handleDelete(id, editingTable || 'fornecimentos')}
+      />
     </div>
   );
 }

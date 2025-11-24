@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { PlaybookItem } from '@/pages/Playbook';
 import {
   Table,
@@ -8,26 +7,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Pencil, Trash2 } from 'lucide-react';
 import { capitalizeWords } from '@/lib/utils/textUtils';
 
 interface PlaybookTableProps {
   data: PlaybookItem[];
   isLoading: boolean;
-  onEdit: (item: PlaybookItem) => void;
-  onDelete: (id: string) => void;
+  onRowClick: (item: PlaybookItem) => void;
 }
 
 const formatCurrency = (value: number | null) => {
@@ -54,25 +40,8 @@ const getStatusColor = (status: string) => {
 export default function PlaybookTable({
   data,
   isLoading,
-  onEdit,
-  onDelete,
+  onRowClick,
 }: PlaybookTableProps) {
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-
-  const handleDeleteClick = (id: string) => {
-    setItemToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (itemToDelete) {
-      onDelete(itemToDelete);
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -105,7 +74,6 @@ export default function PlaybookTable({
             <TableHead className="min-w-[110px] text-xs">Status</TableHead>
             <TableHead className="text-right min-w-[110px] text-xs">Diferença</TableHead>
             <TableHead className="min-w-[120px] text-xs">Observação</TableHead>
-            <TableHead className="text-right min-w-[80px] text-xs">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -114,7 +82,11 @@ export default function PlaybookTable({
             const diferenca = orcamentoMetaTotal - (item.valor_contratado || 0);
 
             return (
-              <TableRow key={item.id}>
+              <TableRow 
+                key={item.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onRowClick(item)}
+              >
                 <TableCell className="font-medium text-xs">{capitalizeWords(item.etapa)}</TableCell>
                 <TableCell className="text-xs">{capitalizeWords(item.proposta)}</TableCell>
                 <TableCell className="text-xs">{capitalizeWords(item.responsavel)}</TableCell>
@@ -148,48 +120,11 @@ export default function PlaybookTable({
                 <TableCell className="max-w-[200px] truncate text-xs">
                   {capitalizeWords(item.observacao) || '-'}
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(item)}
-                      title="Editar"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(item.id)}
-                      title="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
