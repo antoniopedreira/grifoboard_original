@@ -91,7 +91,7 @@ export default function PlaybookSummary({ data }: PlaybookSummaryProps) {
               R$ {formatCurrency(totals['Negociadas'].orcado - totals['Negociadas'].efetivado)}
             </TableCell>
             <TableCell className="text-right">
-              {totalVerbaDisponivel > 0 ? formatPercentage(((totals['Negociadas'].orcado - totals['Negociadas'].efetivado) / totalVerbaDisponivel) * 100) : '0,00%'}
+              {totals['Negociadas'].orcado > 0 ? formatPercentage((1 - (totals['Negociadas'].efetivado / totals['Negociadas'].orcado)) * 100) : '100,00%'}
             </TableCell>
           </TableRow>
 
@@ -113,7 +113,7 @@ export default function PlaybookSummary({ data }: PlaybookSummaryProps) {
               R$ {formatCurrency(totals['Em Andamento'].orcado - totals['Em Andamento'].efetivado)}
             </TableCell>
             <TableCell className="text-right">
-              {totalVerbaDisponivel > 0 ? formatPercentage(((totals['Em Andamento'].orcado - totals['Em Andamento'].efetivado) / totalVerbaDisponivel) * 100) : '0,00%'}
+              {totals['Em Andamento'].orcado > 0 ? formatPercentage((1 - (totals['Em Andamento'].efetivado / totals['Em Andamento'].orcado)) * 100) : '100,00%'}
             </TableCell>
           </TableRow>
 
@@ -135,7 +135,7 @@ export default function PlaybookSummary({ data }: PlaybookSummaryProps) {
               R$ {formatCurrency(totals['A Negociar'].orcado - totals['A Negociar'].efetivado)}
             </TableCell>
             <TableCell className="text-right">
-              {totalVerbaDisponivel > 0 ? formatPercentage(((totals['A Negociar'].orcado - totals['A Negociar'].efetivado) / totalVerbaDisponivel) * 100) : '0,00%'}
+              {totals['A Negociar'].orcado > 0 ? formatPercentage((1 - (totals['A Negociar'].efetivado / totals['A Negociar'].orcado)) * 100) : '100,00%'}
             </TableCell>
           </TableRow>
 
@@ -148,7 +148,7 @@ export default function PlaybookSummary({ data }: PlaybookSummaryProps) {
             <TableCell className="text-right">100,00%</TableCell>
             <TableCell className="text-right">R$ {formatCurrency(totalVerbaDisponivel)}</TableCell>
             <TableCell className="text-right">
-              {totalOrcado > 0 ? formatPercentage((totalVerbaDisponivel / totalOrcado) * 100) : '0,00%'}
+              {totalOrcado > 0 ? formatPercentage((1 - (totalEfetivado / totalOrcado)) * 100) : '100,00%'}
             </TableCell>
           </TableRow>
         </TableBody>
