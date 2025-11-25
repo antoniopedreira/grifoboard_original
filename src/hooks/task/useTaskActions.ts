@@ -232,10 +232,60 @@ export const useTaskActions = ({
     }
   }, [session.obraAtiva, handleTaskCreate, toast]);
   
+  // New function to copy a task to next week
+  const handleCopyToNextWeek = useCallback(async (taskToDuplicate: Task) => {
+    try {
+      if (!session.obraAtiva) {
+        throw new Error("Nenhuma obra ativa selecionada");
+      }
+      
+      // Calculate next week's Monday
+      const currentWeekStart = taskToDuplicate.weekStartDate || new Date();
+      const nextWeekStart = new Date(
+        currentWeekStart.getFullYear(), 
+        currentWeekStart.getMonth(), 
+        currentWeekStart.getDate() + 7
+      );
+      
+      // Create new task data based on the existing task but with next week's date
+      const newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted"> = {
+        sector: taskToDuplicate.sector,
+        item: taskToDuplicate.item,
+        description: taskToDuplicate.description,
+        discipline: taskToDuplicate.discipline,
+        team: taskToDuplicate.team,
+        responsible: taskToDuplicate.responsible,
+        executor: taskToDuplicate.executor,
+        plannedDays: [...taskToDuplicate.plannedDays], // Copy planned days
+        weekStartDate: nextWeekStart, // Set to next week's Monday
+        causeIfNotDone: taskToDuplicate.causeIfNotDone,
+      };
+      
+      // Use the existing create function to make a new task
+      const createdTask = await handleTaskCreate(newTaskData);
+      
+      toast({
+        title: "Tarefa copiada para próxima semana",
+        description: "Uma nova tarefa foi criada para a semana seguinte.",
+      });
+      
+      return createdTask;
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
+      toast({
+        title: "Erro ao copiar tarefa",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [session.obraAtiva, handleTaskCreate, toast]);
+  
   return {
     handleTaskUpdate,
     handleTaskDelete,
     handleTaskCreate,
-    handleTaskDuplicate
+    handleTaskDuplicate,
+    handleCopyToNextWeek
   };
 };

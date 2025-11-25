@@ -27,6 +27,7 @@ interface TaskGridProps {
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskDuplicate?: (task: Task) => void;
+  onCopyToNextWeek?: (task: Task) => void;
 }
 
 interface SortableTaskCardProps {
@@ -34,9 +35,10 @@ interface SortableTaskCardProps {
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskDuplicate?: (task: Task) => void;
+  onCopyToNextWeek?: (task: Task) => void;
 }
 
-const SortableTaskCard: React.FC<SortableTaskCardProps> = ({ task, onTaskUpdate, onTaskDelete, onTaskDuplicate }) => {
+const SortableTaskCard: React.FC<SortableTaskCardProps> = ({ task, onTaskUpdate, onTaskDelete, onTaskDuplicate, onCopyToNextWeek }) => {
   const {
     attributes,
     listeners,
@@ -66,12 +68,13 @@ const SortableTaskCard: React.FC<SortableTaskCardProps> = ({ task, onTaskUpdate,
         onTaskUpdate={onTaskUpdate}
         onTaskDelete={onTaskDelete}
         onTaskDuplicate={onTaskDuplicate}
+        onCopyToNextWeek={onCopyToNextWeek}
       />
     </div>
   );
 };
 
-const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, onTaskDuplicate }) => {
+const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, onTaskDuplicate, onCopyToNextWeek }) => {
   const [orderedTasks, setOrderedTasks] = useState<Task[]>(tasks);
   const { toast } = useToast();
 
@@ -149,6 +152,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onTaskUpdate, onTaskDelete, 
               onTaskUpdate={onTaskUpdate}
               onTaskDelete={onTaskDelete}
               onTaskDuplicate={onTaskDuplicate}
+              onCopyToNextWeek={onCopyToNextWeek}
             />
           ))}
         </div>

@@ -41,7 +41,8 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
     handleTaskUpdate,
     handleTaskDelete,
     handleTaskCreate,
-    handleTaskDuplicate
+    handleTaskDuplicate,
+    handleCopyToNextWeek
   } = useTaskManager(weekStartDate);
   
   const handleCauseSelect = (cause: string) => {
@@ -114,6 +115,7 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
         onTaskUpdate={handleTaskUpdate}
         onTaskDelete={handleTaskDelete}
         onTaskDuplicate={handleTaskDuplicate}
+        onCopyToNextWeek={handleCopyToNextWeek}
         selectedCause={selectedCause}
         sortBy={sortBy}
         onSortChange={handleSortChange}

@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, X } from "lucide-react";
+import { Copy, Pencil, X, Calendar } from "lucide-react";
 import CausesDropdown from "../task/CausesDropdown";
 import { 
   Tooltip,
@@ -16,6 +16,7 @@ interface TaskFooterProps {
   onCauseRemove?: () => void;
   onEditClick: () => void;
   onDuplicateClick?: () => void;
+  onCopyToNextWeek?: () => void;
 }
 
 const TaskFooter: React.FC<TaskFooterProps> = ({ 
@@ -24,7 +25,8 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
   onCauseSelect,
   onCauseRemove,
   onEditClick,
-  onDuplicateClick 
+  onDuplicateClick,
+  onCopyToNextWeek 
 }) => {
   return (
     <div className="w-full flex justify-between items-center">
@@ -59,6 +61,24 @@ const TaskFooter: React.FC<TaskFooterProps> = ({
       )}
       
       <div className="flex gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onCopyToNextWeek} 
+                className="text-gray-600 hover:bg-gray-50 p-1.5 h-7 w-7 rounded-md border-gray-200"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Copiar para próxima semana</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
