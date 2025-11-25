@@ -18,13 +18,15 @@ interface TaskCardProps {
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskDuplicate?: (task: Task) => void;
+  onCopyToNextWeek?: (task: Task) => void;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ 
   task, 
   onTaskUpdate, 
   onTaskDelete,
-  onTaskDuplicate 
+  onTaskDuplicate,
+  onCopyToNextWeek 
 }) => {
   // Use custom hooks to manage task state and actions
   const { 
@@ -111,6 +113,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             onCauseSelect={handleCauseSelect}
             onEditClick={openEdit}
             onDuplicateClick={() => onTaskDuplicate?.(task)}
+            onCopyToNextWeek={() => onCopyToNextWeek?.(task)}
             onCauseRemove={task.causeIfNotDone ? () => handleCauseSelect("") : undefined}
           />
         </CardFooter>

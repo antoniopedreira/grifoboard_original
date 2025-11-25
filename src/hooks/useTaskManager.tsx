@@ -39,7 +39,8 @@ export const useTaskManager = (weekStartDate: Date) => {
     handleTaskUpdate, 
     handleTaskDelete, 
     handleTaskCreate,
-    handleTaskDuplicate
+    handleTaskDuplicate,
+    handleCopyToNextWeek
   } = useTaskActions({
     toast,
     tasks,
@@ -85,7 +86,8 @@ export const useTaskManager = (weekStartDate: Date) => {
     handleTaskUpdate,
     handleTaskDelete,
     handleTaskCreate,
-    handleTaskDuplicate
+    handleTaskDuplicate,
+    handleCopyToNextWeek
   };
 };
 

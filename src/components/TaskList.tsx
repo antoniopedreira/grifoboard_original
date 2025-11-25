@@ -12,6 +12,7 @@ interface TaskListProps {
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete: (taskId: string) => void;
   onTaskDuplicate: (task: Task) => void;
+  onCopyToNextWeek: (task: Task) => void;
   selectedCause: string | null;
   sortBy: "none" | "sector" | "executor" | "discipline";
   onSortChange: (sortBy: "none" | "sector" | "executor" | "discipline") => void;
@@ -22,6 +23,7 @@ const TaskList: React.FC<TaskListProps> = ({
   onTaskUpdate, 
   onTaskDelete, 
   onTaskDuplicate,
+  onCopyToNextWeek,
   selectedCause,
   sortBy,
   onSortChange
@@ -81,6 +83,7 @@ const TaskList: React.FC<TaskListProps> = ({
         onTaskUpdate={handleTaskUpdate}
         onTaskDelete={onTaskDelete}
         onTaskDuplicate={onTaskDuplicate}
+        onCopyToNextWeek={onCopyToNextWeek}
       />
     </div>
   );

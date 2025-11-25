@@ -10,6 +10,7 @@ interface TasksSectionProps {
   onTaskUpdate: (updatedTask: Task) => void;
   onTaskDelete: (taskId: string) => void;
   onTaskDuplicate: (task: Task) => void;
+  onCopyToNextWeek: (task: Task) => void;
   selectedCause: string | null;
   sortBy: "none" | "sector" | "executor" | "discipline";
   onSortChange: (sortBy: "none" | "sector" | "executor" | "discipline") => void;
@@ -21,6 +22,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   onTaskUpdate, 
   onTaskDelete,
   onTaskDuplicate,
+  onCopyToNextWeek,
   selectedCause,
   sortBy,
   onSortChange
@@ -63,6 +65,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
           onTaskUpdate={onTaskUpdate} 
           onTaskDelete={onTaskDelete}
           onTaskDuplicate={onTaskDuplicate}
+          onCopyToNextWeek={onCopyToNextWeek}
           selectedCause={selectedCause}
           sortBy={sortBy}
           onSortChange={onSortChange}
