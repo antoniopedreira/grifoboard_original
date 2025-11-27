@@ -29,14 +29,9 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
   const [editingItem, setEditingItem] = useState<{type: string, value: string, newValue: string} | null>(null);
   const { sectors, disciplines, teams, responsibles, executors, isLoading, deleteRegistry, editRegistry, getRegistryItemId, selectedObraId } = useRegistry();
   const [deletingItem, setDeletingItem] = useState<{type: string, value: string} | null>(null);
-  const [copyingFromUser, setCopyingFromUser] = useState(false);
-  const [userRegistries, setUserRegistries] = useState<{
-    sectors: string[];
-    disciplines: string[];
-    teams: string[];
-    responsibles: string[];
-    executors: string[];
-  } | null>(null);
+  const [copyingFromObras, setCopyingFromObras] = useState(false);
+  const [obrasEmpresa, setObrasEmpresa] = useState<Array<{id: string, nome_obra: string}>>([]);
+  const [selectedObras, setSelectedObras] = useState<string[]>([]);
 
   const handleSubmit = async (type: string) => {
     let value = "";
@@ -124,53 +119,55 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     }
   };
 
-  const loadUserRegistries = async () => {
+  const loadObrasEmpresa = async () => {
+    if (!selectedObraId) return;
+
     try {
-      setCopyingFromUser(true);
-      const { registrosService } = await import('@/services/registroService');
-      const data = await registrosService.listarRegistrosUsuario();
+      setCopyingFromObras(true);
+      const { obrasService } = await import('@/services/obraService');
+      const data = await obrasService.listarObrasDaEmpresa(selectedObraId);
       
-      setUserRegistries({
-        sectors: data.filter(item => item.tipo === 'sector').map(item => item.valor),
-        disciplines: data.filter(item => item.tipo === 'discipline').map(item => item.valor),
-        teams: data.filter(item => item.tipo === 'team').map(item => item.valor),
-        responsibles: data.filter(item => item.tipo === 'responsible').map(item => item.valor),
-        executors: data.filter(item => item.tipo === 'executor').map(item => item.valor),
-      });
+      setObrasEmpresa(data.map(obra => ({
+        id: obra.id,
+        nome_obra: obra.nome_obra
+      })));
     } catch (error) {
       toast({
-        title: "Erro ao carregar cadastros",
-        description: "Não foi possível carregar seus cadastros pessoais.",
+        title: "Erro ao carregar obras",
+        description: "Não foi possível carregar as obras da empresa.",
         variant: "destructive"
       });
+      setCopyingFromObras(false);
     }
   };
 
-  const handleCopyFromUser = async () => {
-    if (!selectedObraId || !userRegistries) return;
+  const handleToggleObra = (obraId: string) => {
+    setSelectedObras(prev => 
+      prev.includes(obraId) 
+        ? prev.filter(id => id !== obraId)
+        : [...prev, obraId]
+    );
+  };
+
+  const handleCopyFromObras = async () => {
+    if (!selectedObraId || selectedObras.length === 0) return;
 
     try {
       const { registrosService } = await import('@/services/registroService');
-      const allUserRegistries = [
-        ...userRegistries.sectors.map(v => ({ tipo: 'sector', valor: v })),
-        ...userRegistries.disciplines.map(v => ({ tipo: 'discipline', valor: v })),
-        ...userRegistries.teams.map(v => ({ tipo: 'team', valor: v })),
-        ...userRegistries.responsibles.map(v => ({ tipo: 'responsible', valor: v })),
-        ...userRegistries.executors.map(v => ({ tipo: 'executor', valor: v })),
-      ];
-
-      await registrosService.copiarRegistrosParaObra(
-        selectedObraId, 
-        allUserRegistries.map(r => ({ ...r, id: '', obra_id: null, user_id: null, created_at: '' }))
-      );
+      
+      // Copy from each selected obra
+      for (const obraId of selectedObras) {
+        await registrosService.copiarRegistrosDeOutraObra(selectedObraId, obraId);
+      }
 
       toast({
         title: "Cadastros copiados",
-        description: "Seus cadastros pessoais foram copiados para esta obra.",
+        description: `Cadastros de ${selectedObras.length} obra(s) foram copiados com sucesso.`,
       });
 
-      setCopyingFromUser(false);
-      setUserRegistries(null);
+      setCopyingFromObras(false);
+      setObrasEmpresa([]);
+      setSelectedObras([]);
       window.location.reload(); // Refresh to show new data
     } catch (error) {
       toast({
@@ -296,42 +293,76 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
   return (
     <div className="space-y-6">
       {selectedObraId && (
-        <div className="flex justify-end">
-          {!copyingFromUser ? (
-            <Button
-              onClick={loadUserRegistries}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Copy className="h-4 w-4" />
-              Copiar da Minha Base de Dados
-            </Button>
-          ) : userRegistries ? (
-            <div className="flex gap-2">
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            {!copyingFromObras ? (
               <Button
-                onClick={handleCopyFromUser}
+                onClick={loadObrasEmpresa}
+                variant="outline"
                 size="sm"
                 className="gap-2"
               >
-                <Check className="h-4 w-4" />
-                Confirmar Cópia
+                <Copy className="h-4 w-4" />
+                Copiar Cadastros de Outras Obras
               </Button>
-              <Button
-                onClick={() => {
-                  setCopyingFromUser(false);
-                  setUserRegistries(null);
-                }}
-                variant="outline"
-                size="sm"
-              >
-                Cancelar
-              </Button>
+            ) : obrasEmpresa.length > 0 ? (
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleCopyFromObras}
+                  size="sm"
+                  className="gap-2"
+                  disabled={selectedObras.length === 0}
+                >
+                  <Check className="h-4 w-4" />
+                  Copiar de {selectedObras.length} Obra(s)
+                </Button>
+                <Button
+                  onClick={() => {
+                    setCopyingFromObras(false);
+                    setObrasEmpresa([]);
+                    setSelectedObras([]);
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Carregando obras...
+              </div>
+            )}
+          </div>
+          
+          {copyingFromObras && obrasEmpresa.length > 0 && (
+            <div className="bg-muted/30 border rounded-lg p-4">
+              <h3 className="font-semibold mb-3 text-sm">Selecione as obras para copiar cadastros:</h3>
+              <ScrollArea className="h-[200px]">
+                <div className="space-y-2">
+                  {obrasEmpresa.map((obra) => (
+                    <label
+                      key={obra.id}
+                      className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedObras.includes(obra.id)}
+                        onChange={() => handleToggleObra(obra.id)}
+                        className="h-4 w-4 rounded border-border"
+                      />
+                      <span className="text-sm font-medium">{obra.nome_obra}</span>
+                    </label>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Carregando...
+          )}
+          
+          {copyingFromObras && obrasEmpresa.length === 0 && (
+            <div className="bg-muted/30 border rounded-lg p-4 text-center text-sm text-muted-foreground">
+              Nenhuma outra obra encontrada nesta empresa.
             </div>
           )}
         </div>

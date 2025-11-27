@@ -95,5 +95,36 @@ export const obrasService = {
     if (error) {
       throw new ObraServiceError('Erro ao excluir obra', error);
     }
+  },
+
+  async listarObrasDaEmpresa(obraId: string): Promise<Obra[]> {
+    if (!obraId) {
+      throw new ObraServiceError('ID da obra é obrigatório');
+    }
+
+    // First get the empresa_id of the current obra
+    const { data: obraAtual, error: obraError } = await supabase
+      .from('obras')
+      .select('empresa_id')
+      .eq('id', obraId)
+      .single();
+
+    if (obraError || !obraAtual) {
+      throw new ObraServiceError('Erro ao buscar obra atual', obraError);
+    }
+
+    // Then get all obras from the same empresa (excluding current obra)
+    const { data, error } = await supabase
+      .from('obras')
+      .select('id, nome_obra, localizacao, status, data_inicio, data_termino, created_at, usuario_id, empresa_id')
+      .eq('empresa_id', obraAtual.empresa_id)
+      .neq('id', obraId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw new ObraServiceError('Erro ao listar obras da empresa', error);
+    }
+    
+    return data ?? [];
   }
 };

@@ -193,15 +193,30 @@ export const registrosService = {
     }
   },
 
-  // Copy registros from user's personal database to an obra
-  async copiarRegistrosParaObra(obra_id: string, registros: Registro[]): Promise<void> {
-    if (!obra_id) {
-      throw new RegistroServiceError('ID da obra é obrigatório');
+  // Copy registros from another obra to current obra
+  async copiarRegistrosDeOutraObra(obraDestinoId: string, obraOrigemId: string): Promise<void> {
+    if (!obraDestinoId || !obraOrigemId) {
+      throw new RegistroServiceError('IDs das obras são obrigatórios');
     }
 
     try {
-      const insertData = registros.map(r => ({
-        obra_id,
+      // Get registros from source obra
+      const { data: registrosOrigem, error: fetchError } = await supabase
+        .from('registros')
+        .select('tipo, valor')
+        .eq('obra_id', obraOrigemId);
+
+      if (fetchError) {
+        throw new RegistroServiceError('Erro ao buscar registros da obra origem', fetchError);
+      }
+
+      if (!registrosOrigem || registrosOrigem.length === 0) {
+        throw new RegistroServiceError('Nenhum registro encontrado na obra selecionada');
+      }
+
+      // Insert into destination obra
+      const insertData = registrosOrigem.map(r => ({
+        obra_id: obraDestinoId,
         tipo: r.tipo,
         valor: r.valor
       }));
@@ -212,12 +227,14 @@ export const registrosService = {
 
       if (error) {
         if (error.code === '23505') {
-          throw new RegistroServiceError('Alguns cadastros já existem nesta obra', error);
+          // Some registros already exist, that's ok
+          console.log('Alguns cadastros já existem nesta obra');
+        } else {
+          throw new RegistroServiceError('Erro ao copiar registros para obra', error);
         }
-        throw new RegistroServiceError('Erro ao copiar registros para obra', error);
       }
     } catch (error) {
-      console.error('Error in copiarRegistrosParaObra:', error);
+      console.error('Error in copiarRegistrosDeOutraObra:', error);
       throw error instanceof RegistroServiceError 
         ? error 
         : new RegistroServiceError('Erro inesperado ao copiar registros', error as Error);
