@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { useRegistry } from "@/context/RegistryContext";
-import { Loader2, Trash2, Edit2, Check, X } from "lucide-react";
+import { Loader2, Trash2, Edit2, Check, X, Copy } from "lucide-react";
 
 interface RegistryFormProps {
   onClose: () => void;
@@ -27,8 +27,16 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
   const [newResponsible, setNewResponsible] = useState("");
   const [newExecutor, setNewExecutor] = useState("");
   const [editingItem, setEditingItem] = useState<{type: string, value: string, newValue: string} | null>(null);
-  const { sectors, disciplines, teams, responsibles, executors, isLoading, deleteRegistry, editRegistry, getRegistryItemId } = useRegistry();
+  const { sectors, disciplines, teams, responsibles, executors, isLoading, deleteRegistry, editRegistry, getRegistryItemId, selectedObraId } = useRegistry();
   const [deletingItem, setDeletingItem] = useState<{type: string, value: string} | null>(null);
+  const [copyingFromUser, setCopyingFromUser] = useState(false);
+  const [userRegistries, setUserRegistries] = useState<{
+    sectors: string[];
+    disciplines: string[];
+    teams: string[];
+    responsibles: string[];
+    executors: string[];
+  } | null>(null);
 
   const handleSubmit = async (type: string) => {
     let value = "";
@@ -113,6 +121,63 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
       // Error is handled by the context
     } finally {
       setDeletingItem(null);
+    }
+  };
+
+  const loadUserRegistries = async () => {
+    try {
+      setCopyingFromUser(true);
+      const { registrosService } = await import('@/services/registroService');
+      const data = await registrosService.listarRegistrosUsuario();
+      
+      setUserRegistries({
+        sectors: data.filter(item => item.tipo === 'sector').map(item => item.valor),
+        disciplines: data.filter(item => item.tipo === 'discipline').map(item => item.valor),
+        teams: data.filter(item => item.tipo === 'team').map(item => item.valor),
+        responsibles: data.filter(item => item.tipo === 'responsible').map(item => item.valor),
+        executors: data.filter(item => item.tipo === 'executor').map(item => item.valor),
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao carregar cadastros",
+        description: "Não foi possível carregar seus cadastros pessoais.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCopyFromUser = async () => {
+    if (!selectedObraId || !userRegistries) return;
+
+    try {
+      const { registrosService } = await import('@/services/registroService');
+      const allUserRegistries = [
+        ...userRegistries.sectors.map(v => ({ tipo: 'sector', valor: v })),
+        ...userRegistries.disciplines.map(v => ({ tipo: 'discipline', valor: v })),
+        ...userRegistries.teams.map(v => ({ tipo: 'team', valor: v })),
+        ...userRegistries.responsibles.map(v => ({ tipo: 'responsible', valor: v })),
+        ...userRegistries.executors.map(v => ({ tipo: 'executor', valor: v })),
+      ];
+
+      await registrosService.copiarRegistrosParaObra(
+        selectedObraId, 
+        allUserRegistries.map(r => ({ ...r, id: '', obra_id: null, user_id: null, created_at: '' }))
+      );
+
+      toast({
+        title: "Cadastros copiados",
+        description: "Seus cadastros pessoais foram copiados para esta obra.",
+      });
+
+      setCopyingFromUser(false);
+      setUserRegistries(null);
+      window.location.reload(); // Refresh to show new data
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar cadastros",
+        description: "Alguns cadastros podem já existir nesta obra.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -229,8 +294,51 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
   };
 
   return (
-    <Tabs defaultValue="sector" className="w-full">
-      <TabsList className="grid w-full grid-cols-5 mb-8 h-auto p-1 bg-muted/50">
+    <div className="space-y-6">
+      {selectedObraId && (
+        <div className="flex justify-end">
+          {!copyingFromUser ? (
+            <Button
+              onClick={loadUserRegistries}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              Copiar da Minha Base de Dados
+            </Button>
+          ) : userRegistries ? (
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCopyFromUser}
+                size="sm"
+                className="gap-2"
+              >
+                <Check className="h-4 w-4" />
+                Confirmar Cópia
+              </Button>
+              <Button
+                onClick={() => {
+                  setCopyingFromUser(false);
+                  setUserRegistries(null);
+                }}
+                variant="outline"
+                size="sm"
+              >
+                Cancelar
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Carregando...
+            </div>
+          )}
+        </div>
+      )}
+
+      <Tabs defaultValue="sector" className="w-full">
+        <TabsList className="grid w-full grid-cols-5 mb-8 h-auto p-1 bg-muted/50">
         <TabsTrigger value="sector" className="flex flex-col py-3 px-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           <span className="font-medium text-xs sm:text-sm">Setor</span>
           <div className="mt-1 text-xs opacity-75">{renderItemsCount(sectors)}</div>
@@ -412,7 +520,8 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
         </div>
         {renderItemsList("executor", executors)}
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 };
 

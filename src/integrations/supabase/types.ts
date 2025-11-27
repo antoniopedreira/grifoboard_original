@@ -598,22 +598,25 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          obra_id: string
+          obra_id: string | null
           tipo: string
+          user_id: string | null
           valor: string
         }
         Insert: {
           created_at?: string
           id?: string
-          obra_id: string
+          obra_id?: string | null
           tipo: string
+          user_id?: string | null
           valor: string
         }
         Update: {
           created_at?: string
           id?: string
-          obra_id?: string
+          obra_id?: string | null
           tipo?: string
+          user_id?: string | null
           valor?: string
         }
         Relationships: [

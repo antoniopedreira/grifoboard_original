@@ -102,8 +102,6 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Mutation to delete registry items
   const deleteRegistryMutation = useMutation({
     mutationFn: async ({ type, value }: { type: string; value: string }) => {
-      if (!selectedObraId) throw new Error('No obra selected');
-      
       await registrosService.excluirRegistro(selectedObraId, type, value);
     },
     onSuccess: () => {
