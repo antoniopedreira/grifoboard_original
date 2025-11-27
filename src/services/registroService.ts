@@ -2,7 +2,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Registro {
   id: string;
-  obra_id: string;
+  obra_id: string | null;
+  user_id: string | null;
   tipo: string;
   valor: string;
   created_at: string;
@@ -21,10 +22,12 @@ type TipoRegistro = typeof VALID_TIPOS[number];
 // Helper function to update related tables
 async function updateRelatedTables(
   tipo: TipoRegistro, 
-  obraId: string, 
+  obraId: string | null, 
   oldValue: string, 
   newValue: string
 ): Promise<void> {
+  if (!obraId) return; // Skip for user-level registries
+  
   try {
     switch (tipo) {
       case 'sector':
@@ -95,6 +98,7 @@ async function updateRelatedTables(
 }
 
 export const registrosService = {
+  // List all registros for a specific obra
   async listarRegistros(obra_id: string): Promise<Registro[]> {
     if (!obra_id) {
       throw new RegistroServiceError('ID da obra é obrigatório');
@@ -102,7 +106,7 @@ export const registrosService = {
 
     const { data, error } = await supabase
       .from('registros')
-      .select('id, obra_id, tipo, valor, created_at')
+      .select('id, obra_id, user_id, tipo, valor, created_at')
       .eq('obra_id', obra_id)
       .order('tipo', { ascending: true })
       .order('valor', { ascending: true });
@@ -114,43 +118,110 @@ export const registrosService = {
     return data ?? [];
   },
 
-  async criarRegistro(registro: { obra_id: string; tipo: string; valor: string }): Promise<Registro> {
-    if (!registro.obra_id) {
-      throw new RegistroServiceError('ID da obra é obrigatório');
+  // List user's personal registros (not tied to any obra)
+  async listarRegistrosUsuario(): Promise<Registro[]> {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new RegistroServiceError('Usuário não autenticado', authError);
+
+      const { data, error } = await supabase
+        .from('registros')
+        .select('id, obra_id, user_id, tipo, valor, created_at')
+        .eq('user_id', user.id)
+        .is('obra_id', null)
+        .order('tipo', { ascending: true })
+        .order('valor', { ascending: true });
+
+      if (error) throw new RegistroServiceError('Erro ao listar registros do usuário', error);
+      return data || [];
+    } catch (error) {
+      console.error('Error in listarRegistrosUsuario:', error);
+      throw error instanceof RegistroServiceError 
+        ? error 
+        : new RegistroServiceError('Erro inesperado ao listar registros do usuário', error as Error);
     }
-    
+  },
+
+  // Create a new registro (obra-specific or user-level)
+  async criarRegistro(registro: { obra_id?: string | null; tipo: string; valor: string }): Promise<Registro> {
     if (!registro.tipo || !registro.valor?.trim()) {
       throw new RegistroServiceError('Tipo e valor são obrigatórios');
     }
 
-    const { data, error } = await supabase
-      .from('registros')
-      .insert([registro])
-      .select()
-      .single();
-    
-    if (error) {
-      // Handle unique constraint violation
-      if (error.code === '23505') {
-        const { data: existingData } = await supabase
-          .from('registros')
-          .select('*')
-          .eq('obra_id', registro.obra_id)
-          .eq('tipo', registro.tipo)
-          .eq('valor', registro.valor)
-          .single();
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new RegistroServiceError('Usuário não autenticado', authError);
+
+      const insertData = registro.obra_id 
+        ? { obra_id: registro.obra_id, tipo: registro.tipo, valor: registro.valor }
+        : { user_id: user.id, tipo: registro.tipo, valor: registro.valor };
+
+      const { data, error } = await supabase
+        .from('registros')
+        .insert([insertData])
+        .select()
+        .single();
+      
+      if (error) {
+        // Handle unique constraint violation
+        if (error.code === '23505') {
+          const query = registro.obra_id
+            ? supabase.from('registros').select('*').eq('obra_id', registro.obra_id)
+            : supabase.from('registros').select('*').eq('user_id', user.id).is('obra_id', null);
           
-        if (existingData) return existingData;
+          const { data: existingData } = await query
+            .eq('tipo', registro.tipo)
+            .eq('valor', registro.valor)
+            .single();
+            
+          if (existingData) return existingData;
+        }
+        
+        throw new RegistroServiceError('Erro ao criar registro', error);
+      }
+
+      if (!data) {
+        throw new RegistroServiceError('Nenhum dado retornado ao criar registro');
       }
       
-      throw new RegistroServiceError('Erro ao criar registro', error);
+      return data;
+    } catch (error) {
+      console.error('Error in criarRegistro:', error);
+      throw error instanceof RegistroServiceError 
+        ? error 
+        : new RegistroServiceError('Erro inesperado ao criar registro', error as Error);
+    }
+  },
+
+  // Copy registros from user's personal database to an obra
+  async copiarRegistrosParaObra(obra_id: string, registros: Registro[]): Promise<void> {
+    if (!obra_id) {
+      throw new RegistroServiceError('ID da obra é obrigatório');
     }
 
-    if (!data) {
-      throw new RegistroServiceError('Nenhum dado retornado ao criar registro');
+    try {
+      const insertData = registros.map(r => ({
+        obra_id,
+        tipo: r.tipo,
+        valor: r.valor
+      }));
+
+      const { error } = await supabase
+        .from('registros')
+        .insert(insertData);
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new RegistroServiceError('Alguns cadastros já existem nesta obra', error);
+        }
+        throw new RegistroServiceError('Erro ao copiar registros para obra', error);
+      }
+    } catch (error) {
+      console.error('Error in copiarRegistrosParaObra:', error);
+      throw error instanceof RegistroServiceError 
+        ? error 
+        : new RegistroServiceError('Erro inesperado ao copiar registros', error as Error);
     }
-    
-    return data;
   },
 
   async editarRegistro(id: string, novoValor: string): Promise<Registro> {
@@ -165,7 +236,7 @@ export const registrosService = {
     // Fetch current registro
     const { data: currentRegistro, error: fetchError } = await supabase
       .from('registros')
-      .select('id, obra_id, tipo, valor, created_at')
+      .select('id, obra_id, user_id, tipo, valor, created_at')
       .eq('id', id)
       .single();
     
@@ -213,20 +284,32 @@ export const registrosService = {
     return data;
   },
 
-  async excluirRegistro(obra_id: string, tipo: string, valor: string): Promise<void> {
-    if (!obra_id || !tipo || !valor) {
-      throw new RegistroServiceError('Obra ID, tipo e valor são obrigatórios');
+  // Delete a registro (obra-specific or user-level)
+  async excluirRegistro(obra_id: string | null, tipo: string, valor: string): Promise<void> {
+    if (!tipo || !valor) {
+      throw new RegistroServiceError('Tipo e valor são obrigatórios');
     }
 
-    const { error } = await supabase
-      .from('registros')
-      .delete()
-      .eq('obra_id', obra_id)
-      .eq('tipo', tipo)
-      .eq('valor', valor);
-    
-    if (error) {
-      throw new RegistroServiceError('Erro ao excluir registro', error);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new RegistroServiceError('Usuário não autenticado', authError);
+
+      let query = supabase.from('registros').delete();
+      
+      if (obra_id) {
+        query = query.eq('obra_id', obra_id);
+      } else {
+        query = query.eq('user_id', user.id).is('obra_id', null);
+      }
+      
+      const { error } = await query.eq('tipo', tipo).eq('valor', valor);
+
+      if (error) throw new RegistroServiceError('Erro ao excluir registro', error);
+    } catch (error) {
+      console.error('Error in excluirRegistro:', error);
+      throw error instanceof RegistroServiceError 
+        ? error 
+        : new RegistroServiceError('Erro inesperado ao excluir registro', error as Error);
     }
   }
 };
