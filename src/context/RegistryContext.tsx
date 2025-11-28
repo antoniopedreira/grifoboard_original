@@ -185,3 +185,9 @@ export const useRegistry = (): RegistryContextType => {
   }
   return context;
 };
+
+// Safe version that returns null instead of throwing
+export const useSafeRegistry = (): RegistryContextType | null => {
+  const context = useContext(RegistryContext);
+  return context || null;
+};

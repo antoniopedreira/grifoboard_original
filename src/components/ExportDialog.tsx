@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useRegistry } from "@/context/RegistryContext";
+import { useSafeRegistry } from "@/context/RegistryContext";
 
 interface ExportDialogProps {
   obraId: string;
@@ -43,7 +43,9 @@ const ExportDialog = ({ obraId, obraNome, weekStartDate }: ExportDialogProps) =>
   const [selectedExecutante, setSelectedExecutante] = useState<string>("");
   const [loading, setLoading] = useState(false);
   
-  const { teams } = useRegistry();
+  // Use safe registry hook that won't throw if provider is not available
+  const registry = useSafeRegistry();
+  const teams = registry?.teams || [];
 
   const weekStartISO = toMondayISO(weekStartDate);
 
