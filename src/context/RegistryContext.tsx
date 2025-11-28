@@ -14,6 +14,7 @@ interface RegistryContextType {
   editRegistry: (id: string, newValue: string) => Promise<void>;
   deleteRegistry: (type: string, value: string) => Promise<void>;
   getRegistryItemId: (type: string, value: string) => string | undefined;
+  refetchRegistries: () => Promise<void>;
   isLoading: boolean;
   isSaving: boolean;
   selectedObraId: string | null;
@@ -157,6 +158,11 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // Function to manually refetch registries
+  const refetchRegistries = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['registros', selectedObraId] });
+  };
+
   return (
     <RegistryContext.Provider value={{ 
       sectors, 
@@ -168,6 +174,7 @@ export const RegistryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       editRegistry,
       deleteRegistry,
       getRegistryItemId,
+      refetchRegistries,
       isLoading,
       isSaving: addRegistryMutation.isPending || editRegistryMutation.isPending || deleteRegistryMutation.isPending,
       selectedObraId,
