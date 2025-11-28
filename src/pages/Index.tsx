@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Obra } from "@/types/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { useRegistry } from "@/context/RegistryContext";
+import { useSafeRegistry } from "@/context/RegistryContext";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import MainPageContent from "@/components/MainPageContent";
 import DashboardContent from "@/components/DashboardContent";
@@ -20,7 +20,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
   const { userSession } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setSelectedObraId } = useRegistry();
+  const registry = useSafeRegistry();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   // Enable session timeout management
@@ -35,11 +35,11 @@ const Index = ({ onObraSelect }: IndexProps) => {
 
   // Show message when no obra is selected instead of redirecting
   useEffect(() => {
-    if (userSession?.obraAtiva) {
-      setSelectedObraId(userSession.obraAtiva.id);
+    if (userSession?.obraAtiva && registry?.setSelectedObraId) {
+      registry.setSelectedObraId(userSession.obraAtiva.id);
       onObraSelect(userSession.obraAtiva);
     }
-  }, [userSession?.obraAtiva, setSelectedObraId, onObraSelect]);
+  }, [userSession?.obraAtiva, registry, onObraSelect]);
 
   // Only redirect to auth if no user
   if (!userSession?.user) {
