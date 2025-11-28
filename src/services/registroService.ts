@@ -193,13 +193,35 @@ export const registrosService = {
     }
   },
 
-  // Copy registros from another obra to current obra
+  // Copy registros from another obra to current obra (must be same empresa)
   async copiarRegistrosDeOutraObra(obraDestinoId: string, obraOrigemId: string): Promise<void> {
     if (!obraDestinoId || !obraOrigemId) {
       throw new RegistroServiceError('IDs das obras são obrigatórios');
     }
 
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new RegistroServiceError('Usuário não autenticado', authError);
+
+      // Verify both obras belong to same empresa
+      const { data: obras, error: obrasError } = await supabase
+        .from('obras')
+        .select('id, empresa_id')
+        .in('id', [obraDestinoId, obraOrigemId]);
+
+      if (obrasError) {
+        throw new RegistroServiceError('Erro ao verificar obras', obrasError);
+      }
+
+      if (!obras || obras.length !== 2) {
+        throw new RegistroServiceError('Uma ou mais obras não encontradas');
+      }
+
+      const empresaIds = obras.map(o => o.empresa_id);
+      if (empresaIds[0] !== empresaIds[1]) {
+        throw new RegistroServiceError('As obras devem pertencer à mesma empresa');
+      }
+
       // Get registros from source obra
       const { data: registrosOrigem, error: fetchError } = await supabase
         .from('registros')
@@ -214,7 +236,7 @@ export const registrosService = {
         throw new RegistroServiceError('Nenhum registro encontrado na obra selecionada');
       }
 
-      // Insert into destination obra
+      // Insert into destination obra (empresa_id will be auto-set by trigger)
       const insertData = registrosOrigem.map(r => ({
         obra_id: obraDestinoId,
         tipo: r.tipo,

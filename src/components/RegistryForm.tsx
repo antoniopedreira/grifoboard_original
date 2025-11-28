@@ -10,6 +10,14 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { useRegistry } from "@/context/RegistryContext";
 import { Loader2, Trash2, Edit2, Check, X, Copy } from "lucide-react";
@@ -141,12 +149,14 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
     }
   };
 
-  const handleToggleObra = (obraId: string) => {
-    setSelectedObras(prev => 
-      prev.includes(obraId) 
-        ? prev.filter(id => id !== obraId)
-        : [...prev, obraId]
-    );
+  const handleSelectObra = (obraId: string) => {
+    if (!selectedObras.includes(obraId)) {
+      setSelectedObras(prev => [...prev, obraId]);
+    }
+  };
+
+  const handleRemoveObra = (obraId: string) => {
+    setSelectedObras(prev => prev.filter(id => id !== obraId));
   };
 
   const handleCopyFromObras = async () => {
@@ -337,26 +347,45 @@ const RegistryForm: React.FC<RegistryFormProps> = ({ onClose, onRegistryCreate, 
           </div>
           
           {copyingFromObras && obrasEmpresa.length > 0 && (
-            <div className="bg-muted/30 border rounded-lg p-4">
-              <h3 className="font-semibold mb-3 text-sm">Selecione as obras para copiar cadastros:</h3>
-              <ScrollArea className="h-[200px]">
-                <div className="space-y-2">
-                  {obrasEmpresa.map((obra) => (
-                    <label
-                      key={obra.id}
-                      className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedObras.includes(obra.id)}
-                        onChange={() => handleToggleObra(obra.id)}
-                        className="h-4 w-4 rounded border-border"
-                      />
-                      <span className="text-sm font-medium">{obra.nome_obra}</span>
-                    </label>
-                  ))}
+            <div className="bg-muted/30 border rounded-lg p-4 space-y-4">
+              <div>
+                <h3 className="font-semibold mb-3 text-sm">Selecione as obras para copiar cadastros:</h3>
+                <Select onValueChange={handleSelectObra}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione uma obra" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background">
+                    {obrasEmpresa
+                      .filter(obra => !selectedObras.includes(obra.id))
+                      .map((obra) => (
+                        <SelectItem key={obra.id} value={obra.id}>
+                          {obra.nome_obra}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedObras.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Obras selecionadas:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedObras.map(obraId => {
+                      const obra = obrasEmpresa.find(o => o.id === obraId);
+                      return obra ? (
+                        <Badge
+                          key={obraId}
+                          variant="secondary"
+                          className="px-3 py-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          onClick={() => handleRemoveObra(obraId)}
+                        >
+                          {obra.nome_obra} ×
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
                 </div>
-              </ScrollArea>
+              )}
             </div>
           )}
           

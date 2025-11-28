@@ -597,6 +597,7 @@ export type Database = {
       registros: {
         Row: {
           created_at: string
+          empresa_id: string | null
           id: string
           obra_id: string | null
           tipo: string
@@ -605,6 +606,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa_id?: string | null
           id?: string
           obra_id?: string | null
           tipo: string
@@ -613,6 +615,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa_id?: string | null
           id?: string
           obra_id?: string | null
           tipo?: string
@@ -620,6 +623,13 @@ export type Database = {
           valor?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "registros_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "registros_obra_id_fkey"
             columns: ["obra_id"]
