@@ -48,6 +48,11 @@ const BaseDeDados = () => {
   const [tipoFiltro, setTipoFiltro] = useState<string>('todos');
   const [dataInicio, setDataInicio] = useState<Date | undefined>();
   const [dataFim, setDataFim] = useState<Date | undefined>();
+  const [regiaoFiltro, setRegiaoFiltro] = useState<string>('todas');
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>('todas');
+  const [tipoAtuacaoFiltro, setTipoAtuacaoFiltro] = useState<string>('todos');
+  const [especialidadeFiltro, setEspecialidadeFiltro] = useState<string>('todas');
+  const [funcaoPrincipalFiltro, setFuncaoPrincipalFiltro] = useState<string>('todas');
   const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,7 +64,7 @@ const BaseDeDados = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [submissions, tipoFiltro, dataInicio, dataFim]);
+  }, [submissions, tipoFiltro, dataInicio, dataFim, regiaoFiltro, categoriaFiltro, tipoAtuacaoFiltro, especialidadeFiltro, funcaoPrincipalFiltro]);
 
   const loadSubmissions = async () => {
     setLoading(true);
@@ -152,6 +157,46 @@ const BaseDeDados = () => {
       const endOfDay = new Date(dataFim);
       endOfDay.setHours(23, 59, 59, 999);
       filtered = filtered.filter((s) => new Date(s.created_at) <= endOfDay);
+    }
+
+    // Filter by região
+    if (regiaoFiltro !== 'todas') {
+      filtered = filtered.filter((s) => {
+        if (s.tipo === 'profissionais') {
+          return s.data.regioes_atendidas?.includes(regiaoFiltro);
+        } else if (s.tipo === 'fornecedores') {
+          return s.data.regioes_atendidas?.includes(regiaoFiltro);
+        }
+        return true;
+      });
+    }
+
+    // Filter by categoria (fornecedores only)
+    if (categoriaFiltro !== 'todas' && tipoFiltro === 'fornecedores') {
+      filtered = filtered.filter((s) => {
+        return s.data.categorias_atendidas?.includes(categoriaFiltro);
+      });
+    }
+
+    // Filter by tipo de atuação (fornecedores only)
+    if (tipoAtuacaoFiltro !== 'todos' && tipoFiltro === 'fornecedores') {
+      filtered = filtered.filter((s) => {
+        return s.data.tipos_atuacao?.includes(tipoAtuacaoFiltro);
+      });
+    }
+
+    // Filter by especialidade (profissionais only)
+    if (especialidadeFiltro !== 'todas' && tipoFiltro === 'profissionais') {
+      filtered = filtered.filter((s) => {
+        return s.data.especialidades?.includes(especialidadeFiltro);
+      });
+    }
+
+    // Filter by função principal (profissionais only)
+    if (funcaoPrincipalFiltro !== 'todas' && tipoFiltro === 'profissionais') {
+      filtered = filtered.filter((s) => {
+        return s.data.funcao_principal === funcaoPrincipalFiltro;
+      });
     }
 
     setFilteredSubmissions(filtered);
@@ -299,7 +344,123 @@ const BaseDeDados = () => {
               </Popover>
             </div>
 
-            {(tipoFiltro !== 'todos' || dataInicio || dataFim) && (
+            {(tipoFiltro === 'profissionais' || tipoFiltro === 'fornecedores') && (
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-sm font-medium mb-2 block">Região de Atuação</label>
+                <Select value={regiaoFiltro} onValueChange={setRegiaoFiltro}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas</SelectItem>
+                    <SelectItem value="Norte">Norte</SelectItem>
+                    <SelectItem value="Nordeste">Nordeste</SelectItem>
+                    <SelectItem value="Centro-Oeste">Centro-Oeste</SelectItem>
+                    <SelectItem value="Sudeste">Sudeste</SelectItem>
+                    <SelectItem value="Sul">Sul</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {tipoFiltro === 'fornecedores' && (
+              <>
+                <div className="flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium mb-2 block">Categoria Atendida</label>
+                  <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todas">Todas</SelectItem>
+                      <SelectItem value="Estrutura">Estrutura</SelectItem>
+                      <SelectItem value="Alvenaria">Alvenaria</SelectItem>
+                      <SelectItem value="Impermeabilização">Impermeabilização</SelectItem>
+                      <SelectItem value="Acabamentos">Acabamentos</SelectItem>
+                      <SelectItem value="Hidráulica">Hidráulica</SelectItem>
+                      <SelectItem value="Elétrica">Elétrica</SelectItem>
+                      <SelectItem value="Pintura">Pintura</SelectItem>
+                      <SelectItem value="Drywall">Drywall</SelectItem>
+                      <SelectItem value="Carpintaria">Carpintaria</SelectItem>
+                      <SelectItem value="Gesso">Gesso</SelectItem>
+                      <SelectItem value="Serralheria">Serralheria</SelectItem>
+                      <SelectItem value="Demolição">Demolição</SelectItem>
+                      <SelectItem value="Locação de Equipamentos">Locação de Equipamentos</SelectItem>
+                      <SelectItem value="Entrega">Entrega</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium mb-2 block">Tipo de Atuação</label>
+                  <Select value={tipoAtuacaoFiltro} onValueChange={setTipoAtuacaoFiltro}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="Loja">Loja</SelectItem>
+                      <SelectItem value="Distribuidor">Distribuidor</SelectItem>
+                      <SelectItem value="Fabricante">Fabricante</SelectItem>
+                      <SelectItem value="Prestador de Serviços">Prestador de Serviços</SelectItem>
+                      <SelectItem value="Logística">Logística</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {tipoFiltro === 'profissionais' && (
+              <>
+                <div className="flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium mb-2 block">Especialidade</label>
+                  <Select value={especialidadeFiltro} onValueChange={setEspecialidadeFiltro}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todas">Todas</SelectItem>
+                      <SelectItem value="Estrutura">Estrutura</SelectItem>
+                      <SelectItem value="Alvenaria">Alvenaria</SelectItem>
+                      <SelectItem value="Acabamentos">Acabamentos</SelectItem>
+                      <SelectItem value="Hidráulica">Hidráulica</SelectItem>
+                      <SelectItem value="Elétrica">Elétrica</SelectItem>
+                      <SelectItem value="Drywall">Drywall</SelectItem>
+                      <SelectItem value="Pintura">Pintura</SelectItem>
+                      <SelectItem value="Revestimentos">Revestimentos</SelectItem>
+                      <SelectItem value="Impermeabilização">Impermeabilização</SelectItem>
+                      <SelectItem value="Demolição">Demolição</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium mb-2 block">Função Principal</label>
+                  <Select value={funcaoPrincipalFiltro} onValueChange={setFuncaoPrincipalFiltro}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todas">Todas</SelectItem>
+                      <SelectItem value="Engenheiro">Engenheiro</SelectItem>
+                      <SelectItem value="Técnico em Edificações">Técnico em Edificações</SelectItem>
+                      <SelectItem value="Mestre de Obras">Mestre de Obras</SelectItem>
+                      <SelectItem value="Pedreiro">Pedreiro</SelectItem>
+                      <SelectItem value="Carpinteiro">Carpinteiro</SelectItem>
+                      <SelectItem value="Eletricista">Eletricista</SelectItem>
+                      <SelectItem value="Encanador">Encanador</SelectItem>
+                      <SelectItem value="Pintor">Pintor</SelectItem>
+                      <SelectItem value="Gesseiro">Gesseiro</SelectItem>
+                      <SelectItem value="Ferreiro">Ferreiro</SelectItem>
+                      <SelectItem value="Servente">Servente</SelectItem>
+                      <SelectItem value="Arquiteto">Arquiteto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {(tipoFiltro !== 'todos' || dataInicio || dataFim || regiaoFiltro !== 'todas' || categoriaFiltro !== 'todas' || tipoAtuacaoFiltro !== 'todos' || especialidadeFiltro !== 'todas' || funcaoPrincipalFiltro !== 'todas') && (
               <div className="flex items-end">
                 <Button
                   variant="ghost"
@@ -307,6 +468,11 @@ const BaseDeDados = () => {
                     setTipoFiltro('todos');
                     setDataInicio(undefined);
                     setDataFim(undefined);
+                    setRegiaoFiltro('todas');
+                    setCategoriaFiltro('todas');
+                    setTipoAtuacaoFiltro('todos');
+                    setEspecialidadeFiltro('todas');
+                    setFuncaoPrincipalFiltro('todas');
                   }}
                 >
                   Limpar Filtros
