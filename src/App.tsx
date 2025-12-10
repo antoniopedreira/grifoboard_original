@@ -15,6 +15,7 @@ import MasterAdmin from "@/pages/MasterAdmin";
 import Formularios from "@/pages/Formularios";
 import BaseDeDados from '@/pages/BaseDeDados';
 import Playbook from '@/pages/Playbook';
+import Marketplace from '@/pages/Marketplace';
 import FormProfissionais from '@/pages/form/Profissionais';
 import FormEmpresas from '@/pages/form/Empresas';
 import FormFornecedores from '@/pages/form/Fornecedores';
@@ -117,6 +118,7 @@ function App() {
                     <Route path="/formularios" element={<Formularios />} />
                     <Route path="/base-de-dados" element={<BaseDeDados />} />
                     <Route path="/playbook" element={<Playbook />} />
+                    <Route path="/marketplace" element={<Marketplace />} />
                     <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                     <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                     <Route path="/diarioobra" element={<DiarioObra />} />
