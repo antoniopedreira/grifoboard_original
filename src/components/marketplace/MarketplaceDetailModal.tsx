@@ -12,7 +12,7 @@ import { formatPhoneNumber } from "@/lib/utils/formatPhone";
 import { 
   MapPin, Star, Building2, User, Truck, Phone, Mail, 
   Globe, Calendar, Briefcase, Award, Send, Edit2, Trash2,
-  FileText, Image, Download, ExternalLink
+  FileText, Image, Download, ExternalLink, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -218,7 +218,7 @@ export const MarketplaceDetailModal = ({
         <Tabs defaultValue="info" className="flex-1">
           <TabsList className="mx-6 mt-4">
             <TabsTrigger value="info">Informações</TabsTrigger>
-            <TabsTrigger value="docs">Documentos</TabsTrigger>
+            <TabsTrigger value="docs">Arquivos</TabsTrigger>
             <TabsTrigger value="reviews">Avaliações ({reviews.length})</TabsTrigger>
           </TabsList>
 
@@ -365,7 +365,7 @@ export const MarketplaceDetailModal = ({
 // Documents Section Component
 const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
-  const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const getBucketName = () => {
     switch (item.type) {
@@ -379,131 +379,216 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
     switch (item.type) {
       case "profissional":
         return [
-          { key: "curriculo_path", label: "Currículo", icon: FileText },
-          { key: "fotos_trabalhos_path", label: "Fotos de Trabalhos", icon: Image },
-          { key: "certificacoes_path", label: "Certificações", icon: Award },
+          { key: "curriculo_path", label: "Currículo", isImage: false },
+          { key: "fotos_trabalhos_path", label: "Fotos de Trabalhos", isImage: true },
+          { key: "certificacoes_path", label: "Certificações", isImage: false },
         ];
       case "fornecedor":
         return [
-          { key: "logo_path", label: "Logo", icon: Image },
-          { key: "portfolio_path", label: "Portfólio", icon: FileText },
-          { key: "certificacoes_path", label: "Certificações", icon: Award },
+          { key: "logo_path", label: "Logo", isImage: true },
+          { key: "portfolio_path", label: "Portfólio", isImage: false },
+          { key: "certificacoes_path", label: "Certificações", isImage: false },
         ];
       case "empresa":
         return [
-          { key: "logo_path", label: "Logo", icon: Image },
-          { key: "apresentacao_path", label: "Apresentação Institucional", icon: FileText },
+          { key: "logo_path", label: "Logo", isImage: true },
+          { key: "apresentacao_path", label: "Apresentação Institucional", isImage: false },
         ];
     }
   };
 
-  useEffect(() => {
-    const loadFileUrls = async () => {
-      const bucket = getBucketName();
-      const fields = getDocumentFields();
-      const urls: Record<string, string> = {};
-
-      for (const field of fields) {
-        const path = data[field.key];
-        if (path) {
-          const { data: urlData } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(path, 3600); // 1 hour expiry
-
-          if (urlData?.signedUrl) {
-            urls[field.key] = urlData.signedUrl;
-          }
-        }
-      }
-
-      setFileUrls(urls);
-    };
-
-    loadFileUrls();
-  }, [item, data]);
-
-  const fields = getDocumentFields();
-  const hasAnyDocument = fields.some(f => data[f.key]);
-
-  if (!hasAnyDocument) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-        <p className="text-sm">Nenhum documento disponível</p>
-      </div>
-    );
-  }
+  const getPublicUrl = (path: string) => {
+    const bucket = getBucketName();
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+    return urlData?.publicUrl || "";
+  };
 
   const isImageFile = (path: string) => {
     const ext = path.toLowerCase().split('.').pop();
     return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
   };
 
-  return (
-    <div className="space-y-4">
-      <h4 className="font-medium text-sm text-muted-foreground mb-4">Documentos e Arquivos</h4>
+  const fields = getDocumentFields();
+  
+  // Separate images and documents
+  const images: { label: string; url: string; path: string }[] = [];
+  const documents: { label: string; url: string; path: string }[] = [];
+
+  fields.forEach(field => {
+    const path = data[field.key];
+    if (path) {
+      const url = getPublicUrl(path);
+      const fileIsImage = isImageFile(path);
       
-      <div className="grid gap-4">
-        {fields.map((field) => {
-          const path = data[field.key];
-          if (!path) return null;
+      if (fileIsImage || field.isImage) {
+        images.push({ label: field.label, url, path });
+      } else {
+        documents.push({ label: field.label, url, path });
+      }
+    }
+  });
 
-          const url = fileUrls[field.key];
-          const isImage = isImageFile(path);
-          const Icon = field.icon;
+  const hasAnyFile = images.length > 0 || documents.length > 0;
 
-          return (
-            <div 
-              key={field.key}
-              className="border border-border/50 rounded-xl overflow-hidden"
-            >
-              <div className="flex items-center justify-between p-4 bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-background">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{field.label}</p>
-                    <p className="text-xs text-muted-foreground">{path.split('/').pop()}</p>
-                  </div>
-                </div>
-                {url && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(url, '_blank')}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                      Abrir
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                    >
-                      <a href={url} download>
-                        <Download className="h-3.5 w-3.5" />
-                      </a>
-                    </Button>
-                  </div>
-                )}
-              </div>
+  if (!hasAnyFile) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+        <p className="text-sm">Nenhum arquivo disponível</p>
+      </div>
+    );
+  }
 
-              {/* Image Preview */}
-              {isImage && url && (
-                <div className="p-4 border-t border-border/50">
-                  <img 
-                    src={url} 
-                    alt={field.label}
-                    className="max-w-full max-h-64 rounded-lg object-contain mx-auto"
-                  />
-                </div>
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Photos Gallery Section */}
+      {images.length > 0 && (
+        <div>
+          <h4 className="font-medium text-sm text-muted-foreground mb-4 flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Fotos ({images.length})
+          </h4>
+          
+          <div className="relative bg-muted/30 rounded-xl overflow-hidden">
+            {/* Main Image */}
+            <div className="relative aspect-video flex items-center justify-center bg-black/5">
+              <img 
+                src={images[currentImageIndex].url} 
+                alt={images[currentImageIndex].label}
+                className="max-w-full max-h-72 object-contain"
+              />
+              
+              {/* Navigation arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-all"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-all"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
               )}
             </div>
-          );
-        })}
-      </div>
+
+            {/* Image info and actions */}
+            <div className="p-4 flex items-center justify-between border-t border-border/50">
+              <div>
+                <p className="font-medium text-sm">{images[currentImageIndex].label}</p>
+                {images.length > 1 && (
+                  <p className="text-xs text-muted-foreground">{currentImageIndex + 1} de {images.length}</p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(images[currentImageIndex].url, '_blank')}
+                >
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  Abrir
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                >
+                  <a href={images[currentImageIndex].url} download={images[currentImageIndex].label}>
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+
+            {/* Thumbnails */}
+            {images.length > 1 && (
+              <div className="px-4 pb-4 flex gap-2 overflow-x-auto">
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      idx === currentImageIndex 
+                        ? "border-primary" 
+                        : "border-transparent opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <img 
+                      src={img.url} 
+                      alt={img.label}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Documents Section */}
+      {documents.length > 0 && (
+        <div>
+          <h4 className="font-medium text-sm text-muted-foreground mb-4 flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Documentos ({documents.length})
+          </h4>
+          
+          <div className="space-y-3">
+            {documents.map((doc, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center justify-between p-4 border border-border/50 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-background">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{doc.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {doc.path.split('.').pop()?.toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(doc.url, '_blank')}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                    Visualizar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                  >
+                    <a href={doc.url} download={doc.label}>
+                      <Download className="h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
