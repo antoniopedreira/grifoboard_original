@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatPhoneNumber } from "@/lib/utils/formatPhone";
 import { 
   MapPin, Star, Building2, User, Truck, Phone, Mail, 
-  Globe, Calendar, Briefcase, Award, Send, Edit2, Trash2
+  Globe, Calendar, Briefcase, Award, Send, Edit2, Trash2,
+  FileText, Image, Download, ExternalLink
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -183,7 +185,7 @@ export const MarketplaceDetailModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
+      <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-0">
           <div className="flex items-start gap-4">
             <div className={`p-3 rounded-xl ${
@@ -216,12 +218,17 @@ export const MarketplaceDetailModal = ({
         <Tabs defaultValue="info" className="flex-1">
           <TabsList className="mx-6 mt-4">
             <TabsTrigger value="info">Informações</TabsTrigger>
+            <TabsTrigger value="docs">Documentos</TabsTrigger>
             <TabsTrigger value="reviews">Avaliações ({reviews.length})</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="h-[50vh]">
+          <ScrollArea className="h-[55vh]">
             <TabsContent value="info" className="p-6 pt-4 m-0">
               <DetailInfo item={item} />
+            </TabsContent>
+
+            <TabsContent value="docs" className="p-6 pt-4 m-0">
+              <DocumentsSection item={item} />
             </TabsContent>
 
             <TabsContent value="reviews" className="p-6 pt-4 m-0">
@@ -355,6 +362,152 @@ export const MarketplaceDetailModal = ({
   );
 };
 
+// Documents Section Component
+const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
+  const { data } = item;
+  const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
+
+  const getBucketName = () => {
+    switch (item.type) {
+      case "profissional": return "formularios-profissionais";
+      case "fornecedor": return "formularios-fornecedores";
+      case "empresa": return "formularios-empresas";
+    }
+  };
+
+  const getDocumentFields = () => {
+    switch (item.type) {
+      case "profissional":
+        return [
+          { key: "curriculo_path", label: "Currículo", icon: FileText },
+          { key: "fotos_trabalhos_path", label: "Fotos de Trabalhos", icon: Image },
+          { key: "certificacoes_path", label: "Certificações", icon: Award },
+        ];
+      case "fornecedor":
+        return [
+          { key: "logo_path", label: "Logo", icon: Image },
+          { key: "portfolio_path", label: "Portfólio", icon: FileText },
+          { key: "certificacoes_path", label: "Certificações", icon: Award },
+        ];
+      case "empresa":
+        return [
+          { key: "logo_path", label: "Logo", icon: Image },
+          { key: "apresentacao_path", label: "Apresentação Institucional", icon: FileText },
+        ];
+    }
+  };
+
+  useEffect(() => {
+    const loadFileUrls = async () => {
+      const bucket = getBucketName();
+      const fields = getDocumentFields();
+      const urls: Record<string, string> = {};
+
+      for (const field of fields) {
+        const path = data[field.key];
+        if (path) {
+          const { data: urlData } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(path, 3600); // 1 hour expiry
+
+          if (urlData?.signedUrl) {
+            urls[field.key] = urlData.signedUrl;
+          }
+        }
+      }
+
+      setFileUrls(urls);
+    };
+
+    loadFileUrls();
+  }, [item, data]);
+
+  const fields = getDocumentFields();
+  const hasAnyDocument = fields.some(f => data[f.key]);
+
+  if (!hasAnyDocument) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+        <p className="text-sm">Nenhum documento disponível</p>
+      </div>
+    );
+  }
+
+  const isImageFile = (path: string) => {
+    const ext = path.toLowerCase().split('.').pop();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+  };
+
+  return (
+    <div className="space-y-4">
+      <h4 className="font-medium text-sm text-muted-foreground mb-4">Documentos e Arquivos</h4>
+      
+      <div className="grid gap-4">
+        {fields.map((field) => {
+          const path = data[field.key];
+          if (!path) return null;
+
+          const url = fileUrls[field.key];
+          const isImage = isImageFile(path);
+          const Icon = field.icon;
+
+          return (
+            <div 
+              key={field.key}
+              className="border border-border/50 rounded-xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-4 bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-background">
+                    <Icon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{field.label}</p>
+                    <p className="text-xs text-muted-foreground">{path.split('/').pop()}</p>
+                  </div>
+                </div>
+                {url && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(url, '_blank')}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                      Abrir
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                    >
+                      <a href={url} download>
+                        <Download className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Image Preview */}
+              {isImage && url && (
+                <div className="p-4 border-t border-border/50">
+                  <img 
+                    src={url} 
+                    alt={field.label}
+                    className="max-w-full max-h-64 rounded-lg object-contain mx-auto"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // Helper component for detail info
 const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
@@ -379,9 +532,29 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
         <InfoRow icon={Calendar} label="Experiência" value={data.tempo_experiencia} />
         <InfoRow icon={Award} label="Disponibilidade" value={data.disponibilidade_atual} />
         <InfoRow icon={Briefcase} label="Modalidade" value={data.modalidade_trabalho} />
-        <InfoRow icon={Phone} label="Telefone" value={data.telefone} />
+        <InfoRow icon={Briefcase} label="Pretensão Salarial" value={data.pretensao_valor} />
+        <InfoRow icon={Award} label="Equipamentos Próprios" value={data.equipamentos_proprios} />
+        <InfoRow icon={Phone} label="Telefone" value={formatPhoneNumber(data.telefone)} />
         <InfoRow icon={Mail} label="Email" value={data.email} />
         
+        {data.regioes_atendidas?.length > 0 && (
+          <div className="pt-4">
+            <p className="text-xs text-muted-foreground mb-2">Regiões Atendidas</p>
+            <div className="flex flex-wrap gap-1.5">
+              {data.regioes_atendidas.map((reg: string, idx: number) => (
+                <Badge key={idx} variant="outline" className="text-xs">{reg}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {data.cidades_frequentes && (
+          <div className="pt-4">
+            <p className="text-xs text-muted-foreground mb-2">Cidades Frequentes</p>
+            <p className="text-sm">{data.cidades_frequentes}</p>
+          </div>
+        )}
+
         {data.especialidades?.length > 0 && (
           <div className="pt-4">
             <p className="text-xs text-muted-foreground mb-2">Especialidades</p>
@@ -421,9 +594,27 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
         <InfoRow icon={Briefcase} label="Capacidade de Atendimento" value={data.capacidade_atendimento} />
         <InfoRow icon={Briefcase} label="Ticket Médio" value={data.ticket_medio} />
         <InfoRow icon={User} label="Responsável" value={data.nome_responsavel} />
-        <InfoRow icon={Phone} label="Telefone" value={data.telefone} />
+        <InfoRow icon={Phone} label="Telefone" value={formatPhoneNumber(data.telefone)} />
         <InfoRow icon={Mail} label="Email" value={data.email} />
         <InfoRow icon={Globe} label="Site" value={data.site} />
+
+        {data.regioes_atendidas?.length > 0 && (
+          <div className="pt-4">
+            <p className="text-xs text-muted-foreground mb-2">Regiões Atendidas</p>
+            <div className="flex flex-wrap gap-1.5">
+              {data.regioes_atendidas.map((reg: string, idx: number) => (
+                <Badge key={idx} variant="outline" className="text-xs">{reg}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {data.cidades_frequentes && (
+          <div className="pt-4">
+            <p className="text-xs text-muted-foreground mb-2">Cidades Frequentes</p>
+            <p className="text-sm">{data.cidades_frequentes}</p>
+          </div>
+        )}
 
         {data.tipos_atuacao?.length > 0 && (
           <div className="pt-4">
@@ -470,9 +661,11 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
       <InfoRow icon={Briefcase} label="Ticket Médio" value={data.ticket_medio} />
       <InfoRow icon={User} label="Contato" value={data.nome_contato} />
       <InfoRow icon={Briefcase} label="Cargo" value={data.cargo_contato} />
-      <InfoRow icon={Phone} label="WhatsApp" value={data.whatsapp_contato} />
+      <InfoRow icon={Phone} label="WhatsApp" value={formatPhoneNumber(data.whatsapp_contato)} />
       <InfoRow icon={Mail} label="Email" value={data.email_contato} />
       <InfoRow icon={Globe} label="Site" value={data.site} />
+      <InfoRow icon={Briefcase} label="Planejamento" value={data.planejamento_curto_prazo} />
+      <InfoRow icon={Briefcase} label="Ferramentas de Gestão" value={data.ferramentas_gestao} />
 
       {data.tipos_obras?.length > 0 && (
         <div className="pt-4">
@@ -489,8 +682,8 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
         <div className="pt-4">
           <p className="text-xs text-muted-foreground mb-2">Principais Desafios</p>
           <div className="flex flex-wrap gap-1.5">
-            {data.principais_desafios.map((des: string, idx: number) => (
-              <Badge key={idx} variant="outline" className="text-xs">{des}</Badge>
+            {data.principais_desafios.map((desafio: string, idx: number) => (
+              <Badge key={idx} variant="outline" className="text-xs">{desafio}</Badge>
             ))}
           </div>
         </div>

@@ -1,6 +1,7 @@
-import { MapPin, Star, Building2, User, Truck } from "lucide-react";
+import { MapPin, Star, Building2, User, Truck, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatPhoneNumber } from "@/lib/utils/formatPhone";
 
 type TargetType = "empresa" | "profissional" | "fornecedor";
 
@@ -50,7 +51,15 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
     return null;
   };
 
+  const getPhone = () => {
+    if (item.type === "empresa") {
+      return formatPhoneNumber(item.data.whatsapp_contato);
+    }
+    return formatPhoneNumber(item.data.telefone);
+  };
+
   const extraInfo = getExtraInfo();
+  const phone = getPhone();
 
   return (
     <Card 
@@ -86,10 +95,18 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
         </h3>
 
         {/* Location */}
-        <div className="flex items-center gap-1 text-muted-foreground text-sm mb-3">
-          <MapPin className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
           <span className="line-clamp-1">{item.location}</span>
         </div>
+
+        {/* Phone */}
+        {phone && (
+          <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+            <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+            <span>{phone}</span>
+          </div>
+        )}
 
         {/* Extra info */}
         {extraInfo && (
