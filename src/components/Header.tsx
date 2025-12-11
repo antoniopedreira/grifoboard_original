@@ -2,71 +2,103 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Building2, LogOut } from "lucide-react";
-import grifoLogo from '@/assets/grifo-logo.png';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 const Header = () => {
-  const {
-    userSession,
-    signOut,
-    setObraAtiva
-  } = useAuth();
+  const { userSession, signOut, setObraAtiva } = useAuth();
   const navigate = useNavigate();
+
   const handleMudarObra = () => {
     setObraAtiva(null);
     navigate("/obras");
   };
-  return <header className="bg-brand border-b border-brand-2/20 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+
+  const getInitials = (name?: string) => {
+    if (!name) return "GR";
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  return (
+    // AQUI: bg-primary aplica o AZUL (#112232) que definimos no index.css
+    <header className="bg-primary border-b border-white/10 sticky top-0 z-50 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 flex items-center justify-center">
-              <img src={grifoLogo} alt="Grifo Logo" className="w-full h-full object-contain" />
+          {/* Logo e Título */}
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/dashboard")}>
+            <div className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+              {/* Se a imagem falhar, mostra um ícone de fallback */}
+              <img
+                src="/lovable-uploads/grifo-logo-header.png"
+                alt="Grifo"
+                className="w-full h-full object-contain p-1 brightness-0 invert"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  e.currentTarget.parentElement!.innerHTML = '<span class="text-secondary font-bold text-xl">G</span>';
+                }}
+              />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-text-on-dark">GrifoBoard</h1>
-              <div className="text-xs text-muted-on-dark">Controle do PCP de Obra</div>
+              <h1 className="text-xl font-heading font-bold text-white tracking-wide">GrifoBoard</h1>
+              <div className="text-[10px] uppercase tracking-wider text-accent font-medium">Controle de Obras</div>
             </div>
           </div>
 
-          {userSession.user && <div className="flex items-center space-x-3">
-              {userSession.obraAtiva && <div className="hidden md:flex items-center bg-text-on-dark/10 rounded-lg px-3 py-2 border border-text-on-dark/20">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center mr-2">
-                      <Building2 className="w-4 h-4 text-accent" />
-                    </div>
-                    <div>
-                      <div className="text-xs text-muted-on-dark">Obra ativa:</div>
-                      <div className="font-medium text-sm text-text-on-dark">
-                        {userSession.obraAtiva.nome_obra}
-                      </div>
-                    </div>
+          {/* Área do Usuário e Obra Ativa */}
+          {userSession.user && (
+            <div className="flex items-center gap-3 md:gap-4">
+              {/* Card da Obra Ativa (Só aparece se tiver obra) */}
+              {userSession.obraAtiva && (
+                <div className="hidden md:flex items-center bg-black/20 rounded-lg px-4 py-2 border border-white/5 backdrop-blur-sm">
+                  <div className="w-8 h-8 bg-secondary/20 rounded-md flex items-center justify-center mr-3">
+                    <Building2 className="w-4 h-4 text-secondary" />
                   </div>
-                </div>}
-              
-              {userSession.obraAtiva && <Button 
-                variant="outline" 
-                size="sm" 
-                className="smooth-button bg-transparent border-text-on-dark/30 text-text-on-dark hover:bg-brand-2 hover:border-text-on-dark/40 hover:text-text-on-dark" 
-                onClick={handleMudarObra}
-              >
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Mudar Obra
-                </Button>}
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="smooth-button text-text-on-dark hover:bg-destructive/20 hover:text-destructive" 
-                onClick={async () => {
-                  await signOut();
-                  navigate('/auth');
-                }}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
-              </Button>
-            </div>}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-white/50 uppercase tracking-wider leading-none mb-1">
+                      Obra Ativa
+                    </span>
+                    <span className="font-semibold text-sm text-white max-w-[150px] truncate leading-none">
+                      {userSession.obraAtiva.nome_obra}
+                    </span>
+                  </div>
+                  <div className="w-px h-8 bg-white/10 mx-4" />
+                  <button
+                    onClick={handleMudarObra}
+                    className="text-xs text-accent hover:text-white transition-colors font-medium hover:underline"
+                  >
+                    Trocar
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                {/* Botão Sair - Estilo Ghost Branco */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/70 hover:text-white hover:bg-white/10"
+                  onClick={async () => {
+                    await signOut();
+                    navigate("/auth");
+                  }}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+
+                {/* Avatar do Usuário */}
+                <Avatar className="h-9 w-9 border-2 border-secondary cursor-pointer hover:scale-105 transition-transform">
+                  <AvatarImage src={userSession?.user?.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-secondary text-white font-bold text-xs">
+                    {getInitials(userSession?.user?.email)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
+
 export default Header;
