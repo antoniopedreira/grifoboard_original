@@ -14,20 +14,17 @@ export default {
     },
     extend: {
       colors: {
-        // Mapeamento direto das variáveis CSS que definimos no index.css
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-
-        // Cores semânticas do Shadcn (Agora mapeadas para Grifo)
         primary: {
-          DEFAULT: "hsl(var(--primary))", // Azul Grifo
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))", // Dourado Grifo
+          DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
@@ -39,7 +36,7 @@ export default {
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))", // Bege Grifo
+          DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
@@ -50,8 +47,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-
-        // Sidebar (Mapeada para variáveis forçadas no index.css)
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -62,12 +57,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-
-        // Alias explícitos para quando você quiser usar hardcoded
         grifo: {
-          primary: "hsl(var(--primary))", // Azul
-          secondary: "hsl(var(--secondary))", // Dourado
-          tertiary: "hsl(var(--accent))", // Bege
+          primary: "hsl(var(--primary))",
+          secondary: "hsl(var(--secondary))",
+          tertiary: "hsl(var(--accent))",
         },
       },
       borderRadius: {
@@ -75,9 +68,10 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      // CORREÇÃO: Usando apenas Inter para tudo
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        heading: ["Playfair Display", "serif"],
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        // 'heading' removido para usar a padrão (sans)
       },
       keyframes: {
         "accordion-down": {
