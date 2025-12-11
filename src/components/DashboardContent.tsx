@@ -7,19 +7,17 @@ import PCPOverallCard from "@/components/chart/PCPOverallCard";
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 import PCPBreakdownCard from "@/components/chart/PCPBreakdownCard";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
-import WeekNavigation from "@/components/WeekNavigation"; // Navegação de semanas restaurada
+import WeekNavigation from "@/components/WeekNavigation";
 import { motion } from "framer-motion";
 import { startOfWeek, endOfWeek, addDays } from "date-fns";
 
 const DashboardContent = () => {
   const { userSession } = useAuth();
 
-  // Estado para controlar a semana selecionada (Padrão: Semana Atual)
   const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
 
   const weekEndDate = endOfWeek(weekStartDate, { weekStartsOn: 1 });
 
-  // Hook gerenciador de tarefas conectado à semana selecionada
   const { tasks, isLoading, pcpData, weeklyPCPData } = useTaskManager(weekStartDate);
 
   const handlePreviousWeek = () => {
@@ -42,11 +40,13 @@ const DashboardContent = () => {
     );
   }
 
-  // KPIs calculados com base nos dados carregados
+  // Proteção: Garante que tasks seja um array antes de filtrar
+  const safeTasks = tasks || [];
+
   const stats = [
     {
       label: "Total de Tarefas",
-      value: tasks.length,
+      value: safeTasks.length,
       icon: CheckCircle2,
       color: "text-primary",
       bg: "bg-primary/10",
@@ -60,7 +60,8 @@ const DashboardContent = () => {
     },
     {
       label: "Tarefas Pendentes",
-      value: tasks.filter((t) => !t.isFullyCompleted).length,
+      // Correção do erro de undefined filter
+      value: safeTasks.filter((t) => !t.isFullyCompleted).length,
       icon: Clock,
       color: "text-orange-600",
       bg: "bg-orange-100",
@@ -69,7 +70,6 @@ const DashboardContent = () => {
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho e Navegação de Semana */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
@@ -80,7 +80,6 @@ const DashboardContent = () => {
           </div>
         </div>
 
-        {/* Componente de Navegação de Semana Restaurado */}
         <WeekNavigation
           weekStartDate={weekStartDate}
           weekEndDate={weekEndDate}
@@ -95,7 +94,6 @@ const DashboardContent = () => {
         </div>
       ) : (
         <>
-          {/* Grid de KPIs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {stats.map((stat, i) => (
               <motion.div
@@ -119,9 +117,7 @@ const DashboardContent = () => {
             ))}
           </div>
 
-          {/* Gráficos Principais */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Gráfico de Evolução Semanal */}
             <motion.div
               className="lg:col-span-2 h-full"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -134,23 +130,22 @@ const DashboardContent = () => {
                   <CardDescription>Acompanhamento semanal do Planejado vs Realizado</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PCPWeeklyChart
-                    weeklyData={weeklyPCPData}
-                    barColor="#112232" // Azul Grifo
-                  />
+                  <PCPWeeklyChart weeklyData={weeklyPCPData} barColor="#112232" />
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Coluna Direita: PCP Geral e Causas */}
             <div className="space-y-6">
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                <PCPOverallCard data={pcpData.overall} className="bg-white border-border/60 shadow-sm" />
+                <PCPOverallCard
+                  data={pcpData?.overall || { completedTasks: 0, totalTasks: 0, percentage: 0 }}
+                  className="bg-white border-border/60 shadow-sm"
+                />
               </motion.div>
 
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
                 <WeeklyCausesChart
-                  tasks={tasks}
+                  tasks={safeTasks}
                   weekStartDate={weekStartDate}
                   className="bg-white border-border/60 shadow-sm"
                 />
@@ -158,14 +153,13 @@ const DashboardContent = () => {
             </div>
           </div>
 
-          {/* Detalhamento por Setor */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
             <Card className="bg-white border-border/60 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-primary font-heading">Detalhamento por Setor</CardTitle>
               </CardHeader>
               <CardContent>
-                <PCPBreakdownCard title="" data={pcpData.bySector} />
+                <PCPBreakdownCard title="" data={pcpData?.bySector || {}} />
               </CardContent>
             </Card>
           </motion.div>
