@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap");
+/* Import apenas da Inter, removendo a Playfair Display */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,57 +7,50 @@
 
 @layer base {
   :root {
-    /* --- PALETA GRIFO ENGENHARIA (Valores HSL Exatos) --- */
+    /* --- PALETA GRIFO ENGENHARIA --- */
+    --primary: 209 49% 13%; /* #112232 */
+    --primary-foreground: 35 20% 84%;
 
-    /* Principal (#112232) - Azul Profundo (Usado em Headers, Sidebar, Texto Forte) */
-    --primary: 209 49% 13%;
-    --primary-foreground: 35 20% 84%; /* Texto Bege sobre Azul */
+    --secondary: 37 61% 40%; /* #A47428 */
+    --secondary-foreground: 0 0% 100%;
 
-    /* Secundária (#A47428) - Dourado (Usado em Botões, Destaques, Links) */
-    --secondary: 37 61% 40%;
-    --secondary-foreground: 0 0% 100%; /* Texto Branco sobre Dourado */
-
-    /* Terciária/Fundo (#E0D9CF) - Bege (Usado em Bordas, Detalhes) */
-    --accent: 35 20% 84%;
+    --accent: 35 20% 84%; /* #E0D9CF */
     --accent-foreground: 209 49% 13%;
 
-    /* Destrutivo (Vermelho padrão para erros) */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Fundos e Superfícies */
-    --background: 35 15% 97%; /* Bege muito claro (#FAF9F7) para o fundo da página */
-    --foreground: 209 49% 13%; /* Texto padrão é o Azul Grifo */
+    --background: 35 15% 97%; /* #FAF9F7 */
+    --foreground: 209 49% 13%;
 
-    --card: 0 0% 100%; /* Cards Brancos */
+    --card: 0 0% 100%;
     --card-foreground: 209 49% 13%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 209 49% 13%;
 
     --muted: 35 10% 94%;
-    --muted-foreground: 209 20% 40%; /* Cinza azulado para texto secundário */
+    --muted-foreground: 209 20% 40%;
 
-    --border: 35 15% 85%; /* Bordas Bege (#E0D9CF ajustado) */
+    --border: 35 15% 85%;
     --input: 35 15% 85%;
 
-    --ring: 37 61% 40%; /* Foco em Dourado */
+    --ring: 37 61% 40%;
 
     --radius: 0.5rem;
 
-    /* Variáveis Específicas da Sidebar (Forçando o Azul) */
-    --sidebar-background: 209 49% 13%; /* Azul Grifo */
-    --sidebar-foreground: 35 20% 84%; /* Bege */
-    --sidebar-primary: 37 61% 40%; /* Dourado */
+    /* Sidebar */
+    --sidebar-background: 209 49% 13%;
+    --sidebar-foreground: 35 20% 84%;
+    --sidebar-primary: 37 61% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 209 40% 20%; /* Azul levemente mais claro para hover */
+    --sidebar-accent: 209 40% 20%;
     --sidebar-accent-foreground: 35 20% 84%;
     --sidebar-border: 209 40% 20%;
     --sidebar-ring: 37 61% 40%;
   }
 
   .dark {
-    /* Modo Escuro (Opcional - Invertendo a lógica mas mantendo a identidade) */
     --background: 209 49% 10%;
     --foreground: 35 20% 84%;
     --primary: 35 20% 84%;
@@ -74,16 +68,18 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Define Inter como padrão para tudo */
     font-family: "Inter", sans-serif;
   }
-  /* Forçando títulos a usarem a fonte serifada elegante */
+  /* Removemos a regra que forçava outra fonte nos títulos */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: "Playfair Display", serif;
+    @apply font-sans; /* Garante que títulos usem a mesma fonte do corpo */
+    font-weight: 600; /* Um peso maior para destaque, mas com a mesma fonte */
   }
 }
 
