@@ -18,7 +18,6 @@ const DashboardContent = () => {
 
   const weekEndDate = endOfWeek(weekStartDate, { weekStartsOn: 1 });
 
-  // Hook gerenciador de tarefas
   const { tasks, isLoading, pcpData } = useTaskManager(weekStartDate);
 
   const handlePreviousWeek = () => {
@@ -41,7 +40,6 @@ const DashboardContent = () => {
     );
   }
 
-  // Proteção Crítica: Garante que tasks seja sempre um array antes de filtrar
   const safeTasks = tasks || [];
 
   const stats = [
@@ -61,13 +59,16 @@ const DashboardContent = () => {
     },
     {
       label: "Tarefas Pendentes",
-      // Agora seguro contra undefined
       value: safeTasks.filter((t) => !t.isFullyCompleted).length,
       icon: Clock,
       color: "text-orange-600",
       bg: "bg-orange-100",
     },
   ];
+
+  // Classes de animação reutilizáveis para consistência
+  const cardHoverEffect =
+    "hover:shadow-xl transition-all duration-300 hover:scale-[1.01] cursor-pointer border-border/60 shadow-sm";
 
   return (
     <div className="space-y-6">
@@ -95,6 +96,7 @@ const DashboardContent = () => {
         </div>
       ) : (
         <>
+          {/* Grid de KPIs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {stats.map((stat, i) => (
               <motion.div
@@ -103,7 +105,9 @@ const DashboardContent = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="bg-white border-border/60 shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
+                <Card
+                  className={`bg-white hover:shadow-md transition-all hover:-translate-y-1 border-border/60 shadow-sm`}
+                >
                   <CardContent className="p-6 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
@@ -119,14 +123,14 @@ const DashboardContent = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Gráfico de Evolução Semanal (Agora Independente) */}
+            {/* 1. Gráfico de Evolução Semanal (Com animação de Hover) */}
             <motion.div
               className="lg:col-span-2 h-full"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <Card className="bg-white border-border/60 shadow-sm h-full">
+              <Card className={`bg-white h-full ${cardHoverEffect}`}>
                 <CardHeader>
                   <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
                   <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
@@ -139,24 +143,27 @@ const DashboardContent = () => {
 
             <div className="space-y-6">
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
+                {/* PCP Overall já tem animação interna, mantemos consistente */}
                 <PCPOverallCard
                   data={pcpData?.overall || { completedTasks: 0, totalTasks: 0, percentage: 0 }}
-                  className="bg-white border-border/60 shadow-sm"
+                  className={`bg-white ${cardHoverEffect}`}
                 />
               </motion.div>
 
+              {/* 2. Causas da Semana (Com animação de Hover) */}
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
                 <WeeklyCausesChart
                   tasks={safeTasks}
                   weekStartDate={weekStartDate}
-                  className="bg-white border-border/60 shadow-sm"
+                  className={`bg-white ${cardHoverEffect}`}
                 />
               </motion.div>
             </div>
           </div>
 
+          {/* 3. Detalhamento por Setor (Com animação de Hover) */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-            <Card className="bg-white border-border/60 shadow-sm">
+            <Card className={`bg-white ${cardHoverEffect}`}>
               <CardHeader>
                 <CardTitle className="text-primary font-heading">Detalhamento por Setor</CardTitle>
               </CardHeader>
