@@ -91,7 +91,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Área de Conteúdo */}
         <main className="flex-1 relative overflow-hidden flex flex-col bg-background">
           <ScrollArea className="flex-1 h-full">
-            <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full pb-20">{children}</div>
+            {/* CORREÇÃO AQUI: Padding reduzido para p-4 (mobile) e p-6 (desktop) para subir o conteúdo */}
+            <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full pb-20">{children}</div>
           </ScrollArea>
         </main>
       </div>
