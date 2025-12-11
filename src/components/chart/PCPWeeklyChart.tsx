@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 
 interface PCPWeeklyChartProps {
   weeklyData?: any[];
-  barColor?: string; // Nova prop opcional
+  barColor?: string; // Prop adicionada para corrigir o erro TS
 }
 
 const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ weeklyData, barColor = "#021C2F" }) => {
@@ -16,7 +16,6 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ weeklyData, barColor = 
   const { userSession } = useAuth();
   const obraId = userSession?.obraAtiva?.id;
 
-  // Se weeklyData for fornecido via props, use-o (prioridade)
   useEffect(() => {
     if (weeklyData && weeklyData.length > 0) {
       const formatted = weeklyData.map((d) => ({
@@ -27,7 +26,6 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ weeklyData, barColor = 
       setChartData(formatted);
       setIsLoading(false);
     } else {
-      // Caso contrário, busca do Supabase (fallback legado)
       fetchResumoExecucaoData();
     }
   }, [weeklyData, obraId]);
