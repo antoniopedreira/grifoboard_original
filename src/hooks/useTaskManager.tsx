@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Task, WeeklyPCPData, PCPBreakdown } from "@/types";
+import { Task, PCPBreakdown } from "@/types"; // WeeklyPCPData removido
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { calculatePCP } from "@/utils/pcp";
@@ -12,34 +12,18 @@ export const useTaskManager = (weekStartDate: Date) => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Use our extracted hooks
   const { filterTasksByWeek, filteredTasks, setFilteredTasks } = useTaskFilters(tasks, weekStartDate);
   const { loadTasks } = useTaskData(session, toast, setTasks, setIsLoading);
 
-  // Função para calcular dados do PCP com base nas tarefas
-  const calculatePCPData = useCallback(
-    (tasksList: Task[]) => {
-      // Proteção contra undefined/null
-      const safeTaskList = tasksList || [];
-      const pcpData = calculatePCP(safeTaskList);
+  // Função simplificada para apenas calcular o PCP
+  const calculatePCPData = useCallback((tasksList: Task[]) => {
+    // Proteção contra undefined
+    const safeList = tasksList || [];
+    return calculatePCP(safeList);
+  }, []);
 
-      // Convert PCPBreakdown to WeeklyPCPData format for compatibility
-      const weeklyData: WeeklyPCPData = {
-        week: `Semana ${Math.ceil((new Date().getTime() - weekStartDate.getTime()) / (7 * 24 * 60 * 60 * 1000))}`,
-        percentage: pcpData.overall.percentage,
-        date: weekStartDate,
-        isCurrentWeek: true,
-      };
-      setWeeklyPCPData([weeklyData]);
-      return pcpData;
-    },
-    [weekStartDate],
-  );
-
-  // Task actions with dependencies injected
   const { handleTaskUpdate, handleTaskDelete, handleTaskCreate, handleTaskDuplicate, handleCopyToNextWeek } =
     useTaskActions({
       toast,
@@ -52,7 +36,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       session,
     });
 
-  // Carregar tarefas quando a obra ativa mudar
+  // Carregar tarefas
   useEffect(() => {
     if (session.obraAtiva) {
       loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks);
@@ -63,26 +47,24 @@ export const useTaskManager = (weekStartDate: Date) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.obraAtiva]);
 
-  // Quando a semana muda, atualizar a lista filtrada
+  // Atualizar lista filtrada ao mudar semana
   useEffect(() => {
-    if (tasks.length > 0) {
-      const filteredTasks = filterTasksByWeek(tasks, weekStartDate);
-      setFilteredTasks(filteredTasks);
-      // Recalculate PCP data for the filtered tasks
-      calculatePCPData(filteredTasks);
+    if (tasks && tasks.length > 0) {
+      const filtered = filterTasksByWeek(tasks, weekStartDate);
+      setFilteredTasks(filtered);
+      calculatePCPData(filtered);
     }
   }, [weekStartDate, tasks, filterTasksByWeek, calculatePCPData, setFilteredTasks]);
 
-  // Calcular PCP atual baseado nas tarefas filtradas da semana
+  // Cálculo final seguro
   const pcpData = calculatePCP(filteredTasks || []);
 
   return {
-    // CORREÇÃO CRÍTICA: Garante que tasks nunca seja undefined
-    tasks: filteredTasks || [],
-    allTasks: tasks || [],
+    tasks: filteredTasks || [], // Garante array vazio
+    allTasks: tasks || [], // Garante array vazio
     isLoading,
     pcpData,
-    weeklyPCPData: weeklyPCPData || [],
+    // loadTasks exposto de forma segura
     loadTasks: (callback?: () => void) =>
       loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks, callback),
     handleTaskUpdate,
@@ -93,5 +75,4 @@ export const useTaskManager = (weekStartDate: Date) => {
   };
 };
 
-// Re-export these utility functions from this file for compatibility
 export { formatDateToISO, convertTarefaToTask } from "@/utils/taskUtils";
