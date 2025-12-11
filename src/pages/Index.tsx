@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Obra } from "@/types/supabase";
@@ -22,13 +21,13 @@ const Index = ({ onObraSelect }: IndexProps) => {
   const location = useLocation();
   const registry = useSafeRegistry();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  
+
   // Enable session timeout management
-  useSessionTimeout({ 
+  useSessionTimeout({
     timeoutMinutes: 30, // 30 minutes of inactivity
-    warningMinutes: 5   // Show warning 5 minutes before expiry
+    warningMinutes: 5, // Show warning 5 minutes before expiry
   });
-  
+
   // Determine which content to render based on the current route
   const isDashboard = location.pathname === "/dashboard";
   const isChecklist = location.pathname === "/checklist";
@@ -57,7 +56,7 @@ const Index = ({ onObraSelect }: IndexProps) => {
         <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-lg">
           <h2 className="text-2xl font-bold text-slate-800">Nenhuma obra selecionada</h2>
           <p className="text-slate-600">Selecione uma obra para continuar.</p>
-          <button 
+          <button
             onClick={() => navigate("/obras")}
             className="px-6 py-3 bg-[#C7A347] text-white rounded-xl font-semibold hover:bg-[#B7943F] transition-colors"
           >

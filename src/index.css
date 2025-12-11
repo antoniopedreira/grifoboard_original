@@ -1,238 +1,117 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .line-clamp-1 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
+@layer base {
+  :root {
+    /* --- PALETA GRIFO ENGENHARIA --- */
+
+    /* Principal (#112232) - Azul Profundo */
+    --primary: 209 49% 13%;
+    --primary-foreground: 35 20% 84%; /* Texto Bege sobre Azul */
+
+    /* Secundária (#A47428) - Dourado */
+    --secondary: 37 61% 40%;
+    --secondary-foreground: 0 0% 100%; /* Texto Branco sobre Dourado */
+
+    /* Terciária/Fundo (#E0D9CF) - Bege */
+    --accent: 35 20% 84%;
+    --accent-foreground: 209 49% 13%;
+
+    /* Fundos */
+    --background: 35 15% 97%; /* Um bege super claro para o fundo geral (#FAF9F7) */
+    --foreground: 209 49% 13%; /* Texto padrão é o Azul Escuro */
+
+    /* Componentes Shadcn */
+    --card: 0 0% 100%;
+    --card-foreground: 209 49% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 209 49% 13%;
+
+    --muted: 35 10% 94%;
+    --muted-foreground: 209 20% 40%;
+
+    --border: 35 15% 85%; /* Bordas em bege escuro */
+    --input: 35 15% 85%;
+
+    --ring: 37 61% 40%; /* Foco em Dourado */
+
+    --radius: 0.75rem;
+
+    /* Sidebar Variables */
+    --sidebar-background: 209 49% 13%; /* Azul Grifo */
+    --sidebar-foreground: 35 20% 84%; /* Bege */
+    --sidebar-primary: 37 61% 40%; /* Dourado */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 209 40% 20%; /* Azul um pouco mais claro para hover */
+    --sidebar-accent-foreground: 35 20% 84%;
+    --sidebar-border: 209 40% 20%;
+    --sidebar-ring: 37 61% 40%;
   }
-  
-  .line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+
+  .dark {
+    /* Modo Escuro (Opcional, mas configurado com a paleta Grifo invertida) */
+    --background: 209 49% 10%;
+    --foreground: 35 20% 84%;
+
+    --primary: 35 20% 84%;
+    --primary-foreground: 209 49% 13%;
+
+    --secondary: 37 61% 40%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 209 40% 20%;
+    --muted-foreground: 35 10% 70%;
+
+    --accent: 209 40% 20%;
+    --accent-foreground: 35 20% 84%;
+
+    --popover: 209 49% 12%;
+    --popover-foreground: 35 20% 84%;
+
+    --card: 209 49% 12%;
+    --card-foreground: 35 20% 84%;
+
+    --border: 209 40% 20%;
+    --input: 209 40% 20%;
   }
-  
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    transition: width 0.3s ease;
-  }
-  
-  .scrollbar-thin:hover::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 4px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgba(148, 163, 184, 0.4);
-    border-radius: 4px;
-    transition: all 0.3s ease;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(100, 116, 139, 0.7);
-  }
-
-  /* Respect user's motion preferences */
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-}
-
-:root {
-  /* Clean Minimal Palette */
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  
-  /* Neutral Primary */
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --primary-hover: 240 5.9% 15%;
-  --primary-light: 240 4.8% 95.9%;
-
-  /* Subtle Secondary */
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --secondary-light: 240 4.8% 98%;
-
-  /* Minimal Accent */
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --accent-light: 240 4.8% 98%;
-
-  /* Clean Status Colors */
-  --success: 142 76% 36%;
-  --success-foreground: 355.7 100% 97.3%;
-  --success-light: 142 76% 95%;
-  
-  --warning: 47.9 95.8% 53.1%;
-  --warning-foreground: 26 83.3% 14.1%;
-  --warning-light: 47.9 95.8% 95%;
-  
-  --destructive: 0 72.2% 50.6%;
-  --destructive-foreground: 0 85.7% 97.3%;
-  --destructive-light: 0 72.2% 95%;
-
-  /* Grifo Brand Colors */
-  --brand: 207 75% 9%;           /* #081C2C - dark blue-teal */
-  --brand-2: 207 65% 15%;        /* brand +12% luminosity */
-  --accent: 45 60% 52%;          /* #C8A04B - gold */
-  --text-on-dark: 210 40% 98%;   /* #F8FAFC - almost white */
-  --muted-on-dark: 215 25% 82%;  /* #C8D1DD - secondary text on dark */
-
-  /* Neutral System */
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-
-  /* Clean Design Tokens */
-  --radius: 8px;
-  
-  /* Glass Morphism */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  --glass-backdrop: blur(8px);
-  
-  /* Minimal Shadows */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-
-  /* Sidebar */
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 240 5.9% 10%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 240 5.9% 90%;
-  --sidebar-ring: 240 5.9% 10%;
-}
-
-.dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --primary-hover: 0 0% 90%;
-  --primary-light: 240 3.7% 15.9%;
-
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --secondary-light: 240 3.7% 12%;
-
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --accent-light: 240 3.7% 12%;
-
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-
-  /* Dark Glass */
-  --glass-bg: rgba(0, 0, 0, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.05);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-
-  /* Dark Sidebar */
-  --sidebar-background: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 94.1%;
-  --sidebar-primary-foreground: 220.9 39.3% 11%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 240 4.9% 83.9%;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-  
-  html, body {
-    height: 100vh;
-    overflow: hidden;
-    font-family: 'Inter', 'Geist', sans-serif;
-  }
-  
-  #root {
-    height: 100vh;
-    overflow: hidden;
-  }
-  
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Playfair Display", serif; /* Fonte elegante para títulos */
   }
 }
 
-@layer components {
-  /* Glass Card - Use specific transitions */
-  .glass-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: var(--glass-backdrop);
-    -webkit-backdrop-filter: var(--glass-backdrop);
-    @apply rounded-lg shadow-lg transition-shadow duration-300 hover:shadow-xl;
+@layer utilities {
+  /* Scrollbar personalizada Grifo */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-
-  /* Minimal Card - Use specific transitions */
-  .minimal-card {
-    @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
   }
-
-  /* Interactive Element - Use specific transitions only */
-  .interactive {
-    @apply hover:scale-[1.02] transition-transform duration-200 ease-out;
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e0d9cf;
+    border-radius: 3px;
   }
-
-  /* Smooth Button - Use only transform transition */
-  .smooth-button {
-    @apply transition-transform duration-200 ease-out hover:scale-105;
-  }
-
-  /* Frosted Glass */
-  .frosted-glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    @apply rounded-xl;
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a47428;
   }
 }
