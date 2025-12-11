@@ -1,4 +1,3 @@
-/* Import apenas da Inter, removendo a Playfair Display */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 @tailwind base;
@@ -8,57 +7,53 @@
 @layer base {
   :root {
     /* --- PALETA GRIFO ENGENHARIA --- */
-    --primary: 209 49% 13%; /* #112232 */
+    --primary: 209 49% 13%; /* #112232 - Azul Profundo */
     --primary-foreground: 35 20% 84%;
 
-    --secondary: 37 61% 40%; /* #A47428 */
+    --secondary: 37 61% 40%; /* #A47428 - Dourado */
     --secondary-foreground: 0 0% 100%;
 
-    --accent: 35 20% 84%; /* #E0D9CF */
+    --accent: 35 20% 84%; /* #E0D9CF - Bege Claro */
     --accent-foreground: 209 49% 13%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --background: 35 15% 97%; /* #FAF9F7 */
+    /* CORREÇÃO DE FUNDO: Um cinza-bege mais visível para separar dos cards */
+    --background: 30 10% 94%; /* #F2F0ED - Mais escuro que o card branco */
     --foreground: 209 49% 13%;
 
+    /* Cards permanecem brancos puros para destacar do fundo */
     --card: 0 0% 100%;
     --card-foreground: 209 49% 13%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 209 49% 13%;
 
-    --muted: 35 10% 94%;
-    --muted-foreground: 209 20% 40%;
+    --muted: 210 20% 96%; /* Cinza frio para áreas secundárias */
+    --muted-foreground: 215 20% 45%;
 
     --border: 35 15% 85%;
     --input: 35 15% 85%;
-
     --ring: 37 61% 40%;
 
     --radius: 0.5rem;
 
-    /* Sidebar */
+    /* Sidebar: Forçando o Azul Escuro Sólido */
     --sidebar-background: 209 49% 13%;
-    --sidebar-foreground: 35 20% 84%;
+    --sidebar-foreground: 35 20% 90%;
     --sidebar-primary: 37 61% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 209 40% 20%;
-    --sidebar-accent-foreground: 35 20% 84%;
+    --sidebar-accent-foreground: 35 20% 95%;
     --sidebar-border: 209 40% 20%;
     --sidebar-ring: 37 61% 40%;
   }
 
   .dark {
-    --background: 209 49% 10%;
+    --background: 209 49% 8%;
     --foreground: 35 20% 84%;
-    --primary: 35 20% 84%;
-    --primary-foreground: 209 49% 13%;
-    --card: 209 49% 12%;
-    --card-foreground: 35 20% 84%;
-    --border: 209 40% 20%;
-    --input: 209 40% 20%;
+    /* ... (resto do dark mode) */
   }
 }
 
@@ -68,22 +63,25 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Define Inter como padrão para tudo */
     font-family: "Inter", sans-serif;
   }
-  /* Removemos a regra que forçava outra fonte nos títulos */
+  /* Melhora a legibilidade dos títulos */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    @apply font-sans; /* Garante que títulos usem a mesma fonte do corpo */
-    font-weight: 600; /* Um peso maior para destaque, mas com a mesma fonte */
+    @apply font-sans font-semibold tracking-tight text-primary;
   }
 }
 
 @layer utilities {
+  /* Utilitário para elevar cards visualmente */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-border/60;
+  }
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -92,7 +90,7 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--accent));
+    background: hsl(var(--accent)); /* Bege */
     border-radius: 3px;
   }
 }
