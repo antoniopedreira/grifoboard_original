@@ -1,20 +1,20 @@
 import { PCPData } from "@/types";
 import { BarChart2 } from "lucide-react";
-import { cn } from "@/lib/utils"; // Importante para mesclar classes
+import { cn } from "@/lib/utils";
 
 interface PCPOverallCardProps {
   data: PCPData;
-  className?: string; // Nova prop
+  className?: string; // Prop adicionada para corrigir erro TS
 }
 
 const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data, className }) => {
-  const percentage = Math.round(data.percentage);
+  const percentage = data ? Math.round(data.percentage) : 0;
 
   return (
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl bg-white border border-slate-200/50 shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-fade-in",
-        className, // Aplica as classes passadas pelo pai
+        className,
       )}
     >
       <div className="relative p-6">
@@ -56,7 +56,7 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data, className }) => {
 
           <div className="text-center">
             <div className="text-xs font-medium text-slate-600 mb-1">
-              {data.completedTasks} de {data.totalTasks} tarefas concluídas
+              {data?.completedTasks || 0} de {data?.totalTasks || 0} tarefas concluídas
             </div>
             <div className="flex items-center justify-center space-x-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
