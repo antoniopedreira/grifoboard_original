@@ -498,77 +498,49 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
 
   return (
     <div className="space-y-4">
-      {/* Main Image Viewer */}
-      <div className="relative bg-black/5 rounded-2xl overflow-hidden">
-        <div className="aspect-[16/10] flex items-center justify-center relative">
-          <img 
-            src={images[currentImageIndex].url} 
-            alt={images[currentImageIndex].label}
-            className="max-w-full max-h-full object-contain cursor-zoom-in"
-            onClick={() => setIsLightboxOpen(true)}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/placeholder.svg';
-            }}
-          />
-          
-          {/* Zoom indicator */}
-          <button
-            onClick={() => setIsLightboxOpen(true)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-          >
-            <ZoomIn className="h-5 w-5" />
-          </button>
-
-          {/* Navigation */}
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={prevImage}
-                className="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Counter */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-1.5 rounded-full backdrop-blur-sm">
-          {currentImageIndex + 1} / {images.length}
-        </div>
-      </div>
-
-      {/* Thumbnails */}
-      {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
+      {/* Photo Feed - Vertical Scroll */}
+      <ScrollArea className="max-h-[400px] pr-4">
+        <div className="space-y-4">
           {images.map((img, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentImageIndex(idx)}
-              className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
-                idx === currentImageIndex 
-                  ? "border-primary ring-2 ring-primary/20" 
-                  : "border-transparent opacity-60 hover:opacity-100"
-              }`}
+            <div 
+              key={idx} 
+              className="relative bg-black/5 rounded-2xl overflow-hidden"
             >
-              <img 
-                src={img.url} 
-                alt={`Foto ${idx + 1}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+              {/* Image Label */}
+              <div className="absolute top-3 left-3 z-10 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
+                {img.label} {images.length > 1 && `(${idx + 1}/${images.length})`}
+              </div>
+
+              {/* Zoom button */}
+              <button
+                onClick={() => {
+                  setCurrentImageIndex(idx);
+                  setIsLightboxOpen(true);
                 }}
-              />
-            </button>
+                className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+
+              {/* Image */}
+              <div className="aspect-[16/10] flex items-center justify-center">
+                <img 
+                  src={img.url} 
+                  alt={img.label}
+                  className="max-w-full max-h-full object-contain cursor-zoom-in"
+                  onClick={() => {
+                    setCurrentImageIndex(idx);
+                    setIsLightboxOpen(true);
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+            </div>
           ))}
         </div>
-      )}
+      </ScrollArea>
 
       {/* Lightbox */}
       {isLightboxOpen && (
