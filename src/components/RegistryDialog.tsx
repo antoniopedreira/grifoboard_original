@@ -3,6 +3,7 @@ import RegistryForm from "./RegistryForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRegistry } from "@/context/RegistryContext"; // Importar o contexto
 
 interface RegistryDialogProps {
   isOpen: boolean;
@@ -10,13 +11,15 @@ interface RegistryDialogProps {
 }
 
 const RegistryDialog = ({ isOpen, onOpenChange }: RegistryDialogProps) => {
+  // Consumir o contexto para obter as funções e estados necessários
+  const { addRegistry, isSaving } = useRegistry();
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0 bg-white border-border shadow-2xl overflow-hidden rounded-2xl"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
-          // Previne fechamento acidental ao clicar fora (opcional, mas recomendado para forms longos)
           const isClickOutside = e.type === "pointerdown";
           if (!isClickOutside) e.preventDefault();
         }}
@@ -51,17 +54,11 @@ const RegistryDialog = ({ isOpen, onOpenChange }: RegistryDialogProps) => {
         <div className="flex-1 overflow-hidden bg-slate-50/50">
           <ScrollArea className="h-full w-full">
             <div className="p-6">
-              <RegistryForm />
+              {/* CORREÇÃO: Passando as props obrigatórias para o RegistryForm */}
+              <RegistryForm onClose={() => onOpenChange(false)} onRegistryCreate={addRegistry} isSaving={isSaving} />
             </div>
           </ScrollArea>
         </div>
-
-        {/* Rodapé (Opcional, mas útil para consistência) */}
-        {/* <div className="px-6 py-4 border-t border-border bg-white flex justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fechar
-          </Button>
-        </div> */}
       </DialogContent>
     </Dialog>
   );
