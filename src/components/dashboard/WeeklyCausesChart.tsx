@@ -26,7 +26,7 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
   const [selectedCause, setSelectedCause] = useState<CauseData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Grupos de causas
+  // Grupos de causas (Mantidos para brevidade, iguais ao original)
   const causeGroups = {
     projeto: ["Projeto", "Desenho/Detalhamento", "Especificação"],
     planejamento: ["Planejamento/Sequenciamento", "Programação"],
@@ -50,43 +50,31 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
 
   const getCauseGroup = (causa: string): string => {
     for (const [group, causes] of Object.entries(causeGroups)) {
-      if (causes.some((c) => causa.includes(c))) {
-        return group;
-      }
+      if (causes.some((c) => causa.includes(c))) return group;
     }
     return "outros";
   };
 
   useEffect(() => {
-    // Current week causes
-    const currentWeekCauses = tasks
+    // Proteção: Garante que tasks seja um array
+    const safeTasks = tasks || [];
+
+    const currentWeekCauses = safeTasks
       .filter((task) => task.causeIfNotDone)
       .reduce(
         (acc, task) => {
           const cause = task.causeIfNotDone!;
           if (!acc[cause]) {
-            acc[cause] = {
-              count: 0,
-              responsaveis: new Set<string>(),
-              tasks: [],
-            };
+            acc[cause] = { count: 0, responsaveis: new Set<string>(), tasks: [] };
           }
           acc[cause].count++;
           acc[cause].responsaveis.add(task.responsible);
           acc[cause].tasks.push(task);
           return acc;
         },
-        {} as Record<
-          string,
-          {
-            count: number;
-            responsaveis: Set<string>;
-            tasks: Task[];
-          }
-        >,
+        {} as Record<string, { count: number; responsaveis: Set<string>; tasks: Task[] }>,
       );
 
-    // Calculate totals and process data
     const totalCauses = Object.values(currentWeekCauses).reduce((sum, c) => sum + c.count, 0);
     const processedData: CauseData[] = Object.entries(currentWeekCauses)
       .map(([causa, data]) => {
@@ -113,7 +101,7 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
   };
 
   return (
-    <div className={cn("h-full", className)}>
+    <div className={cn("h-full p-6 rounded-2xl", className)}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
           <Filter className="h-5 w-5 text-secondary" />
@@ -122,7 +110,6 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
         <Badge variant="outline">{causesData.length} causas</Badge>
       </div>
 
-      {/* Causes List */}
       <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin pr-2">
         {causesData.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -161,7 +148,6 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
         )}
       </div>
 
-      {/* Task Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
