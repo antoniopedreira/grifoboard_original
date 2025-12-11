@@ -244,9 +244,7 @@ const Auth = () => {
           </motion.div>
         </div>
 
-        <div className="relative z-10 text-xs text-primary-foreground/60 font-light">
-          © {new Date().getFullYear()} Grifoboard. Todos os direitos reservados.
-        </div>
+        <div className="relative z-10 text-xs text-primary-foreground/60 font-light"></div>
       </div>
 
       {/* --- PAINEL DIREITO: Login --- */}
