@@ -18,7 +18,8 @@ const DashboardContent = () => {
 
   const weekEndDate = endOfWeek(weekStartDate, { weekStartsOn: 1 });
 
-  const { tasks, isLoading, pcpData, weeklyPCPData } = useTaskManager(weekStartDate);
+  // Hook gerenciador de tarefas
+  const { tasks, isLoading, pcpData } = useTaskManager(weekStartDate);
 
   const handlePreviousWeek = () => {
     setWeekStartDate((prev) => addDays(prev, -7));
@@ -40,7 +41,7 @@ const DashboardContent = () => {
     );
   }
 
-  // Proteção: Garante que tasks seja um array antes de filtrar
+  // Proteção Crítica: Garante que tasks seja sempre um array antes de filtrar
   const safeTasks = tasks || [];
 
   const stats = [
@@ -60,7 +61,7 @@ const DashboardContent = () => {
     },
     {
       label: "Tarefas Pendentes",
-      // Correção do erro de undefined filter
+      // Agora seguro contra undefined
       value: safeTasks.filter((t) => !t.isFullyCompleted).length,
       icon: Clock,
       color: "text-orange-600",
@@ -118,6 +119,7 @@ const DashboardContent = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Gráfico de Evolução Semanal (Agora Independente) */}
             <motion.div
               className="lg:col-span-2 h-full"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -127,10 +129,10 @@ const DashboardContent = () => {
               <Card className="bg-white border-border/60 shadow-sm h-full">
                 <CardHeader>
                   <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
-                  <CardDescription>Acompanhamento semanal do Planejado vs Realizado</CardDescription>
+                  <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PCPWeeklyChart weeklyData={weeklyPCPData} barColor="#112232" />
+                  <PCPWeeklyChart barColor="#112232" />
                 </CardContent>
               </Card>
             </motion.div>
