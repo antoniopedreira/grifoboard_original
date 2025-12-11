@@ -20,7 +20,6 @@ const Header = () => {
 
   return (
     <header className="bg-primary border-b border-white/10 sticky top-0 z-50 shadow-md">
-      {/* CORREÇÃO AQUI: Trocamos 'max-w-7xl mx-auto' por 'w-full' para ocupar a tela toda */}
       <div className="w-full px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo e Título */}
@@ -30,6 +29,10 @@ const Header = () => {
                 src="/lovable-uploads/grifo-logo-header.png"
                 alt="Grifo"
                 className="w-full h-full object-contain"
+                // OTIMIZAÇÃO DE PERFORMANCE:
+                loading="eager"
+                fetchPriority="high"
+                decoding="sync"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                   e.currentTarget.parentElement!.innerHTML = '<span class="text-secondary font-bold text-xl">G</span>';
