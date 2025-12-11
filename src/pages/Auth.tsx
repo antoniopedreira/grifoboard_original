@@ -245,7 +245,7 @@ const Auth = () => {
         </div>
 
         <div className="relative z-10 text-xs text-primary-foreground/60 font-light">
-          © {new Date().getFullYear()} Grifo Engenharia. Todos os direitos reservados.
+          © {new Date().getFullYear()} Grifoboard. Todos os direitos reservados.
         </div>
       </div>
 
