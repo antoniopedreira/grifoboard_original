@@ -19,14 +19,13 @@ const Header = () => {
   };
 
   return (
-    // bg-primary aplica o AZUL (#112232) que definimos no index.css
     <header className="bg-primary border-b border-white/10 sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+      {/* CORREÇÃO AQUI: Trocamos 'max-w-7xl mx-auto' por 'w-full' para ocupar a tela toda */}
+      <div className="w-full px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo e Título */}
           <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => navigate("/dashboard")}>
             <div className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 group-hover:bg-white/10 transition-colors p-1">
-              {/* Logo original sem filtros de cor */}
               <img
                 src="/lovable-uploads/grifo-logo-header.png"
                 alt="Grifo"
@@ -46,7 +45,6 @@ const Header = () => {
           {/* Área do Usuário e Obra Ativa */}
           {userSession.user && (
             <div className="flex items-center gap-3 md:gap-4">
-              {/* Card da Obra Ativa (Só aparece se tiver obra) */}
               {userSession.obraAtiva && (
                 <div className="hidden md:flex items-center bg-black/20 rounded-lg px-4 py-2 border border-white/5 backdrop-blur-sm">
                   <div className="w-8 h-8 bg-secondary/20 rounded-md flex items-center justify-center mr-3">
