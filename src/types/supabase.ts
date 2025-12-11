@@ -1,4 +1,3 @@
-
 export interface Obra {
   id: string;
   nome_obra: string;
@@ -34,10 +33,16 @@ export interface Tarefa {
   created_at: string;
 }
 
+// CORREÇÃO AQUI: Adicionando user_metadata
 export interface UserSession {
   user: {
     id: string;
     email: string;
+    user_metadata?: {
+      full_name?: string;
+      avatar_url?: string;
+      [key: string]: any;
+    };
   } | null;
   obraAtiva: Obra | null;
 }
