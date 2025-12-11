@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button"; // Importando Button
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard,
@@ -12,11 +12,11 @@ import {
   FileText,
   LogOut,
   Settings,
-  Building2, // Ícone da Obra
-  ChevronsUpDown, // Ícone de troca (setinhas)
+  Building2,
+  ChevronsUpDown,
 } from "lucide-react";
 
-// ITEM "MINHAS OBRAS" REMOVIDO DA LISTA
+// Menu Principal
 const menuItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/tarefas", label: "Tarefas", icon: ClipboardList },
@@ -31,10 +31,9 @@ const CustomSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Função para trocar de obra
   const handleSwitchObra = () => {
-    // Opcional: Limpar a obra ativa se quiser forçar uma nova seleção "limpa"
-    // setObraAtiva(null);
+    // CORREÇÃO: Limpa a obra ativa antes de navegar, permitindo escolher outra
+    setObraAtiva(null);
     navigate("/obras");
   };
 
@@ -51,6 +50,7 @@ const CustomSidebar = () => {
   const userName = userSession?.user?.user_metadata?.full_name || "Usuário Grifo";
   const userEmail = userSession?.user?.email || "";
   const userAvatar = userSession?.user?.user_metadata?.avatar_url;
+  // Fallback para quando não tem obra selecionada
   const activeObraName = userSession?.obraAtiva?.nome_obra || "Selecionar Obra";
 
   return (
@@ -65,8 +65,7 @@ const CustomSidebar = () => {
         />
       </div>
 
-      {/* NOVO: Seletor de Obra Ativa */}
-      {/* Fica fixo no topo, logo abaixo da logo, dando destaque ao contexto atual */}
+      {/* Seletor de Obra Ativa */}
       <div className="px-3 pt-4 pb-2">
         <Button
           onClick={handleSwitchObra}
