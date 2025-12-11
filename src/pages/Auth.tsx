@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import AuthForm from "@/components/auth/AuthForm";
 import { motion } from "framer-motion";
-import { Building2, Ruler, HardHat } from "lucide-react";
+import { Building2, Ruler } from "lucide-react"; // HardHat removido dos imports
 
 const Auth = () => {
   const { userSession } = useAuth();
@@ -33,7 +33,7 @@ const Auth = () => {
     <div className="h-screen w-full flex overflow-hidden bg-background" onMouseMove={handleMouseMove}>
       {/* --- PAINEL ESQUERDO: Visual e Marca (Engenharia + Tech) --- */}
       <div className="hidden lg:flex lg:w-[55%] relative bg-primary overflow-hidden flex-col justify-between p-12 text-white z-10">
-        {/* Background Animado Híbrido (Construção + Dados) */}
+        {/* Background Animado */}
         <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
           <motion.svg
             className="w-full h-full"
@@ -98,8 +98,18 @@ const Auth = () => {
         {/* Conteúdo Esquerda */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-secondary/20 rounded-lg backdrop-blur-sm border border-secondary/30">
-              <HardHat className="h-8 w-8 text-secondary" />
+            {/* CORREÇÃO: Ícone Grifo (Badge) */}
+            <div className="p-2 bg-secondary/20 rounded-lg backdrop-blur-sm border border-secondary/30 flex items-center justify-center">
+              <img
+                src="/lovable-uploads/grifo-logo-header.png"
+                alt="Grifo Icon"
+                className="grifo-logo-placeholder h-8 w-8 object-contain"
+                // Filtro para garantir a cor dourada (#A47428) caso a imagem original seja branca/preta
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(43%) sepia(35%) saturate(1096%) hue-rotate(5deg) brightness(93%) contrast(90%)",
+                }}
+              />
             </div>
             <h2 className="text-2xl font-heading font-bold tracking-wide text-white">Grifo Engenharia</h2>
           </div>
@@ -160,13 +170,11 @@ const Auth = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          // CORREÇÃO: Padding reduzido (p-8) e espaçamento reduzido (space-y-6)
           className="w-full max-w-md space-y-6 bg-white p-8 rounded-3xl shadow-2xl shadow-primary/10 border border-border/60 mt-24 lg:mt-0 relative"
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-1.5 bg-secondary rounded-b-full" />
 
           <div className="text-center space-y-1">
-            {/* CORREÇÃO: Logo aumentada (h-20) e margem reduzida (mb-4) */}
             <img
               src="/lovable-uploads/grifo-logo-header.png"
               alt="Grifo Logo"
