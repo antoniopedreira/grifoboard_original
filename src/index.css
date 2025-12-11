@@ -6,75 +6,63 @@
 
 @layer base {
   :root {
-    /* --- PALETA GRIFO ENGENHARIA --- */
+    /* --- PALETA GRIFO ENGENHARIA (Valores HSL Exatos) --- */
 
-    /* Principal (#112232) - Azul Profundo */
+    /* Principal (#112232) - Azul Profundo (Usado em Headers, Sidebar, Texto Forte) */
     --primary: 209 49% 13%;
     --primary-foreground: 35 20% 84%; /* Texto Bege sobre Azul */
 
-    /* Secundária (#A47428) - Dourado */
+    /* Secundária (#A47428) - Dourado (Usado em Botões, Destaques, Links) */
     --secondary: 37 61% 40%;
     --secondary-foreground: 0 0% 100%; /* Texto Branco sobre Dourado */
 
-    /* Terciária/Fundo (#E0D9CF) - Bege */
+    /* Terciária/Fundo (#E0D9CF) - Bege (Usado em Bordas, Detalhes) */
     --accent: 35 20% 84%;
     --accent-foreground: 209 49% 13%;
 
-    /* Fundos */
-    --background: 35 15% 97%; /* Um bege super claro para o fundo geral (#FAF9F7) */
-    --foreground: 209 49% 13%; /* Texto padrão é o Azul Escuro */
+    /* Destrutivo (Vermelho padrão para erros) */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    /* Componentes Shadcn */
-    --card: 0 0% 100%;
+    /* Fundos e Superfícies */
+    --background: 35 15% 97%; /* Bege muito claro (#FAF9F7) para o fundo da página */
+    --foreground: 209 49% 13%; /* Texto padrão é o Azul Grifo */
+
+    --card: 0 0% 100%; /* Cards Brancos */
     --card-foreground: 209 49% 13%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 209 49% 13%;
 
     --muted: 35 10% 94%;
-    --muted-foreground: 209 20% 40%;
+    --muted-foreground: 209 20% 40%; /* Cinza azulado para texto secundário */
 
-    --border: 35 15% 85%; /* Bordas em bege escuro */
+    --border: 35 15% 85%; /* Bordas Bege (#E0D9CF ajustado) */
     --input: 35 15% 85%;
 
     --ring: 37 61% 40%; /* Foco em Dourado */
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Sidebar Variables */
+    /* Variáveis Específicas da Sidebar (Forçando o Azul) */
     --sidebar-background: 209 49% 13%; /* Azul Grifo */
     --sidebar-foreground: 35 20% 84%; /* Bege */
     --sidebar-primary: 37 61% 40%; /* Dourado */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 209 40% 20%; /* Azul um pouco mais claro para hover */
+    --sidebar-accent: 209 40% 20%; /* Azul levemente mais claro para hover */
     --sidebar-accent-foreground: 35 20% 84%;
     --sidebar-border: 209 40% 20%;
     --sidebar-ring: 37 61% 40%;
   }
 
   .dark {
-    /* Modo Escuro (Opcional, mas configurado com a paleta Grifo invertida) */
+    /* Modo Escuro (Opcional - Invertendo a lógica mas mantendo a identidade) */
     --background: 209 49% 10%;
     --foreground: 35 20% 84%;
-
     --primary: 35 20% 84%;
     --primary-foreground: 209 49% 13%;
-
-    --secondary: 37 61% 40%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 209 40% 20%;
-    --muted-foreground: 35 10% 70%;
-
-    --accent: 209 40% 20%;
-    --accent-foreground: 35 20% 84%;
-
-    --popover: 209 49% 12%;
-    --popover-foreground: 35 20% 84%;
-
     --card: 209 49% 12%;
     --card-foreground: 35 20% 84%;
-
     --border: 209 40% 20%;
     --input: 209 40% 20%;
   }
@@ -88,18 +76,18 @@
     @apply bg-background text-foreground;
     font-family: "Inter", sans-serif;
   }
+  /* Forçando títulos a usarem a fonte serifada elegante */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: "Playfair Display", serif; /* Fonte elegante para títulos */
+    font-family: "Playfair Display", serif;
   }
 }
 
 @layer utilities {
-  /* Scrollbar personalizada Grifo */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -108,10 +96,7 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #e0d9cf;
+    background: hsl(var(--accent));
     border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a47428;
   }
 }
