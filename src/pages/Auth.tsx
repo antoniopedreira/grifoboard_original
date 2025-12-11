@@ -111,7 +111,7 @@ const Auth = () => {
                 }}
               />
             </div>
-            <h2 className="text-2xl font-heading font-bold tracking-wide text-white">Grifo Engenharia</h2>
+            <h2 className="text-2xl font-heading font-bold tracking-wide text-white">Grifoboard</h2>
           </div>
         </div>
 
