@@ -1,157 +1,103 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { Task } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useTaskManager } from "@/hooks/useTaskManager";
-import { Loader2, TrendingUp, AlertCircle, CheckCircle2, Clock } from "lucide-react";
-import PCPOverallCard from "@/components/chart/PCPOverallCard";
-import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
-import PCPBreakdownCard from "@/components/chart/PCPBreakdownCard";
-import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
-import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
+import { calculatePCP } from "@/utils/pcp";
+import { useTaskData } from "@/hooks/task/useTaskData";
+import { useTaskFilters } from "@/hooks/task/useTaskFilters";
 
-const DashboardContent = () => {
-  const { userSession } = useAuth();
-  const { tasks, isLoading, pcpData, weeklyPCPData, historicalPCP } = useTaskManager();
+interface DashboardContextType {
+  // Current week data
+  currentWeekTasks: Task[];
+  currentWeekPcpData: any;
 
-  if (!userSession?.obraAtiva) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-        <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-secondary" />
-        </div>
-        <h2 className="text-2xl font-heading font-bold text-primary">Nenhuma obra selecionada</h2>
-        <p className="text-muted-foreground">Selecione uma obra no menu lateral para visualizar os dados.</p>
-      </div>
-    );
+  // Previous week data
+  prevWeekTasks: Task[];
+  prevWeekPcpData: any;
+
+  // All tasks for context
+  allTasks: Task[];
+
+  // Loading states
+  isLoading: boolean;
+
+  // Week navigation
+  weekStartDate: Date;
+  setWeekStartDate: (date: Date) => void;
+}
+
+const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
+
+export const useDashboard = () => {
+  const context = useContext(DashboardContext);
+  if (!context) {
+    throw new Error("useDashboard must be used within DashboardProvider");
   }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-secondary" />
-      </div>
-    );
-  }
-
-  // Estatísticas Rápidas (KPIs)
-  const stats = [
-    {
-      label: "Total de Tarefas",
-      value: tasks.length,
-      icon: CheckCircle2,
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      label: "PCP Geral",
-      value: `${Math.round(pcpData.overall.percentage)}%`,
-      icon: TrendingUp,
-      color: "text-secondary", // Dourado
-      bg: "bg-secondary/10",
-    },
-    {
-      label: "Tarefas Pendentes",
-      value: tasks.filter((t) => !t.isFullyCompleted).length,
-      icon: Clock,
-      color: "text-orange-600",
-      bg: "bg-orange-100",
-    },
-  ];
-
-  return (
-    <div className="space-y-6">
-      {/* Header da Página */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-      >
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-primary tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Visão geral da obra <span className="font-semibold text-primary">{userSession.obraAtiva.nome_obra}</span>
-          </p>
-        </div>
-
-        <div className="flex items-center text-sm text-muted-foreground bg-white px-3 py-1.5 rounded-full border border-border shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
-          Dados atualizados em tempo real
-        </div>
-      </motion.div>
-
-      {/* Grid de KPIs (Cards Pequenos) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <Card className="bg-white border-border/60 shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-              <CardContent className="p-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
-                  <h3 className="text-3xl font-bold font-heading text-primary">{stat.value}</h3>
-                </div>
-                <div className={`p-3 rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Linha Principal de Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* PCP Geral (Card Principal) */}
-        <motion.div
-          className="lg:col-span-2 h-full"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="bg-white border-border/60 shadow-sm h-full">
-            <CardHeader>
-              <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
-              <CardDescription>Acompanhamento semanal do Planejado vs Realizado</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Passando cores personalizadas para o gráfico */}
-              <PCPWeeklyChart
-                data={weeklyPCPData}
-                barColor="#112232" // Azul Grifo
-                lineColor="#A47428" // Dourado Grifo
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Distribuição (Setores/Causas) */}
-        <div className="space-y-6">
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-            <PCPOverallCard pcpData={pcpData} className="bg-white border-border/60 shadow-sm" />
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-            <WeeklyCausesChart tasks={tasks} className="bg-white border-border/60 shadow-sm" />
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Detalhamento por Setor (Tabela/Lista) */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-        <Card className="bg-white border-border/60 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-primary font-heading">Detalhamento por Setor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PCPBreakdownCard pcpData={pcpData} />
-          </CardContent>
-        </Card>
-      </motion.div>
-    </div>
-  );
+  return context;
 };
 
-export default DashboardContent;
+interface DashboardProviderProps {
+  children: ReactNode;
+  initialWeekStartDate: Date;
+}
+
+export const DashboardProvider = ({ children, initialWeekStartDate }: DashboardProviderProps) => {
+  const { toast } = useToast();
+  const { session } = useAuth();
+  const [weekStartDate, setWeekStartDate] = useState(initialWeekStartDate);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Previous week calculation
+  const prevWeekStart = new Date(weekStartDate);
+  prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+
+  // Use task filters for both weeks
+  const { filterTasksByWeek } = useTaskFilters(allTasks, weekStartDate);
+  const { loadTasks } = useTaskData(session, toast, setAllTasks, setIsLoading);
+
+  // Filter tasks by weeks
+  const currentWeekTasks = filterTasksByWeek(allTasks, weekStartDate);
+  const prevWeekTasks = filterTasksByWeek(allTasks, prevWeekStart);
+
+  // Calculate PCP data
+  const currentWeekPcpData = calculatePCP(currentWeekTasks);
+  const prevWeekPcpData = calculatePCP(prevWeekTasks);
+
+  // Load all tasks when obra changes (load broader range to cover multiple weeks)
+  useEffect(() => {
+    if (session.obraAtiva) {
+      setIsLoading(true);
+
+      // Load tasks from 4 weeks ago to 2 weeks in the future to cover current and previous weeks
+      const startRange = new Date(weekStartDate);
+      startRange.setDate(startRange.getDate() - 28); // 4 weeks back
+
+      const endRange = new Date(weekStartDate);
+      endRange.setDate(endRange.getDate() + 14); // 2 weeks forward
+
+      // Use the loadTasks method but with a broader date range to get more data at once
+      loadTasks(
+        startRange, // Use start range instead of specific week
+        (tasks: Task[]) => calculatePCP(tasks), // PCP calculation callback
+        (tasks: Task[], startDate: Date) => tasks, // Return all tasks instead of filtering
+        () => {}, // No filtered tasks setter needed
+        () => setIsLoading(false), // Set loading false when done
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.obraAtiva]);
+
+  const value: DashboardContextType = {
+    currentWeekTasks,
+    currentWeekPcpData,
+    prevWeekTasks,
+    prevWeekPcpData,
+    allTasks,
+    isLoading,
+    weekStartDate,
+    setWeekStartDate,
+  };
+
+  return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
+};
