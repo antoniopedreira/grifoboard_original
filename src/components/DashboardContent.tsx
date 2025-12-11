@@ -1,155 +1,373 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useTaskManager } from "@/hooks/useTaskManager";
-import { Loader2, TrendingUp, AlertCircle, CheckCircle2, Clock } from "lucide-react";
-import PCPOverallCard from "@/components/chart/PCPOverallCard";
-import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
-import PCPBreakdownCard from "@/components/chart/PCPBreakdownCard";
+import { useToast } from "@/hooks/use-toast";
+import WeekNavigation from "@/components/WeekNavigation";
+import { getWeekStartDate } from "@/utils/pcp";
+import { DashboardProvider, useDashboard } from "@/context/DashboardContext";
+import TaskProgressChart from "@/components/dashboard/TaskProgressChart";
+import WeeklyProgressWithAverage from "@/components/dashboard/WeeklyProgressWithAverage";
+import ExecutorChart from "@/components/dashboard/ExecutorChart";
+import TeamChart from "@/components/dashboard/TeamChart";
+import ResponsibleChart from "@/components/dashboard/ResponsibleChart";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
-import { motion } from "framer-motion";
+import TaskDetailsModal from "@/components/dashboard/TaskDetailsModal";
+import ProjectCountdown from "@/components/dashboard/ProjectCountdown";
+import { BarChart3, CheckCircle2, Calendar, TrendingUp, Activity } from "lucide-react";
+import { Task } from "@/types";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const DashboardContent = () => {
   const { userSession } = useAuth();
-  const { tasks, isLoading, pcpData, weeklyPCPData, historicalPCP } = useTaskManager();
-
-  if (!userSession?.obraAtiva) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-        <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-secondary" />
-        </div>
-        <h2 className="text-2xl font-heading font-bold text-primary">Nenhuma obra selecionada</h2>
-        <p className="text-muted-foreground">Selecione uma obra no menu lateral para visualizar os dados.</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-secondary" />
-      </div>
-    );
-  }
-
-  // Estatísticas Rápidas (KPIs)
-  const stats = [
-    {
-      label: "Total de Tarefas",
-      value: tasks.length,
-      icon: CheckCircle2,
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      label: "PCP Geral",
-      value: `${Math.round(pcpData.overall.percentage)}%`,
-      icon: TrendingUp,
-      color: "text-secondary", // Dourado
-      bg: "bg-secondary/10",
-    },
-    {
-      label: "Tarefas Pendentes",
-      value: tasks.filter((t) => !t.isFullyCompleted).length,
-      icon: Clock,
-      color: "text-orange-600",
-      bg: "bg-orange-100",
-    },
-  ];
+  const initialWeekStartDate = getWeekStartDate(new Date());
 
   return (
-    <div className="space-y-6">
-      {/* Header da Página */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-      >
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-primary tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Visão geral da obra <span className="font-semibold text-primary">{userSession.obraAtiva.nome_obra}</span>
-          </p>
+    <DashboardProvider initialWeekStartDate={initialWeekStartDate}>
+      <DashboardInner />
+    </DashboardProvider>
+  );
+};
+
+const DashboardInner = () => {
+  const { userSession } = useAuth();
+  const {
+    currentWeekTasks,
+    currentWeekPcpData,
+    prevWeekTasks,
+    prevWeekPcpData,
+    allTasks,
+    isLoading,
+    weekStartDate,
+    setWeekStartDate,
+  } = useDashboard();
+
+  const [weekEndDate, setWeekEndDate] = useState(new Date());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"completed" | "pending">("completed");
+  const [modalTasks, setModalTasks] = useState<Task[]>([]);
+  const [analysisMode, setAnalysisMode] = useState<"weekly" | "overall">("weekly");
+  const [lastUpdateDate, setLastUpdateDate] = useState<Date | null>(null);
+
+  // Calculate end of week when start date changes
+  useEffect(() => {
+    const endDate = new Date(weekStartDate);
+    endDate.setDate(endDate.getDate() + 6);
+    setWeekEndDate(endDate);
+  }, [weekStartDate]);
+
+  // Fetch last update date from tasks
+  useEffect(() => {
+    const fetchLastUpdate = async () => {
+      if (!userSession?.obraAtiva?.id) return;
+
+      const { data, error } = await supabase
+        .from("tarefas")
+        .select("updated_at")
+        .eq("obra_id", userSession.obraAtiva.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data && !error) {
+        setLastUpdateDate(new Date(data.updated_at));
+      }
+    };
+
+    fetchLastUpdate();
+  }, [userSession?.obraAtiva?.id, allTasks]);
+
+  // Navigate to previous and next weeks
+  const navigateToPreviousWeek = () => {
+    const prevWeek = new Date(weekStartDate);
+    prevWeek.setDate(prevWeek.getDate() - 7);
+    setWeekStartDate(prevWeek);
+  };
+
+  const navigateToNextWeek = () => {
+    const nextWeek = new Date(weekStartDate);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    setWeekStartDate(nextWeek);
+  };
+
+  // Calculate metrics from dashboard context data
+  const completedTasks = currentWeekTasks.filter((task) => task.isFullyCompleted).length;
+  const pendingTasks = currentWeekTasks.filter((task) => !task.isFullyCompleted).length;
+  const pcpPercentage = currentWeekPcpData?.overall?.percentage ? Math.round(currentWeekPcpData.overall.percentage) : 0;
+
+  // Previous week calculations for WoW comparison
+  const prevCompletedTasks = prevWeekTasks.filter((task) => task.isFullyCompleted).length;
+  const prevPendingTasks = prevWeekTasks.filter((task) => !task.isFullyCompleted).length;
+  const prevPcpPercentage = prevWeekPcpData?.overall?.percentage ? Math.round(prevWeekPcpData.overall.percentage) : 0;
+
+  // Calculate deltas
+  const totalTasksDelta = currentWeekTasks.length - prevWeekTasks.length;
+  const completedTasksDelta = completedTasks - prevCompletedTasks;
+  const pendingTasksDelta = pendingTasks - prevPendingTasks;
+  const pcpDelta = pcpPercentage - prevPcpPercentage;
+
+  // Mock data for additional deltas (can be calculated from real data later)
+  const delaysDelta = Math.floor(Math.random() * 10) - 5;
+  const criticalCausesDelta = Math.floor(Math.random() * 6) - 3;
+
+  // PCP color based on percentage
+  const getPcpColor = (pcp: number) => {
+    if (pcp >= 85) return "text-success";
+    if (pcp >= 70) return "text-warning";
+    return "text-destructive";
+  };
+
+  // Format date in São Paulo timezone without extra libs
+  const formatInSaoPaulo = (d: Date) => {
+    const date = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo" }).format(d);
+    const time = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(d);
+    return `${date} às ${time}`;
+  };
+
+  // Handlers for opening modals
+  const handleCompletedTasksClick = () => {
+    const completed = currentWeekTasks.filter((task) => task.isFullyCompleted);
+    setModalTasks(completed);
+    setModalType("completed");
+    setModalOpen(true);
+  };
+
+  const handlePendingTasksClick = () => {
+    const pending = currentWeekTasks.filter((task) => !task.isFullyCompleted);
+    setModalTasks(pending);
+    setModalType("pending");
+    setModalOpen(true);
+  };
+
+  if (isLoading && currentWeekTasks.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-muted/20 to-background p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Loading Header */}
+          <div className="glass-card p-8 animate-pulse">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-muted rounded-lg"></div>
+              <div>
+                <div className="h-8 w-48 bg-muted rounded"></div>
+                <div className="h-4 w-32 bg-muted/60 rounded mt-2"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading Navigation */}
+          <div className="glass-card p-4 animate-pulse">
+            <div className="h-12 bg-muted rounded"></div>
+          </div>
+
+          {/* Loading Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={`skeleton-${i}`} className="glass-card p-6 animate-pulse min-h-[140px]">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 bg-muted rounded-lg"></div>
+                  <div className="text-right">
+                    <div className="h-8 w-12 bg-muted rounded"></div>
+                    <div className="h-3 w-16 bg-muted/60 rounded mt-1"></div>
+                  </div>
+                </div>
+                <div className="h-4 w-24 bg-muted rounded"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Loading Chart */}
+          <div className="glass-card p-6 animate-pulse min-h-[280px]">
+            <div className="h-64 bg-muted rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-muted/20 to-background">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Clean Header */}
+        <div className="glass-card p-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-semibold text-foreground">Dashboard</h1>
+                <p className="text-muted-foreground">{userSession?.obraAtiva?.nome_obra || "Obra"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+              <span>{lastUpdateDate ? `Atualizado: ${formatInSaoPaulo(lastUpdateDate)}` : "Atualizado agora"}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center text-sm text-muted-foreground bg-white px-3 py-1.5 rounded-full border border-border shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
-          Dados atualizados em tempo real
-        </div>
-      </motion.div>
+        {/* Week Navigation */}
+        <WeekNavigation
+          weekStartDate={weekStartDate}
+          weekEndDate={weekEndDate}
+          onPreviousWeek={navigateToPreviousWeek}
+          onNextWeek={navigateToNextWeek}
+        />
 
-      {/* Grid de KPIs (Cards Pequenos) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+        {/* KPIs with WoW Comparison */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="minimal-card p-6 interactive min-h-[140px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-foreground">{currentWeekTasks.length}</div>
+                <div className="text-xs text-muted-foreground">Total</div>
+              </div>
+            </div>
+            <h3 className="text-sm font-medium text-foreground">Total de Tarefas</h3>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
+              <span
+                className={`text-xs font-medium ${totalTasksDelta >= 0 ? "text-primary" : "text-muted-foreground"}`}
+              >
+                {totalTasksDelta >= 0 ? "+" : ""}
+                {totalTasksDelta} ({totalTasksDelta >= 0 ? "+" : ""}
+                {((totalTasksDelta / Math.max(prevWeekTasks.length, 1)) * 100).toFixed(1)}%)
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="minimal-card p-6 interactive cursor-pointer hover:shadow-lg transition-shadow min-h-[140px]"
+            onClick={handleCompletedTasksClick}
           >
-            <Card className="bg-white border-border/60 shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-              <CardContent className="p-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
-                  <h3 className="text-3xl font-bold font-heading text-primary">{stat.value}</h3>
-                </div>
-                <div className={`p-3 rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-success" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-success">{completedTasks}</div>
+                <div className="text-xs text-muted-foreground">Concluídas</div>
+              </div>
+            </div>
+            <h3 className="text-sm font-medium text-foreground">Tarefas Concluídas</h3>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
+              <span className={`text-xs font-medium ${completedTasksDelta >= 0 ? "text-success" : "text-destructive"}`}>
+                {completedTasksDelta >= 0 ? "+" : ""}
+                {completedTasksDelta} ({completedTasksDelta >= 0 ? "+" : ""}
+                {((completedTasksDelta / Math.max(prevCompletedTasks, 1)) * 100).toFixed(1)}%)
+              </span>
+            </div>
+          </div>
 
-      {/* Linha Principal de Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* PCP Geral (Card Principal) */}
-        <motion.div
-          className="lg:col-span-2 h-full"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="bg-white border-border/60 shadow-sm h-full">
-            <CardHeader>
-              <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
-              <CardDescription>Acompanhamento semanal do Planejado vs Realizado</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Passando cores personalizadas para o gráfico */}
-              <PCPWeeklyChart
-                data={weeklyPCPData}
-                barColor="#112232" // Azul Grifo
-                lineColor="#A47428" // Dourado Grifo
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
+          <div
+            className="minimal-card p-6 interactive cursor-pointer hover:shadow-lg transition-shadow min-h-[140px]"
+            onClick={handlePendingTasksClick}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-destructive" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-destructive">{pendingTasks}</div>
+                <div className="text-xs text-muted-foreground">Pendentes</div>
+              </div>
+            </div>
+            <h3 className="text-sm font-medium text-foreground">Não Realizadas</h3>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
+              <span className={`text-xs font-medium ${pendingTasksDelta <= 0 ? "text-success" : "text-destructive"}`}>
+                {pendingTasksDelta >= 0 ? "+" : ""}
+                {pendingTasksDelta} ({pendingTasksDelta >= 0 ? "+" : ""}
+                {((pendingTasksDelta / Math.max(prevPendingTasks, 1)) * 100).toFixed(1)}%)
+              </span>
+            </div>
+          </div>
 
-        {/* Distribuição (Setores/Causas) */}
-        <div className="space-y-6">
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-            <PCPOverallCard pcpData={pcpData} className="bg-white border-border/60 shadow-sm" />
-          </motion.div>
+          <div className="minimal-card p-6 interactive min-h-[140px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-right">
+                <div className={`text-2xl font-semibold ${getPcpColor(pcpPercentage)}`}>{pcpPercentage}%</div>
+                <div className="text-xs text-muted-foreground">Performance</div>
+              </div>
+            </div>
+            <h3 className="text-sm font-medium text-foreground">PCP Semanal</h3>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-muted-foreground">vs sem. anterior:</span>
+              <span className={`text-xs font-medium ${pcpDelta >= 0 ? "text-success" : "text-destructive"}`}>
+                {pcpDelta >= 0 ? "+" : ""}
+                {pcpDelta}p.p.
+              </span>
+            </div>
+          </div>
+        </div>
 
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-            <WeeklyCausesChart tasks={tasks} className="bg-white border-border/60 shadow-sm" />
-          </motion.div>
+        {/* Project Countdown */}
+        <ProjectCountdown />
+
+        {/* Weekly Progress - All Weeks */}
+        <WeeklyProgressWithAverage />
+
+        {/* Analysis Mode Selector */}
+        <div className="glass-card p-6">
+          <Tabs value={analysisMode} onValueChange={(value) => setAnalysisMode(value as "weekly" | "overall")}>
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="weekly">Análise Semanal</TabsTrigger>
+              <TabsTrigger value="overall">Análise Geral</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {/* Analytics Charts Grid 2x2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="minimal-card p-6">
+            <ExecutorChart
+              weekStartDate={weekStartDate}
+              tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks}
+              analysisMode={analysisMode}
+            />
+          </div>
+
+          <div className="minimal-card p-6">
+            <TeamChart
+              weekStartDate={weekStartDate}
+              tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks}
+              analysisMode={analysisMode}
+            />
+          </div>
+
+          <div className="minimal-card p-6">
+            <ResponsibleChart
+              weekStartDate={weekStartDate}
+              tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks}
+              analysisMode={analysisMode}
+            />
+          </div>
+
+          <div className="minimal-card p-6">
+            <WeeklyCausesChart
+              weekStartDate={weekStartDate}
+              tasks={analysisMode === "weekly" ? currentWeekTasks : allTasks}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Detalhamento por Setor (Tabela/Lista) */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-        <Card className="bg-white border-border/60 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-primary font-heading">Detalhamento por Setor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PCPBreakdownCard pcpData={pcpData} />
-          </CardContent>
-        </Card>
-      </motion.div>
+      {/* Task Details Modal */}
+      <TaskDetailsModal isOpen={modalOpen} onClose={() => setModalOpen(false)} tasks={modalTasks} type={modalType} />
     </div>
   );
 };
