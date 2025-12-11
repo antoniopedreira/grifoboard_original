@@ -3,21 +3,21 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Building2, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 const Header = () => {
-  const { userSession, signOut, setObraAtiva } = useAuth();
+  const {
+    userSession,
+    signOut,
+    setObraAtiva
+  } = useAuth();
   const navigate = useNavigate();
-
   const handleMudarObra = () => {
     setObraAtiva(null);
     navigate("/obras");
   };
-
   const getInitials = (name?: string) => {
     if (!name) return "GR";
     return name.substring(0, 2).toUpperCase();
   };
-
   return (
     // bg-primary aplica o AZUL (#112232) que definimos no index.css
     <header className="bg-primary border-b border-white/10 sticky top-0 z-50 shadow-md">
@@ -27,29 +27,22 @@ const Header = () => {
           <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => navigate("/dashboard")}>
             <div className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 group-hover:bg-white/10 transition-colors p-1">
               {/* CORREÇÃO AQUI: Removido 'brightness-0 invert' para mostrar a cor original da logo */}
-              <img
-                src="/lovable-uploads/grifo-logo-header.png"
-                alt="Grifo"
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  // Fallback em Dourado
-                  e.currentTarget.parentElement!.innerHTML = '<span class="text-secondary font-bold text-xl">G</span>';
-                }}
-              />
+              <img src="/lovable-uploads/grifo-logo-header.png" alt="Grifo" className="w-full h-full object-contain" onError={e => {
+                e.currentTarget.style.display = "none";
+                // Fallback em Dourado
+                e.currentTarget.parentElement!.innerHTML = '<span class="text-secondary font-bold text-xl">G</span>';
+              }} />
             </div>
             <div>
               <h1 className="text-xl font-heading font-bold text-white tracking-wide">GrifoBoard</h1>
-              <div className="text-[10px] uppercase tracking-wider text-accent font-medium">Controle de Obras</div>
+              
             </div>
           </div>
 
           {/* Área do Usuário e Obra Ativa */}
-          {userSession.user && (
-            <div className="flex items-center gap-3 md:gap-4">
+          {userSession.user && <div className="flex items-center gap-3 md:gap-4">
               {/* Card da Obra Ativa (Só aparece se tiver obra) */}
-              {userSession.obraAtiva && (
-                <div className="hidden md:flex items-center bg-black/20 rounded-lg px-4 py-2 border border-white/5 backdrop-blur-sm">
+              {userSession.obraAtiva && <div className="hidden md:flex items-center bg-black/20 rounded-lg px-4 py-2 border border-white/5 backdrop-blur-sm">
                   <div className="w-8 h-8 bg-secondary/20 rounded-md flex items-center justify-center mr-3">
                     <Building2 className="w-4 h-4 text-secondary" />
                   </div>
@@ -62,26 +55,17 @@ const Header = () => {
                     </span>
                   </div>
                   <div className="w-px h-8 bg-white/10 mx-4" />
-                  <button
-                    onClick={handleMudarObra}
-                    className="text-xs text-accent hover:text-white transition-colors font-medium hover:underline"
-                  >
+                  <button onClick={handleMudarObra} className="text-xs text-accent hover:text-white transition-colors font-medium hover:underline">
                     Trocar
                   </button>
-                </div>
-              )}
+                </div>}
 
               <div className="flex items-center gap-2">
                 {/* Botão Sair - Estilo Ghost Branco */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white/70 hover:text-white hover:bg-white/10"
-                  onClick={async () => {
-                    await signOut();
-                    navigate("/auth");
-                  }}
-                >
+                <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10" onClick={async () => {
+                await signOut();
+                navigate("/auth");
+              }}>
                   <LogOut className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>
@@ -94,12 +78,10 @@ const Header = () => {
                   </AvatarFallback>
                 </Avatar>
               </div>
-            </div>
-          )}
+            </div>}
         </div>
       </div>
     </header>
   );
 };
-
 export default Header;
