@@ -29,7 +29,6 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
   const { toast } = useToast();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // Verificações de acesso e redirecionamentos...
   useEffect(() => {
     const checkMasterAdmin = async () => {
       if (userSession?.user && !redirectAttempted) {
@@ -54,12 +53,16 @@ const Obras = ({ onObraSelect }: ObrasPageProps) => {
     }
   }, [userSession, navigate, redirectAttempted]);
 
+  // CORREÇÃO: Removemos o redirecionamento automático para o dashboard.
+  // Isso permite que o usuário veja a lista de obras mesmo se já tiver uma ativa.
+  /*
   useEffect(() => {
     if (userSession?.user && userSession.obraAtiva && !redirectAttempted) {
-      navigate("/dashboard");
+      navigate('/dashboard');
       setRedirectAttempted(true);
     }
   }, [userSession, navigate, redirectAttempted]);
+  */
 
   const fetchObras = async () => {
     try {
