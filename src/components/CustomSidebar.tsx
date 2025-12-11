@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -18,7 +18,6 @@ import {
   ChevronsUpDown,
   ChevronLeft,
   ChevronRight,
-  Zap, // Ícone para Cultura Fast (exemplo)
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,13 +35,11 @@ const CustomSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Estado para controlar se está minimizado (inicia lendo do localStorage)
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem("sidebarCollapsed");
     return saved ? JSON.parse(saved) : false;
   });
 
-  // Salva preferência do usuário
   useEffect(() => {
     localStorage.setItem("sidebarCollapsed", JSON.stringify(isCollapsed));
   }, [isCollapsed]);
@@ -73,11 +70,10 @@ const CustomSidebar = () => {
     <TooltipProvider>
       <motion.aside
         initial={false}
-        animate={{ width: isCollapsed ? "5rem" : "16rem" }} // 80px vs 256px
+        animate={{ width: isCollapsed ? "5rem" : "16rem" }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="h-screen bg-primary text-primary-foreground flex flex-col shadow-2xl relative z-30 font-sans border-r border-white/10 hidden md:flex flex-shrink-0"
       >
-        {/* Botão de Toggle (Abre/Fecha) */}
         <button
           onClick={toggleSidebar}
           className="absolute -right-3 top-9 z-40 bg-secondary text-white p-1 rounded-full shadow-md border border-white/20 hover:bg-secondary/90 transition-colors"
@@ -85,7 +81,6 @@ const CustomSidebar = () => {
           {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
 
-        {/* Logo Area */}
         <div
           className={cn(
             "flex items-center border-b border-white/10 bg-black/10 transition-all duration-300",
@@ -103,10 +98,8 @@ const CustomSidebar = () => {
           />
         </div>
 
-        {/* Seletor de Obra Ativa */}
         <div className={cn("transition-all duration-300", isCollapsed ? "px-2 py-4" : "px-3 pt-4 pb-2")}>
           {isCollapsed ? (
-            // Versão Minimizada (Apenas Ícone com Tooltip)
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Button
@@ -123,7 +116,6 @@ const CustomSidebar = () => {
               </TooltipContent>
             </Tooltip>
           ) : (
-            // Versão Expandida (Completa)
             <Button
               onClick={handleSwitchObra}
               variant="ghost"
@@ -145,18 +137,17 @@ const CustomSidebar = () => {
           )}
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
 
-            // Componente Link Base (Reutilizável)
             const LinkContent = (
               <Link
                 to={item.path}
                 className={cn(
-                  "relative flex items-center rounded-lg transition-all duration-200 group mb-1",
-                  isCollapsed ? "justify-center px-0 py-3" : "gap-3 px-4 py-3",
+                  "relative flex items-center rounded-lg transition-all duration-200 group mb-1 overflow-hidden",
+                  // CORREÇÃO: Padding consistente para garantir alinhamento
+                  isCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-4 py-3 w-full",
                   isActive
                     ? "bg-secondary text-white shadow-lg font-medium"
                     : "hover:bg-white/10 hover:text-white text-primary-foreground/80",
@@ -164,8 +155,8 @@ const CustomSidebar = () => {
               >
                 <item.icon
                   className={cn(
-                    "transition-colors",
-                    isCollapsed ? "h-6 w-6" : "h-5 w-5",
+                    "transition-colors flex-shrink-0",
+                    isCollapsed ? "h-5 w-5" : "h-5 w-5",
                     isActive ? "text-white" : "text-secondary group-hover:text-white",
                   )}
                 />
@@ -185,20 +176,22 @@ const CustomSidebar = () => {
                   <motion.div
                     layoutId="activeIndicator"
                     className={cn(
-                      "absolute rounded-full bg-white",
-                      isCollapsed ? "left-1 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full" : "right-3 w-1.5 h-1.5",
+                      "absolute bg-white",
+                      // CORREÇÃO: Posicionamento do indicador ajustado
+                      isCollapsed
+                        ? "left-0 top-0 bottom-0 w-1 h-full rounded-l-none" // Barra lateral cheia no modo mini
+                        : "right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full", // Ponto no modo full
                     )}
                   />
                 )}
               </Link>
             );
 
-            // Se estiver colapsado, envolve em Tooltip
             if (isCollapsed) {
               return (
                 <Tooltip key={item.path} delayDuration={0}>
                   <TooltipTrigger asChild>{LinkContent}</TooltipTrigger>
-                  <TooltipContent side="right" className="bg-primary border-white/10 text-white font-medium">
+                  <TooltipContent side="right" className="bg-primary border-white/10 text-white font-medium z-50">
                     {item.label}
                   </TooltipContent>
                 </Tooltip>
@@ -209,7 +202,6 @@ const CustomSidebar = () => {
           })}
         </nav>
 
-        {/* Footer / User Profile */}
         <div
           className={cn(
             "m-4 rounded-xl bg-black/20 border border-white/5 overflow-hidden transition-all duration-300",
@@ -219,7 +211,7 @@ const CustomSidebar = () => {
           <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3 mb-3")}>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <Avatar className="h-10 w-10 border-2 border-secondary shadow-sm cursor-pointer">
+                <Avatar className="h-10 w-10 border-2 border-secondary shadow-sm cursor-pointer hover:scale-105 transition-transform">
                   <AvatarImage src={userAvatar} />
                   <AvatarFallback className="bg-secondary text-white font-bold text-xs">
                     {getInitials(userName)}
@@ -252,12 +244,11 @@ const CustomSidebar = () => {
               isCollapsed ? "grid-cols-1 w-full pt-2 border-none" : "grid-cols-2 pt-2",
             )}
           >
-            {/* Botão Config */}
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <button
                   className={cn(
-                    "flex items-center justify-center rounded-md hover:bg-white/10 text-white/70 transition-colors",
+                    "flex items-center justify-center rounded-md hover:bg-white/10 text-white/70 transition-colors group",
                     isCollapsed ? "p-2 w-full hover:text-secondary" : "p-2 text-xs",
                   )}
                 >
@@ -268,13 +259,12 @@ const CustomSidebar = () => {
               {isCollapsed && <TooltipContent side="right">Configurações</TooltipContent>}
             </Tooltip>
 
-            {/* Botão Sair */}
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => signOut()}
                   className={cn(
-                    "flex items-center justify-center rounded-md hover:bg-red-500/20 hover:text-red-200 transition-colors",
+                    "flex items-center justify-center rounded-md hover:bg-red-500/20 hover:text-red-200 transition-colors group",
                     isCollapsed ? "p-2 w-full text-red-300" : "p-2 text-xs text-white/70",
                   )}
                 >
