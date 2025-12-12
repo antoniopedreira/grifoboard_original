@@ -44,22 +44,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMaterialsOpen, setIsMaterialsOpen] = useState(false);
   const [newMaterial, setNewMaterial] = useState("");
-  // Estado local para materiais (simulação visual até ter backend)
+  // Estado local para materiais (simulação visual até backend específico)
   const [materials, setMaterials] = useState<string[]>([]);
 
   const isDone = task.isFullyCompleted;
   const hasIssue = !!task.causeIfNotDone;
 
-  // Cores de Status
-  const statusColor = isDone ? "bg-green-500" : hasIssue ? "bg-red-500" : "bg-secondary"; // Dourado
+  // Cores de Status Visual
+  const statusColor = isDone ? "bg-green-500" : hasIssue ? "bg-red-500" : "bg-secondary"; // Dourado (Em andamento)
 
   const days: DayOfWeek[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
   const dayLabels = { mon: "Seg", tue: "Ter", wed: "Qua", thu: "Qui", fri: "Sex", sat: "Sáb", sun: "Dom" };
 
+  // Helper para obter o status atual de um dia
   const getDailyStatus = (day: DayOfWeek): TaskStatus => {
     return task.dailyStatus?.find((s) => s.day === day)?.status || "planned";
   };
 
+  // Clique no dia (Ciclo: Planejado -> Concluído -> Não Concluído -> Planejado)
   const handleDayClick = (day: DayOfWeek, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!task.plannedDays.includes(day)) return;
@@ -76,6 +78,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
       newDailyStatus.push({ day, status: newStatus });
     }
 
+    // Sugestão automática: se todos os dias estiverem completos, sugere marcar a tarefa como completa
     const allPlannedAreCompleted = task.plannedDays.every((d) => {
       const s = d === day ? newStatus : getDailyStatus(d);
       return s === "completed";
@@ -84,35 +87,36 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
     onUpdate({
       ...task,
       dailyStatus: newDailyStatus,
-      isFullyCompleted: allPlannedAreCompleted,
-      causeIfNotDone: allPlannedAreCompleted ? undefined : task.causeIfNotDone,
+      // Opcional: Descomente abaixo se quiser que complete a tarefa automaticamente ao completar todos os dias
+      // isFullyCompleted: allPlannedAreCompleted ? true : task.isFullyCompleted,
+      // causeIfNotDone: allPlannedAreCompleted ? undefined : task.causeIfNotDone
     });
   };
 
-  // Nova Lógica de Status Global (Dropdown)
+  // Lógica de Status Global (Dropdown)
   const handleSetStatus = (status: "completed" | "not_done" | "in_progress") => {
     if (status === "completed") {
-      // Marca tudo como concluído
-      const allCompleted = task.plannedDays.map((d) => ({ day: d, status: "completed" as TaskStatus }));
+      // ✅ CONCLUÍDA: Marca flag, limpa causa. Mantém dias como estão (respeita histórico).
       onUpdate({
         ...task,
         isFullyCompleted: true,
-        dailyStatus: allCompleted,
-        causeIfNotDone: undefined,
+        // @ts-ignore - Supabase aceita null para limpar
+        causeIfNotDone: null,
       });
     } else if (status === "not_done") {
-      // Marca visualmente como não concluído (vermelho) e seta causa padrão se não houver
+      // ❌ NÃO CONCLUÍDA: Remove flag, exige causa. Mantém dias como estão.
       onUpdate({
         ...task,
         isFullyCompleted: false,
         causeIfNotDone: task.causeIfNotDone || "Outros",
       });
     } else {
-      // Reseta para Em Andamento (Dourado)
+      // 🕒 EM ANDAMENTO (Voltar atrás): Limpa tudo.
       onUpdate({
         ...task,
         isFullyCompleted: false,
-        causeIfNotDone: undefined,
+        // @ts-ignore - Supabase aceita null para limpar
+        causeIfNotDone: null,
       });
     }
   };
@@ -121,7 +125,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
     if (newMaterial.trim()) {
       setMaterials([...materials, newMaterial.trim()]);
       setNewMaterial("");
-      // Futuro: Salvar no backend
     }
   };
 
@@ -144,6 +147,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
   };
 
   const handleCauseChange = (value: string) => {
+    // Se selecionou uma causa manualmente, define como não concluída
     onUpdate({
       ...task,
       causeIfNotDone: value === "none" ? undefined : value,
@@ -172,6 +176,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
           isDone ? "bg-slate-50/50" : "",
         )}
       >
+        {/* Barra lateral de status */}
         <div className={cn("absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300", statusColor)} />
 
         <div className="pl-6 pr-4 py-5 flex flex-col gap-5">
@@ -184,7 +189,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
               {task.description}
             </h3>
 
-            {/* Botão de Status Global (DROPDOWN DE STATUS) */}
+            {/* Botão de Status Global (Dropdown) */}
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -270,7 +275,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
             </div>
           </div>
 
-          {/* Grid de Informações */}
+          {/* Grid de Informações Completas */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
             <div>
               <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Setor</span>
@@ -296,7 +301,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
             )}
           </div>
 
-          {/* Timeline */}
+          {/* Timeline Interativa */}
           <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
             {days.map((day) => {
               const isPlanned = task.plannedDays.includes(day);
@@ -317,12 +322,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                     )}
                     title={isPlanned ? "Clique para alterar status" : "Não planejado"}
                   >
-                    {task.dailyStatus?.find((s) => s.day === day)?.status === "completed" && (
-                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                    )}
-                    {task.dailyStatus?.find((s) => s.day === day)?.status === "not_done" && (
-                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                    )}
+                    {getDailyStatus(day) === "completed" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                    {getDailyStatus(day) === "not_done" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                   </button>
                 </div>
               );
@@ -331,7 +332,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
 
           {/* Rodapé: Materiais e Causa */}
           <div className="flex flex-col gap-3 pt-2 border-t border-slate-100">
-            {/* Seção de Materiais */}
             <Collapsible open={isMaterialsOpen} onOpenChange={setIsMaterialsOpen} className="w-full">
               <div className="flex items-center justify-between">
                 <CollapsibleTrigger asChild>
@@ -352,7 +352,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent className="space-y-2 pt-2">
-                {/* Lista de Materiais */}
                 {materials.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {materials.map((mat, idx) => (
@@ -367,7 +366,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                   </div>
                 )}
 
-                {/* Input de Adicionar */}
                 <div className="flex gap-2">
                   <Input
                     placeholder="Adicionar material..."
@@ -387,7 +385,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Seletor de Causas e Botões */}
+            {/* Seletor de Causa no Rodapé */}
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <Select value={task.causeIfNotDone || "none"} onValueChange={handleCauseChange}>
