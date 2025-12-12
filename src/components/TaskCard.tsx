@@ -4,7 +4,6 @@ import {
   Copy,
   Trash2,
   ArrowRightCircle,
-  CalendarDays,
   Package,
   ChevronDown,
   Edit,
@@ -12,6 +11,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Clock,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMaterialsOpen, setIsMaterialsOpen] = useState(false);
   const [newMaterial, setNewMaterial] = useState("");
+  // Estado local para materiais (simulação visual até ter backend)
+  const [materials, setMaterials] = useState<string[]>([]);
 
   const isDone = task.isFullyCompleted;
   const hasIssue = !!task.causeIfNotDone;
@@ -82,26 +85,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
       ...task,
       dailyStatus: newDailyStatus,
       isFullyCompleted: allPlannedAreCompleted,
-      // Se mudou algo, limpa a causa global se estiver tudo ok
       causeIfNotDone: allPlannedAreCompleted ? undefined : task.causeIfNotDone,
     });
   };
 
-  // Função para alternar status global da tarefa
-  const toggleTaskStatus = (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (isDone) {
-      // Se estava concluída, volta para "Em andamento" (reseta os dias para planejado)
-      onUpdate({
-        ...task,
-        isFullyCompleted: false,
-        dailyStatus: [], // Limpa status diários
-        causeIfNotDone: undefined,
-      });
-    } else if (hasIssue) {
-      // Se tinha problema, marca como concluída
-      // Define todos os dias planejados como 'completed'
+  // Nova Lógica de Status Global (Dropdown)
+  const handleSetStatus = (status: "completed" | "not_done" | "in_progress") => {
+    if (status === "completed") {
+      // Marca tudo como concluído
       const allCompleted = task.plannedDays.map((d) => ({ day: d, status: "completed" as TaskStatus }));
       onUpdate({
         ...task,
@@ -109,13 +100,28 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
         dailyStatus: allCompleted,
         causeIfNotDone: undefined,
       });
-    } else {
-      // Se estava em andamento, marca como "Não Concluída" (necessita causa)
-      // Isso é um atalho visual, idealmente pediria a causa, mas aqui seta um default ou espera o user
+    } else if (status === "not_done") {
+      // Marca visualmente como não concluído (vermelho) e seta causa padrão se não houver
       onUpdate({
         ...task,
-        causeIfNotDone: "Outros", // Causa padrão temporária para ativar o estado vermelho
+        isFullyCompleted: false,
+        causeIfNotDone: task.causeIfNotDone || "Outros",
       });
+    } else {
+      // Reseta para Em Andamento (Dourado)
+      onUpdate({
+        ...task,
+        isFullyCompleted: false,
+        causeIfNotDone: undefined,
+      });
+    }
+  };
+
+  const handleAddMaterial = () => {
+    if (newMaterial.trim()) {
+      setMaterials([...materials, newMaterial.trim()]);
+      setNewMaterial("");
+      // Futuro: Salvar no backend
     }
   };
 
@@ -141,7 +147,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
     onUpdate({
       ...task,
       causeIfNotDone: value === "none" ? undefined : value,
-      isFullyCompleted: false, // Se tem causa, não está 100%
+      isFullyCompleted: false,
     });
   };
 
@@ -178,36 +184,59 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
               {task.description}
             </h3>
 
-            {/* Botão de Status Global (O botão da imagem 2) */}
+            {/* Botão de Status Global (DROPDOWN DE STATUS) */}
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleTaskStatus}
-                className={cn(
-                  "h-7 px-3 text-xs font-semibold rounded-full border transition-all",
-                  isDone
-                    ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300"
-                    : hasIssue
-                      ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300"
-                      : "bg-white text-slate-500 border-slate-200 hover:text-primary hover:border-primary/30",
-                )}
-              >
-                {isDone ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Concluída
-                  </>
-                ) : hasIssue ? (
-                  <>
-                    <XCircle className="w-3.5 h-3.5 mr-1.5" /> Não Concluída
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="w-3.5 h-3.5 mr-1.5" /> Em andamento
-                  </>
-                )}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-7 px-3 text-xs font-semibold rounded-full border transition-all shadow-sm",
+                      isDone
+                        ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                        : hasIssue
+                          ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                          : "bg-white text-slate-600 border-slate-200 hover:text-primary hover:border-secondary/50",
+                    )}
+                  >
+                    {isDone ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Concluída
+                      </>
+                    ) : hasIssue ? (
+                      <>
+                        <XCircle className="w-3.5 h-3.5 mr-1.5" /> Não Concluída
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-3.5 h-3.5 mr-1.5 text-secondary" /> Em andamento
+                      </>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Definir Status</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => handleSetStatus("completed")}
+                    className="cursor-pointer text-green-700 focus:text-green-800 focus:bg-green-50"
+                  >
+                    <CheckCircle2 className="mr-2 h-4 w-4" /> Concluída
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleSetStatus("not_done")}
+                    className="cursor-pointer text-red-700 focus:text-red-800 focus:bg-red-50"
+                  >
+                    <Ban className="mr-2 h-4 w-4" /> Não Concluída
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleSetStatus("in_progress")} className="cursor-pointer">
+                    <Clock className="mr-2 h-4 w-4 text-secondary" /> Em Andamento
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
+              {/* Menu de Ações (3 pontinhos) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -267,7 +296,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
             )}
           </div>
 
-          {/* Timeline Interativa */}
+          {/* Timeline */}
           <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
             {days.map((day) => {
               const isPlanned = task.plannedDays.includes(day);
@@ -302,7 +331,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
 
           {/* Rodapé: Materiais e Causa */}
           <div className="flex flex-col gap-3 pt-2 border-t border-slate-100">
-            {/* Seção de Materiais (Adicionar Items) */}
+            {/* Seção de Materiais */}
             <Collapsible open={isMaterialsOpen} onOpenChange={setIsMaterialsOpen} className="w-full">
               <div className="flex items-center justify-between">
                 <CollapsibleTrigger asChild>
@@ -313,7 +342,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                   >
                     <Package className="h-4 w-4 group-hover:text-secondary transition-colors" />
                     <span className="text-xs font-medium">Materiais Necessários</span>
-                    <span className="bg-slate-100 text-slate-600 text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                    <span className="bg-slate-100 text-slate-600 text-[10px] px-1.5 py-0.5 rounded-full">
+                      {materials.length}
+                    </span>
                     <ChevronDown
                       className={cn("h-3 w-3 transition-transform duration-200", isMaterialsOpen ? "rotate-180" : "")}
                     />
@@ -321,20 +352,37 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent className="space-y-2 pt-2">
-                {/* Lista vazia por enquanto */}
-                <div className="text-xs text-muted-foreground p-3 bg-slate-50 rounded border border-slate-100 flex flex-col gap-2">
-                  <span className="text-center italic opacity-70">Nenhum material listado</span>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Adicionar material..."
-                      className="h-7 text-xs bg-white"
-                      value={newMaterial}
-                      onChange={(e) => setNewMaterial(e.target.value)}
-                    />
-                    <Button size="sm" className="h-7 w-7 p-0 bg-secondary hover:bg-secondary/90">
-                      <Plus className="h-3 w-3" />
-                    </Button>
+                {/* Lista de Materiais */}
+                {materials.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {materials.map((mat, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="secondary"
+                        className="text-[10px] bg-slate-100 text-slate-700 hover:bg-slate-200 border-none"
+                      >
+                        {mat}
+                      </Badge>
+                    ))}
                   </div>
+                )}
+
+                {/* Input de Adicionar */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Adicionar material..."
+                    className="h-8 text-xs bg-white"
+                    value={newMaterial}
+                    onChange={(e) => setNewMaterial(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddMaterial()}
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 w-8 p-0 bg-secondary hover:bg-secondary/90"
+                    onClick={handleAddMaterial}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -343,7 +391,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <Select value={task.causeIfNotDone || "none"} onValueChange={handleCauseChange}>
-                  <SelectTrigger className="h-9 text-xs border-slate-200 bg-slate-50 hover:bg-white transition-colors focus:ring-0">
+                  <SelectTrigger
+                    className={cn(
+                      "h-9 text-xs border-slate-200 transition-colors focus:ring-0",
+                      hasIssue ? "bg-red-50 text-red-700 border-red-200" : "bg-slate-50 hover:bg-white",
+                    )}
+                  >
                     <SelectValue placeholder="Selecionar causa..." />
                   </SelectTrigger>
                   <SelectContent>
