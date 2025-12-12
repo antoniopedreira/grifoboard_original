@@ -1,4 +1,3 @@
-
 export type DayOfWeek = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 export type TaskStatus = "planned" | "completed" | "not_done" | "not_planned";
@@ -43,4 +42,5 @@ export interface Task {
   causeIfNotDone?: string;
   weekStartDate?: Date;
   order?: number;
+  created_at?: string; // ADICIONADO: Propriedade que faltava
 }
