@@ -1,32 +1,23 @@
-import { useState, useEffect } from "react";
-import { Task, DayOfWeek } from "@/types";
+import { Task } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditTaskForm from "./EditTaskForm";
 import { Edit } from "lucide-react";
-import { useTaskEditForm } from "./useTaskEditForm"; // Hook existente
+import { useTaskEditForm } from "./useTaskEditForm";
 
-// Interface simplificada
 export interface EditTaskDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task;
-  onUpdate: (updatedTask: Task) => void; // Agora aceita onUpdate
+  onUpdate: (updatedTask: Task) => void;
 }
 
 const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ isOpen, onOpenChange, task, onUpdate }) => {
-  // Usar o hook existente para gerenciar o estado do formulário
+  // Agora o hook aceita o callback como segundo argumento
   const { editFormData, handleEditFormChange, handleDayToggle, handleSave, isFormValid, handleWeekDateChange } =
-    useTaskEditForm(task, (updated) => {
-      onUpdate(updated);
+    useTaskEditForm(task, (updatedTask) => {
+      onUpdate(updatedTask);
       onOpenChange(false);
     });
-
-  // Reset form quando o modal abre
-  useEffect(() => {
-    if (isOpen) {
-      // O hook já deve cuidar da inicialização, mas se necessário, forçar reset aqui
-    }
-  }, [isOpen, task]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -47,7 +38,7 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ isOpen, onOpenChange, t
           editFormData={editFormData}
           onEditFormChange={handleEditFormChange}
           onDayToggle={handleDayToggle}
-          onDelete={() => {}} // Delete não é necessário aqui, já tem no card
+          onDelete={() => {}} // Delete é gerenciado pelo TaskCard, passamos vazio aqui
           onSave={handleSave}
           isFormValid={isFormValid}
           onWeekDateChange={handleWeekDateChange}
