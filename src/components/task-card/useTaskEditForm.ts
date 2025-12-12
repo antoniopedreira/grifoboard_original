@@ -71,7 +71,8 @@ export const useTaskEditForm = (task: Task, onSaveSuccess?: (updatedTask: Task) 
         ...editFormData,
       };
 
-      await tarefasService.atualizarTarefa(updatedTask);
+      // CORREÇÃO AQUI: Passando ID e o Objeto separadamente
+      await tarefasService.atualizarTarefa(updatedTask.id, updatedTask);
 
       toast({
         title: "Tarefa atualizada",
@@ -97,6 +98,6 @@ export const useTaskEditForm = (task: Task, onSaveSuccess?: (updatedTask: Task) 
     handleEditFormChange,
     handleWeekDateChange,
     isFormValid,
-    handleSave, // Agora exportado corretamente
+    handleSave,
   };
 };
