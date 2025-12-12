@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import TaskForm from "@/components/TaskForm";
 import WeekNavigation from "@/components/WeekNavigation";
 import RegistryDialog from "@/components/RegistryDialog";
@@ -15,12 +15,13 @@ interface MainPageContentProps {
 }
 
 const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
-  
+
   // Initialize with the current week's Monday
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
   const [weekEndDate, setWeekEndDate] = useState(new Date());
@@ -42,9 +43,9 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
     handleTaskDelete,
     handleTaskCreate,
     handleTaskDuplicate,
-    handleCopyToNextWeek
+    handleCopyToNextWeek,
   } = useTaskManager(weekStartDate);
-  
+
   const handleCauseSelect = (cause: string) => {
     // Se user clicks the same cause, clear the filter
     if (selectedCause === cause) {
@@ -61,19 +62,19 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
       });
     }
   };
-  
+
   const navigateToPreviousWeek = () => {
     const { start } = getPreviousWeekDates(weekStartDate);
     setWeekStartDate(start);
     setSelectedCause(null); // Clear filter when changing week
   };
-  
+
   const navigateToNextWeek = () => {
     const { start } = getNextWeekDates(weekStartDate);
     setWeekStartDate(start);
     setSelectedCause(null); // Clear filter when changing week
   };
-  
+
   const clearCauseFilter = () => {
     setSelectedCause(null);
   };
@@ -81,15 +82,16 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
   const handleSortChange = (newSortBy: "none" | "sector" | "executor" | "discipline") => {
     setSortBy(newSortBy);
   };
-  
+
   return (
-    <div className="container mx-auto max-w-7xl px-8 py-6 bg-background">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-8 py-6 bg-background min-h-screen">
       {/* Header com título e botões */}
-      <MainHeader 
+      <MainHeader
         onNewTaskClick={() => setIsFormOpen(true)}
         onRegistryClick={() => setIsRegistryOpen(true)}
+        onChecklistClick={() => navigate("/checklist")}
       />
-      
+
       {/* Week Navigation */}
       <WeekNavigation
         weekStartDate={weekStartDate}
@@ -97,9 +99,9 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
         onPreviousWeek={navigateToPreviousWeek}
         onNextWeek={navigateToNextWeek}
       />
-      
+
       {/* PCP Section com gráficos e filtro ativo */}
-      <PCPSection 
+      <PCPSection
         pcpData={pcpData}
         weeklyPCPData={weeklyPCPData}
         tasks={tasks}
@@ -107,9 +109,9 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
         onCauseSelect={handleCauseSelect}
         onClearFilter={clearCauseFilter}
       />
-      
+
       {/* Tasks Section com lista de tarefas */}
-      <TasksSection 
+      <TasksSection
         tasks={tasks}
         isLoading={isLoading}
         onTaskUpdate={handleTaskUpdate}
@@ -120,19 +122,16 @@ const MainPageContent = ({ initialTab = "tasks" }: MainPageContentProps) => {
         sortBy={sortBy}
         onSortChange={handleSortChange}
       />
-      
+
       {/* Dialogs */}
-      <TaskForm 
-        onTaskCreate={handleTaskCreate} 
+      <TaskForm
+        onTaskCreate={handleTaskCreate}
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
         currentWeekStartDate={weekStartDate}
       />
 
-      <RegistryDialog 
-        isOpen={isRegistryOpen} 
-        onOpenChange={setIsRegistryOpen} 
-      />
+      <RegistryDialog isOpen={isRegistryOpen} onOpenChange={setIsRegistryOpen} />
     </div>
   );
 };
