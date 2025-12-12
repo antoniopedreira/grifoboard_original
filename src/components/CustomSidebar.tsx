@@ -21,11 +21,12 @@ import {
 import { cn } from "@/lib/utils";
 
 // Checklist removido da navegação principal, pois agora é acessado via Tarefas
+// Playbook ocultado temporariamente
 const menuItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/tarefas", label: "Tarefas", icon: ClipboardList },
   { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
-  { path: "/playbook", label: "Playbook", icon: BookOpen },
+  // { path: "/playbook", label: "Playbook", icon: BookOpen },
   { path: "/marketplace", label: "Marketplace", icon: Store },
 ];
 
