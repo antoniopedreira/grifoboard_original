@@ -1,5 +1,17 @@
 import { Task, DayOfWeek, TaskStatus } from "@/types";
-import { MoreHorizontal, Users, Copy, Trash2, ArrowRightCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Users,
+  Copy,
+  Trash2,
+  ArrowRightCircle,
+  AlertTriangle,
+  CheckCircle2,
+  CalendarDays,
+  Package,
+  ChevronDown,
+  Edit,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,6 +22,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import EditTaskDialog from "./task-card/EditTaskDialog";
@@ -25,16 +39,18 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplicate, onCopyToNextWeek }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isMaterialsOpen, setIsMaterialsOpen] = useState(false);
 
   const isDone = task.isFullyCompleted;
   const hasIssue = !!task.causeIfNotDone;
 
-  const statusColor = isDone ? "bg-green-500" : hasIssue ? "bg-red-500" : "bg-secondary";
+  // Status Visual
+  const statusColor = isDone ? "bg-green-500" : hasIssue ? "bg-red-500" : "bg-secondary"; // Dourado
 
   const days: DayOfWeek[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
   const dayLabels = { mon: "Seg", tue: "Ter", wed: "Qua", thu: "Qui", fri: "Sex", sat: "Sáb", sun: "Dom" };
 
-  // Helper para obter o status atual de um dia específico
+  // Helper para obter o status atual de um dia
   const getDailyStatus = (day: DayOfWeek): TaskStatus => {
     return task.dailyStatus?.find((s) => s.day === day)?.status || "planned";
   };
@@ -42,15 +58,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
   // Função para mudar o status de um dia ao clicar
   const handleDayClick = (day: DayOfWeek, e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (!task.plannedDays.includes(day)) {
-      return;
-    }
+    if (!task.plannedDays.includes(day)) return;
 
     const currentStatus = getDailyStatus(day);
     let newStatus: TaskStatus = "planned";
 
-    // Ciclo: Planejado -> Concluído -> Não Concluído -> Planejado
     if (currentStatus === "planned") newStatus = "completed";
     else if (currentStatus === "completed") newStatus = "not_done";
     else if (currentStatus === "not_done") newStatus = "planned";
@@ -60,7 +72,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
       newDailyStatus.push({ day, status: newStatus });
     }
 
-    // Verifica se todos os dias planejados estão concluídos
     const allPlannedAreCompleted = task.plannedDays.every((d) => {
       const s = d === day ? newStatus : getDailyStatus(d);
       return s === "completed";
@@ -73,10 +84,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
     });
   };
 
-  // Define a cor do botão baseado no status
   const getDayColor = (day: DayOfWeek) => {
     const isPlanned = task.plannedDays.includes(day);
-    if (!isPlanned) return "bg-slate-100 text-slate-300 border-transparent";
+    if (!isPlanned) return "bg-slate-50 text-slate-300 border-slate-100"; // Não planejado (mais suave)
 
     const status = getDailyStatus(day);
 
@@ -92,116 +102,71 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
     }
   };
 
+  const handleCauseChange = (value: string) => {
+    onUpdate({
+      ...task,
+      causeIfNotDone: value === "none" ? undefined : value,
+    });
+  };
+
+  // Causas padrão (você pode mover isso para um arquivo de constantes depois)
+  const defaultCauses = [
+    "Chuva",
+    "Falta de Material",
+    "Falta de Projeto",
+    "Falta de Frente",
+    "Mão de Obra",
+    "Equipamento Quebrado",
+  ];
+
   return (
     <>
       <motion.div
         layout
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ scale: 1.002, y: -2 }}
-        transition={{ duration: 0.2 }}
         className={cn(
           "group relative bg-white rounded-xl shadow-sm border border-border/60 overflow-hidden hover:shadow-md transition-all duration-300",
           isDone ? "bg-slate-50/50" : "",
         )}
       >
+        {/* Barra lateral de status */}
         <div className={cn("absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300", statusColor)} />
 
-        <div className="pl-5 pr-4 py-4 flex flex-col md:flex-row gap-4 md:items-center justify-between">
-          {/* Info Principal */}
-          <div className="flex-1 space-y-2 min-w-0" onClick={() => setIsEditOpen(true)}>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge
-                variant="outline"
-                className="text-[10px] font-bold text-slate-500 border-slate-200 bg-slate-50 uppercase tracking-wide"
+        <div className="pl-6 pr-4 py-5 flex flex-col gap-5">
+          {/* Cabeçalho: Descrição e Status */}
+          <div className="flex justify-between items-start gap-4">
+            <div className="space-y-1 flex-1">
+              <h3
+                onClick={() => setIsEditOpen(true)}
+                className="text-lg font-bold text-slate-800 hover:text-primary transition-colors cursor-pointer leading-tight"
               >
-                {task.sector}
-              </Badge>
-              {task.discipline && (
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-bold text-secondary border-secondary/20 bg-secondary/5 uppercase tracking-wide"
-                >
-                  {task.discipline}
-                </Badge>
-              )}
-              {isDone && (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none text-[10px]">
-                  <CheckCircle2 className="w-3 h-3 mr-1" /> Concluído
-                </Badge>
-              )}
-              {hasIssue && (
-                <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-none text-[10px]">
-                  <AlertTriangle className="w-3 h-3 mr-1" /> {task.causeIfNotDone}
-                </Badge>
-              )}
-            </div>
+                {task.description}
+              </h3>
 
-            <h3 className="text-base font-bold text-slate-800 group-hover:text-primary transition-colors cursor-pointer truncate pr-2">
-              {task.description}
-            </h3>
-
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5 min-w-0" title="Responsável">
-                <Users className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
-                <span className="font-medium text-slate-700 truncate">{task.responsible || "N/A"}</span>
+              {/* Badge de Status Geral */}
+              <div>
+                {isDone ? (
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none text-[10px] px-2 py-0.5">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Concluída
+                  </Badge>
+                ) : hasIssue ? (
+                  <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-none text-[10px] px-2 py-0.5">
+                    <AlertTriangle className="w-3 h-3 mr-1" /> Não Concluída
+                  </Badge>
+                ) : (
+                  <span className="text-xs text-muted-foreground font-medium">Em andamento</span>
+                )}
               </div>
-              {task.team && (
-                <>
-                  <div className="w-px h-3 bg-slate-300" />
-                  <div className="flex items-center gap-1.5 min-w-0" title="Equipe">
-                    <span className="font-medium truncate">{task.team}</span>
-                  </div>
-                </>
-              )}
             </div>
-          </div>
 
-          {/* Timeline Interativa */}
-          <div className="flex items-center gap-1.5 self-start md:self-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100">
-            {days.map((day) => {
-              const isPlanned = task.plannedDays.includes(day);
-              const status = getDailyStatus(day);
-              return (
-                <div key={day} className="flex flex-col items-center gap-1">
-                  <span
-                    className={cn("text-[9px] uppercase font-bold", isPlanned ? "text-slate-600" : "text-slate-300")}
-                  >
-                    {dayLabels[day].charAt(0)}
-                  </span>
-                  <button
-                    onClick={(e) => handleDayClick(day, e)}
-                    disabled={!isPlanned}
-                    className={cn(
-                      "w-7 h-9 rounded-md border flex items-center justify-center transition-all duration-200",
-                      // CORREÇÃO: Usando a variável status calculada acima em vez de chamar getDayStatus
-                      status === "completed" ? "ring-2 ring-green-100" : "",
-                      getDayColor(day),
-                      isPlanned
-                        ? "cursor-pointer hover:scale-110 active:scale-95"
-                        : "cursor-default opacity-40 border-transparent",
-                    )}
-                    title={
-                      isPlanned
-                        ? `Clique para alterar status: ${status === "planned" ? "Planejado" : status}`
-                        : "Não planejado"
-                    }
-                  >
-                    {status === "completed" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Menu */}
-          <div className="flex items-center md:border-l md:border-border md:pl-4 self-center">
+            {/* Menu de Ações (3 pontinhos) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-slate-400 hover:text-primary hover:bg-slate-100"
+                  className="h-8 w-8 text-slate-400 hover:text-primary hover:bg-slate-100 -mt-1 -mr-2"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -209,23 +174,150 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => setIsEditOpen(true)} className="cursor-pointer">
-                  Editar Detalhes
+                  <Edit className="mr-2 h-4 w-4" /> Editar
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onDuplicate(task)} className="cursor-pointer">
-                  <Copy className="mr-2 h-4 w-4 text-slate-500" /> Duplicar Tarefa
+                  <Copy className="mr-2 h-4 w-4" /> Duplicar
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onCopyToNextWeek(task)} className="cursor-pointer">
-                  <ArrowRightCircle className="mr-2 h-4 w-4 text-secondary" /> Mover p/ próx. semana
+                  <ArrowRightCircle className="mr-2 h-4 w-4" /> Mover p/ próx. semana
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => onDelete(task.id)}
-                  className="text-red-600 focus:text-red-700 cursor-pointer hover:bg-red-50"
+                  className="text-red-600 focus:text-red-700 cursor-pointer"
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Excluir
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+
+          {/* Grid de Informações (Campos Completos) */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Setor</span>
+              <span className="text-xs font-semibold text-slate-700 block truncate uppercase">{task.sector}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Disciplina</span>
+              <span className="text-xs font-semibold text-slate-700 block truncate uppercase">{task.discipline}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Executante</span>
+              <span className="text-xs font-semibold text-slate-700 block truncate uppercase">{task.team || "-"}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Responsável</span>
+              <span className="text-xs font-semibold text-slate-700 block truncate uppercase">{task.responsible}</span>
+            </div>
+            {task.executor && (
+              <div className="col-span-2">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Encarregado</span>
+                <span className="text-xs font-semibold text-slate-700 block truncate uppercase">{task.executor}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Timeline Interativa */}
+          <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+            {days.map((day) => {
+              const isPlanned = task.plannedDays.includes(day);
+              return (
+                <div key={day} className="flex flex-col items-center gap-1.5 flex-1">
+                  <span
+                    className={cn("text-[9px] uppercase font-bold", isPlanned ? "text-slate-600" : "text-slate-300")}
+                  >
+                    {dayLabels[day]}
+                  </span>
+                  <button
+                    onClick={(e) => handleDayClick(day, e)}
+                    disabled={!isPlanned}
+                    className={cn(
+                      "w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all duration-200",
+                      getDayColor(day),
+                      isPlanned ? "cursor-pointer hover:scale-105 active:scale-95" : "cursor-default opacity-50",
+                    )}
+                    title={isPlanned ? "Clique para alterar status" : "Não planejado"}
+                  >
+                    {/* Indicador visual interno */}
+                    {task.dailyStatus?.find((s) => s.day === day)?.status === "completed" && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    )}
+                    {task.dailyStatus?.find((s) => s.day === day)?.status === "not_done" && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Materiais e Ações de Rodapé */}
+          <div className="flex flex-col gap-3 pt-2 border-t border-slate-100">
+            {/* Seção de Materiais (Colapsável) */}
+            <Collapsible open={isMaterialsOpen} onOpenChange={setIsMaterialsOpen} className="w-full">
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 px-2 text-slate-500 hover:text-primary -ml-2 gap-2">
+                    <Package className="h-4 w-4" />
+                    <span className="text-xs font-medium">Materiais Necessários</span>
+                    <span className="bg-slate-100 text-slate-600 text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                    <ChevronDown
+                      className={cn("h-3 w-3 transition-transform duration-200", isMaterialsOpen ? "rotate-180" : "")}
+                    />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent className="space-y-2 pt-2">
+                <div className="text-xs text-muted-foreground p-2 bg-slate-50 rounded border border-dashed border-slate-200 text-center">
+                  Nenhum material cadastrado
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Seletor de Causas e Botões de Ação Rápida */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Select value={task.causeIfNotDone || "none"} onValueChange={handleCauseChange}>
+                  <SelectTrigger className="h-9 text-xs border-slate-200 bg-slate-50 hover:bg-white transition-colors focus:ring-0">
+                    <SelectValue placeholder="Selecionar causa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-slate-400">
+                      Sem causa registrada
+                    </SelectItem>
+                    {defaultCauses.map((cause) => (
+                      <SelectItem key={cause} value={cause}>
+                        {cause}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Atalhos Rápidos */}
+              <div className="flex gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-slate-200 text-slate-500 hover:text-primary"
+                  onClick={() => onDuplicate(task)}
+                  title="Duplicar"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-slate-200 text-slate-500 hover:text-primary"
+                  onClick={() => setIsEditOpen(true)}
+                  title="Editar"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
