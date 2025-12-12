@@ -14,7 +14,6 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import EditTaskDialog from "./task-card/EditTaskDialog";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 
 interface TaskCardProps {
   task: Task;
@@ -26,7 +25,6 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplicate, onCopyToNextWeek }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const { toast } = useToast();
 
   const isDone = task.isFullyCompleted;
   const hasIssue = !!task.causeIfNotDone;
@@ -36,33 +34,35 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
   const days: DayOfWeek[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
   const dayLabels = { mon: "Seg", tue: "Ter", wed: "Qua", thu: "Qui", fri: "Sex", sat: "Sáb", sun: "Dom" };
 
+  // Helper para obter o status atual de um dia específico
+  const getDailyStatus = (day: DayOfWeek): TaskStatus => {
+    return task.dailyStatus?.find((s) => s.day === day)?.status || "planned";
+  };
+
   // Função para mudar o status de um dia ao clicar
   const handleDayClick = (day: DayOfWeek, e: React.MouseEvent) => {
-    e.stopPropagation(); // Evita abrir o modal de edição ao clicar no dia
+    e.stopPropagation();
 
-    // Verifica se o dia está planejado
     if (!task.plannedDays.includes(day)) {
-      // Opcional: Permitir planejar ao clicar? Por enquanto, apenas interage com dias planejados.
       return;
     }
 
-    const currentStatus = task.dailyStatus?.find((s) => s.day === day)?.status || "planned";
+    const currentStatus = getDailyStatus(day);
     let newStatus: TaskStatus = "planned";
 
-    // Ciclo de status: Planejado -> Concluído -> Não Concluído -> Planejado
+    // Ciclo: Planejado -> Concluído -> Não Concluído -> Planejado
     if (currentStatus === "planned") newStatus = "completed";
     else if (currentStatus === "completed") newStatus = "not_done";
     else if (currentStatus === "not_done") newStatus = "planned";
 
-    // Atualiza o array de dailyStatus
     const newDailyStatus = task.dailyStatus?.filter((s) => s.day !== day) || [];
     if (newStatus !== "planned") {
       newDailyStatus.push({ day, status: newStatus });
     }
 
-    // Calcula se a tarefa está totalmente concluída
+    // Verifica se todos os dias planejados estão concluídos
     const allPlannedAreCompleted = task.plannedDays.every((d) => {
-      const s = d === day ? newStatus : task.dailyStatus?.find((ds) => ds.day === d)?.status || "planned";
+      const s = d === day ? newStatus : getDailyStatus(d);
       return s === "completed";
     });
 
@@ -73,21 +73,22 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
     });
   };
 
+  // Define a cor do botão baseado no status
   const getDayColor = (day: DayOfWeek) => {
     const isPlanned = task.plannedDays.includes(day);
-    if (!isPlanned) return "bg-slate-100 text-slate-300 border-transparent"; // Não planejado
+    if (!isPlanned) return "bg-slate-100 text-slate-300 border-transparent";
 
-    const status = task.dailyStatus?.find((s) => s.day === day)?.status || "planned";
+    const status = getDailyStatus(day);
 
     switch (status) {
       case "completed":
-        return "bg-green-500 text-white border-green-600 shadow-sm";
+        return "bg-green-500 text-white border-green-600 shadow-sm hover:bg-green-600";
       case "not_done":
-        return "bg-red-500 text-white border-red-600 shadow-sm";
+        return "bg-red-500 text-white border-red-600 shadow-sm hover:bg-red-600";
       case "not_planned":
         return "bg-slate-200 text-slate-400";
       default:
-        return "bg-white border-secondary text-secondary font-bold shadow-sm"; // Planejado (Outline/Destaque)
+        return "bg-white border-secondary text-secondary font-bold shadow-sm hover:bg-secondary/10"; // Planejado
     }
   };
 
@@ -160,6 +161,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
           <div className="flex items-center gap-1.5 self-start md:self-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100">
             {days.map((day) => {
               const isPlanned = task.plannedDays.includes(day);
+              const status = getDailyStatus(day);
               return (
                 <div key={day} className="flex flex-col items-center gap-1">
                   <span
@@ -172,18 +174,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                     disabled={!isPlanned}
                     className={cn(
                       "w-7 h-9 rounded-md border flex items-center justify-center transition-all duration-200",
-                      getDayStatus(day) === "completed" ? "ring-2 ring-green-100" : "",
+                      // CORREÇÃO: Usando a variável status calculada acima em vez de chamar getDayStatus
+                      status === "completed" ? "ring-2 ring-green-100" : "",
                       getDayColor(day),
                       isPlanned
                         ? "cursor-pointer hover:scale-110 active:scale-95"
                         : "cursor-default opacity-40 border-transparent",
                     )}
-                    title={isPlanned ? `Clique para alterar status de ${dayLabels[day]}` : "Não planejado"}
+                    title={
+                      isPlanned
+                        ? `Clique para alterar status: ${status === "planned" ? "Planejado" : status}`
+                        : "Não planejado"
+                    }
                   >
-                    {/* Indicador visual interno para status */}
-                    {task.dailyStatus?.find((s) => s.day === day)?.status === "completed" && (
-                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                    )}
+                    {status === "completed" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                   </button>
                 </div>
               );
