@@ -62,8 +62,8 @@ const MainPageContent = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24">
-      {/* Header com ações principais */}
+    <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-8">
+      {/* 1. Header Principal */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <MainHeader
           onNewTaskClick={() => setIsFormOpen(true)}
@@ -72,56 +72,39 @@ const MainPageContent = () => {
         />
       </motion.div>
 
-      {/* Navegação e Indicadores (HUD) */}
+      {/* 2. Navegação de Semana (Full Width e Destacado) */}
       <motion.div
-        className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
+        initial={{ opacity: 0, y: -5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="w-full"
       >
-        {/* Coluna Esquerda: Navegação Temporal */}
-        <div className="xl:col-span-4 flex flex-col gap-4">
-          <WeekNavigation
-            weekStartDate={weekStartDate}
-            weekEndDate={weekEndDate}
-            onPreviousWeek={navigateToPreviousWeek}
-            onNextWeek={navigateToNextWeek}
-          />
-
-          {/* Card de Resumo Rápido da Semana */}
-          <div className="bg-primary text-primary-foreground p-6 rounded-2xl shadow-xl border border-white/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/20 rounded-full blur-3xl -mr-10 -mt-10" />
-            <h3 className="text-lg font-heading font-semibold mb-1 relative z-10">Resumo Semanal</h3>
-            <p className="text-primary-foreground/70 text-sm mb-4 relative z-10">
-              {tasks.length} atividades planejadas
-            </p>
-            <div className="flex gap-4 relative z-10">
-              <div className="flex-1 bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                <span className="block text-2xl font-bold">{Math.round(pcpData?.overall?.percentage || 0)}%</span>
-                <span className="text-xs text-primary-foreground/60">PCP Atual</span>
-              </div>
-              <div className="flex-1 bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                <span className="block text-2xl font-bold">{tasks.filter((t) => t.isFullyCompleted).length}</span>
-                <span className="text-xs text-primary-foreground/60">Concluídas</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Coluna Direita: Gráficos e Filtros Visuais */}
-        <div className="xl:col-span-8">
-          <PCPSection
-            pcpData={pcpData}
-            weeklyPCPData={weeklyPCPData}
-            tasks={tasks}
-            selectedCause={selectedCause}
-            onCauseSelect={handleCauseSelect}
-            onClearFilter={() => setSelectedCause(null)}
-          />
-        </div>
+        <WeekNavigation
+          weekStartDate={weekStartDate}
+          weekEndDate={weekEndDate}
+          onPreviousWeek={navigateToPreviousWeek}
+          onNextWeek={navigateToNextWeek}
+        />
       </motion.div>
 
-      {/* Área de Tarefas */}
+      {/* 3. Indicadores Visuais (HUD) */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+        className="w-full"
+      >
+        <PCPSection
+          pcpData={pcpData}
+          weeklyPCPData={weeklyPCPData}
+          tasks={tasks}
+          selectedCause={selectedCause}
+          onCauseSelect={handleCauseSelect}
+          onClearFilter={() => setSelectedCause(null)}
+        />
+      </motion.div>
+
+      {/* 4. Lista de Tarefas */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
