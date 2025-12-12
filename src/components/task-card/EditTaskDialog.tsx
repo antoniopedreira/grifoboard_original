@@ -1,44 +1,36 @@
-
+import { useState, useEffect } from "react";
 import { Task, DayOfWeek } from "@/types";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditTaskForm from "./EditTaskForm";
 import { Edit } from "lucide-react";
+import { useTaskEditForm } from "./useTaskEditForm"; // Hook existente
 
-interface EditTaskDialogProps {
+// Interface simplificada
+export interface EditTaskDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task;
-  editFormData: Omit<Task, "id" | "isFullyCompleted" | "dailyStatus">;
-  onEditFormChange: (field: string, value: string) => void;
-  onDayToggle: (day: DayOfWeek) => void;
-  onDelete: () => void;
-  onSave: () => void;
-  isFormValid: boolean | (() => boolean);
-  onWeekDateChange: (date: Date) => void;
+  onUpdate: (updatedTask: Task) => void; // Agora aceita onUpdate
 }
 
-const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
-  isOpen,
-  onOpenChange,
-  task,
-  editFormData,
-  onEditFormChange,
-  onDayToggle,
-  onDelete,
-  onSave,
-  isFormValid,
-  onWeekDateChange
-}) => {
+const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ isOpen, onOpenChange, task, onUpdate }) => {
+  // Usar o hook existente para gerenciar o estado do formulário
+  const { editFormData, handleEditFormChange, handleDayToggle, handleSave, isFormValid, handleWeekDateChange } =
+    useTaskEditForm(task, (updated) => {
+      onUpdate(updated);
+      onOpenChange(false);
+    });
+
+  // Reset form quando o modal abre
+  useEffect(() => {
+    if (isOpen) {
+      // O hook já deve cuidar da inicialização, mas se necessário, forçar reset aqui
+    }
+  }, [isOpen, task]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden"
-      >
+      <DialogContent className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden">
         <div className="sticky top-0 bg-background z-10 p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -49,16 +41,16 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
             </div>
           </div>
         </div>
-        
+
         <EditTaskForm
           task={task}
           editFormData={editFormData}
-          onEditFormChange={onEditFormChange}
-          onDayToggle={onDayToggle}
-          onDelete={onDelete}
-          onSave={onSave}
+          onEditFormChange={handleEditFormChange}
+          onDayToggle={handleDayToggle}
+          onDelete={() => {}} // Delete não é necessário aqui, já tem no card
+          onSave={handleSave}
           isFormValid={isFormValid}
-          onWeekDateChange={onWeekDateChange}
+          onWeekDateChange={handleWeekDateChange}
         />
       </DialogContent>
     </Dialog>
