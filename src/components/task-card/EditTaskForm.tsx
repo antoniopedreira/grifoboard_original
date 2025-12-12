@@ -35,17 +35,14 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   ];
 
   return (
-    // CORREÇÃO: h-full garante que ocupe todo espaço disponível dado pelo DialogContent
     <div className="flex flex-col h-full bg-slate-50/50">
-      {/* Área de Scroll: flex-1 e overflow-y-auto habilitam a rolagem aqui */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+      {/* Área de Scroll */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-50/50">
         {/* Seção 1: Definição */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-primary/10 rounded-md">
-              <Briefcase className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Definição da Atividade</h3>
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-secondary" />
+            <h3 className="text-sm font-bold text-slate-700 uppercase">Definição da Atividade</h3>
           </div>
 
           <div className="grid gap-4 bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm">
@@ -56,33 +53,29 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <Textarea
                 value={editFormData.description}
                 onChange={(e) => onEditFormChange("description", e.target.value)}
-                className="resize-none bg-slate-50 border-slate-200 focus:bg-white transition-colors min-h-[80px]"
-                placeholder="Ex: Instalação de tubulação de água fria no 3º Pavimento"
+                className="resize-none border-slate-200 focus:border-secondary min-h-[70px]"
+                placeholder="Descreva a atividade..."
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-500">
                   Setor <span className="text-red-500">*</span>
                 </Label>
-                <div className="relative">
-                  <Layers className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                  <Input
-                    value={editFormData.sector}
-                    onChange={(e) => onEditFormChange("sector", e.target.value)}
-                    className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                    placeholder="Ex: Torre A"
-                  />
-                </div>
+                <Input
+                  value={editFormData.sector}
+                  onChange={(e) => onEditFormChange("sector", e.target.value)}
+                  className="border-slate-200"
+                  placeholder="Setor/Local"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-500">Disciplina</Label>
                 <Input
                   value={editFormData.discipline}
                   onChange={(e) => onEditFormChange("discipline", e.target.value)}
-                  className="bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                  placeholder="Ex: Hidráulica"
+                  className="border-slate-200"
+                  placeholder="Ex: Elétrica"
                 />
               </div>
             </div>
@@ -91,11 +84,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
 
         {/* Seção 2: Equipe */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-primary/10 rounded-md">
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Equipe Responsável</h3>
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-secondary" />
+            <h3 className="text-sm font-bold text-slate-700 uppercase">Equipe Responsável</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm">
@@ -106,8 +97,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <Input
                 value={editFormData.responsible}
                 onChange={(e) => onEditFormChange("responsible", e.target.value)}
-                className="bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                placeholder="Nome do Eng/Mestre"
+                className="border-slate-200"
+                placeholder="Engenheiro"
               />
             </div>
             <div className="space-y-1.5">
@@ -115,45 +106,36 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
               <Input
                 value={editFormData.team}
                 onChange={(e) => onEditFormChange("team", e.target.value)}
-                className="bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                placeholder="Empresa/Equipe"
+                className="border-slate-200"
+                placeholder="Equipe"
               />
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label className="text-xs font-semibold text-slate-500">Encarregado</Label>
-              <div className="relative">
-                <HardHat className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  value={editFormData.executor}
-                  onChange={(e) => onEditFormChange("executor", e.target.value)}
-                  className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                  placeholder="Nome do líder"
-                />
-              </div>
+              <Input
+                value={editFormData.executor}
+                onChange={(e) => onEditFormChange("executor", e.target.value)}
+                className="border-slate-200"
+                placeholder="Líder"
+              />
             </div>
           </div>
         </section>
 
         {/* Seção 3: Planejamento */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-primary/10 rounded-md">
-              <CalendarIcon className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Planejamento Semanal</h3>
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4 text-secondary" />
+            <h3 className="text-sm font-bold text-slate-700 uppercase">Planejamento Semanal</h3>
           </div>
 
           <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-sm">
-            <Label className="text-xs font-semibold text-slate-500 mb-4 block">
-              Dias de Execução <span className="text-red-500">*</span>
-            </Label>
             <div className="flex justify-between items-center gap-2">
               {days.map((day) => {
                 const isSelected = editFormData.plannedDays.includes(day.key);
                 return (
                   <button
                     key={day.key}
-                    type="button"
                     onClick={() => onDayToggle(day.key)}
                     className={cn(
                       "flex flex-col items-center justify-center w-11 h-16 rounded-lg transition-all duration-200 border-2",
@@ -168,31 +150,16 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
                 );
               })}
             </div>
-            <p className="text-[10px] text-slate-400 mt-4 text-center">
-              Selecione os dias programados para esta atividade.
-            </p>
           </div>
         </section>
       </div>
 
       {/* Footer Fixo */}
-      <div className="flex-none p-4 bg-white border-t border-slate-100 flex justify-end gap-3 shadow-[-10px_0_20px_rgba(0,0,0,0.02)]">
-        <Button
-          variant="outline"
-          onClick={onSave} // Fecha o modal implicitamente se não houver mudanças, ou salva
-          className="border-slate-200 text-slate-600 hover:bg-slate-50"
-        >
+      <div className="p-4 border-t border-slate-100 bg-white sticky bottom-0 z-10 flex justify-end gap-3">
+        <Button variant="outline" onClick={onSave}>
           Cancelar
         </Button>
-        <Button
-          onClick={onSave}
-          disabled={!isFormValid()}
-          className={cn(
-            "gap-2 px-6 shadow-lg transition-all",
-            isFormValid() ? "bg-primary hover:bg-primary/90" : "bg-slate-300 cursor-not-allowed",
-          )}
-        >
-          <Save className="h-4 w-4" />
+        <Button onClick={onSave} disabled={!isFormValid()} className="bg-primary hover:bg-primary/90 min-w-[140px]">
           Salvar Alterações
         </Button>
       </div>
