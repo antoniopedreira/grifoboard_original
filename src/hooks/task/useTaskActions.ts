@@ -118,10 +118,13 @@ export const useTaskActions = ({
       }
       
       // Initialize the new Tarefa object with required fields
+      // Gerar item automaticamente se não fornecido
+      const itemValue = newTaskData.item || `${newTaskData.sector}-${Date.now()}`;
+      
       const novaTarefa: Omit<Tarefa, 'id' | 'created_at'> = {
         obra_id: session.obraAtiva.id,
         setor: newTaskData.sector,
-        item: newTaskData.item,
+        item: itemValue,
         descricao: newTaskData.description,
         disciplina: newTaskData.discipline,
         executante: newTaskData.team,
