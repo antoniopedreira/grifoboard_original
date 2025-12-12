@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import { DayOfWeek } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Briefcase, Users, CalendarIcon, Layers, HardHat, Plus, X } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Briefcase, Users, CalendarIcon, Plus, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useRegistry } from "@/context/RegistryContext"; // Importando Contexto
 
-// Props do componente
 interface TaskFormProps {
-  // CORREÇÃO: Alterado de Promise<void> para Promise<any> para aceitar o retorno da Task
   onTaskCreate: (task: any) => Promise<any>;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,9 +19,10 @@ interface TaskFormProps {
 
 const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange, currentWeekStartDate }) => {
   const { toast } = useToast();
+  // Consumindo dados dos cadastros
+  const { sectors, disciplines, teams, responsibles, executors, isLoading: isLoadingRegistry } = useRegistry();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Estado do formulário
   const [formData, setFormData] = useState({
     sector: "",
     discipline: "",
@@ -33,7 +33,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
     plannedDays: [] as DayOfWeek[],
   });
 
-  // Resetar formulário ao abrir
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -153,21 +152,41 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
                   <Label className="text-xs font-semibold text-slate-500">
                     Setor <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Select
                     value={formData.sector}
-                    onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
-                    className="border-slate-200"
-                    placeholder="Setor/Local"
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, sector: value })}
+                    disabled={isLoadingRegistry}
+                  >
+                    <SelectTrigger className="border-slate-200 bg-white">
+                      <SelectValue placeholder="Selecione o Setor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sectors.map((sector) => (
+                        <SelectItem key={sector} value={sector}>
+                          {sector}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-slate-500">Disciplina</Label>
-                  <Input
+                  <Select
                     value={formData.discipline}
-                    onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
-                    className="border-slate-200"
-                    placeholder="Ex: Elétrica"
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, discipline: value })}
+                    disabled={isLoadingRegistry}
+                  >
+                    <SelectTrigger className="border-slate-200 bg-white">
+                      <SelectValue placeholder="Selecione a Disciplina" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {disciplines.map((discipline) => (
+                        <SelectItem key={discipline} value={discipline}>
+                          {discipline}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -185,35 +204,65 @@ const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreate, isOpen, onOpenChange,
                 <Label className="text-xs font-semibold text-slate-500">
                   Responsável <span className="text-red-500">*</span>
                 </Label>
-                <Input
+                <Select
                   value={formData.responsible}
-                  onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-                  className="border-slate-200"
-                  placeholder="Engenheiro"
-                />
+                  onValueChange={(value) => setFormData({ ...formData, responsible: value })}
+                  disabled={isLoadingRegistry}
+                >
+                  <SelectTrigger className="border-slate-200 bg-white">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {responsibles.map((resp) => (
+                      <SelectItem key={resp} value={resp}>
+                        {resp}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-500">Executante</Label>
-                <Input
+                <Select
                   value={formData.team}
-                  onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                  className="border-slate-200"
-                  placeholder="Equipe"
-                />
+                  onValueChange={(value) => setFormData({ ...formData, team: value })}
+                  disabled={isLoadingRegistry}
+                >
+                  <SelectTrigger className="border-slate-200 bg-white">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.map((team) => (
+                      <SelectItem key={team} value={team}>
+                        {team}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-500">Encarregado</Label>
-                <Input
+                <Select
                   value={formData.executor}
-                  onChange={(e) => setFormData({ ...formData, executor: e.target.value })}
-                  className="border-slate-200"
-                  placeholder="Líder"
-                />
+                  onValueChange={(value) => setFormData({ ...formData, executor: value })}
+                  disabled={isLoadingRegistry}
+                >
+                  <SelectTrigger className="border-slate-200 bg-white">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {executors.map((exc) => (
+                      <SelectItem key={exc} value={exc}>
+                        {exc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </section>
 
-          {/* Seção 3 */}
+          {/* Seção 3: Planejamento (Mantida igual) */}
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4 text-secondary" />
