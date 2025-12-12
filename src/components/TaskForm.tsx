@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 
 // Props do componente
 interface TaskFormProps {
-  onTaskCreate: (task: any) => Promise<void>;
+  // CORREÇÃO: Alterado de Promise<void> para Promise<any> para aceitar o retorno da Task
+  onTaskCreate: (task: any) => Promise<any>;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   currentWeekStartDate: Date;
