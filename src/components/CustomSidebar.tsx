@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   ClipboardList,
-  CheckSquare,
   BookOpen,
   Store,
   FileText,
@@ -21,10 +20,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Checklist removido da navegação principal, pois agora é acessado via Tarefas
 const menuItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/tarefas", label: "Tarefas", icon: ClipboardList },
-  { path: "/checklist", label: "Checklist", icon: CheckSquare },
   { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
   { path: "/playbook", label: "Playbook", icon: BookOpen },
   { path: "/marketplace", label: "Marketplace", icon: Store },
@@ -146,7 +145,6 @@ const CustomSidebar = () => {
                 to={item.path}
                 className={cn(
                   "relative flex items-center rounded-lg transition-all duration-200 group mb-1 overflow-hidden",
-                  // CORREÇÃO: Padding consistente para garantir alinhamento
                   isCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-4 py-3 w-full",
                   isActive
                     ? "bg-secondary text-white shadow-lg font-medium"
@@ -177,10 +175,9 @@ const CustomSidebar = () => {
                     layoutId="activeIndicator"
                     className={cn(
                       "absolute bg-white",
-                      // CORREÇÃO: Posicionamento do indicador ajustado
                       isCollapsed
-                        ? "left-0 top-0 bottom-0 w-1 h-full rounded-l-none" // Barra lateral cheia no modo mini
-                        : "right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full", // Ponto no modo full
+                        ? "left-0 top-0 bottom-0 w-1 h-full rounded-l-none"
+                        : "right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full",
                     )}
                   />
                 )}
