@@ -1,16 +1,5 @@
-import { Task } from "@/types";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  MoreHorizontal,
-  CalendarDays,
-  Users,
-  Copy,
-  Trash2,
-  ArrowRightCircle,
-  AlertTriangle,
-  CheckCircle2,
-} from "lucide-react";
+import { Task, DayOfWeek, TaskStatus } from "@/types";
+import { MoreHorizontal, Users, Copy, Trash2, ArrowRightCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,6 +14,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import EditTaskDialog from "./task-card/EditTaskDialog";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskCardProps {
   task: Task;
@@ -36,25 +26,69 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplicate, onCopyToNextWeek }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const { toast } = useToast();
 
-  // Status visual logic
   const isDone = task.isFullyCompleted;
   const hasIssue = !!task.causeIfNotDone;
 
-  // Status Colors
-  const statusColor = isDone ? "bg-green-500" : hasIssue ? "bg-red-500" : "bg-secondary"; // Dourado para "Em andamento"
+  const statusColor = isDone ? "bg-green-500" : hasIssue ? "bg-red-500" : "bg-secondary";
 
-  // Days Visualizer (Mini Timeline)
-  const days = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
+  const days: DayOfWeek[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  const dayLabels = { mon: "Seg", tue: "Ter", wed: "Qua", thu: "Qui", fri: "Sex", sat: "Sáb", sun: "Dom" };
 
-  const getDayStatus = (day: string) => {
-    // @ts-ignore - Index access
-    const status = task[day];
-    if (status === "concluido") return "bg-green-500";
-    if (status === "nao_concluido") return "bg-red-400";
-    if (status === "programado") return "bg-secondary/60";
-    if (status === "chuva") return "bg-blue-400";
-    return "bg-slate-100"; // Sem atividade
+  // Função para mudar o status de um dia ao clicar
+  const handleDayClick = (day: DayOfWeek, e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita abrir o modal de edição ao clicar no dia
+
+    // Verifica se o dia está planejado
+    if (!task.plannedDays.includes(day)) {
+      // Opcional: Permitir planejar ao clicar? Por enquanto, apenas interage com dias planejados.
+      return;
+    }
+
+    const currentStatus = task.dailyStatus?.find((s) => s.day === day)?.status || "planned";
+    let newStatus: TaskStatus = "planned";
+
+    // Ciclo de status: Planejado -> Concluído -> Não Concluído -> Planejado
+    if (currentStatus === "planned") newStatus = "completed";
+    else if (currentStatus === "completed") newStatus = "not_done";
+    else if (currentStatus === "not_done") newStatus = "planned";
+
+    // Atualiza o array de dailyStatus
+    const newDailyStatus = task.dailyStatus?.filter((s) => s.day !== day) || [];
+    if (newStatus !== "planned") {
+      newDailyStatus.push({ day, status: newStatus });
+    }
+
+    // Calcula se a tarefa está totalmente concluída
+    const allPlannedAreCompleted = task.plannedDays.every((d) => {
+      const s = d === day ? newStatus : task.dailyStatus?.find((ds) => ds.day === d)?.status || "planned";
+      return s === "completed";
+    });
+
+    onUpdate({
+      ...task,
+      dailyStatus: newDailyStatus,
+      isFullyCompleted: allPlannedAreCompleted,
+    });
+  };
+
+  const getDayColor = (day: DayOfWeek) => {
+    const isPlanned = task.plannedDays.includes(day);
+    if (!isPlanned) return "bg-slate-100 text-slate-300 border-transparent"; // Não planejado
+
+    const status = task.dailyStatus?.find((s) => s.day === day)?.status || "planned";
+
+    switch (status) {
+      case "completed":
+        return "bg-green-500 text-white border-green-600 shadow-sm";
+      case "not_done":
+        return "bg-red-500 text-white border-red-600 shadow-sm";
+      case "not_planned":
+        return "bg-slate-200 text-slate-400";
+      default:
+        return "bg-white border-secondary text-secondary font-bold shadow-sm"; // Planejado (Outline/Destaque)
+    }
   };
 
   return (
@@ -63,82 +97,101 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
         layout
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ scale: 1.005, y: -2 }}
+        whileHover={{ scale: 1.002, y: -2 }}
         transition={{ duration: 0.2 }}
         className={cn(
-          "group relative bg-white rounded-xl shadow-sm border border-border/60 overflow-hidden hover:shadow-lg transition-all duration-300",
-          isDone ? "opacity-80 hover:opacity-100" : "",
+          "group relative bg-white rounded-xl shadow-sm border border-border/60 overflow-hidden hover:shadow-md transition-all duration-300",
+          isDone ? "bg-slate-50/50" : "",
         )}
       >
-        {/* Barra lateral de status */}
-        <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", statusColor)} />
+        <div className={cn("absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300", statusColor)} />
 
-        <div className="pl-6 pr-4 py-4 flex flex-col md:flex-row gap-4 md:items-center justify-between">
-          {/* Informações Principais */}
-          <div className="flex-1 space-y-2">
+        <div className="pl-5 pr-4 py-4 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+          {/* Info Principal */}
+          <div className="flex-1 space-y-2 min-w-0" onClick={() => setIsEditOpen(true)}>
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-[10px] font-bold text-slate-500 border-slate-200 bg-slate-50">
+              <Badge
+                variant="outline"
+                className="text-[10px] font-bold text-slate-500 border-slate-200 bg-slate-50 uppercase tracking-wide"
+              >
                 {task.sector}
               </Badge>
               {task.discipline && (
                 <Badge
                   variant="outline"
-                  className="text-[10px] font-bold text-secondary border-secondary/20 bg-secondary/5"
+                  className="text-[10px] font-bold text-secondary border-secondary/20 bg-secondary/5 uppercase tracking-wide"
                 >
                   {task.discipline}
                 </Badge>
               )}
               {isDone && (
-                <Badge className="bg-green-100 text-green-700 border-none text-[10px]">
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none text-[10px]">
                   <CheckCircle2 className="w-3 h-3 mr-1" /> Concluído
                 </Badge>
               )}
               {hasIssue && (
-                <Badge className="bg-red-100 text-red-700 border-none text-[10px]">
+                <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-none text-[10px]">
                   <AlertTriangle className="w-3 h-3 mr-1" /> {task.causeIfNotDone}
                 </Badge>
               )}
             </div>
 
-            <h3
-              onClick={() => setIsEditOpen(true)}
-              className="text-base font-bold text-primary hover:text-secondary cursor-pointer transition-colors line-clamp-1"
-            >
+            <h3 className="text-base font-bold text-slate-800 group-hover:text-primary transition-colors cursor-pointer truncate pr-2">
               {task.description}
             </h3>
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5" title="Responsável">
-                <Users className="w-3.5 h-3.5 text-secondary" />
-                <span className="font-medium text-primary/80">{task.responsible || "Sem resp."}</span>
+              <div className="flex items-center gap-1.5 min-w-0" title="Responsável">
+                <Users className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
+                <span className="font-medium text-slate-700 truncate">{task.responsible || "N/A"}</span>
               </div>
-              <div className="w-px h-3 bg-border" />
-              <div className="flex items-center gap-1.5" title="Equipe">
-                <span className="font-medium">{task.team || "Equipe geral"}</span>
-              </div>
+              {task.team && (
+                <>
+                  <div className="w-px h-3 bg-slate-300" />
+                  <div className="flex items-center gap-1.5 min-w-0" title="Equipe">
+                    <span className="font-medium truncate">{task.team}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Timeline de Dias (Visual) */}
-          <div className="flex items-center gap-1">
-            {days.map((day) => (
-              <div key={day} className="flex flex-col items-center gap-1">
-                <span className="text-[9px] uppercase font-bold text-slate-400">{day.charAt(0)}</span>
-                <div
-                  className={cn(
-                    "w-6 h-8 rounded-md transition-colors border border-transparent",
-                    getDayStatus(day),
-                    // @ts-ignore
-                    task[day] !== "" ? "border-black/5 shadow-sm" : "",
-                  )}
-                  title={`${day.toUpperCase()}: ${task[day] || "Sem atividade"}`}
-                />
-              </div>
-            ))}
+          {/* Timeline Interativa */}
+          <div className="flex items-center gap-1.5 self-start md:self-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100">
+            {days.map((day) => {
+              const isPlanned = task.plannedDays.includes(day);
+              return (
+                <div key={day} className="flex flex-col items-center gap-1">
+                  <span
+                    className={cn("text-[9px] uppercase font-bold", isPlanned ? "text-slate-600" : "text-slate-300")}
+                  >
+                    {dayLabels[day].charAt(0)}
+                  </span>
+                  <button
+                    onClick={(e) => handleDayClick(day, e)}
+                    disabled={!isPlanned}
+                    className={cn(
+                      "w-7 h-9 rounded-md border flex items-center justify-center transition-all duration-200",
+                      getDayStatus(day) === "completed" ? "ring-2 ring-green-100" : "",
+                      getDayColor(day),
+                      isPlanned
+                        ? "cursor-pointer hover:scale-110 active:scale-95"
+                        : "cursor-default opacity-40 border-transparent",
+                    )}
+                    title={isPlanned ? `Clique para alterar status de ${dayLabels[day]}` : "Não planejado"}
+                  >
+                    {/* Indicador visual interno para status */}
+                    {task.dailyStatus?.find((s) => s.day === day)?.status === "completed" && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Menu de Ações */}
-          <div className="flex items-center md:border-l md:border-border md:pl-4">
+          {/* Menu */}
+          <div className="flex items-center md:border-l md:border-border md:pl-4 self-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -152,10 +205,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => setIsEditOpen(true)} className="cursor-pointer">
-                  Editar Tarefa
+                  Editar Detalhes
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onDuplicate(task)} className="cursor-pointer">
-                  <Copy className="mr-2 h-4 w-4 text-slate-500" /> Duplicar
+                  <Copy className="mr-2 h-4 w-4 text-slate-500" /> Duplicar Tarefa
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onCopyToNextWeek(task)} className="cursor-pointer">
                   <ArrowRightCircle className="mr-2 h-4 w-4 text-secondary" /> Mover p/ próx. semana
@@ -163,7 +216,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => onDelete(task.id)}
-                  className="text-red-600 focus:text-red-700 cursor-pointer"
+                  className="text-red-600 focus:text-red-700 cursor-pointer hover:bg-red-50"
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Excluir
                 </DropdownMenuItem>
