@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Task, DayOfWeek } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { tarefasService } from "@/services/tarefaService";
+import { convertTaskStatusToTarefa } from "@/utils/taskUtils";
 
 export const useTaskEditForm = (task: Task, onSaveSuccess?: (updatedTask: Task) => void) => {
   const { toast } = useToast();
@@ -71,8 +72,9 @@ export const useTaskEditForm = (task: Task, onSaveSuccess?: (updatedTask: Task) 
         ...editFormData,
       };
 
-      // CORREÇÃO AQUI: Passando ID e o Objeto separadamente
-      await tarefasService.atualizarTarefa(updatedTask.id, updatedTask);
+      // Converter para formato do banco antes de enviar
+      const tarefaToUpdate = convertTaskStatusToTarefa(updatedTask);
+      await tarefasService.atualizarTarefa(updatedTask.id, tarefaToUpdate);
 
       toast({
         title: "Tarefa atualizada",
