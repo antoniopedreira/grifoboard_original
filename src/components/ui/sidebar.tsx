@@ -356,6 +356,7 @@ export function SessionNavBar() {
                         )}
                       </motion.li>
                     </Button>
+                    {/* Playbook tab hidden for now
                     <Button
                       variant="ghost"
                       className={cn(
@@ -373,6 +374,7 @@ export function SessionNavBar() {
                         )}
                       </motion.li>
                     </Button>
+                    */}
                     <Button
                       variant="ghost"
                       className={cn(
