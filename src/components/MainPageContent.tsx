@@ -155,13 +155,8 @@ const MainPageContent = () => {
               </TabsTrigger>
             </TabsList>
 
-            {/* Week Navigation - Design Premium */}
-            <div
-              className={cn(
-                "flex items-center gap-2 transition-all duration-300",
-                activeTab === "analytics" && "opacity-40 pointer-events-none"
-              )}
-            >
+            {/* Week Navigation - Sempre ativo */}
+            <div className="flex items-center gap-2">
               <WeekNavigation
                 weekStartDate={weekStartDate}
                 weekEndDate={weekEndDate}

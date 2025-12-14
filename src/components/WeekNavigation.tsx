@@ -43,16 +43,14 @@ const WeekNavigation = ({
           <div className="p-1.5 rounded-lg bg-primary/10">
             <Calendar className="h-4 w-4 text-primary" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground tracking-tight">
-              {currentWeekFormatted}
+          <span className="text-sm font-semibold text-foreground tracking-tight">
+            {currentWeekFormatted}
+          </span>
+          {isCurrentWeek && (
+            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              Atual
             </span>
-            {isCurrentWeek && (
-              <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider">
-                Semana Atual
-              </span>
-            )}
-          </div>
+          )}
         </div>
         
         {/* Separador */}
