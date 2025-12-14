@@ -13,7 +13,6 @@ import { motion } from "framer-motion";
 import { Loader2, LayoutList, PieChart, TrendingUp, Award, Layers, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
   BarChart,
@@ -26,22 +25,21 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import { format, startOfWeek, addDays, parseISO } from "date-fns";
+import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client"; // Importação direta para Analytics
+import { supabase } from "@/integrations/supabase/client";
 
 // --- SUB-COMPONENTES DE ANALYTICS (GLOBAL) ---
 
-// 1. Gráfico de Evolução do PCP (Estilo Barra Escura - Igual Dashboard)
+// 1. Gráfico de Evolução do PCP (Estilo Barra Escura)
 const WeeklyHistoryChart = ({ tasks }: { tasks: any[] }) => {
   const chartData = useMemo(() => {
     if (!tasks || tasks.length === 0) return [];
 
-    // Agrupar tarefas por semana (Data de Início)
+    // Agrupar tarefas por semana
     const weeksMap = new Map();
 
     tasks.forEach((t) => {
-      // Normaliza a data para o início da semana (segunda-feira)
       const date = new Date(t.weekStartDate);
       const weekStartStr = format(date, "yyyy-MM-dd");
 
@@ -54,10 +52,9 @@ const WeeklyHistoryChart = ({ tasks }: { tasks: any[] }) => {
       if (t.isFullyCompleted) current.completed++;
     });
 
-    // Converter para array e ordenar
     return Array.from(weeksMap.entries())
       .map(([key, val]) => ({
-        date: format(addDays(val.date, 1), "dd/MM", { locale: ptBR }), // Ajuste visual de dia
+        date: format(addDays(val.date, 1), "dd/MM", { locale: ptBR }),
         fullDate: val.date,
         pcp: val.total > 0 ? Math.round((val.completed / val.total) * 100) : 0,
       }))
@@ -87,7 +84,7 @@ const WeeklyHistoryChart = ({ tasks }: { tasks: any[] }) => {
           />
           <Bar dataKey="pcp" radius={[4, 4, 0, 0]}>
             {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill="#1e293b" /> // Cor escura (Slate 800) igual imagem
+              <Cell key={`cell-${index}`} fill="#1e293b" />
             ))}
             <LabelList
               dataKey="pcp"
@@ -102,7 +99,7 @@ const WeeklyHistoryChart = ({ tasks }: { tasks: any[] }) => {
   );
 };
 
-// 2. Ranking de Performance Global (Média de todas as semanas)
+// 2. Ranking de Performance Global (Custom Progress Bar)
 const GlobalRanking = ({
   tasks,
   type,
@@ -132,7 +129,7 @@ const GlobalRanking = ({
         completed: d.completed,
       }))
       .filter((i) => i.count > 0)
-      .sort((a, b) => b.percentage - a.percentage); // Ordenar por % de sucesso
+      .sort((a, b) => b.percentage - a.percentage);
   }, [tasks, type]);
 
   if (data.length === 0)
@@ -180,19 +177,24 @@ const GlobalRanking = ({
                   {item.percentage}%
                 </span>
               </div>
-              <Progress
-                value={item.percentage}
-                className={cn("h-2 bg-slate-100")}
-                indicatorClassName={cn(
-                  item.percentage >= 80
-                    ? "bg-green-500"
-                    : item.percentage >= 50
-                      ? "bg-blue-500"
-                      : item.percentage >= 30
-                        ? "bg-yellow-500"
-                        : "bg-red-500",
-                )}
-              />
+
+              {/* CORREÇÃO: Barra de Progresso Customizada (DIV) ao invés do componente Progress */}
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-500 ease-in-out rounded-full",
+                    item.percentage >= 80
+                      ? "bg-green-500"
+                      : item.percentage >= 50
+                        ? "bg-blue-500"
+                        : item.percentage >= 30
+                          ? "bg-yellow-500"
+                          : "bg-red-500",
+                  )}
+                  style={{ width: `${item.percentage}%` }}
+                />
+              </div>
+
               <div className="flex justify-between text-[9px] text-slate-400 px-0.5">
                 <span>
                   {item.completed}/{item.count} tarefas
@@ -215,11 +217,9 @@ const MainPageContent = () => {
   const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
   const [activeTab, setActiveTab] = useState("planning");
 
-  // Estado para Analytics Global
   const [allTasks, setAllTasks] = useState<any[]>([]);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
 
-  // Estados de Semana (Para a aba de Planejamento)
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
   const [weekEndDate, setWeekEndDate] = useState(new Date());
 
@@ -229,7 +229,6 @@ const MainPageContent = () => {
     setWeekEndDate(endDate);
   }, [weekStartDate]);
 
-  // Hook original (traz dados apenas da semana selecionada)
   const {
     tasks,
     isLoading,
@@ -242,13 +241,12 @@ const MainPageContent = () => {
     handleCopyToNextWeek,
   } = useTaskManager(weekStartDate);
 
-  // --- NOVO: Fetch de DADOS GLOBAIS para Analytics ---
+  // Fetch de DADOS GLOBAIS
   useEffect(() => {
     if (activeTab === "analytics") {
       const fetchAllTasks = async () => {
         setIsLoadingAnalytics(true);
         try {
-          // Busca TODAS as tarefas sem filtro de semana
           const { data, error } = await supabase
             .from("tarefas")
             .select("*")
@@ -270,7 +268,7 @@ const MainPageContent = () => {
 
       fetchAllTasks();
     }
-  }, [activeTab]); // Só roda quando troca para a aba Analytics
+  }, [activeTab]);
 
   const handleCauseSelect = (cause: string) => {
     if (selectedCause === cause) {
@@ -324,7 +322,6 @@ const MainPageContent = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Navegação Temporal (Só aparece na aba de Planejamento ou se quiser filtrar o Dashboard também, mas por padrão Dashboard é global) */}
           <div
             className={cn(
               "w-full sm:w-auto transition-opacity duration-300",
