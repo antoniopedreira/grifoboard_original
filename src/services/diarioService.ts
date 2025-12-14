@@ -3,23 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 export interface DiarioObra {
   id: string;
   obra_id: string;
-  data: string; // no banco é 'data', mas no front as vezes usamos data_diario. Vamos padronizar.
+  data: string;
   clima?: string;
   mao_de_obra?: string;
   equipamentos?: string;
   atividades: string;
-  ocorrencias?: string; // Adicionado para bater com a nova UI
+  ocorrencias?: string;
   observacoes?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
 }
 
-// Tipo estendido para aceitar campos opcionais no upsert
+// Interface para criar ou atualizar
 export interface DiarioObraUpsert {
   id?: string | null;
   obra_id: string;
-  data_diario: string; // Usaremos este nome para diferenciar e mapear para 'data'
+  data_diario: string;
   clima?: string;
   mao_de_obra?: string;
   equipamentos?: string;
@@ -29,7 +29,7 @@ export interface DiarioObraUpsert {
 }
 
 export const diarioService = {
-  // Método existente mantido
+  // Busca lista (existente)
   async getByObra(obraId: string, startDate?: string, endDate?: string) {
     let query = supabase.from("diarios_obra").select("*").eq("obra_id", obraId).order("data", { ascending: false });
 
@@ -41,13 +41,13 @@ export const diarioService = {
     }
 
     const { data, error } = await query;
-
     if (error) throw error;
     return data as DiarioObra[];
   },
 
-  // NOVO: Busca por data específica (usado na navegação diária)
+  // Busca por data específica (Necessário para a navegação de histórico)
   async getDiarioByDate(obraId: string, date: Date) {
+    // Ajuste para fuso horário local se necessário, ou usar UTC string simples
     const dateStr = date.toISOString().split("T")[0];
 
     const { data, error } = await supabase
@@ -61,9 +61,8 @@ export const diarioService = {
     return data as DiarioObra | null;
   },
 
-  // NOVO: Cria ou Atualiza
+  // Cria ou Atualiza (Upsert inteligente)
   async upsertDiario(diario: DiarioObraUpsert) {
-    // Preparar objeto para o banco (mapear campos se necessário)
     const payload: any = {
       obra_id: diario.obra_id,
       data: diario.data_diario,
@@ -72,21 +71,20 @@ export const diarioService = {
       equipamentos: diario.equipamentos,
       atividades: diario.atividades,
       observacoes: diario.observacoes,
-      // Se tiver campo ocorrencias no banco, inclua. Se não, combine com obs ou atividades.
-      // Vou assumir que observacoes pode levar as ocorrencias se não tiver campo específico,
-      // mas o ideal é ter. Vou tentar salvar no campo observacoes se ocorrencias não existir no type.
+      // Mapeia ocorrencias para observacoes se o campo nao existir no banco, ou cria campo novo
+      // Assumindo que observacoes é o campo genérico se ocorrencias não existir no schema
+      ocorrencias: diario.ocorrencias,
     };
 
-    // Se tiver ID, é update
+    // Se tiver ID, atualiza
     if (diario.id) {
       const { data, error } = await supabase.from("diarios_obra").update(payload).eq("id", diario.id).select().single();
 
       if (error) throw error;
       return data as DiarioObra;
     }
-    // Se não tiver ID, verifica se já existe data para evitar duplicidade
+    // Se não, busca por data antes de inserir para evitar duplicidade
     else {
-      // Primeiro check se já existe (segurança extra)
       const existing = await this.getDiarioByDate(diario.obra_id, new Date(diario.data_diario));
 
       if (existing) {
@@ -99,9 +97,6 @@ export const diarioService = {
         if (error) throw error;
         return data as DiarioObra;
       } else {
-        // Insert real
-        // Precisamos do created_by? O RLS do supabase costuma injetar ou default
-        // Se precisar, pegue do auth session no componente antes de chamar
         const { data, error } = await supabase.from("diarios_obra").insert([payload]).select().single();
 
         if (error) throw error;
