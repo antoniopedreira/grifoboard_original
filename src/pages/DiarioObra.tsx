@@ -27,6 +27,7 @@ import {
   FileText,
   BookOpen,
   History,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PhotoUploader } from "@/components/diario/PhotoUploader";
@@ -42,6 +43,8 @@ const DiarioObra = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true); // true = editing, false = view only
+  const [pendingPhotos, setPendingPhotos] = useState<{ files: File[]; legenda: string }[]>([]);
 
   // Estados de Dados
   const [diarioId, setDiarioId] = useState<string | null>(null);
@@ -78,6 +81,7 @@ const DiarioObra = () => {
       const data = await diarioService.getDiarioByDate(obraId!, date);
       if (data) {
         setDiarioId(data.id);
+        setIsEditMode(false); // Diário já existe, modo visualização
 
         let climas = { manha: "", tarde: "", noite: "" };
         try {
@@ -105,6 +109,8 @@ const DiarioObra = () => {
         });
       } else {
         setDiarioId(null);
+        setIsEditMode(true); // Novo diário, modo edição
+        setPendingPhotos([]);
         setFormData({
           clima_manha: "",
           clima_tarde: "",
@@ -152,6 +158,20 @@ const DiarioObra = () => {
       });
 
       setDiarioId(savedDiario.id);
+
+      // Upload pending photos after saving
+      if (pendingPhotos.length > 0) {
+        const isoDate = format(date, "yyyy-MM-dd");
+        for (const pending of pendingPhotos) {
+          await diarioFotosService.uploadDailyPhotos(obraId, isoDate, pending.files, pending.legenda);
+        }
+        setPendingPhotos([]);
+        loadPhotos();
+      }
+
+      setIsEditMode(false); // Switch to view mode after saving
+      loadDiarioHistory(); // Refresh history
+
       toast({
         title: "Diário Salvo",
         description: "As informações foram atualizadas com sucesso.",
@@ -167,6 +187,15 @@ const DiarioObra = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEnterEditMode = () => {
+    setIsEditMode(true);
+  };
+
+  const handleAddPendingPhotos = async (files: File[], legenda?: string) => {
+    setPendingPhotos((prev) => [...prev, { files, legenda: legenda || "" }]);
+    toast({ title: "Fotos adicionadas", description: "As fotos serão salvas junto com o diário." });
   };
 
   // --- FUNÇÃO DE HISTÓRICO ---
@@ -362,14 +391,25 @@ const DiarioObra = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              onClick={handleSave}
-              disabled={isSaving || isLoading}
-              className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-md transition-all gap-2"
-            >
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Salvar Diário
-            </Button>
+            {!isEditMode && diarioId ? (
+              <Button
+                onClick={handleEnterEditMode}
+                variant="outline"
+                className="w-full sm:w-auto gap-2 border-primary text-primary hover:bg-primary/10"
+              >
+                <Pencil className="h-4 w-4" />
+                Editar Diário
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSave}
+                disabled={isSaving || isLoading}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-md transition-all gap-2"
+              >
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Salvar Diário
+              </Button>
+            )}
           </div>
         </div>
 
@@ -399,8 +439,9 @@ const DiarioObra = () => {
                         <Select
                           value={formData[`clima_${periodo}` as keyof typeof formData]}
                           onValueChange={(val) => handleInputChange(`clima_${periodo}`, val)}
+                          disabled={!isEditMode}
                         >
-                          <SelectTrigger className="flex-1 h-9 border-slate-200">
+                          <SelectTrigger className={cn("flex-1 h-9 border-slate-200", !isEditMode && "bg-slate-50 cursor-not-allowed")}>
                             <SelectValue placeholder="Selecione..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -431,7 +472,8 @@ const DiarioObra = () => {
                       placeholder="Ex: 5 Pedreiros, 4 Serventes..."
                       value={formData.mao_de_obra}
                       onChange={(e) => handleInputChange("mao_de_obra", e.target.value)}
-                      className="min-h-[80px] border-slate-200 resize-none focus:border-secondary"
+                      disabled={!isEditMode}
+                      className={cn("min-h-[80px] border-slate-200 resize-none focus:border-secondary", !isEditMode && "bg-slate-50 cursor-not-allowed")}
                     />
                   </div>
                   <div className="space-y-2">
@@ -440,7 +482,8 @@ const DiarioObra = () => {
                       placeholder="Ex: 1 Betoneira, 1 Serra Circular..."
                       value={formData.equipamentos}
                       onChange={(e) => handleInputChange("equipamentos", e.target.value)}
-                      className="min-h-[80px] border-slate-200 resize-none focus:border-secondary"
+                      disabled={!isEditMode}
+                      className={cn("min-h-[80px] border-slate-200 resize-none focus:border-secondary", !isEditMode && "bg-slate-50 cursor-not-allowed")}
                     />
                   </div>
                 </CardContent>
@@ -464,7 +507,8 @@ const DiarioObra = () => {
                       placeholder="Descreva o que foi feito hoje..."
                       value={formData.atividades}
                       onChange={(e) => handleInputChange("atividades", e.target.value)}
-                      className="min-h-[150px] border-slate-200 focus:border-secondary text-base leading-relaxed"
+                      disabled={!isEditMode}
+                      className={cn("min-h-[150px] border-slate-200 focus:border-secondary text-base leading-relaxed", !isEditMode && "bg-slate-50 cursor-not-allowed")}
                     />
                   </div>
 
@@ -475,7 +519,8 @@ const DiarioObra = () => {
                         placeholder="Houve algum problema?"
                         value={formData.ocorrencias}
                         onChange={(e) => handleInputChange("ocorrencias", e.target.value)}
-                        className="min-h-[100px] border-red-100 focus:border-red-300 bg-red-50/10"
+                        disabled={!isEditMode}
+                        className={cn("min-h-[100px] border-red-100 focus:border-red-300 bg-red-50/10", !isEditMode && "bg-slate-50 cursor-not-allowed")}
                       />
                     </div>
                     <div className="space-y-2">
@@ -484,14 +529,15 @@ const DiarioObra = () => {
                         placeholder="Outras anotações..."
                         value={formData.observacoes}
                         onChange={(e) => handleInputChange("observacoes", e.target.value)}
-                        className="min-h-[100px] border-slate-200"
+                        disabled={!isEditMode}
+                        className={cn("min-h-[100px] border-slate-200", !isEditMode && "bg-slate-50 cursor-not-allowed")}
                       />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Galeria de Fotos Integrada */}
+              {/* Galeria de Fotos - Antes de Salvar */}
               <Card className="border-border/60 shadow-sm hover:shadow-md transition-all overflow-hidden">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
                   <div className="flex justify-between items-center">
@@ -499,27 +545,48 @@ const DiarioObra = () => {
                       <Camera className="h-4 w-4 text-secondary" />
                       Galeria de Fotos
                     </CardTitle>
-                    {/* Botão de Upload: Passamos apenas a função onUpload */}
-                    {diarioId && <PhotoUploader onUpload={handlePhotoUpload} />}
+                    {/* Upload: em modo edição, ou se já existe diário e está em modo edição */}
+                    {isEditMode && <PhotoUploader onUpload={diarioId ? handlePhotoUpload : handleAddPendingPhotos} />}
                   </div>
                   <CardDescription>
-                    {!diarioId ? "Salve o diário primeiro para adicionar fotos." : "Documentação visual do dia."}
+                    {isEditMode && !diarioId && pendingPhotos.length > 0
+                      ? `${pendingPhotos.reduce((acc, p) => acc + p.files.length, 0)} foto(s) pendente(s) - serão salvas com o diário.`
+                      : "Documentação visual do dia."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 bg-slate-50/30 min-h-[200px]">
+                  {/* Show pending photos if no diarioId yet */}
+                  {!diarioId && pendingPhotos.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      {pendingPhotos.flatMap((p, idx) =>
+                        p.files.map((file, fileIdx) => (
+                          <div key={`pending-${idx}-${fileIdx}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-primary/40 bg-primary/5">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt="Foto pendente"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-xs py-1 px-2 text-center">
+                              Pendente
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                   {diarioId ? (
                     <PhotoGallery
                       photos={photos}
                       loading={isLoadingPhotos}
-                      onDelete={handlePhotoDelete}
+                      onDelete={isEditMode ? handlePhotoDelete : undefined}
                       currentUserId={userSession?.user?.id}
                     />
-                  ) : (
+                  ) : pendingPhotos.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-muted-foreground border-2 border-dashed border-slate-200 rounded-xl">
-                      <FileText className="h-8 w-8 mb-2 opacity-20" />
-                      <p>Preencha e salve o diário para habilitar o envio de fotos.</p>
+                      <Camera className="h-8 w-8 mb-2 opacity-20" />
+                      <p className="text-sm">Adicione fotos antes de salvar o diário</p>
                     </div>
-                  )}
+                  ) : null}
                 </CardContent>
               </Card>
             </div>
