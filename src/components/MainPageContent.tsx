@@ -46,8 +46,9 @@ const WeeklyHistoryChart = ({ data }: { data: any[] }) => {
 
   // Formatar dados para o gráfico
   const chartData = data
+    .filter((d) => d.weekStartDate && !isNaN(new Date(d.weekStartDate).getTime()))
     .map((d) => ({
-      name: `Sem ${d.weekNumber}`,
+      name: `Sem ${d.weekNumber || '?'}`,
       date: format(new Date(d.weekStartDate), "dd/MM", { locale: ptBR }),
       pcp: d.percentage || 0,
       fullDate: d.weekStartDate,
