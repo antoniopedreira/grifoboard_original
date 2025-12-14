@@ -30,13 +30,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 import { cn } from "@/lib/utils";
 
-import PCPOverallCard from "@/components/chart/PCPOverallCard";
-
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 
-import PCPBreakdownCard from "@/components/chart/PCPBreakdownCard";
+import PCPAverageCard from "@/components/chart/PCPAverageCard";
 
-import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
+import AllCausesChart from "@/components/chart/AllCausesChart";
+
+import ExecutorRankingChart from "@/components/chart/ExecutorRankingChart";
+
+import BreakdownWithFilter from "@/components/chart/BreakdownWithFilter";
 
 const MainPageContent = () => {
   const navigate = useNavigate();
@@ -236,35 +238,34 @@ const MainPageContent = () => {
 
             <div className="space-y-6">
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-                <PCPOverallCard
-                  data={pcpData?.overall || { completedTasks: 0, totalTasks: 0, percentage: 0 }}
+                <PCPAverageCard
                   className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
                 />
               </motion.div>
 
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                <WeeklyCausesChart
-                  tasks={tasks}
-                  weekStartDate={weekStartDate}
+                <AllCausesChart
                   className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
                 />
               </motion.div>
             </div>
           </div>
 
-          {/* Detalhamento por Setor */}
+          {/* Ranking e Detalhamento */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <ExecutorRankingChart
+                className="shadow-sm hover:shadow-xl transition-all duration-300"
+              />
+            </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <Card className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="text-primary font-heading">Detalhamento por Setor</CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <PCPBreakdownCard title="" data={pcpData?.bySector || {}} />
-              </CardContent>
-            </Card>
-          </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+              <BreakdownWithFilter
+                pcpData={pcpData}
+                className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
+              />
+            </motion.div>
+          </div>
         </TabsContent>
       </Tabs>
 
