@@ -14,6 +14,7 @@ import {
   Clock,
   Ban,
 } from "lucide-react";
+import { standardCauses } from "@/utils/standardCauses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -155,15 +156,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
     });
   };
 
-  const defaultCauses = [
-    "Chuva",
-    "Falta de Material",
-    "Falta de Projeto",
-    "Falta de Frente",
-    "Mão de Obra",
-    "Equipamento Quebrado",
-    "Outros",
-  ];
+  // Usar standardCauses importado do utils
 
   return (
     <>
@@ -401,7 +394,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
                     <SelectItem value="none" className="text-slate-400">
                       Sem causa registrada
                     </SelectItem>
-                    {defaultCauses.map((cause) => (
+                    {standardCauses.map((cause) => (
                       <SelectItem key={cause} value={cause}>
                         {cause}
                       </SelectItem>
