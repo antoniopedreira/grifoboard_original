@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { diarioService } from "@/services/diarioService";
-import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService"; // Importando serviço de fotos
+import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService";
 import MainHeader from "@/components/MainHeader";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,7 +34,7 @@ const DiarioObra = () => {
   const { toast } = useToast();
   const [date, setDate] = useState<Date>(new Date());
 
-  // Estados de Carregamento
+  // Estados de UI
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
@@ -59,6 +59,8 @@ const DiarioObra = () => {
   useEffect(() => {
     if (obraId) {
       loadDiario();
+      // O carregamento de fotos depende do diarioId ou da data?
+      // Pelo service de fotos, depende da data e obraId. Então podemos carregar em paralelo.
       loadPhotos();
     }
   }, [date, obraId]);
@@ -68,7 +70,6 @@ const DiarioObra = () => {
   const loadDiario = async () => {
     setIsLoading(true);
     try {
-      // @ts-ignore - Método adicionado recentemente ao service
       const data = await diarioService.getDiarioByDate(obraId!, date);
       if (data) {
         setDiarioId(data.id);
@@ -133,7 +134,6 @@ const DiarioObra = () => {
         noite: formData.clima_noite,
       });
 
-      // @ts-ignore - Método adicionado recentemente ao service
       const savedDiario = await diarioService.upsertDiario({
         id: diarioId,
         obra_id: obraId,
@@ -171,6 +171,7 @@ const DiarioObra = () => {
     setIsLoadingPhotos(true);
     try {
       const isoDate = format(date, "yyyy-MM-dd");
+      // Filtro "todos" carrega fotos de todos os usuários
       const data = await diarioFotosService.loadPhotos(obraId, isoDate, "todos");
       setPhotos(data);
     } catch (error) {
@@ -401,6 +402,7 @@ const DiarioObra = () => {
                       <Camera className="h-4 w-4 text-secondary" />
                       Galeria de Fotos
                     </CardTitle>
+                    {/* Botão de Upload: Passamos apenas a função onUpload */}
                     {diarioId && <PhotoUploader onUpload={handlePhotoUpload} />}
                   </div>
                   <CardDescription>
