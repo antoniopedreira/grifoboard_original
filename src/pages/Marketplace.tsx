@@ -1,109 +1,150 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import MainHeader from "@/components/MainHeader";
-// CORREÇÃO: Usando importação nomeada (com chaves)
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
 import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Store, Hammer, Truck, Package, Briefcase, Filter } from "lucide-react";
+import { Search, Store, Hammer, Truck, Briefcase, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 
-// Mock Data
-const ITEMS = [
-  {
-    id: 1,
-    title: "Mão de Obra Especializada",
-    description: "Equipe completa de pedreiros e serventes com experiência em alvenaria estrutural.",
-    category: "Mão de Obra",
-    type: "Serviço",
-    location: "Salvador, BA",
-    rating: 4.8,
-    reviews: 124,
-    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=400",
-    tags: ["Alvenaria", "Acabamento"],
-    contact: { name: "Empreiteira Silva", phone: "71999999999" },
-  },
-  {
-    id: 2,
-    title: "Aluguel de Betoneira 400L",
-    description: "Betoneira elétrica 400 litros, ideal para obras de pequeno e médio porte. Diária ou mensal.",
-    category: "Equipamentos",
-    type: "Locação",
-    location: "Lauro de Freitas, BA",
-    rating: 4.9,
-    reviews: 56,
-    image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=400",
-    tags: ["Maquinário", "Concretagem"],
-    contact: { name: "LocaTudo Equipamentos", phone: "71988888888" },
-  },
-  {
-    id: 3,
-    title: "Cimento CP-II (Saco 50kg)",
-    description: "Cimento Portland composto, versátil para todas as etapas da obra. Venda direta de fábrica.",
-    category: "Materiais",
-    type: "Venda",
-    location: "Camaçari, BA",
-    rating: 4.5,
-    reviews: 89,
-    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=400",
-    tags: ["Básico", "Estrutura"],
-    contact: { name: "Depósito Central", phone: "71977777777" },
-  },
-  {
-    id: 4,
-    title: "Projeto Elétrico Residencial",
-    description: "Elaboração de projetos elétricos completos com ART e aprovação na Coelba.",
-    category: "Serviços",
-    type: "Projetos",
-    location: "Remoto / Salvador",
-    rating: 5.0,
-    reviews: 32,
-    image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=400",
-    tags: ["Engenharia", "Elétrica"],
-    contact: { name: "Eng. Roberto Alves", phone: "71966666666" },
-  },
-  {
-    id: 5,
-    title: "Areia Lavada Média (Caminhão)",
-    description: "Areia lavada média de alta qualidade, livre de impurezas. Caminhão fechado 12m³.",
-    category: "Materiais",
-    type: "Venda",
-    location: "Simões Filho, BA",
-    rating: 4.2,
-    reviews: 15,
-    image: "https://images.unsplash.com/photo-1605114676921-2785bd5d9565?auto=format&fit=crop&q=80&w=400",
-    tags: ["Agregados", "Básico"],
-    contact: { name: "Areal Vitória", phone: "71955555555" },
-  },
-];
+// Types for marketplace items
+export interface MarketplaceItem {
+  id: string;
+  title: string;
+  description: string;
+  category: "Profissional" | "Empresa" | "Fornecedor";
+  type: string;
+  location: string;
+  rating: number;
+  reviews: number;
+  image: string | null;
+  tags: string[];
+  rawData: any;
+}
+
+// Fetch functions
+const fetchProfissionais = async () => {
+  const { data, error } = await supabase
+    .from("formulario_profissionais")
+    .select("*");
+  if (error) throw error;
+  return data || [];
+};
+
+const fetchEmpresas = async () => {
+  const { data, error } = await supabase
+    .from("formulario_empresas")
+    .select("*");
+  if (error) throw error;
+  return data || [];
+};
+
+const fetchFornecedores = async () => {
+  const { data, error } = await supabase
+    .from("formulario_fornecedores")
+    .select("*");
+  if (error) throw error;
+  return data || [];
+};
+
+// Transform functions
+const transformProfissional = (p: any): MarketplaceItem => ({
+  id: p.id,
+  title: p.nome_completo,
+  description: `${p.funcao_principal}${p.especialidades?.length ? ` • Especialidades: ${p.especialidades.slice(0, 2).join(", ")}` : ""}`,
+  category: "Profissional",
+  type: p.modalidade_trabalho || "Autônomo",
+  location: `${p.cidade}, ${p.estado}`,
+  rating: 0,
+  reviews: 0,
+  image: null,
+  tags: [...(p.especialidades || []).slice(0, 3), p.funcao_principal].filter(Boolean),
+  rawData: p,
+});
+
+const transformEmpresa = (e: any): MarketplaceItem => ({
+  id: e.id,
+  title: e.nome_empresa,
+  description: `${e.tamanho_empresa} • ${e.tipos_obras?.slice(0, 2).join(", ") || "Construção"}`,
+  category: "Empresa",
+  type: e.tamanho_empresa || "Empresa",
+  location: `${e.cidade}, ${e.estado}`,
+  rating: 0,
+  reviews: 0,
+  image: e.logo_path || null,
+  tags: (e.tipos_obras || []).slice(0, 3),
+  rawData: e,
+});
+
+const transformFornecedor = (f: any): MarketplaceItem => ({
+  id: f.id,
+  title: f.nome_empresa,
+  description: `${f.tipos_atuacao?.slice(0, 2).join(", ") || "Fornecedor"} • ${f.categorias_atendidas?.slice(0, 2).join(", ") || ""}`,
+  category: "Fornecedor",
+  type: f.tipos_atuacao?.[0] || "Fornecedor",
+  location: `${f.cidade}, ${f.estado}`,
+  rating: 0,
+  reviews: 0,
+  image: f.logo_path || null,
+  tags: [...(f.categorias_atendidas || []).slice(0, 3)],
+  rawData: f,
+});
 
 const Marketplace = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
   const [activeTab, setActiveTab] = useState("todos");
 
-  // Lógica de Filtro
-  const filteredItems = ITEMS.filter((item) => {
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Fetch data from Supabase
+  const { data: profissionais = [], isLoading: loadingProf } = useQuery({
+    queryKey: ["marketplace-profissionais"],
+    queryFn: fetchProfissionais,
+  });
 
-    const matchesCategory =
-      activeTab === "todos"
-        ? true
-        : activeTab === "mao_de_obra"
-          ? item.category === "Mão de Obra"
-          : activeTab === "materiais"
-            ? item.category === "Materiais"
-            : activeTab === "equipamentos"
-              ? item.category === "Equipamentos"
-              : activeTab === "servicos"
-                ? item.category === "Serviços"
+  const { data: empresas = [], isLoading: loadingEmp } = useQuery({
+    queryKey: ["marketplace-empresas"],
+    queryFn: fetchEmpresas,
+  });
+
+  const { data: fornecedores = [], isLoading: loadingForn } = useQuery({
+    queryKey: ["marketplace-fornecedores"],
+    queryFn: fetchFornecedores,
+  });
+
+  const isLoading = loadingProf || loadingEmp || loadingForn;
+
+  // Transform and combine all items
+  const allItems = useMemo(() => {
+    const profItems = profissionais.map(transformProfissional);
+    const empItems = empresas.map(transformEmpresa);
+    const fornItems = fornecedores.map(transformFornecedor);
+    return [...profItems, ...empItems, ...fornItems];
+  }, [profissionais, empresas, fornecedores]);
+
+  // Filter logic
+  const filteredItems = useMemo(() => {
+    return allItems.filter((item) => {
+      const matchesSearch =
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesCategory =
+        activeTab === "todos"
+          ? true
+          : activeTab === "profissionais"
+            ? item.category === "Profissional"
+            : activeTab === "empresas"
+              ? item.category === "Empresa"
+              : activeTab === "fornecedores"
+                ? item.category === "Fornecedor"
                 : true;
 
-    return matchesSearch && matchesCategory;
-  });
+      return matchesSearch && matchesCategory;
+    });
+  }, [allItems, searchTerm, activeTab]);
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
@@ -121,7 +162,7 @@ const Marketplace = () => {
             </div>
             <h1 className="text-4xl font-heading font-bold text-slate-900 mb-2">Marketplace da Construção</h1>
             <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-              Conecte-se com os melhores fornecedores, prestadores de serviço e locadores de equipamentos da sua região.
+              Conecte-se com os melhores profissionais, empresas e fornecedores cadastrados na plataforma.
             </p>
           </motion.div>
 
@@ -136,7 +177,7 @@ const Marketplace = () => {
               <Search className="h-5 w-5 text-slate-400 group-focus-within:text-secondary transition-colors" />
             </div>
             <Input
-              placeholder="O que você precisa para sua obra hoje?"
+              placeholder="Buscar profissionais, empresas ou fornecedores..."
               className="h-14 pl-12 pr-4 rounded-full border-slate-200 shadow-sm text-base focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -158,38 +199,37 @@ const Marketplace = () => {
                 value="todos"
                 className="rounded-full px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white"
               >
-                Todos
+                Todos ({allItems.length})
               </TabsTrigger>
               <TabsTrigger
-                value="mao_de_obra"
+                value="profissionais"
                 className="rounded-full px-6 py-2.5 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
               >
-                <Hammer className="h-4 w-4" /> Mão de Obra
+                <Hammer className="h-4 w-4" /> Profissionais ({profissionais.length})
               </TabsTrigger>
               <TabsTrigger
-                value="materiais"
+                value="empresas"
                 className="rounded-full px-6 py-2.5 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
               >
-                <Package className="h-4 w-4" /> Materiais
+                <Briefcase className="h-4 w-4" /> Empresas ({empresas.length})
               </TabsTrigger>
               <TabsTrigger
-                value="equipamentos"
+                value="fornecedores"
                 className="rounded-full px-6 py-2.5 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
               >
-                <Truck className="h-4 w-4" /> Equipamentos
-              </TabsTrigger>
-              <TabsTrigger
-                value="servicos"
-                className="rounded-full px-6 py-2.5 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
-                <Briefcase className="h-4 w-4" /> Serviços
+                <Truck className="h-4 w-4" /> Fornecedores ({fornecedores.length})
               </TabsTrigger>
             </TabsList>
           </div>
 
           <TabsContent value={activeTab} className="mt-0 focus-visible:ring-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItems.length > 0 ? (
+              {isLoading ? (
+                <div className="col-span-full py-20 text-center text-slate-400">
+                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                  <p>Carregando...</p>
+                </div>
+              ) : filteredItems.length > 0 ? (
                 filteredItems.map((item, index) => (
                   <motion.div
                     key={item.id}
@@ -204,7 +244,7 @@ const Marketplace = () => {
                 <div className="col-span-full py-20 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
                   <Filter className="h-12 w-12 mx-auto mb-4 opacity-20" />
                   <p className="text-lg font-medium">Nenhum item encontrado.</p>
-                  <p className="text-sm">Tente buscar por outros termos ou categorias.</p>
+                  <p className="text-sm">Cadastre profissionais, empresas ou fornecedores nos formulários públicos.</p>
                 </div>
               )}
             </div>

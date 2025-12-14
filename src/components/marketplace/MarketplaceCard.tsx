@@ -1,25 +1,39 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Star, ArrowRight } from "lucide-react";
-
-interface MarketplaceItem {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  type: string;
-  location: string;
-  rating: number;
-  reviews: number;
-  image: string;
-  tags: string[];
-}
+import { MapPin, ArrowRight, User, Building2, Truck } from "lucide-react";
+import type { MarketplaceItem } from "@/pages/Marketplace";
 
 interface MarketplaceCardProps {
   item: MarketplaceItem;
   onClick: () => void;
 }
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "Profissional":
+      return <User className="h-4 w-4" />;
+    case "Empresa":
+      return <Building2 className="h-4 w-4" />;
+    case "Fornecedor":
+      return <Truck className="h-4 w-4" />;
+    default:
+      return null;
+  }
+};
+
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case "Profissional":
+      return "bg-blue-100 text-blue-700";
+    case "Empresa":
+      return "bg-emerald-100 text-emerald-700";
+    case "Fornecedor":
+      return "bg-amber-100 text-amber-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+};
 
 // CORREÇÃO: Exportação nomeada
 export function MarketplaceCard({ item, onClick }: MarketplaceCardProps) {
@@ -28,30 +42,31 @@ export function MarketplaceCard({ item, onClick }: MarketplaceCardProps) {
       className="group overflow-hidden cursor-pointer border-border/60 hover:shadow-xl hover:border-secondary/30 transition-all duration-300 h-full flex flex-col bg-white"
       onClick={onClick}
     >
-      {/* Imagem de Capa */}
-      <div className="relative h-48 overflow-hidden bg-slate-100">
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
+      {/* Header com ícone ou imagem */}
+      <div className="relative h-32 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400">
+            {getCategoryIcon(item.category)}
+          </div>
+        )}
         <div className="absolute top-3 right-3 flex gap-2">
-          <Badge className="bg-white/90 text-slate-800 hover:bg-white backdrop-blur-sm shadow-sm font-semibold border-none">
-            {item.type}
+          <Badge className={`${getCategoryColor(item.category)} backdrop-blur-sm shadow-sm font-semibold border-none flex items-center gap-1`}>
+            {getCategoryIcon(item.category)}
+            {item.category}
           </Badge>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
       <CardContent className="p-5 flex-1 flex flex-col gap-3">
-        {/* Categoria e Rating */}
+        {/* Tipo */}
         <div className="flex justify-between items-start">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">{item.category}</span>
-          <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded text-amber-700">
-            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-            <span className="text-xs font-bold">{item.rating}</span>
-            <span className="text-[10px] text-amber-600/70">({item.reviews})</span>
-          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">{item.type}</span>
         </div>
 
         <h3 className="font-heading font-bold text-lg text-slate-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
