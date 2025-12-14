@@ -39,7 +39,7 @@ const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) 
 
       const { data, error } = await supabase
         .from('tarefas')
-        .select('setor, disciplina, seg, ter, qua, qui, sex, sab, dom')
+        .select('setor, disciplina, percentual_executado')
         .eq('obra_id', obraId);
 
       if (error) {
@@ -58,16 +58,10 @@ const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) 
             stats[key] = { total: 0, completed: 0 };
           }
 
-          const days = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const;
-          days.forEach(day => {
-            const dayValue = task[day];
-            if (dayValue === 'P' || dayValue === 'Planejada') {
-              stats[key].total++;
-            } else if (dayValue === 'C' || dayValue === 'Executada') {
-              stats[key].total++;
-              stats[key].completed++;
-            }
-          });
+          stats[key].total++;
+          if (task.percentual_executado === 1) {
+            stats[key].completed++;
+          }
         });
 
         const processedData: BreakdownData[] = Object.entries(stats)
