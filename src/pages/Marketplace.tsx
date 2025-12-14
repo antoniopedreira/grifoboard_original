@@ -1,14 +1,15 @@
 import { useState } from "react";
 import MainHeader from "@/components/MainHeader";
-import MarketplaceCard from "@/components/marketplace/MarketplaceCard";
-import MarketplaceDetailModal from "@/components/marketplace/MarketplaceDetailModal";
+// CORREÇÃO: Usando importação nomeada (com chaves)
+import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
+import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Store, Hammer, Truck, Package, Briefcase, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 
-// Mock Data (Simulando banco de dados)
+// Mock Data
 const ITEMS = [
   {
     id: 1,
