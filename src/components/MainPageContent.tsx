@@ -14,28 +14,57 @@ import { Loader2, LayoutList, PieChart, TrendingUp, Award, Layers, AlertCircle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-// CORREÇÃO: Importando o 'cn' aqui
 import { cn } from "@/lib/utils";
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   Cell,
+  LabelList,
 } from "recharts";
-import { format } from "date-fns";
+import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client"; // Importação direta para Analytics
 
-// --- SUB-COMPONENTES DE ANALYTICS ---
+// --- SUB-COMPONENTES DE ANALYTICS (GLOBAL) ---
 
-// 1. Gráfico de Histórico Semanal
-const WeeklyHistoryChart = ({ data }: { data: any[] }) => {
-  if (!data || data.length === 0) {
+// 1. Gráfico de Evolução do PCP (Estilo Barra Escura - Igual Dashboard)
+const WeeklyHistoryChart = ({ tasks }: { tasks: any[] }) => {
+  const chartData = useMemo(() => {
+    if (!tasks || tasks.length === 0) return [];
+
+    // Agrupar tarefas por semana (Data de Início)
+    const weeksMap = new Map();
+
+    tasks.forEach((t) => {
+      // Normaliza a data para o início da semana (segunda-feira)
+      const date = new Date(t.weekStartDate);
+      const weekStartStr = format(date, "yyyy-MM-dd");
+
+      if (!weeksMap.has(weekStartStr)) {
+        weeksMap.set(weekStartStr, { total: 0, completed: 0, date: date });
+      }
+
+      const current = weeksMap.get(weekStartStr);
+      current.total++;
+      if (t.isFullyCompleted) current.completed++;
+    });
+
+    // Converter para array e ordenar
+    return Array.from(weeksMap.entries())
+      .map(([key, val]) => ({
+        date: format(addDays(val.date, 1), "dd/MM", { locale: ptBR }), // Ajuste visual de dia
+        fullDate: val.date,
+        pcp: val.total > 0 ? Math.round((val.completed / val.total) * 100) : 0,
+      }))
+      .sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
+  }, [tasks]);
+
+  if (chartData.length === 0) {
     return (
       <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
         <TrendingUp className="h-10 w-10 mb-2 opacity-20" />
@@ -44,135 +73,51 @@ const WeeklyHistoryChart = ({ data }: { data: any[] }) => {
     );
   }
 
-  // Formatar dados para o gráfico
-  const chartData = data
-    .filter((d) => d.weekStartDate && !isNaN(new Date(d.weekStartDate).getTime()))
-    .map((d) => ({
-      name: `Sem ${d.weekNumber || '?'}`,
-      date: format(new Date(d.weekStartDate), "dd/MM", { locale: ptBR }),
-      pcp: d.percentage || 0,
-      fullDate: d.weekStartDate,
-    }))
-    .reverse();
-
   return (
-    <div className="h-[300px] w-full">
+    <div className="h-[350px] w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="colorPcp" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
-            </linearGradient>
-          </defs>
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} barSize={50}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
           <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dy={10} />
-          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} unit="%" />
+          <YAxis hide domain={[0, 100]} />
           <RechartsTooltip
+            cursor={{ fill: "transparent" }}
             contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-            cursor={{ stroke: "#0ea5e9", strokeWidth: 1 }}
+            formatter={(value: number) => [`${value}%`, "PCP"]}
           />
-          <Area
-            type="monotone"
-            dataKey="pcp"
-            stroke="#0ea5e9"
-            strokeWidth={3}
-            fillOpacity={1}
-            fill="url(#colorPcp)"
-            activeDot={{ r: 6, strokeWidth: 0 }}
-          />
-        </AreaChart>
+          <Bar dataKey="pcp" radius={[4, 4, 0, 0]}>
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill="#1e293b" /> // Cor escura (Slate 800) igual imagem
+            ))}
+            <LabelList
+              dataKey="pcp"
+              position="top"
+              formatter={(val: number) => `${val}%`}
+              style={{ fill: "#1e293b", fontWeight: "bold", fontSize: "12px" }}
+            />
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
 };
 
-// 2. Ranking de Performance (Executantes)
-const ExecutorRanking = ({ tasks }: { tasks: any[] }) => {
-  // Agrupar e calcular performance
-  const stats = useMemo(() => {
-    const map = new Map();
-    tasks.forEach((t) => {
-      const name = t.team || "Sem Equipe";
-      if (!map.has(name)) map.set(name, { total: 0, completed: 0 });
-      const current = map.get(name);
-      current.total++;
-      if (t.isFullyCompleted) current.completed++;
-    });
-
-    return Array.from(map.entries())
-      .map(([name, data]) => ({
-        name,
-        percentage: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
-        ...data,
-      }))
-      .sort((a, b) => b.percentage - a.percentage); // Ordenar por melhor performance
-  }, [tasks]);
-
-  if (stats.length === 0)
-    return <p className="text-sm text-muted-foreground">Nenhuma tarefa registrada nesta semana.</p>;
-
-  return (
-    <div className="space-y-5">
-      {stats.map((stat, index) => (
-        <div key={stat.name} className="space-y-2">
-          <div className="flex justify-between items-end">
-            <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold",
-                  index === 0
-                    ? "bg-yellow-100 text-yellow-700"
-                    : index === 1
-                      ? "bg-slate-100 text-slate-600"
-                      : index === 2
-                        ? "bg-orange-100 text-orange-700"
-                        : "bg-transparent text-slate-400",
-                )}
-              >
-                {index + 1}
-              </span>
-              <span className="text-sm font-medium text-slate-700 truncate max-w-[150px]">{stat.name}</span>
-            </div>
-            <span className="text-xs font-bold text-slate-600">{stat.percentage}%</span>
-          </div>
-          <Progress
-            value={stat.percentage}
-            className={cn(
-              "h-2",
-              stat.percentage >= 80 ? "bg-slate-100" : stat.percentage >= 50 ? "bg-slate-100" : "bg-slate-100",
-            )}
-          >
-            <div
-              className={cn(
-                "h-full transition-all rounded-full",
-                stat.percentage >= 100
-                  ? "bg-green-500"
-                  : stat.percentage >= 70
-                    ? "bg-blue-500"
-                    : stat.percentage >= 40
-                      ? "bg-yellow-500"
-                      : "bg-red-500",
-              )}
-              style={{ width: `${stat.percentage}%` }}
-            />
-          </Progress>
-          <div className="flex justify-between text-[10px] text-slate-400 px-1">
-            <span>{stat.completed} concluídas</span>
-            <span>{stat.total} total</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// 3. Breakdown por Setor ou Disciplina
-const BreakdownChart = ({ tasks, type }: { tasks: any[]; type: "sector" | "discipline" }) => {
+// 2. Ranking de Performance Global (Média de todas as semanas)
+const GlobalRanking = ({
+  tasks,
+  type,
+  title,
+  icon: Icon,
+}: {
+  tasks: any[];
+  type: "team" | "sector" | "discipline";
+  title: string;
+  icon: any;
+}) => {
   const data = useMemo(() => {
     const map = new Map();
     tasks.forEach((t) => {
-      const key = t[type] || "N/A";
+      const key = t[type] || "Não Definido";
       if (!map.has(key)) map.set(key, { total: 0, completed: 0 });
       const current = map.get(key);
       current.total++;
@@ -184,46 +129,80 @@ const BreakdownChart = ({ tasks, type }: { tasks: any[]; type: "sector" | "disci
         name,
         percentage: d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0,
         count: d.total,
+        completed: d.completed,
       }))
-      .sort((a, b) => b.count - a.count); // Ordenar por volume de tarefas
+      .filter((i) => i.count > 0)
+      .sort((a, b) => b.percentage - a.percentage); // Ordenar por % de sucesso
   }, [tasks, type]);
 
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {data.map((item) => (
-        <div
-          key={item.name}
-          className="bg-slate-50 border border-slate-100 p-3 rounded-lg flex flex-col justify-between hover:bg-white hover:shadow-sm transition-all"
-        >
-          <div className="flex justify-between items-start mb-2">
-            <span
-              className="text-xs font-bold text-slate-600 uppercase truncate max-w-[80%] break-words leading-tight"
-              title={item.name}
-            >
-              {item.name}
-            </span>
-            <span className="text-[10px] bg-white border border-slate-200 px-1.5 rounded text-slate-500">
-              {item.count}
-            </span>
-          </div>
+  if (data.length === 0)
+    return <div className="p-4 text-center text-sm text-muted-foreground">Sem dados para análise.</div>;
 
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px]">
-              <span className="text-slate-400">PCP</span>
-              <span
-                className={cn(
-                  "font-bold",
-                  item.percentage >= 80 ? "text-green-600" : item.percentage < 50 ? "text-red-500" : "text-slate-600",
+  return (
+    <Card className="border-border/60 shadow-sm flex flex-col h-full">
+      <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
+        <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
+          <Icon className="h-4 w-4 text-secondary" />
+          {title}
+        </CardTitle>
+        <CardDescription className="text-xs">Média acumulada de todas as semanas.</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-4 flex-1 overflow-y-auto max-h-[300px] custom-scrollbar">
+        <div className="space-y-4">
+          {data.map((item, index) => (
+            <div key={item.name} className="space-y-1.5">
+              <div className="flex justify-between items-end">
+                <div className="flex items-center gap-2">
+                  {index < 3 && type === "team" && (
+                    <span
+                      className={cn(
+                        "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold",
+                        index === 0
+                          ? "bg-yellow-100 text-yellow-700"
+                          : index === 1
+                            ? "bg-slate-100 text-slate-600"
+                            : "bg-orange-100 text-orange-700",
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                  )}
+                  <span className="text-xs font-bold text-slate-700 uppercase truncate max-w-[140px]" title={item.name}>
+                    {item.name}
+                  </span>
+                </div>
+                <span
+                  className={cn(
+                    "text-xs font-bold",
+                    item.percentage >= 80 ? "text-green-600" : item.percentage < 50 ? "text-red-500" : "text-slate-600",
+                  )}
+                >
+                  {item.percentage}%
+                </span>
+              </div>
+              <Progress
+                value={item.percentage}
+                className={cn("h-2 bg-slate-100")}
+                indicatorClassName={cn(
+                  item.percentage >= 80
+                    ? "bg-green-500"
+                    : item.percentage >= 50
+                      ? "bg-blue-500"
+                      : item.percentage >= 30
+                        ? "bg-yellow-500"
+                        : "bg-red-500",
                 )}
-              >
-                {item.percentage}%
-              </span>
+              />
+              <div className="flex justify-between text-[9px] text-slate-400 px-0.5">
+                <span>
+                  {item.completed}/{item.count} tarefas
+                </span>
+              </div>
             </div>
-            <Progress value={item.percentage} className="h-1.5" />
-          </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -236,6 +215,11 @@ const MainPageContent = () => {
   const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
   const [activeTab, setActiveTab] = useState("planning");
 
+  // Estado para Analytics Global
+  const [allTasks, setAllTasks] = useState<any[]>([]);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+
+  // Estados de Semana (Para a aba de Planejamento)
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
   const [weekEndDate, setWeekEndDate] = useState(new Date());
 
@@ -245,6 +229,7 @@ const MainPageContent = () => {
     setWeekEndDate(endDate);
   }, [weekStartDate]);
 
+  // Hook original (traz dados apenas da semana selecionada)
   const {
     tasks,
     isLoading,
@@ -256,6 +241,36 @@ const MainPageContent = () => {
     handleTaskDuplicate,
     handleCopyToNextWeek,
   } = useTaskManager(weekStartDate);
+
+  // --- NOVO: Fetch de DADOS GLOBAIS para Analytics ---
+  useEffect(() => {
+    if (activeTab === "analytics") {
+      const fetchAllTasks = async () => {
+        setIsLoadingAnalytics(true);
+        try {
+          // Busca TODAS as tarefas sem filtro de semana
+          const { data, error } = await supabase
+            .from("tarefas")
+            .select("*")
+            .order("weekStartDate", { ascending: true });
+
+          if (error) throw error;
+          if (data) setAllTasks(data);
+        } catch (error) {
+          console.error("Erro ao carregar analytics:", error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar o histórico completo.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingAnalytics(false);
+        }
+      };
+
+      fetchAllTasks();
+    }
+  }, [activeTab]); // Só roda quando troca para a aba Analytics
 
   const handleCauseSelect = (cause: string) => {
     if (selectedCause === cause) {
@@ -288,9 +303,9 @@ const MainPageContent = () => {
         />
       </motion.div>
 
-      {/* 2. Abas: Planejamento vs Inteligência */}
+      {/* 2. Sistema de Abas */}
       <Tabs defaultValue="planning" value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-        {/* Header das Abas + Navegação Temporal */}
+        {/* Header das Abas */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-border pb-2 bg-white/50 backdrop-blur-sm sticky top-0 z-20 pt-2">
           <TabsList className="bg-slate-100 p-1">
             <TabsTrigger
@@ -309,7 +324,13 @@ const MainPageContent = () => {
             </TabsTrigger>
           </TabsList>
 
-          <div className="w-full sm:w-auto">
+          {/* Navegação Temporal (Só aparece na aba de Planejamento ou se quiser filtrar o Dashboard também, mas por padrão Dashboard é global) */}
+          <div
+            className={cn(
+              "w-full sm:w-auto transition-opacity duration-300",
+              activeTab === "analytics" ? "opacity-50 pointer-events-none grayscale" : "opacity-100",
+            )}
+          >
             <WeekNavigation
               weekStartDate={weekStartDate}
               weekEndDate={weekEndDate}
@@ -321,7 +342,6 @@ const MainPageContent = () => {
 
         {/* === ABA 1: PLANEJAMENTO (OPERACIONAL) === */}
         <TabsContent value="planning" className="space-y-6 outline-none animate-in fade-in-50 duration-300">
-          {/* HUD (Indicadores Rápidos) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -338,7 +358,6 @@ const MainPageContent = () => {
             />
           </motion.div>
 
-          {/* Lista de Tarefas */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
@@ -361,72 +380,40 @@ const MainPageContent = () => {
           </motion.div>
         </TabsContent>
 
-        {/* === ABA 2: INDICADORES (ESTRATÉGICO) === */}
+        {/* === ABA 2: INDICADORES (ESTRATÉGICO - DADOS GLOBAIS) === */}
         <TabsContent value="analytics" className="space-y-6 outline-none animate-in fade-in-50 duration-300">
-          {/* Linha 1: Histórico de Evolução */}
-          <Card className="border-border/60 shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-lg font-heading text-primary flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-secondary" />
-                    Histórico de Evolução PCP
-                  </CardTitle>
-                  <CardDescription>
-                    Acompanhamento do Índice de Planejamento Cumprido (PCP) semanalmente.
-                  </CardDescription>
-                </div>
+          {isLoadingAnalytics ? (
+            <div className="h-[400px] flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+          ) : (
+            <>
+              {/* Linha 1: Histórico de Evolução */}
+              <Card className="border-border/60 shadow-sm overflow-hidden">
+                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-lg font-heading text-primary flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-secondary" />
+                        Evolução do PCP
+                      </CardTitle>
+                      <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <WeeklyHistoryChart tasks={allTasks} />
+                </CardContent>
+              </Card>
+
+              {/* Linha 2: Breakdowns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <GlobalRanking tasks={allTasks} type="team" title="Ranking de Executantes" icon={Award} />
+                <GlobalRanking tasks={allTasks} type="sector" title="PCP por Setor" icon={Layers} />
+                <GlobalRanking tasks={allTasks} type="discipline" title="PCP por Disciplina" icon={AlertCircle} />
               </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <WeeklyHistoryChart data={weeklyPCPData} />
-            </CardContent>
-          </Card>
-
-          {/* Linha 2: Breakdowns */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Ranking de Equipes */}
-            <Card className="border-border/60 shadow-sm flex flex-col">
-              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
-                <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
-                  <Award className="h-4 w-4 text-secondary" />
-                  Ranking de Execução
-                </CardTitle>
-                <CardDescription className="text-xs">Performance por equipe na semana selecionada.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-4 flex-1">
-                <ExecutorRanking tasks={tasks} />
-              </CardContent>
-            </Card>
-
-            {/* Desempenho por Setor */}
-            <Card className="border-border/60 shadow-sm flex flex-col">
-              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
-                <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-secondary" />
-                  Análise por Setor
-                </CardTitle>
-                <CardDescription className="text-xs">Aderência ao planejamento por local.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-4 flex-1">
-                <BreakdownChart tasks={tasks} type="sector" />
-              </CardContent>
-            </Card>
-
-            {/* Desempenho por Disciplina */}
-            <Card className="border-border/60 shadow-sm flex flex-col">
-              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
-                <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-secondary" />
-                  Análise por Disciplina
-                </CardTitle>
-                <CardDescription className="text-xs">Aderência por tipo de serviço.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-4 flex-1">
-                <BreakdownChart tasks={tasks} type="discipline" />
-              </CardContent>
-            </Card>
-          </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
