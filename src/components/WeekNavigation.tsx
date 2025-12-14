@@ -57,7 +57,7 @@ const WeekNavigation = ({
             {currentWeekFormatted}
           </span>
           {isCurrentWeek && (
-            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-2 py-0.5 rounded-full uppercase tracking-wide">
+            <span className="text-[9px] font-bold text-white bg-emerald-500 px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse">
               Atual
             </span>
           )}
