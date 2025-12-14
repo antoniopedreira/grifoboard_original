@@ -1,944 +1,371 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { diarioService } from "@/services/diarioService";
+import MainHeader from "@/components/MainHeader";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CalendarIcon, Plus, FileText, Trash2, Filter, Image as ImageIcon, Pencil, Save, X } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { diarioService, type DiarioObra } from "@/services/diarioService";
-import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PhotoGallery } from "@/components/diario/PhotoGallery";
-import { PhotoUploader } from "@/components/diario/PhotoUploader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatISODateToBR, formatISODateToLongBR } from "@/lib/utils/formatters";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useToast } from "@/hooks/use-toast";
+import { format, ptBR } from "date-fns";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Save,
+  CloudSun,
+  HardHat,
+  ClipboardList,
+  Camera,
+  Loader2,
+  FileText,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import PhotoUploader from "@/components/diario/PhotoUploader";
+import PhotoGallery from "@/components/diario/PhotoGallery";
+import { motion } from "framer-motion";
 
-export default function DiarioObra() {
+const DiarioObra = () => {
   const { userSession } = useAuth();
+  const { toast } = useToast();
   const [date, setDate] = useState<Date>(new Date());
-  const [clima, setClima] = useState("");
-  const [equipamentos, setEquipamentos] = useState("");
-  const [maoDeObra, setMaoDeObra] = useState("");
-  const [atividades, setAtividades] = useState("");
-  const [observacoes, setObservacoes] = useState("");
-  const [diarios, setDiarios] = useState<DiarioObra[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filterStartDate, setFilterStartDate] = useState<Date | undefined>();
-  const [filterEndDate, setFilterEndDate] = useState<Date | undefined>();
-  const [showFilters, setShowFilters] = useState(false);
-  const obraId = userSession?.obraAtiva?.id || undefined;
-  const [selectedDiario, setSelectedDiario] = useState<DiarioObra | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [selectedDiarioPhotos, setSelectedDiarioPhotos] = useState<DiarioFoto[]>([]);
-  const [selectedDiarioPhotosLoading, setSelectedDiarioPhotosLoading] = useState(false);
-  
-  // Estados para edição
-  const [isEditing, setIsEditing] = useState(false);
-  const [editClima, setEditClima] = useState("");
-  const [editMaoDeObra, setEditMaoDeObra] = useState("");
-  const [editEquipamentos, setEditEquipamentos] = useState("");
-  const [editAtividades, setEditAtividades] = useState("");
-  const [editObservacoes, setEditObservacoes] = useState("");
-  
-  // Estados para fotos
-  const [photoDate, setPhotoDate] = useState<Date>(new Date());
-  const [userFilter, setUserFilter] = useState<"todos" | string>("todos");
-  const [photos, setPhotos] = useState<DiarioFoto[]>([]);
-  const [photosLoading, setPhotosLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPhotos, setTotalPhotos] = useState(0);
-  const pageSize = 30;
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Estado do formulário
+  const [diarioId, setDiarioId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    clima_manha: "",
+    clima_tarde: "",
+    clima_noite: "",
+    mao_de_obra: "",
+    equipamentos: "",
+    atividades: "",
+    ocorrencias: "",
+    observacoes: "",
+  });
+
+  const obraId = userSession?.obraAtiva?.id;
+
+  // Carregar dados ao mudar a data ou obra
   useEffect(() => {
-    loadDiarios();
-  }, [obraId, filterStartDate, filterEndDate]);
+    if (obraId) {
+      loadDiario();
+    }
+  }, [date, obraId]);
 
-  useEffect(() => {
-    loadPhotos();
-  }, [obraId, photoDate, userFilter, currentPage]);
+  const loadDiario = async () => {
+    setIsLoading(true);
+    try {
+      const data = await diarioService.getDiarioByDate(obraId!, date);
+      if (data) {
+        setDiarioId(data.id);
+        setFormData({
+          clima_manha: data.clima_manha || "",
+          clima_tarde: data.clima_tarde || "",
+          clima_noite: data.clima_noite || "",
+          mao_de_obra: data.mao_de_obra || "",
+          equipamentos: data.equipamentos || "",
+          atividades: data.atividades || "",
+          ocorrencias: data.ocorrencias || "",
+          observacoes: data.observacoes || "",
+        });
+      } else {
+        setDiarioId(null);
+        // Reset form
+        setFormData({
+          clima_manha: "",
+          clima_tarde: "",
+          clima_noite: "",
+          mao_de_obra: "",
+          equipamentos: "",
+          atividades: "",
+          ocorrencias: "",
+          observacoes: "",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar diário:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados do diário.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const loadDiarios = async () => {
+  const handleSave = async () => {
     if (!obraId) return;
 
+    setIsSaving(true);
     try {
-      setLoading(true);
-      const data = await diarioService.getByObra(
-        obraId,
-        filterStartDate ? format(filterStartDate, "yyyy-MM-dd") : undefined,
-        filterEndDate ? format(filterEndDate, "yyyy-MM-dd") : undefined
-      );
-      setDiarios(data);
-    } catch (error) {
-      console.error("Error loading diarios:", error);
-      toast.error("Erro ao carregar diários");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log("UserSession:", userSession);
-    console.log("Obra Ativa:", userSession?.obraAtiva);
-    console.log("User:", userSession?.user);
-    
-    if (!obraId) {
-      toast.error("Selecione uma obra primeiro");
-      return;
-    }
-
-    if (!userSession?.user?.id) {
-      toast.error("Usuário não autenticado");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const diarioData = {
+      const savedDiario = await diarioService.upsertDiario({
+        id: diarioId,
         obra_id: obraId,
-        data: format(date, "yyyy-MM-dd"),
-        clima,
-        mao_de_obra: maoDeObra,
-        equipamentos,
-        atividades,
-        observacoes,
-        created_by: userSession.user.id,
-      };
-      
-      console.log("Tentando salvar diário:", diarioData);
-      
-      await diarioService.create(diarioData);
-
-      toast.success("Registro do diário salvo com sucesso!");
-      
-      // Clear form
-      setClima("");
-      setEquipamentos("");
-      setMaoDeObra("");
-      setAtividades("");
-      setObservacoes("");
-      setDate(new Date());
-
-      // Reload diarios
-      loadDiarios();
-    } catch (error: any) {
-      console.error("Error saving diario:", error);
-      console.error("Error details:", error?.message, error?.details, error?.hint);
-      toast.error(`Erro ao salvar diário: ${error?.message || "Erro desconhecido"}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Deseja realmente excluir este registro?")) return;
-
-    try {
-      await diarioService.delete(id);
-      toast.success("Registro excluído com sucesso");
-      loadDiarios();
-    } catch (error) {
-      console.error("Error deleting diario:", error);
-      toast.error("Erro ao excluir registro");
-    }
-  };
-
-  const clearFilters = () => {
-    setFilterStartDate(undefined);
-    setFilterEndDate(undefined);
-  };
-
-  const handleViewDetails = async (diario: DiarioObra) => {
-    setSelectedDiario(diario);
-    setDetailsOpen(true);
-    setIsEditing(false);
-    
-    // Inicializar estados de edição
-    setEditClima(diario.clima || "");
-    setEditMaoDeObra(diario.mao_de_obra || "");
-    setEditEquipamentos(diario.equipamentos || "");
-    setEditAtividades(diario.atividades || "");
-    setEditObservacoes(diario.observacoes || "");
-    
-    // Carregar fotos do dia
-    if (obraId) {
-      try {
-        setSelectedDiarioPhotosLoading(true);
-        const photosData = await diarioFotosService.loadPhotos(
-          obraId,
-          diario.data,
-          "todos", // Mostrar todas as fotos do dia
-          0,
-          100 // Carregar até 100 fotos
-        );
-        setSelectedDiarioPhotos(photosData);
-      } catch (error) {
-        console.error("Error loading photos for diario:", error);
-        setSelectedDiarioPhotos([]);
-      } finally {
-        setSelectedDiarioPhotosLoading(false);
-      }
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!selectedDiario) return;
-
-    try {
-      setLoading(true);
-      await diarioService.update(selectedDiario.id, {
-        clima: editClima,
-        mao_de_obra: editMaoDeObra,
-        equipamentos: editEquipamentos,
-        atividades: editAtividades,
-        observacoes: editObservacoes,
+        data_diario: format(date, "yyyy-MM-dd"),
+        ...formData,
       });
 
-      toast.success("Registro atualizado com sucesso!");
-      
-      // Atualizar o diário selecionado
-      setSelectedDiario({
-        ...selectedDiario,
-        clima: editClima,
-        mao_de_obra: editMaoDeObra,
-        equipamentos: editEquipamentos,
-        atividades: editAtividades,
-        observacoes: editObservacoes,
+      setDiarioId(savedDiario.id);
+      toast({
+        title: "Diário Salvo",
+        description: "As informações foram atualizadas com sucesso.",
+        className: "bg-green-50 border-green-200",
       });
-      
-      setIsEditing(false);
-      loadDiarios();
     } catch (error) {
-      console.error("Error updating diario:", error);
-      toast.error("Erro ao atualizar registro");
+      console.error("Erro ao salvar:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Verifique sua conexão e tente novamente.",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const handleCancelEdit = () => {
-    if (!selectedDiario) return;
-    
-    // Restaurar valores originais
-    setEditClima(selectedDiario.clima || "");
-    setEditMaoDeObra(selectedDiario.mao_de_obra || "");
-    setEditEquipamentos(selectedDiario.equipamentos || "");
-    setEditAtividades(selectedDiario.atividades || "");
-    setEditObservacoes(selectedDiario.observacoes || "");
-    setIsEditing(false);
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Funções para fotos
-  const loadPhotos = async () => {
-    if (!obraId) {
-      setPhotos([]);
-      return;
-    }
-
-    try {
-      setPhotosLoading(true);
-      const isoDate = diarioFotosService.toISODateBahia(photoDate);
-      
-      const [photosData, count] = await Promise.all([
-        diarioFotosService.loadPhotos(obraId, isoDate, userFilter, currentPage, pageSize),
-        diarioFotosService.countPhotos(obraId, isoDate, userFilter),
-      ]);
-      
-      setPhotos(photosData);
-      setTotalPhotos(count);
-    } catch (error) {
-      console.error("Error loading photos:", error);
-      toast.error("Erro ao carregar fotos");
-    } finally {
-      setPhotosLoading(false);
-    }
+  const navigateDay = (direction: "prev" | "next") => {
+    const newDate = new Date(date);
+    newDate.setDate(date.getDate() + (direction === "next" ? 1 : -1));
+    setDate(newDate);
   };
 
-  const handlePhotoUpload = async (files: File[], legenda?: string) => {
-    if (!obraId) {
-      toast.error("Selecione uma obra primeiro");
-      return;
-    }
-
-    const isoDate = diarioFotosService.toISODateBahia(photoDate);
-    await diarioFotosService.uploadDailyPhotos(obraId, isoDate, files, legenda);
-    
-    // Recarregar galeria
-    setCurrentPage(0);
-    await loadPhotos();
-  };
-
-  const handlePhotoDelete = async (id: string, path: string) => {
-    try {
-      await diarioFotosService.deletePhoto(id, path);
-      toast.success("Foto excluída com sucesso");
-      await loadPhotos();
-    } catch (error: any) {
-      console.error("Error deleting photo:", error);
-      toast.error(`Erro ao excluir foto: ${error?.message || "Erro desconhecido"}`);
-    }
-  };
+  const climaOptions = ["Ensolarado", "Nublado", "Chuvoso", "Variável", "Impraticável"];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Diário de Obra</h1>
-        <p className="text-gray-600">Registre eventos, atividades e fotos do dia</p>
-      </div>
+    <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-6">
+      {/* Header Global */}
+      <MainHeader
+        onNewTaskClick={() => {}} // Opcional nesta tela
+        onRegistryClick={() => {}}
+        onChecklistClick={() => {}}
+      />
 
-      <Tabs defaultValue="registro" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="registro">
-            <FileText className="h-4 w-4 mr-2" />
-            Registro Diário
-          </TabsTrigger>
-          <TabsTrigger value="fotos">
-            <ImageIcon className="h-4 w-4 mr-2" />
-            Fotos do Dia
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col gap-6">
+        {/* Barra de Navegação e Ações (Sticky) */}
+        <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md border-b border-slate-200 -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+          {/* Navegador de Data */}
+          <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigateDay("prev")}
+              className="h-9 w-9 hover:bg-slate-100"
+            >
+              <ChevronLeft className="h-4 w-4 text-slate-600" />
+            </Button>
 
-        {/* ABA DE REGISTRO DIÁRIO */}
-        <TabsContent value="registro" className="mt-6">
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Form Section */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Novo Registro
-              </CardTitle>
-              <CardDescription>
-                Preencha as informações do dia na obra
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Data */}
-                <div className="space-y-2">
-                  <Label htmlFor="data">Data</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={(date) => date && setDate(date)}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Clima */}
-                <div className="space-y-2">
-                  <Label htmlFor="clima">Condições Climáticas</Label>
-                  <Input
-                    id="clima"
-                    placeholder="Ex: Ensolarado, Nublado, Chuvoso..."
-                    value={clima}
-                    onChange={(e) => setClima(e.target.value)}
-                  />
-                </div>
-
-                {/* Mão de Obra */}
-                <div className="space-y-2">
-                  <Label htmlFor="maoDeObra">Mão de Obra</Label>
-                  <Textarea
-                    id="maoDeObra"
-                    placeholder="Descreva a quantidade e função dos trabalhadores presentes..."
-                    value={maoDeObra}
-                    onChange={(e) => setMaoDeObra(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                {/* Equipamentos */}
-                <div className="space-y-2">
-                  <Label htmlFor="equipamentos">Equipamentos Utilizados</Label>
-                  <Textarea
-                    id="equipamentos"
-                    placeholder="Liste os equipamentos e máquinas utilizados..."
-                    value={equipamentos}
-                    onChange={(e) => setEquipamentos(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                {/* Atividades */}
-                <div className="space-y-2">
-                  <Label htmlFor="atividades">Atividades Realizadas</Label>
-                  <Textarea
-                    id="atividades"
-                    placeholder="Descreva as principais atividades executadas..."
-                    value={atividades}
-                    onChange={(e) => setAtividades(e.target.value)}
-                    rows={4}
-                    required
-                  />
-                </div>
-
-                {/* Observações */}
-                <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações e Ocorrências</Label>
-                  <Textarea
-                    id="observacoes"
-                    placeholder="Registre qualquer observação importante, problemas, visitantes, entregas..."
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <Button type="submit" className="flex-1" disabled={loading || !obraId}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {loading ? "Salvando..." : "Salvar Registro"}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => {
-                      setClima("");
-                      setEquipamentos("");
-                      setMaoDeObra("");
-                      setAtividades("");
-                      setObservacoes("");
-                      setDate(new Date());
-                    }}
-                  >
-                    Limpar
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Entries Section */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Registros
-                </CardTitle>
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {showFilters && (
-                <div className="space-y-3 mb-4 p-3 bg-muted rounded-lg">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Data Inicial</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !filterStartDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {filterStartDate ? format(filterStartDate, "dd/MM/yyyy") : "Selecionar"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={filterStartDate}
-                          onSelect={setFilterStartDate}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Data Final</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !filterEndDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {filterEndDate ? format(filterEndDate, "dd/MM/yyyy") : "Selecionar"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={filterEndDate}
-                          onSelect={setFilterEndDate}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {(filterStartDate || filterEndDate) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={clearFilters}
-                    >
-                      Limpar Filtros
-                    </Button>
+                  className={cn(
+                    "justify-start text-left font-semibold w-[240px] h-9 hover:bg-slate-50",
+                    !date && "text-muted-foreground",
                   )}
-                </div>
-              )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                  {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus />
+              </PopoverContent>
+            </Popover>
 
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                {!obraId ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Selecione uma obra para ver os registros
-                  </p>
-                ) : loading ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Carregando...
-                  </p>
-                ) : diarios.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Nenhum registro encontrado
-                  </p>
-                ) : (
-                  diarios.map((diario) => (
-                    <div
-                      key={diario.id}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => handleViewDetails(diario)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">
-                          Registro {formatISODateToBR(diario.data)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(diario.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigateDay("next")}
+              className="h-9 w-9 hover:bg-slate-100"
+            >
+              <ChevronRight className="h-4 w-4 text-slate-600" />
+            </Button>
+          </div>
 
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="text-lg">Dicas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Registre diariamente todas as atividades</li>
-                <li>• Documente problemas e soluções</li>
-                <li>• Anote visitantes e entregas</li>
-                <li>• Registre condições climáticas</li>
-                <li>• Mantenha histórico completo</li>
-              </ul>
-            </CardContent>
-          </Card>
+          {/* Ações */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || isLoading}
+              className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-md transition-all gap-2"
+            >
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Salvar Diário
+            </Button>
+          </div>
         </div>
-      </div>
-        </TabsContent>
 
-        {/* ABA DE FOTOS */}
-        <TabsContent value="fotos" className="mt-6">
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Controles e Upload */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Filtros */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Filter className="h-5 w-5" />
-                    Filtros
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground">Carregando registros do dia...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Coluna Esquerda: Informações Gerais e Clima */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Card de Clima */}
+              <Card className="border-border/60 shadow-sm hover:shadow-md transition-all">
+                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
+                  <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
+                    <CloudSun className="h-4 w-4 text-secondary" />
+                    Condições Climáticas
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Seletor de Data */}
-                  <div className="space-y-2">
-                    <Label>Data das Fotos</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !photoDate && "text-muted-foreground"
-                          )}
+                <CardContent className="pt-4 space-y-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    {["manha", "tarde", "noite"].map((periodo) => (
+                      <div key={periodo} className="flex items-center justify-between gap-4">
+                        <Label className="capitalize w-16 text-slate-600">{periodo}</Label>
+                        <Select
+                          value={formData[`clima_${periodo}` as keyof typeof formData]}
+                          onValueChange={(val) => handleInputChange(`clima_${periodo}`, val)}
                         >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {photoDate ? format(photoDate, "PPP", { locale: ptBR }) : "Selecione uma data"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={photoDate}
-                          onSelect={(date) => {
-                            if (date) {
-                              setPhotoDate(date);
-                              setCurrentPage(0);
-                            }
-                          }}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                          <SelectTrigger className="flex-1 h-9 border-slate-200">
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {climaOptions.map((opt) => (
+                              <SelectItem key={opt} value={opt}>
+                                {opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
                   </div>
-
-                  {/* Filtro de Usuário */}
-                  <div className="space-y-2">
-                    <Label>Filtrar por Usuário</Label>
-                    <Select value={userFilter} onValueChange={(value) => {
-                      setUserFilter(value);
-                      setCurrentPage(0);
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos os usuários</SelectItem>
-                        <SelectItem value={userSession?.user?.id || ""}>
-                          Somente eu
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Info de resultados */}
-                  {totalPhotos > 0 && (
-                    <div className="pt-2 border-t">
-                      <p className="text-sm text-muted-foreground">
-                        {totalPhotos} foto(s) encontrada(s)
-                      </p>
-                      {totalPhotos > pageSize && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Página {currentPage + 1} de {Math.ceil(totalPhotos / pageSize)}
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
-              {/* Upload de Fotos */}
-              <PhotoUploader
-                onUpload={handlePhotoUpload}
-                disabled={!obraId}
-              />
+              {/* Card de Mão de Obra e Equipamentos */}
+              <Card className="border-border/60 shadow-sm hover:shadow-md transition-all">
+                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
+                  <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
+                    <HardHat className="h-4 w-4 text-secondary" />
+                    Recursos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase">Mão de Obra (Qtd e Tipo)</Label>
+                    <Textarea
+                      placeholder="Ex: 5 Pedreiros, 4 Serventes..."
+                      value={formData.mao_de_obra}
+                      onChange={(e) => handleInputChange("mao_de_obra", e.target.value)}
+                      className="min-h-[80px] border-slate-200 resize-none focus:border-secondary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase">Equipamentos Utilizados</Label>
+                    <Textarea
+                      placeholder="Ex: 1 Betoneira, 1 Serra Circular..."
+                      value={formData.equipamentos}
+                      onChange={(e) => handleInputChange("equipamentos", e.target.value)}
+                      className="min-h-[80px] border-slate-200 resize-none focus:border-secondary"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Galeria de Fotos */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    Galeria - {format(photoDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            {/* Coluna Direita: Atividades e Fotos */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* Card de Atividades */}
+              <Card className="border-border/60 shadow-sm hover:shadow-md transition-all">
+                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
+                  <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-secondary" />
+                    Registro de Atividades
                   </CardTitle>
+                  <CardDescription>Descrição detalhada dos serviços executados no dia.</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase">Atividades Executadas</Label>
+                    <Textarea
+                      placeholder="Descreva o que foi feito hoje..."
+                      value={formData.atividades}
+                      onChange={(e) => handleInputChange("atividades", e.target.value)}
+                      className="min-h-[150px] border-slate-200 focus:border-secondary text-base leading-relaxed"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase">Ocorrências / Impeditivos</Label>
+                      <Textarea
+                        placeholder="Houve algum problema?"
+                        value={formData.ocorrencias}
+                        onChange={(e) => handleInputChange("ocorrencias", e.target.value)}
+                        className="min-h-[100px] border-red-100 focus:border-red-300 bg-red-50/10"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase">Observações Gerais</Label>
+                      <Textarea
+                        placeholder="Outras anotações..."
+                        value={formData.observacoes}
+                        onChange={(e) => handleInputChange("observacoes", e.target.value)}
+                        className="min-h-[100px] border-slate-200"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Seção de Fotos */}
+              <Card className="border-border/60 shadow-sm hover:shadow-md transition-all overflow-hidden">
+                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
+                      <Camera className="h-4 w-4 text-secondary" />
+                      Galeria de Fotos
+                    </CardTitle>
+                    {diarioId && (
+                      <PhotoUploader
+                        diarioId={diarioId}
+                        onUploadSuccess={() => {
+                          // Gatilho para recarregar galeria se necessário, ou usar Contexto
+                          // Como o PhotoGallery busca sozinho pelo ID, apenas garantir que ele saiba que mudou
+                          // Uma solução simples é forçar re-render ou usar ref, mas aqui vamos confiar no estado
+                          toast({ title: "Foto enviada!", description: "A galeria será atualizada." });
+                        }}
+                      />
+                    )}
+                  </div>
                   <CardDescription>
-                    {userFilter === "todos" ? "Todas as fotos" : "Apenas suas fotos"}
+                    {!diarioId ? "Salve o diário primeiro para adicionar fotos." : "Documentação visual do dia."}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  {!obraId ? (
-                    <div className="text-center py-12">
-                      <p className="text-muted-foreground">Selecione uma obra para ver as fotos</p>
-                    </div>
+                <CardContent className="pt-6 bg-slate-50/30 min-h-[200px]">
+                  {diarioId ? (
+                    <PhotoGallery diarioId={diarioId} />
                   ) : (
-                    <>
-                      <PhotoGallery
-                        photos={photos}
-                        currentUserId={userSession?.user?.id}
-                        onDelete={handlePhotoDelete}
-                        loading={photosLoading}
-                      />
-
-                      {/* Paginação */}
-                      {totalPhotos > pageSize && (
-                        <div className="flex justify-center gap-2 mt-6 pt-6 border-t">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={currentPage === 0}
-                            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                          >
-                            Anterior
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={(currentPage + 1) * pageSize >= totalPhotos}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                          >
-                            Próxima
-                          </Button>
-                        </div>
-                      )}
-                    </>
+                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground border-2 border-dashed border-slate-200 rounded-xl">
+                      <FileText className="h-8 w-8 mb-2 opacity-20" />
+                      <p>Preencha e salve o diário para habilitar o envio de fotos.</p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={(open) => {
-        setDetailsOpen(open);
-        if (!open) setIsEditing(false);
-      }}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>
-                Registro - {selectedDiario && formatISODateToLongBR(selectedDiario.data)}
-              </DialogTitle>
-              {!isEditing && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
-              )}
-            </div>
-          </DialogHeader>
-
-          {selectedDiario && (
-            <div className="space-y-6">
-              {/* Informações Textuais */}
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-semibold">Condições Climáticas</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editClima}
-                      onChange={(e) => setEditClima(e.target.value)}
-                      placeholder="Ex: Ensolarado, Nublado, Chuvoso..."
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {selectedDiario.clima || "-"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold">Mão de Obra</Label>
-                  {isEditing ? (
-                    <Textarea
-                      value={editMaoDeObra}
-                      onChange={(e) => setEditMaoDeObra(e.target.value)}
-                      placeholder="Descreva a quantidade e função dos trabalhadores presentes..."
-                      rows={3}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                      {selectedDiario.mao_de_obra || "-"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold">Equipamentos Utilizados</Label>
-                  {isEditing ? (
-                    <Textarea
-                      value={editEquipamentos}
-                      onChange={(e) => setEditEquipamentos(e.target.value)}
-                      placeholder="Liste os equipamentos e máquinas utilizados..."
-                      rows={3}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                      {selectedDiario.equipamentos || "-"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold">Atividades Realizadas</Label>
-                  {isEditing ? (
-                    <Textarea
-                      value={editAtividades}
-                      onChange={(e) => setEditAtividades(e.target.value)}
-                      placeholder="Descreva as principais atividades executadas..."
-                      rows={4}
-                      className="mt-1"
-                      required
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                      {selectedDiario.atividades}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold">Observações e Ocorrências</Label>
-                  {isEditing ? (
-                    <Textarea
-                      value={editObservacoes}
-                      onChange={(e) => setEditObservacoes(e.target.value)}
-                      placeholder="Registre qualquer observação importante, problemas, visitantes, entregas..."
-                      rows={4}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                      {selectedDiario.observacoes || "-"}
-                    </p>
-                  )}
-                </div>
-
-                {/* Botões de Edição */}
-                {isEditing && (
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      onClick={handleSaveEdit}
-                      disabled={loading || !editAtividades.trim()}
-                      className="flex-1"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {loading ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleCancelEdit}
-                      disabled={loading}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancelar
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Fotos do Dia */}
-              <Separator />
-              
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <ImageIcon className="h-5 w-5" />
-                  <Label className="text-sm font-semibold">Fotos do Dia</Label>
-                  {!selectedDiarioPhotosLoading && selectedDiarioPhotos.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      ({selectedDiarioPhotos.length} foto{selectedDiarioPhotos.length !== 1 ? 's' : ''})
-                    </span>
-                  )}
-                </div>
-                
-                {selectedDiarioPhotosLoading ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">Carregando fotos...</p>
-                  </div>
-                ) : selectedDiarioPhotos.length === 0 ? (
-                  <div className="text-center py-8 bg-muted/30 rounded-lg">
-                    <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">Nenhuma foto neste dia</p>
-                  </div>
-                ) : (
-                  <PhotoGallery
-                    photos={selectedDiarioPhotos}
-                    currentUserId={userSession?.user?.id}
-                    onDelete={async (id, path) => {
-                      await handlePhotoDelete(id, path);
-                      // Recarregar fotos do modal
-                      const updatedPhotos = await diarioFotosService.loadPhotos(
-                        obraId!,
-                        selectedDiario.data,
-                        "todos",
-                        0,
-                        100
-                      );
-                      setSelectedDiarioPhotos(updatedPhotos);
-                    }}
-                    loading={false}
-                  />
-                )}
-              </div>
-
-              <Separator />
-
-              {!isEditing && (
-                <div className="flex justify-between items-center text-xs text-muted-foreground">
-                  <span>
-                    Criado em: {format(new Date(selectedDiario.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                  </span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      handleDelete(selectedDiario.id);
-                      setDetailsOpen(false);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir Registro
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default DiarioObra;
