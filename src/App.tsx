@@ -136,7 +136,7 @@ function App() {
                   <RouteRestorer />
                   <AppLayout>
                     <Routes>
-                      <Route path="/" element={<Navigate to="/tarefas" replace />} />
+                      <Route path="/" element={<Navigate to="/obras" replace />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />

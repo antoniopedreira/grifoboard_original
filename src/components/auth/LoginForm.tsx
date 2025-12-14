@@ -44,7 +44,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
       await signIn(email, password);
       
       // Depois do login, verifica a role e redireciona UMA vez
-      let targetPath = '/tarefas';
+      let targetPath = '/obras';
       try {
         const isMasterAdmin = await masterAdminService.isMasterAdmin();
         if (isMasterAdmin) {
