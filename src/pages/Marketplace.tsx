@@ -1,258 +1,308 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import MainHeader from "@/components/MainHeader";
-import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
-import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
+import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Store, Hammer, Truck, Briefcase, Filter } from "lucide-react";
-import { motion } from "framer-motion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Building2, User, Truck, MapPin, Star, Filter } from "lucide-react";
+import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
+import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Types for marketplace items
-export interface MarketplaceItem {
+type TargetType = "empresa" | "profissional" | "fornecedor";
+
+interface MarketplaceItem {
   id: string;
-  title: string;
-  description: string;
-  category: "Profissional" | "Empresa" | "Fornecedor";
-  type: string;
+  type: TargetType;
+  name: string;
   location: string;
+  categories?: string[];
   rating: number;
-  reviews: number;
-  image: string | null;
-  tags: string[];
-  rawData: any;
+  reviewCount: number;
+  data: any;
 }
 
-// Fetch functions
-const fetchProfissionais = async () => {
-  const { data, error } = await supabase
-    .from("formulario_profissionais")
-    .select("*");
-  if (error) throw error;
-  return data || [];
-};
-
-const fetchEmpresas = async () => {
-  const { data, error } = await supabase
-    .from("formulario_empresas")
-    .select("*");
-  if (error) throw error;
-  return data || [];
-};
-
-const fetchFornecedores = async () => {
-  const { data, error } = await supabase
-    .from("formulario_fornecedores")
-    .select("*");
-  if (error) throw error;
-  return data || [];
-};
-
-// Transform functions
-const transformProfissional = (p: any): MarketplaceItem => ({
-  id: p.id,
-  title: p.nome_completo,
-  description: `${p.funcao_principal}${p.especialidades?.length ? ` • Especialidades: ${p.especialidades.slice(0, 2).join(", ")}` : ""}`,
-  category: "Profissional",
-  type: p.modalidade_trabalho || "Autônomo",
-  location: `${p.cidade}, ${p.estado}`,
-  rating: 0,
-  reviews: 0,
-  image: null,
-  tags: [...(p.especialidades || []).slice(0, 3), p.funcao_principal].filter(Boolean),
-  rawData: p,
-});
-
-const transformEmpresa = (e: any): MarketplaceItem => ({
-  id: e.id,
-  title: e.nome_empresa,
-  description: `${e.tamanho_empresa} • ${e.tipos_obras?.slice(0, 2).join(", ") || "Construção"}`,
-  category: "Empresa",
-  type: e.tamanho_empresa || "Empresa",
-  location: `${e.cidade}, ${e.estado}`,
-  rating: 0,
-  reviews: 0,
-  image: e.logo_path || null,
-  tags: (e.tipos_obras || []).slice(0, 3),
-  rawData: e,
-});
-
-const transformFornecedor = (f: any): MarketplaceItem => ({
-  id: f.id,
-  title: f.nome_empresa,
-  description: `${f.tipos_atuacao?.slice(0, 2).join(", ") || "Fornecedor"} • ${f.categorias_atendidas?.slice(0, 2).join(", ") || ""}`,
-  category: "Fornecedor",
-  type: f.tipos_atuacao?.[0] || "Fornecedor",
-  location: `${f.cidade}, ${f.estado}`,
-  rating: 0,
-  reviews: 0,
-  image: f.logo_path || null,
-  tags: [...(f.categorias_atendidas || []).slice(0, 3)],
-  rawData: f,
-});
+const REGIOES = [
+  "Norte",
+  "Nordeste", 
+  "Centro-Oeste",
+  "Sudeste",
+  "Sul"
+];
 
 const Marketplace = () => {
+  const { userSession } = useAuth();
+  const [activeTab, setActiveTab] = useState<TargetType>("profissional");
   const [searchTerm, setSearchTerm] = useState("");
+  const [regiaoFiltro, setRegiaoFiltro] = useState<string>("all");
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
-  const [activeTab, setActiveTab] = useState("todos");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [empresas, setEmpresas] = useState<any[]>([]);
+  const [profissionais, setProfissionais] = useState<any[]>([]);
+  const [fornecedores, setFornecedores] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch data from Supabase
-  const { data: profissionais = [], isLoading: loadingProf } = useQuery({
-    queryKey: ["marketplace-profissionais"],
-    queryFn: fetchProfissionais,
-  });
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [empresasRes, profissionaisRes, fornecedoresRes, reviewsRes] = await Promise.all([
+        supabase.from("formulario_empresas").select("*"),
+        supabase.from("formulario_profissionais").select("*"),
+        supabase.from("formulario_fornecedores").select("*"),
+        supabase.from("marketplace_reviews").select("*")
+      ]);
 
-  const { data: empresas = [], isLoading: loadingEmp } = useQuery({
-    queryKey: ["marketplace-empresas"],
-    queryFn: fetchEmpresas,
-  });
+      if (empresasRes.data) setEmpresas(empresasRes.data);
+      if (profissionaisRes.data) setProfissionais(profissionaisRes.data);
+      if (fornecedoresRes.data) setFornecedores(fornecedoresRes.data);
+      if (reviewsRes.data) setReviews(reviewsRes.data);
+    } catch (error) {
+      console.error("Error fetching marketplace data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const { data: fornecedores = [], isLoading: loadingForn } = useQuery({
-    queryKey: ["marketplace-fornecedores"],
-    queryFn: fetchFornecedores,
-  });
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const isLoading = loadingProf || loadingEmp || loadingForn;
+  const getAverageRating = (targetType: TargetType, targetId: string) => {
+    const targetReviews = reviews.filter(
+      r => r.target_type === targetType && r.target_id === targetId
+    );
+    if (targetReviews.length === 0) return { rating: 0, count: 0 };
+    const avg = targetReviews.reduce((acc, r) => acc + r.rating, 0) / targetReviews.length;
+    return { rating: Math.round(avg * 10) / 10, count: targetReviews.length };
+  };
 
-  // Transform and combine all items
-  const allItems = useMemo(() => {
-    const profItems = profissionais.map(transformProfissional);
-    const empItems = empresas.map(transformEmpresa);
-    const fornItems = fornecedores.map(transformFornecedor);
-    return [...profItems, ...empItems, ...fornItems];
-  }, [profissionais, empresas, fornecedores]);
+  const processedItems = useMemo(() => {
+    let items: MarketplaceItem[] = [];
 
-  // Filter logic
-  const filteredItems = useMemo(() => {
-    return allItems.filter((item) => {
-      const matchesSearch =
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    if (activeTab === "empresa") {
+      items = empresas.map(e => {
+        const { rating, count } = getAverageRating("empresa", e.id);
+        return {
+          id: e.id,
+          type: "empresa" as TargetType,
+          name: e.nome_empresa,
+          location: `${e.cidade}, ${e.estado}`,
+          categories: e.tipos_obras || [],
+          rating,
+          reviewCount: count,
+          data: e
+        };
+      });
+    } else if (activeTab === "profissional") {
+      items = profissionais.map(p => {
+        const { rating, count } = getAverageRating("profissional", p.id);
+        return {
+          id: p.id,
+          type: "profissional" as TargetType,
+          name: p.nome_completo,
+          location: `${p.cidade}, ${p.estado}`,
+          categories: p.especialidades || [],
+          rating,
+          reviewCount: count,
+          data: p
+        };
+      });
+    } else {
+      items = fornecedores.map(f => {
+        const { rating, count } = getAverageRating("fornecedor", f.id);
+        return {
+          id: f.id,
+          type: "fornecedor" as TargetType,
+          name: f.nome_empresa,
+          location: `${f.cidade}, ${f.estado}`,
+          categories: f.categorias_atendidas || [],
+          rating,
+          reviewCount: count,
+          data: f
+        };
+      });
+    }
 
-      const matchesCategory =
-        activeTab === "todos"
-          ? true
-          : activeTab === "profissionais"
-            ? item.category === "Profissional"
-            : activeTab === "empresas"
-              ? item.category === "Empresa"
-              : activeTab === "fornecedores"
-                ? item.category === "Fornecedor"
-                : true;
+    // Apply filters
+    if (searchTerm) {
+      items = items.filter(item =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.categories?.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [allItems, searchTerm, activeTab]);
+    if (regiaoFiltro && regiaoFiltro !== "all") {
+      items = items.filter(item => {
+        const data = item.data;
+        const regioes = data.regioes_atendidas || [];
+        return regioes.includes(regiaoFiltro);
+      });
+    }
+
+    if (categoriaFiltro && categoriaFiltro !== "all") {
+      items = items.filter(item => 
+        item.categories?.includes(categoriaFiltro)
+      );
+    }
+
+    return items;
+  }, [activeTab, empresas, profissionais, fornecedores, reviews, searchTerm, regiaoFiltro, categoriaFiltro]);
+
+  const availableCategories = useMemo(() => {
+    let categories: string[] = [];
+    if (activeTab === "empresa") {
+      empresas.forEach(e => {
+        if (e.tipos_obras) categories.push(...e.tipos_obras);
+      });
+    } else if (activeTab === "profissional") {
+      profissionais.forEach(p => {
+        if (p.especialidades) categories.push(...p.especialidades);
+      });
+    } else {
+      fornecedores.forEach(f => {
+        if (f.categorias_atendidas) categories.push(...f.categorias_atendidas);
+      });
+    }
+    return [...new Set(categories)].sort();
+  }, [activeTab, empresas, profissionais, fornecedores]);
+
+  const handleCardClick = (item: MarketplaceItem) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleReviewSubmitted = () => {
+    fetchData();
+  };
+
+  const getTabIcon = (type: TargetType) => {
+    switch (type) {
+      case "empresa": return <Building2 className="h-4 w-4" />;
+      case "profissional": return <User className="h-4 w-4" />;
+      case "fornecedor": return <Truck className="h-4 w-4" />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
-      {/* Header Global */}
-      <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 pt-6">
-        <MainHeader onNewTaskClick={() => {}} onRegistryClick={() => {}} onChecklistClick={() => {}} />
-      </div>
-
-      {/* Hero Section do Marketplace */}
-      <div className="bg-white border-b border-slate-200 pt-8 pb-12 px-4 sm:px-6 mb-8 mt-6">
-        <div className="container mx-auto max-w-[1200px] text-center space-y-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <div className="inline-flex items-center justify-center p-3 bg-secondary/10 rounded-full mb-4">
-              <Store className="h-8 w-8 text-secondary" />
-            </div>
-            <h1 className="text-4xl font-heading font-bold text-slate-900 mb-2">Marketplace da Construção</h1>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-              Conecte-se com os melhores profissionais, empresas e fornecedores cadastrados na plataforma.
-            </p>
-          </motion.div>
-
-          {/* Barra de Busca Grande */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="max-w-2xl mx-auto relative group"
-          >
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-slate-400 group-focus-within:text-secondary transition-colors" />
-            </div>
-            <Input
-              placeholder="Buscar profissionais, empresas ou fornecedores..."
-              className="h-14 pl-12 pr-4 rounded-full border-slate-200 shadow-sm text-base focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Button className="absolute right-2 top-2 h-10 rounded-full px-6 bg-secondary hover:bg-secondary/90 transition-all">
-              Buscar
-            </Button>
-          </motion.div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Marketplace</h1>
+          <p className="text-muted-foreground">
+            Encontre profissionais, empresas e fornecedores para sua obra
+          </p>
         </div>
-      </div>
 
-      {/* Conteúdo Principal */}
-      <div className="container mx-auto max-w-[1600px] px-4 sm:px-6">
-        <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          {/* Navegação de Categorias */}
-          <div className="flex justify-center">
-            <TabsList className="h-auto p-1.5 bg-white border border-slate-200 rounded-full shadow-sm overflow-x-auto flex-nowrap justify-start sm:justify-center w-full sm:w-auto">
-              <TabsTrigger
-                value="todos"
-                className="rounded-full px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
-                Todos ({allItems.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="profissionais"
-                className="rounded-full px-6 py-2.5 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
-                <Hammer className="h-4 w-4" /> Profissionais ({profissionais.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="empresas"
-                className="rounded-full px-6 py-2.5 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
-                <Briefcase className="h-4 w-4" /> Empresas ({empresas.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="fornecedores"
-                className="rounded-full px-6 py-2.5 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
-                <Truck className="h-4 w-4" /> Fornecedores ({fornecedores.length})
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value={activeTab} className="mt-0 focus-visible:ring-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {isLoading ? (
-                <div className="col-span-full py-20 text-center text-slate-400">
-                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-                  <p>Carregando...</p>
-                </div>
-              ) : filteredItems.length > 0 ? (
-                filteredItems.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <MarketplaceCard item={item} onClick={() => setSelectedItem(item)} />
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-full py-20 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-                  <Filter className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p className="text-lg font-medium">Nenhum item encontrado.</p>
-                  <p className="text-sm">Cadastre profissionais, empresas ou fornecedores nos formulários públicos.</p>
-                </div>
-              )}
+        {/* Search and Filters */}
+        <div className="bg-card rounded-xl border shadow-sm p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, cidade ou categoria..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
+            <div className="flex gap-3">
+              <Select value={regiaoFiltro} onValueChange={setRegiaoFiltro}>
+                <SelectTrigger className="w-[160px]">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Região" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas regiões</SelectItem>
+                  {REGIOES.map(r => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas categorias</SelectItem>
+                  {availableCategories.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={(v) => {
+          setActiveTab(v as TargetType);
+          setCategoriaFiltro("all");
+        }}>
+          <TabsList className="mb-6 bg-muted/50">
+            <TabsTrigger value="profissional" className="gap-2">
+              <User className="h-4 w-4" />
+              Profissionais
+            </TabsTrigger>
+            <TabsTrigger value="fornecedor" className="gap-2">
+              <Truck className="h-4 w-4" />
+              Fornecedores
+            </TabsTrigger>
+            <TabsTrigger value="empresa" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Empresas
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab}>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <Skeleton key={i} className="h-64 rounded-xl" />
+                ))}
+              </div>
+            ) : processedItems.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+                  {getTabIcon(activeTab)}
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  Nenhum resultado encontrado
+                </h3>
+                <p className="text-muted-foreground">
+                  Tente ajustar os filtros ou a busca
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {processedItems.map((item) => (
+                  <MarketplaceCard
+                    key={item.id}
+                    item={item}
+                    onClick={() => handleCardClick(item)}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
 
-      <MarketplaceDetailModal item={selectedItem} isOpen={!!selectedItem} onClose={() => setSelectedItem(null)} />
+      {/* Detail Modal */}
+      <MarketplaceDetailModal
+        item={selectedItem}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedItem(null);
+        }}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
     </div>
   );
 };
