@@ -27,19 +27,10 @@ const PCPGeneralCard: React.FC<PCPGeneralCardProps> = ({ className }) => {
     }
 
     try {
-      // Get current week start (Monday)
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const currentWeekStart = new Date(today);
-      currentWeekStart.setDate(today.getDate() + diff);
-      currentWeekStart.setHours(0, 0, 0, 0);
-
       const { data, error } = await supabase
         .from('tarefas')
-        .select('seg, ter, qua, qui, sex, sab, dom, semana')
-        .eq('obra_id', obraId)
-        .lte('semana', currentWeekStart.toISOString().split('T')[0]);
+        .select('seg, ter, qua, qui, sex, sab, dom')
+        .eq('obra_id', obraId);
 
       if (error) {
         console.error("Erro ao buscar dados gerais:", error);

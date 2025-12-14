@@ -51,20 +51,11 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ barColor = "#021C2F" })
 
     try {
       setIsLoading(true);
-      
-      // Get current week start (Monday)
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const currentWeekStart = new Date(today);
-      currentWeekStart.setDate(today.getDate() + diff);
-      currentWeekStart.setHours(0, 0, 0, 0);
 
       const { data, error } = await supabase
         .from("resumo_execucao_semanal")
         .select("semana, percentual_concluido")
         .eq("obra_id", obraId)
-        .lte("semana", currentWeekStart.toISOString().split('T')[0])
         .order("semana", { ascending: true });
 
       if (error) {
