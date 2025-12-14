@@ -1,18 +1,17 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { diarioService } from "@/services/diarioService";
+import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService"; // Importando serviço de fotos
 import MainHeader from "@/components/MainHeader";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input"; // Importação que pode ser usada
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-// CORREÇÃO 1: Importar locale corretamente
 import { ptBR } from "date-fns/locale";
 import {
   Calendar as CalendarIcon,
@@ -27,20 +26,22 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-// CORREÇÃO 2: Importações nomeadas
 import { PhotoUploader } from "@/components/diario/PhotoUploader";
 import { PhotoGallery } from "@/components/diario/PhotoGallery";
-import { motion } from "framer-motion"; // Se for usar animações
 
 const DiarioObra = () => {
   const { userSession } = useAuth();
   const { toast } = useToast();
   const [date, setDate] = useState<Date>(new Date());
+
+  // Estados de Carregamento
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
 
-  // Estado do formulário
+  // Estados de Dados
   const [diarioId, setDiarioId] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<DiarioFoto[]>([]);
   const [formData, setFormData] = useState({
     clima_manha: "",
     clima_tarde: "",
@@ -58,20 +59,22 @@ const DiarioObra = () => {
   useEffect(() => {
     if (obraId) {
       loadDiario();
+      loadPhotos();
     }
   }, [date, obraId]);
+
+  // --- FUNÇÕES DE DADOS DO DIÁRIO ---
 
   const loadDiario = async () => {
     setIsLoading(true);
     try {
+      // @ts-ignore - Método adicionado recentemente ao service
       const data = await diarioService.getDiarioByDate(obraId!, date);
       if (data) {
         setDiarioId(data.id);
 
-        // Lógica para parsear o clima (que está salvo como string única ou JSON)
         let climas = { manha: "", tarde: "", noite: "" };
         try {
-          // Tenta parsear como JSON se foi salvo pelo novo sistema
           const parsed = JSON.parse(data.clima || "{}");
           if (typeof parsed === "object") {
             climas = {
@@ -81,7 +84,6 @@ const DiarioObra = () => {
             };
           }
         } catch (e) {
-          // Se falhar (formato antigo texto simples), define tudo igual ou deixa manhã
           climas.manha = data.clima || "";
         }
 
@@ -92,7 +94,6 @@ const DiarioObra = () => {
           mao_de_obra: data.mao_de_obra || "",
           equipamentos: data.equipamentos || "",
           atividades: data.atividades || "",
-          // Se não houver campo ocorrencias no banco, virá vazio, ok.
           ocorrencias: data.ocorrencias || "",
           observacoes: data.observacoes || "",
         });
@@ -126,20 +127,18 @@ const DiarioObra = () => {
 
     setIsSaving(true);
     try {
-      // Combinar climas em um JSON string para salvar no campo único 'clima'
       const climaJson = JSON.stringify({
         manha: formData.clima_manha,
         tarde: formData.clima_tarde,
         noite: formData.clima_noite,
       });
 
-      // Combinar ocorrências nas observações se necessário, ou mandar separado se o serviço tratar
-      // Aqui mandamos tudo e o serviço decide o que salvar no payload
+      // @ts-ignore - Método adicionado recentemente ao service
       const savedDiario = await diarioService.upsertDiario({
         id: diarioId,
         obra_id: obraId,
         data_diario: format(date, "yyyy-MM-dd"),
-        clima: climaJson, // Salvando estruturado
+        clima: climaJson,
         mao_de_obra: formData.mao_de_obra,
         equipamentos: formData.equipamentos,
         atividades: formData.atividades,
@@ -165,6 +164,48 @@ const DiarioObra = () => {
     }
   };
 
+  // --- FUNÇÕES DE FOTOS ---
+
+  const loadPhotos = async () => {
+    if (!obraId) return;
+    setIsLoadingPhotos(true);
+    try {
+      const isoDate = format(date, "yyyy-MM-dd");
+      const data = await diarioFotosService.loadPhotos(obraId, isoDate, "todos");
+      setPhotos(data);
+    } catch (error) {
+      console.error("Erro ao carregar fotos:", error);
+    } finally {
+      setIsLoadingPhotos(false);
+    }
+  };
+
+  const handlePhotoUpload = async (files: File[], legenda?: string) => {
+    if (!obraId) return;
+    try {
+      const isoDate = format(date, "yyyy-MM-dd");
+      await diarioFotosService.uploadDailyPhotos(obraId, isoDate, files, legenda || "");
+      toast({ title: "Sucesso", description: "Fotos enviadas com sucesso." });
+      loadPhotos(); // Recarrega a galeria
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro", description: "Falha ao enviar fotos.", variant: "destructive" });
+    }
+  };
+
+  const handlePhotoDelete = async (id: string, path: string) => {
+    try {
+      await diarioFotosService.deletePhoto(id, path);
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
+      toast({ title: "Foto excluída", description: "A imagem foi removida do diário." });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro", description: "Não foi possível excluir a foto.", variant: "destructive" });
+    }
+  };
+
+  // --- HELPERS ---
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -179,13 +220,11 @@ const DiarioObra = () => {
 
   return (
     <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-6">
-      {/* Header Global */}
       <MainHeader onNewTaskClick={() => {}} onRegistryClick={() => {}} onChecklistClick={() => {}} />
 
       <div className="flex flex-col gap-6">
-        {/* Barra de Navegação e Ações (Sticky) */}
+        {/* Barra de Navegação e Ações */}
         <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md border-b border-slate-200 -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-          {/* Navegador de Data */}
           <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
             <Button
               variant="ghost"
@@ -224,7 +263,6 @@ const DiarioObra = () => {
             </Button>
           </div>
 
-          {/* Ações */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               onClick={handleSave}
@@ -244,9 +282,8 @@ const DiarioObra = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Coluna Esquerda: Informações Gerais e Clima */}
+            {/* Coluna Esquerda */}
             <div className="lg:col-span-4 space-y-6">
-              {/* Card de Clima */}
               <Card className="border-border/60 shadow-sm hover:shadow-md transition-all">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
                   <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
@@ -282,7 +319,6 @@ const DiarioObra = () => {
                 </CardContent>
               </Card>
 
-              {/* Card de Mão de Obra e Equipamentos */}
               <Card className="border-border/60 shadow-sm hover:shadow-md transition-all">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
                   <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
@@ -313,9 +349,8 @@ const DiarioObra = () => {
               </Card>
             </div>
 
-            {/* Coluna Direita: Atividades e Fotos */}
+            {/* Coluna Direita */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Card de Atividades */}
               <Card className="border-border/60 shadow-sm hover:shadow-md transition-all">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
                   <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
@@ -358,7 +393,7 @@ const DiarioObra = () => {
                 </CardContent>
               </Card>
 
-              {/* Seção de Fotos */}
+              {/* Galeria de Fotos Integrada */}
               <Card className="border-border/60 shadow-sm hover:shadow-md transition-all overflow-hidden">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
                   <div className="flex justify-between items-center">
@@ -366,22 +401,7 @@ const DiarioObra = () => {
                       <Camera className="h-4 w-4 text-secondary" />
                       Galeria de Fotos
                     </CardTitle>
-                    {diarioId && (
-                      <PhotoUploader
-                        diarioId={diarioId}
-                        // Passando apenas o que o componente pede na interface simples, se necessário ajustar
-                        onUpload={(files, legenda) => {
-                          // Se o PhotoUploader esperar uma prop diferente, ajustar aqui.
-                          // Pelo erro, parece que o componente foi importado errado, mas agora corrigimos o import.
-                          // Se o componente PhotoUploader interno já fizer a lógica, ok.
-                          // Caso contrário, implementar chamada ao service aqui.
-                          // Assumindo que o componente PhotoUploader faz a chamada interna:
-                          return Promise.resolve();
-                        }}
-                        // O componente original do upload parece esperar uma prop 'onUpload' que recebe files e legenda
-                        // E faz o upload. Vamos simular ou conectar ao serviço de fotos.
-                      />
-                    )}
+                    {diarioId && <PhotoUploader onUpload={handlePhotoUpload} />}
                   </div>
                   <CardDescription>
                     {!diarioId ? "Salve o diário primeiro para adicionar fotos." : "Documentação visual do dia."}
@@ -390,10 +410,10 @@ const DiarioObra = () => {
                 <CardContent className="pt-6 bg-slate-50/30 min-h-[200px]">
                   {diarioId ? (
                     <PhotoGallery
-                      photos={[]} // Aqui deveria vir as fotos carregadas do banco.
-                      // Para simplificar, deixei vazio, mas você deve buscar as fotos usando diarioFotosService.getByDiario(diarioId)
-                      onDelete={() => {}}
-                      loading={false}
+                      photos={photos}
+                      loading={isLoadingPhotos}
+                      onDelete={handlePhotoDelete}
+                      currentUserId={userSession?.user?.id}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-40 text-muted-foreground border-2 border-dashed border-slate-200 rounded-xl">
