@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { diarioService } from "@/services/diarioService";
+import { diarioService, type DiarioObra as DiarioObraRecord } from "@/services/diarioService";
 import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService";
-import MainHeader from "@/components/MainHeader";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Calendar as CalendarIcon,
@@ -24,6 +25,8 @@ import {
   Camera,
   Loader2,
   FileText,
+  BookOpen,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PhotoUploader } from "@/components/diario/PhotoUploader";
@@ -38,10 +41,12 @@ const DiarioObra = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   // Estados de Dados
   const [diarioId, setDiarioId] = useState<string | null>(null);
   const [photos, setPhotos] = useState<DiarioFoto[]>([]);
+  const [diarioHistory, setDiarioHistory] = useState<DiarioObraRecord[]>([]);
   const [formData, setFormData] = useState({
     clima_manha: "",
     clima_tarde: "",
@@ -54,14 +59,14 @@ const DiarioObra = () => {
   });
 
   const obraId = userSession?.obraAtiva?.id;
+  const obraNome = userSession?.obraAtiva?.nome_obra;
 
   // Carregar dados ao mudar a data ou obra
   useEffect(() => {
     if (obraId) {
       loadDiario();
-      // O carregamento de fotos depende do diarioId ou da data?
-      // Pelo service de fotos, depende da data e obraId. Então podemos carregar em paralelo.
       loadPhotos();
+      loadDiarioHistory();
     }
   }, [date, obraId]);
 
@@ -164,6 +169,20 @@ const DiarioObra = () => {
     }
   };
 
+  // --- FUNÇÃO DE HISTÓRICO ---
+  const loadDiarioHistory = async () => {
+    if (!obraId) return;
+    setIsLoadingHistory(true);
+    try {
+      const data = await diarioService.getByObra(obraId);
+      setDiarioHistory(data);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   // --- FUNÇÕES DE FOTOS ---
 
   const loadPhotos = async () => {
@@ -217,11 +236,89 @@ const DiarioObra = () => {
     setDate(newDate);
   };
 
+  const handleSelectDiario = (diario: DiarioObraRecord) => {
+    setDate(parseISO(diario.data));
+  };
+
   const climaOptions = ["Ensolarado", "Nublado", "Chuvoso", "Variável", "Impraticável"];
 
   return (
     <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-6">
-      <MainHeader onNewTaskClick={() => {}} onRegistryClick={() => {}} onChecklistClick={() => {}} />
+      {/* Header da Página */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-primary flex items-center gap-2">
+            <BookOpen className="h-7 w-7 text-secondary" />
+            Diário de Obra
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {obraNome || "Selecione uma obra"}
+          </p>
+        </div>
+
+        {/* Histórico de Diários */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2 border-border shadow-sm">
+              <History className="h-4 w-4" />
+              Histórico
+              {diarioHistory.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {diarioHistory.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 p-0">
+            <div className="p-3 border-b border-border bg-muted/30">
+              <h4 className="font-semibold text-sm text-foreground">Diários Salvos</h4>
+              <p className="text-xs text-muted-foreground">Clique para visualizar</p>
+            </div>
+            <ScrollArea className="h-[280px]">
+              {isLoadingHistory ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : diarioHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                  <FileText className="h-8 w-8 mb-2 opacity-40" />
+                  <p className="text-sm">Nenhum diário registrado</p>
+                </div>
+              ) : (
+                <div className="p-2 space-y-1">
+                  {diarioHistory.map((diario) => {
+                    const isSelected = format(date, "yyyy-MM-dd") === diario.data;
+                    return (
+                      <button
+                        key={diario.id}
+                        onClick={() => handleSelectDiario(diario)}
+                        className={cn(
+                          "w-full text-left p-3 rounded-lg transition-all hover:bg-accent",
+                          isSelected && "bg-primary/10 border border-primary/20"
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm text-foreground">
+                            {format(parseISO(diario.data), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                          </span>
+                          {isSelected && (
+                            <Badge variant="default" className="text-xs h-5">
+                              Atual
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                          {diario.atividades || "Sem atividades registradas"}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
+      </div>
 
       <div className="flex flex-col gap-6">
         {/* Barra de Navegação e Ações */}
