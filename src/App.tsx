@@ -3,7 +3,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
-// O Header foi removido do layout de autenticação, então não precisamos renderizá-lo aqui
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import Index from "@/pages/Index";
@@ -22,6 +21,7 @@ import { useEffect, useState } from "react";
 import { Obra } from "./types/supabase";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CustomSidebar from "@/components/CustomSidebar";
+import MasterAdminSidebar from "@/components/MasterAdminSidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -35,8 +35,11 @@ const queryClient = new QueryClient({
   },
 });
 
+// Rotas exclusivas do master admin
+const masterAdminRoutes = ["/master-admin", "/formularios", "/base-de-dados"];
+
 // Componente Mobile Nav para telas pequenas
-const MobileNav = () => {
+const MobileNav = ({ isMasterAdmin }: { isMasterAdmin: boolean }) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -45,7 +48,7 @@ const MobileNav = () => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 bg-primary border-r-0 w-72">
-        <CustomSidebar />
+        {isMasterAdmin ? <MasterAdminSidebar /> : <CustomSidebar />}
         <style>{`
           [data-radix-collection-item] aside { display: flex !important; width: 100%; }
         `}</style>
@@ -58,6 +61,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isAuthPage = location.pathname === "/auth" || location.pathname === "/reset-password";
   const isFormPage = location.pathname.startsWith("/form/");
+  const isMasterAdminPage = masterAdminRoutes.includes(location.pathname);
 
   // Layout do App (Dashboard, Obras, etc)
   const isAppPage = !isAuthPage && !isFormPage;
@@ -66,7 +70,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   if (!isAppPage) {
     return (
       <div className="flex flex-col min-h-screen bg-background font-sans">
-        {/* CORREÇÃO: Header removido. As páginas de auth/form controlam seu próprio layout */}
         <main className="flex-1 flex flex-col">{children}</main>
       </div>
     );
@@ -75,8 +78,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   // Layout Logado (Sidebar + Conteúdo)
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans">
-      {/* Sidebar Desktop */}
-      <CustomSidebar />
+      {/* Sidebar Desktop - Master Admin ou Regular */}
+      {isMasterAdminPage ? <MasterAdminSidebar /> : <CustomSidebar />}
 
       <div className="flex flex-col flex-1 w-full overflow-hidden">
         {/* Header Mobile Simplificado */}
@@ -85,13 +88,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <img src="/lovable-uploads/grifo-logo-header.png" className="h-8 w-auto" alt="Grifo" />
             <span className="font-bold text-primary font-heading">GrifoBoard</span>
           </div>
-          <MobileNav />
+          <MobileNav isMasterAdmin={isMasterAdminPage} />
         </div>
 
         {/* Área de Conteúdo */}
         <main className="flex-1 relative overflow-hidden flex flex-col bg-background">
           <ScrollArea className="flex-1 h-full">
-            {/* CORREÇÃO AQUI: Padding reduzido para p-4 (mobile) e p-6 (desktop) para subir o conteúdo */}
             <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full pb-20">{children}</div>
           </ScrollArea>
         </main>
