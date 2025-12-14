@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import TaskForm from "@/components/TaskForm";
 import WeekNavigation from "@/components/WeekNavigation";
@@ -10,203 +10,15 @@ import MainHeader from "@/components/MainHeader";
 import PCPSection from "@/components/PCPSection";
 import TasksSection from "@/components/TasksSection";
 import { motion } from "framer-motion";
-import { Loader2, LayoutList, PieChart, TrendingUp, Award, Layers, AlertCircle } from "lucide-react";
+import { Loader2, LayoutList, PieChart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from "recharts";
-import { format, addDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
+import PCPOverallCard from "@/components/chart/PCPOverallCard";
+import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
+import PCPBreakdownCard from "@/components/chart/PCPBreakdownCard";
+import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
 
-// --- SUB-COMPONENTES DE ANALYTICS (GLOBAL) ---
-
-// 1. Gráfico de Evolução do PCP (Estilo Barra Escura)
-const WeeklyHistoryChart = ({ tasks }: { tasks: any[] }) => {
-  const chartData = useMemo(() => {
-    if (!tasks || tasks.length === 0) return [];
-
-    // Agrupar tarefas por semana
-    const weeksMap = new Map();
-
-    tasks.forEach((t) => {
-      const date = new Date(t.weekStartDate);
-      const weekStartStr = format(date, "yyyy-MM-dd");
-
-      if (!weeksMap.has(weekStartStr)) {
-        weeksMap.set(weekStartStr, { total: 0, completed: 0, date: date });
-      }
-
-      const current = weeksMap.get(weekStartStr);
-      current.total++;
-      if (t.isFullyCompleted) current.completed++;
-    });
-
-    return Array.from(weeksMap.entries())
-      .map(([key, val]) => ({
-        date: format(addDays(val.date, 1), "dd/MM", { locale: ptBR }),
-        fullDate: val.date,
-        pcp: val.total > 0 ? Math.round((val.completed / val.total) * 100) : 0,
-      }))
-      .sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
-  }, [tasks]);
-
-  if (chartData.length === 0) {
-    return (
-      <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-        <TrendingUp className="h-10 w-10 mb-2 opacity-20" />
-        <p className="text-sm">Sem histórico suficiente para exibir gráficos.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-[350px] w-full mt-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} barSize={50}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dy={10} />
-          <YAxis hide domain={[0, 100]} />
-          <RechartsTooltip
-            cursor={{ fill: "transparent" }}
-            contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-            formatter={(value: number) => [`${value}%`, "PCP"]}
-          />
-          <Bar dataKey="pcp" radius={[4, 4, 0, 0]}>
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill="#1e293b" />
-            ))}
-            <LabelList
-              dataKey="pcp"
-              position="top"
-              formatter={(val: number) => `${val}%`}
-              style={{ fill: "#1e293b", fontWeight: "bold", fontSize: "12px" }}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-// 2. Ranking de Performance Global (Custom Progress Bar)
-const GlobalRanking = ({
-  tasks,
-  type,
-  title,
-  icon: Icon,
-}: {
-  tasks: any[];
-  type: "team" | "sector" | "discipline";
-  title: string;
-  icon: any;
-}) => {
-  const data = useMemo(() => {
-    const map = new Map();
-    tasks.forEach((t) => {
-      const key = t[type] || "Não Definido";
-      if (!map.has(key)) map.set(key, { total: 0, completed: 0 });
-      const current = map.get(key);
-      current.total++;
-      if (t.isFullyCompleted) current.completed++;
-    });
-
-    return Array.from(map.entries())
-      .map(([name, d]) => ({
-        name,
-        percentage: d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0,
-        count: d.total,
-        completed: d.completed,
-      }))
-      .filter((i) => i.count > 0)
-      .sort((a, b) => b.percentage - a.percentage);
-  }, [tasks, type]);
-
-  if (data.length === 0)
-    return <div className="p-4 text-center text-sm text-muted-foreground">Sem dados para análise.</div>;
-
-  return (
-    <Card className="border-border/60 shadow-sm flex flex-col h-full">
-      <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
-        <CardTitle className="text-base font-heading text-primary flex items-center gap-2">
-          <Icon className="h-4 w-4 text-secondary" />
-          {title}
-        </CardTitle>
-        <CardDescription className="text-xs">Média acumulada de todas as semanas.</CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4 flex-1 overflow-y-auto max-h-[300px] custom-scrollbar">
-        <div className="space-y-4">
-          {data.map((item, index) => (
-            <div key={item.name} className="space-y-1.5">
-              <div className="flex justify-between items-end">
-                <div className="flex items-center gap-2">
-                  {index < 3 && type === "team" && (
-                    <span
-                      className={cn(
-                        "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold",
-                        index === 0
-                          ? "bg-yellow-100 text-yellow-700"
-                          : index === 1
-                            ? "bg-slate-100 text-slate-600"
-                            : "bg-orange-100 text-orange-700",
-                      )}
-                    >
-                      {index + 1}
-                    </span>
-                  )}
-                  <span className="text-xs font-bold text-slate-700 uppercase truncate max-w-[140px]" title={item.name}>
-                    {item.name}
-                  </span>
-                </div>
-                <span
-                  className={cn(
-                    "text-xs font-bold",
-                    item.percentage >= 80 ? "text-green-600" : item.percentage < 50 ? "text-red-500" : "text-slate-600",
-                  )}
-                >
-                  {item.percentage}%
-                </span>
-              </div>
-
-              {/* CORREÇÃO: Barra de Progresso Customizada (DIV) ao invés do componente Progress */}
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full transition-all duration-500 ease-in-out rounded-full",
-                    item.percentage >= 80
-                      ? "bg-green-500"
-                      : item.percentage >= 50
-                        ? "bg-blue-500"
-                        : item.percentage >= 30
-                          ? "bg-yellow-500"
-                          : "bg-red-500",
-                  )}
-                  style={{ width: `${item.percentage}%` }}
-                />
-              </div>
-
-              <div className="flex justify-between text-[9px] text-slate-400 px-0.5">
-                <span>
-                  {item.completed}/{item.count} tarefas
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 const MainPageContent = () => {
   const navigate = useNavigate();
@@ -216,9 +28,6 @@ const MainPageContent = () => {
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
   const [activeTab, setActiveTab] = useState("planning");
-
-  const [allTasks, setAllTasks] = useState<any[]>([]);
-  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
 
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
   const [weekEndDate, setWeekEndDate] = useState(new Date());
@@ -240,35 +49,6 @@ const MainPageContent = () => {
     handleTaskDuplicate,
     handleCopyToNextWeek,
   } = useTaskManager(weekStartDate);
-
-  // Fetch de DADOS GLOBAIS
-  useEffect(() => {
-    if (activeTab === "analytics") {
-      const fetchAllTasks = async () => {
-        setIsLoadingAnalytics(true);
-        try {
-          const { data, error } = await supabase
-            .from("tarefas")
-            .select("*")
-            .order("weekStartDate", { ascending: true });
-
-          if (error) throw error;
-          if (data) setAllTasks(data);
-        } catch (error) {
-          console.error("Erro ao carregar analytics:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar o histórico completo.",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoadingAnalytics(false);
-        }
-      };
-
-      fetchAllTasks();
-    }
-  }, [activeTab]);
 
   const handleCauseSelect = (cause: string) => {
     if (selectedCause === cause) {
@@ -379,38 +159,54 @@ const MainPageContent = () => {
 
         {/* === ABA 2: INDICADORES (ESTRATÉGICO - DADOS GLOBAIS) === */}
         <TabsContent value="analytics" className="space-y-6 outline-none animate-in fade-in-50 duration-300">
-          {isLoadingAnalytics ? (
-            <div className="h-[400px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
-            </div>
-          ) : (
-            <>
-              {/* Linha 1: Histórico de Evolução */}
-              <Card className="border-border/60 shadow-sm overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle className="text-lg font-heading text-primary flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-secondary" />
-                        Evolução do PCP
-                      </CardTitle>
-                      <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Gráfico de Evolução Semanal */}
+            <motion.div
+              className="lg:col-span-2 h-full"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="bg-white h-full border-border/60 shadow-sm hover:shadow-xl transition-all duration-300">
+                <CardHeader>
+                  <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
+                  <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-6">
-                  <WeeklyHistoryChart tasks={allTasks} />
+                <CardContent>
+                  <PCPWeeklyChart barColor="#112232" />
                 </CardContent>
               </Card>
+            </motion.div>
 
-              {/* Linha 2: Breakdowns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <GlobalRanking tasks={allTasks} type="team" title="Ranking de Executantes" icon={Award} />
-                <GlobalRanking tasks={allTasks} type="sector" title="PCP por Setor" icon={Layers} />
-                <GlobalRanking tasks={allTasks} type="discipline" title="PCP por Disciplina" icon={AlertCircle} />
-              </div>
-            </>
-          )}
+            <div className="space-y-6">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+                <PCPOverallCard
+                  data={pcpData?.overall || { completedTasks: 0, totalTasks: 0, percentage: 0 }}
+                  className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
+                />
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+                <WeeklyCausesChart
+                  tasks={tasks}
+                  weekStartDate={weekStartDate}
+                  className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
+                />
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Detalhamento por Setor */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <Card className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-primary font-heading">Detalhamento por Setor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PCPBreakdownCard title="" data={pcpData?.bySector || {}} />
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
       </Tabs>
 
