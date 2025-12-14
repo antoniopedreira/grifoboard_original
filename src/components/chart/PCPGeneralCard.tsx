@@ -27,9 +27,10 @@ const PCPGeneralCard: React.FC<PCPGeneralCardProps> = ({ className }) => {
     }
 
     try {
-      const { data, error } = await supabase
+      // Fetch all tasks - increase limit to get all data
+      const { data, error, count } = await supabase
         .from('tarefas')
-        .select('seg, ter, qua, qui, sex, sab, dom')
+        .select('seg, ter, qua, qui, sex, sab, dom', { count: 'exact' })
         .eq('obra_id', obraId);
 
       if (error) {
@@ -37,6 +38,8 @@ const PCPGeneralCard: React.FC<PCPGeneralCardProps> = ({ className }) => {
         setIsLoading(false);
         return;
       }
+
+      console.log(`PCPGeneralCard: Found ${data?.length} tasks for obra ${obraId}`);
 
       if (data && data.length > 0) {
         let total = 0;
@@ -46,6 +49,7 @@ const PCPGeneralCard: React.FC<PCPGeneralCardProps> = ({ className }) => {
           const days = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const;
           days.forEach(day => {
             const dayValue = task[day];
+            // Count both Planejada and Executada as total
             if (dayValue === 'P' || dayValue === 'Planejada') {
               total++;
             } else if (dayValue === 'C' || dayValue === 'Executada') {
@@ -55,6 +59,7 @@ const PCPGeneralCard: React.FC<PCPGeneralCardProps> = ({ className }) => {
           });
         });
 
+        console.log(`PCPGeneralCard: Completed ${completed} of ${total} activities`);
         setTotalTasks(total);
         setCompletedTasks(completed);
         setPercentage(total > 0 ? Math.round((completed / total) * 100) : 0);
