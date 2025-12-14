@@ -311,15 +311,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
 
-      // Sign out from Supabase with scope: 'local' to only clear local session
-      await supabase.auth.signOut({ scope: "local" });
+      // Sign out from Supabase - use 'global' scope to ensure complete logout
+      await supabase.auth.signOut({ scope: "global" });
 
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
+
+      // Force redirect to auth page
+      window.location.href = "/auth";
     } catch (error: any) {
-      // Even if logout fails on server, clear local state
+      // Even if logout fails on server, clear local state and redirect
       setUserSession({ user: null, obraAtiva: null });
       setSessionId(null);
       localStorage.clear();
@@ -328,6 +331,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Desconectado",
         description: "Sessão local limpa com sucesso.",
       });
+
+      // Force redirect even on error
+      window.location.href = "/auth";
     } finally {
       setIsLoading(false);
     }
