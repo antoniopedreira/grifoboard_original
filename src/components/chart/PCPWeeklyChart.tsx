@@ -52,10 +52,15 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ barColor = "#021C2F" })
     try {
       setIsLoading(true);
 
+      // Get current week start date
+      const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const currentWeekISO = format(currentWeekStart, 'yyyy-MM-dd');
+
       const { data, error } = await supabase
         .from("resumo_execucao_semanal")
         .select("semana, percentual_concluido")
         .eq("obra_id", obraId)
+        .lte("semana", currentWeekISO)
         .order("semana", { ascending: true });
 
       if (error) {

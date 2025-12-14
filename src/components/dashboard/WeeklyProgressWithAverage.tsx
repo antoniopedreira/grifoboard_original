@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { startOfWeek, format } from "date-fns";
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 
 const WeeklyProgressWithAverage = () => {
@@ -20,10 +21,15 @@ const WeeklyProgressWithAverage = () => {
     }
 
     try {
+      // Get current week start date
+      const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const currentWeekISO = format(currentWeekStart, 'yyyy-MM-dd');
+
       const { data, error } = await supabase
         .from('resumo_execucao_semanal')
         .select('percentual_concluido')
-        .eq('obra_id', obraId);
+        .eq('obra_id', obraId)
+        .lte('semana', currentWeekISO);
 
       if (error) {
         console.error("Erro ao buscar dados para média:", error);
