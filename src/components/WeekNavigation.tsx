@@ -20,10 +20,20 @@ const WeekNavigation = ({
 }: WeekNavigationProps) => {
   const { userSession } = useAuth();
   const currentWeekFormatted = formatDateRange(weekStartDate, weekEndDate);
+  
+  // Normalizar datas para comparação (remover hora/minuto/segundo)
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const startNormalized = new Date(weekStartDate);
+  startNormalized.setHours(0, 0, 0, 0);
+  
+  const endNormalized = new Date(weekEndDate);
+  endNormalized.setHours(23, 59, 59, 999);
+  
   const isCurrentWeek = 
-    weekStartDate.getTime() <= today.getTime() && 
-    today.getTime() <= weekEndDate.getTime();
+    startNormalized.getTime() <= today.getTime() && 
+    today.getTime() <= endNormalized.getTime();
     
   return (
     <div className="flex items-center gap-1.5">
