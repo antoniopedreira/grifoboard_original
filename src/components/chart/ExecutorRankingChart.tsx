@@ -56,9 +56,10 @@ const ExecutorRankingChart: React.FC<ExecutorRankingChartProps> = ({ className }
           const days = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const;
           days.forEach(day => {
             const dayValue = task[day];
-            if (dayValue === 'P') {
+            // Check for both short codes (P/C) and full text (Planejada/Executada)
+            if (dayValue === 'P' || dayValue === 'Planejada') {
               executorStats[executor].total++;
-            } else if (dayValue === 'C') {
+            } else if (dayValue === 'C' || dayValue === 'Executada') {
               executorStats[executor].total++;
               executorStats[executor].completed++;
             }
