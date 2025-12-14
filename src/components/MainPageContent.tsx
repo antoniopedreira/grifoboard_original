@@ -14,6 +14,8 @@ import { Loader2, LayoutList, PieChart, TrendingUp, Award, Layers, AlertCircle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+// CORREÇÃO: Importando o 'cn' aqui
+import { cn } from "@/lib/utils";
 import {
   AreaChart,
   Area,
@@ -50,7 +52,7 @@ const WeeklyHistoryChart = ({ data }: { data: any[] }) => {
       pcp: d.percentage || 0,
       fullDate: d.weekStartDate,
     }))
-    .reverse(); // Reverter se necessário para ordem cronológica
+    .reverse();
 
   return (
     <div className="h-[300px] w-full">
@@ -246,7 +248,7 @@ const MainPageContent = () => {
     tasks,
     isLoading,
     pcpData,
-    weeklyPCPData, // Este array contem o histórico de TODAS as semanas
+    weeklyPCPData,
     handleTaskUpdate,
     handleTaskDelete,
     handleTaskCreate,
