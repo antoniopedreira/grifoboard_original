@@ -121,45 +121,56 @@ const MainPageContent = () => {
         />
       </motion.div>
 
-      {/* 2. Sistema de Abas */}
-
+      {/* 2. Sistema de Abas - Design Premium */}
       <Tabs defaultValue="planning" value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-        {/* Header das Abas */}
+        {/* Header Unificado */}
+        <motion.div 
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-white via-white to-slate-50/80 rounded-2xl shadow-lg border border-border/40 p-2 sticky top-0 z-20 backdrop-blur-xl"
+        >
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
+            {/* Tabs com design refinado */}
+            <TabsList className="bg-slate-100/80 p-1.5 rounded-xl h-auto w-full lg:w-auto">
+              <TabsTrigger
+                value="planning"
+                className="gap-2.5 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                  data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:shadow-primary/10
+                  data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-white/50"
+              >
+                <LayoutList className="h-4 w-4" />
+                <span className="hidden sm:inline">Planejamento & Execução</span>
+                <span className="sm:hidden">Planejamento</span>
+              </TabsTrigger>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-border pb-2 bg-white/50 backdrop-blur-sm sticky top-0 z-20 pt-2">
-          <TabsList className="bg-slate-100 p-1">
-            <TabsTrigger
-              value="planning"
-              className="gap-2 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
+              <TabsTrigger
+                value="analytics"
+                className="gap-2.5 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                  data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:shadow-primary/10
+                  data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-white/50"
+              >
+                <PieChart className="h-4 w-4" />
+                <span className="hidden sm:inline">Indicadores & Inteligência</span>
+                <span className="sm:hidden">Indicadores</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Week Navigation - Design Premium */}
+            <div
+              className={cn(
+                "flex items-center gap-2 transition-all duration-300",
+                activeTab === "analytics" && "opacity-40 pointer-events-none"
+              )}
             >
-              <LayoutList className="h-4 w-4" />
-              Planejamento & Execução
-            </TabsTrigger>
-
-            <TabsTrigger
-              value="analytics"
-              className="gap-2 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
-            >
-              <PieChart className="h-4 w-4" />
-              Indicadores & Inteligência
-            </TabsTrigger>
-          </TabsList>
-
-          <div
-            className={cn(
-              "w-full sm:w-auto transition-opacity duration-300",
-
-              activeTab === "analytics" ? "opacity-50 pointer-events-none grayscale" : "opacity-100",
-            )}
-          >
-            <WeekNavigation
-              weekStartDate={weekStartDate}
-              weekEndDate={weekEndDate}
-              onPreviousWeek={navigateToPreviousWeek}
-              onNextWeek={navigateToNextWeek}
-            />
+              <WeekNavigation
+                weekStartDate={weekStartDate}
+                weekEndDate={weekEndDate}
+                onPreviousWeek={navigateToPreviousWeek}
+                onNextWeek={navigateToNextWeek}
+              />
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* === ABA 1: PLANEJAMENTO (OPERACIONAL) === */}
 

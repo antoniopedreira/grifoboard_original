@@ -1,13 +1,9 @@
-
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { 
-  formatDateRange,
-  getPreviousWeekDates,
-  getNextWeekDates
-} from "@/utils/pcp";
+import { ChevronLeft, ChevronRight, Calendar, FileDown } from "lucide-react";
+import { formatDateRange } from "@/utils/pcp";
 import { useAuth } from "@/context/AuthContext";
 import ExportDialog from "@/components/ExportDialog";
+import { cn } from "@/lib/utils";
 
 interface WeekNavigationProps {
   weekStartDate: Date;
@@ -30,43 +26,55 @@ const WeekNavigation = ({
     today.getTime() <= weekEndDate.getTime();
     
   return (
-    <div className="flex justify-between items-center mb-8 bg-white rounded-xl shadow-sm p-4 border border-gray-100/40 backdrop-blur-sm hover:shadow transition-shadow duration-200">
+    <div className="flex items-center gap-1.5">
+      {/* Botão Anterior */}
       <Button 
-        variant="outline" 
+        variant="ghost" 
         size="icon"
-        className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
+        className="h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
         onClick={onPreviousWeek}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
       
-      <div className="flex flex-col items-center">
-        <div className="flex items-center">
-          <Calendar className="h-5 w-5 mr-2 text-primary" />
-          <h3 className="text-lg font-medium font-heading">
-            {currentWeekFormatted}
-          </h3>
+      {/* Container da Data */}
+      <div className="flex items-center gap-3 bg-slate-50/80 rounded-xl px-4 py-2 border border-border/30">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-primary/10">
+            <Calendar className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-foreground tracking-tight">
+              {currentWeekFormatted}
+            </span>
+            {isCurrentWeek && (
+              <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider">
+                Semana Atual
+              </span>
+            )}
+          </div>
         </div>
-        {isCurrentWeek && (
-          <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full mt-1">Semana Atual</span>
-        )}
-      </div>
-      
-      <div className="flex items-center gap-2">
+        
+        {/* Separador */}
+        <div className="h-6 w-px bg-border/50" />
+        
+        {/* Botão Export */}
         <ExportDialog
           obraId={userSession.obraAtiva?.id || ""}
           obraNome={userSession.obraAtiva?.nome_obra || ""}
           weekStartDate={weekStartDate}
         />
-        <Button 
-          variant="outline" 
-          size="icon"
-          className="h-9 w-9 rounded-full border-gray-200 hover:bg-gray-50"
-          onClick={onNextWeek}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
       </div>
+      
+      {/* Botão Próximo */}
+      <Button 
+        variant="ghost" 
+        size="icon"
+        className="h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+        onClick={onNextWeek}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 };
