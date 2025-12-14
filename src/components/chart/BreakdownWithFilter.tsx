@@ -1,24 +1,118 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import PCPBreakdownCard from "./PCPBreakdownCard";
-import { PCPBreakdown } from "@/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface BreakdownWithFilterProps {
-  pcpData: PCPBreakdown | null;
   className?: string;
 }
 
-const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ pcpData, className }) => {
+interface BreakdownData {
+  name: string;
+  total: number;
+  completed: number;
+  percentage: number;
+}
+
+const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) => {
   const [filterBy, setFilterBy] = useState<"sector" | "discipline">("sector");
+  const [breakdownData, setBreakdownData] = useState<BreakdownData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { userSession } = useAuth();
+
+  useEffect(() => {
+    fetchBreakdownData();
+  }, [userSession?.obraAtiva?.id, filterBy]);
+
+  const fetchBreakdownData = async () => {
+    const obraId = userSession?.obraAtiva?.id;
+    if (!obraId) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Get current week start (Monday)
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() + diff);
+      currentWeekStart.setHours(0, 0, 0, 0);
+
+      const { data, error } = await supabase
+        .from('tarefas')
+        .select('setor, disciplina, seg, ter, qua, qui, sex, sab, dom, semana')
+        .eq('obra_id', obraId)
+        .lte('semana', currentWeekStart.toISOString().split('T')[0]);
+
+      if (error) {
+        console.error("Erro ao buscar dados:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const stats: Record<string, { total: number; completed: number }> = {};
+        const field = filterBy === "sector" ? "setor" : "disciplina";
+
+        data.forEach(task => {
+          const key = task[field] || 'Não definido';
+          if (!stats[key]) {
+            stats[key] = { total: 0, completed: 0 };
+          }
+
+          const days = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const;
+          days.forEach(day => {
+            const dayValue = task[day];
+            if (dayValue === 'P' || dayValue === 'Planejada') {
+              stats[key].total++;
+            } else if (dayValue === 'C' || dayValue === 'Executada') {
+              stats[key].total++;
+              stats[key].completed++;
+            }
+          });
+        });
+
+        const processedData: BreakdownData[] = Object.entries(stats)
+          .filter(([_, s]) => s.total > 0)
+          .map(([name, s]) => ({
+            name,
+            total: s.total,
+            completed: s.completed,
+            percentage: s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0,
+          }))
+          .sort((a, b) => b.percentage - a.percentage);
+
+        setBreakdownData(processedData);
+      } else {
+        setBreakdownData([]);
+      }
+
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Erro ao calcular breakdown:", err);
+      setIsLoading(false);
+    }
+  };
 
   const getTitle = () => {
     return filterBy === "sector" ? "Detalhamento por Setor" : "Detalhamento por Disciplina";
   };
 
-  const getData = () => {
-    if (!pcpData) return {};
-    return filterBy === "sector" ? pcpData.bySector : pcpData.byDiscipline;
+  const getPercentageColor = (pct: number) => {
+    if (pct >= 85) return "text-green-600 bg-green-500";
+    if (pct >= 70) return "text-amber-600 bg-amber-500";
+    return "text-red-600 bg-red-500";
+  };
+
+  const capitalize = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
   return (
@@ -36,7 +130,50 @@ const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ pcpData, clas
         </Select>
       </CardHeader>
       <CardContent>
-        <PCPBreakdownCard title="" data={getData()} />
+        <ScrollArea className="h-72">
+          <div className="space-y-2 pr-4">
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground animate-pulse">
+                Carregando...
+              </div>
+            ) : breakdownData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum dado encontrado
+              </div>
+            ) : (
+              breakdownData.map((item, index) => {
+                const colorClasses = getPercentageColor(item.percentage);
+                return (
+                  <div
+                    key={index}
+                    className="p-3 rounded-lg border border-border bg-background transition-all duration-300 ease-out hover:scale-[1.01] hover:shadow-sm animate-fade-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm text-primary truncate uppercase">
+                        {capitalize(item.name)}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {item.completed}/{item.total}
+                        </span>
+                        <span className={cn("font-bold text-sm", colorClasses.split(' ')[0])}>
+                          {item.percentage}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all duration-500", colorClasses.split(' ')[1])}
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

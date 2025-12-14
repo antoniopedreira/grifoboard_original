@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 
-import PCPAverageCard from "@/components/chart/PCPAverageCard";
+import PCPGeneralCard from "@/components/chart/PCPGeneralCard";
 
 import AllCausesChart from "@/components/chart/AllCausesChart";
 
@@ -238,7 +238,7 @@ const MainPageContent = () => {
 
             <div className="space-y-6">
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-                <PCPAverageCard
+                <PCPGeneralCard
                   className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
                 />
               </motion.div>
@@ -261,7 +261,6 @@ const MainPageContent = () => {
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <BreakdownWithFilter
-                pcpData={pcpData}
                 className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
               />
             </motion.div>
