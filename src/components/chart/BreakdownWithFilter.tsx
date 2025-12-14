@@ -36,20 +36,11 @@ const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) 
 
     try {
       setIsLoading(true);
-      
-      // Get current week start (Monday)
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const currentWeekStart = new Date(today);
-      currentWeekStart.setDate(today.getDate() + diff);
-      currentWeekStart.setHours(0, 0, 0, 0);
 
       const { data, error } = await supabase
         .from('tarefas')
-        .select('setor, disciplina, seg, ter, qua, qui, sex, sab, dom, semana')
-        .eq('obra_id', obraId)
-        .lte('semana', currentWeekStart.toISOString().split('T')[0]);
+        .select('setor, disciplina, seg, ter, qua, qui, sex, sab, dom')
+        .eq('obra_id', obraId);
 
       if (error) {
         console.error("Erro ao buscar dados:", error);
