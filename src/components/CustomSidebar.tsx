@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard,
-  ClipboardList,
+  LayoutDashboard, // Vamos manter o ícone, mas usar para o PCP
   BookOpen,
   Store,
   FileText,
@@ -17,16 +16,16 @@ import {
   ChevronsUpDown,
   ChevronLeft,
   ChevronRight,
+  PieChart, // Novo ícone para representar PCP analítico se preferir
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Checklist removido da navegação principal, pois agora é acessado via Tarefas
-// Playbook ocultado temporariamente
+// MUDANÇA AQUI: Removemos o Dashboard isolado e renomeamos Tarefas para PCP
 const menuItems = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/tarefas", label: "Tarefas", icon: ClipboardList },
+  // O antigo dashboard saiu. Agora PCP é a "home" de produção.
+  { path: "/tarefas", label: "PCP", icon: LayoutDashboard },
   { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
-  // { path: "/playbook", label: "Playbook", icon: BookOpen },
+  { path: "/playbook", label: "Playbook", icon: BookOpen },
   { path: "/marketplace", label: "Marketplace", icon: Store },
 ];
 
@@ -139,7 +138,7 @@ const CustomSidebar = () => {
 
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path; // Mantivemos a rota /tarefas internamente por enquanto
 
             const LinkContent = (
               <Link
@@ -200,12 +199,14 @@ const CustomSidebar = () => {
           })}
         </nav>
 
+        {/* Footer da Sidebar (User Profile) - Mantido igual */}
         <div
           className={cn(
             "m-4 rounded-xl bg-black/20 border border-white/5 overflow-hidden transition-all duration-300",
             isCollapsed ? "p-2 flex flex-col items-center gap-4" : "p-4",
           )}
         >
+          {/* ... Código do perfil mantido ... */}
           <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3 mb-3")}>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
