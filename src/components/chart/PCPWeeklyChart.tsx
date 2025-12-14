@@ -7,12 +7,13 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   LabelList,
-  Tooltip, // Importado Tooltip
+  Tooltip,
 } from "recharts";
 import { format, isValid, parseISO, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { TrendingUp } from "lucide-react";
 
 interface PCPWeeklyChartProps {
   barColor?: string;
@@ -33,6 +34,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ barColor = "#021C2F" }) => {
   const [chartData, setChartData] = useState<any[]>([]);
+  const [averagePCP, setAveragePCP] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { userSession } = useAuth();
   const obraId = userSession?.obraAtiva?.id;
@@ -49,10 +51,20 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ barColor = "#021C2F" })
 
     try {
       setIsLoading(true);
+      
+      // Get current week start (Monday)
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() + diff);
+      currentWeekStart.setHours(0, 0, 0, 0);
+
       const { data, error } = await supabase
         .from("resumo_execucao_semanal")
         .select("semana, percentual_concluido")
         .eq("obra_id", obraId)
+        .lte("semana", currentWeekStart.toISOString().split('T')[0])
         .order("semana", { ascending: true });
 
       if (error) {
@@ -76,13 +88,25 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ barColor = "#021C2F" })
           };
         });
         setChartData(formattedData);
+
+        // Calculate average
+        const sum = data.reduce((acc, item) => acc + (item.percentual_concluido || 0), 0);
+        const avg = (sum / data.length) * 100;
+        setAveragePCP(Math.round(avg));
       } else {
         setChartData([]);
+        setAveragePCP(0);
       }
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
     }
+  };
+
+  const getAverageColor = (pcp: number) => {
+    if (pcp >= 85) return "bg-green-500";
+    if (pcp >= 70) return "bg-amber-500";
+    return "bg-red-500";
   };
 
   if (isLoading)
@@ -91,36 +115,46 @@ const PCPWeeklyChart: React.FC<PCPWeeklyChartProps> = ({ barColor = "#021C2F" })
     return <div className="flex justify-center h-64 items-center text-gray-500">Sem dados</div>;
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData} margin={{ top: 30, right: 10, left: 0, bottom: 5 }} barSize={40}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-        <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} tickLine={false} axisLine={false} interval={0} />
-        <YAxis
-          tickFormatter={(v) => `${v}%`}
-          domain={[0, 100]}
-          tick={{ fontSize: 11, fill: "#64748b" }}
-          axisLine={false}
-          tickLine={false}
-          width={35}
-        />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
-        <Bar
-          dataKey="value"
-          name="Progresso"
-          radius={[6, 6, 0, 0]}
-          fill={barColor}
-          animationDuration={1500}
-          animationEasing="ease-out"
-        >
-          <LabelList
-            dataKey="value"
-            position="top"
-            formatter={(v: number) => `${Math.round(v)}%`}
-            style={{ fontSize: 10, fill: "#64748b", fontWeight: 600 }}
+    <div className="relative">
+      {/* Badge de média animado */}
+      <div className="absolute top-0 right-0 z-10">
+        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${getAverageColor(averagePCP)} text-white shadow-lg animate-pulse`}>
+          <TrendingUp className="h-3.5 w-3.5" />
+          <span className="text-xs font-bold">Média: {averagePCP}%</span>
+        </div>
+      </div>
+      
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={chartData} margin={{ top: 30, right: 10, left: 0, bottom: 5 }} barSize={40}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} tickLine={false} axisLine={false} interval={0} />
+          <YAxis
+            tickFormatter={(v) => `${v}%`}
+            domain={[0, 100]}
+            tick={{ fontSize: 11, fill: "#64748b" }}
+            axisLine={false}
+            tickLine={false}
+            width={35}
           />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
+          <Bar
+            dataKey="value"
+            name="Progresso"
+            radius={[6, 6, 0, 0]}
+            fill={barColor}
+            animationDuration={1500}
+            animationEasing="ease-out"
+          >
+            <LabelList
+              dataKey="value"
+              position="top"
+              formatter={(v: number) => `${Math.round(v)}%`}
+              style={{ fontSize: 10, fill: "#64748b", fontWeight: 600 }}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
