@@ -22,13 +22,13 @@ const LoginPage = () => {
   return (
     <AuthLayout title={getTitle()}>
       {currentView === 'login' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <LoginForm onForgotPassword={() => setCurrentView('forgot')} />
         </div>
       )}
       
       {currentView === 'signup' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <SignupForm />
           
           {/* Separator */}
@@ -47,7 +47,7 @@ const LoginPage = () => {
             variant="outline"
             onClick={() => setCurrentView('login')}
             className="w-full font-semibold transition-all duration-300 rounded-xl border-[#C7A347] text-[#C7A347] hover:bg-[#C7A347] hover:text-white"
-            style={{ height: '48px' }}
+            style={{ height: '40px' }}
           >
             Já tenho conta
           </Button>
