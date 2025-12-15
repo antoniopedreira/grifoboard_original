@@ -314,7 +314,7 @@ async function generateHtmlContent(
   ${sections}
 
   <div class="footer">
-    Grifo Engenharia - Sistema Integrado de Gestão
+    Grifoboard - Sistema Integrado de Gestão
   </div>
 </body>
 </html>`;
