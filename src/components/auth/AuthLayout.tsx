@@ -112,7 +112,7 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
         </div>
 
         {/* Right Side - Form Card (40%) */}
-        <div className="w-2/5 flex items-center justify-center p-8">
+        <div className="w-2/5 flex items-center justify-center p-4">
           <motion.div
             initial={{
               opacity: 0,
@@ -126,7 +126,7 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
               duration: 0.6,
               ease: "easeOut",
             }}
-            className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8"
+            className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6"
           >
             <motion.h1
               initial={{
@@ -140,7 +140,7 @@ const AuthLayout = ({ children, title }: AuthLayoutProps) => {
               transition={{
                 delay: 0.2,
               }}
-              className="text-3xl font-bold mb-8 text-center"
+              className="text-2xl font-bold mb-4 text-center"
               style={{
                 color: "#0A1D33",
               }}

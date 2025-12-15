@@ -65,7 +65,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-4">
         {/* Email field */}
         <div className="space-y-2">
@@ -80,7 +80,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
               placeholder="seu@email.com" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="pl-12 h-12 rounded-xl border-gray-300 focus:border-[#C7A347] focus:ring-2 focus:ring-[#C7A347]/20 transition-all duration-300" 
+              className="pl-11 h-10 rounded-xl border-gray-300 focus:border-[#C7A347] focus:ring-2 focus:ring-[#C7A347]/20 transition-all duration-300 text-sm"
               required
             />
           </div>
@@ -99,7 +99,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
               placeholder="••••••••" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="pl-12 pr-12 h-12 rounded-xl border-gray-300 focus:border-[#C7A347] focus:ring-2 focus:ring-[#C7A347]/20 transition-all duration-300" 
+              className="pl-11 pr-11 h-10 rounded-xl border-gray-300 focus:border-[#C7A347] focus:ring-2 focus:ring-[#C7A347]/20 transition-all duration-300 text-sm"
               required
             />
             <button 
@@ -153,7 +153,7 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
         disabled={isLoading} 
         className="w-full font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl transform hover:scale-[1.02] active:scale-[0.98] border-0"
         style={{ 
-          height: '48px',
+          height: '40px',
           backgroundColor: '#C7A347'
         }}
         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B7943F'}
