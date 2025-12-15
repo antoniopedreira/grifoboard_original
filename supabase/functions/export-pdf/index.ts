@@ -21,30 +21,37 @@ interface TaskData {
   sab: string | null;
   dom: string | null;
 }
-interface GroupedTasks { [key: string]: TaskData[]; }
+interface GroupedTasks {
+  [key: string]: TaskData[];
+}
 
-const DOW_PT = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+const DOW_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
-function formatDate(d: Date) { return d.toLocaleDateString("pt-BR"); }
-function formatDateRange(a: Date, b: Date) { return `${formatDate(a)} a ${formatDate(b)}`; }
+function formatDate(d: Date) {
+  return d.toLocaleDateString("pt-BR");
+}
+function formatDateRange(a: Date, b: Date) {
+  return `${formatDate(a)} a ${formatDate(b)}`;
+}
 
 function getCurrentDateTimeBR(): { date: string; time: string } {
-  // Cria uma data no timezone do Brasil (UTC-3)
   const now = new Date();
   const brazilTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  
   return {
     date: brazilTime.toLocaleDateString("pt-BR"),
-    time: brazilTime.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })
+    time: brazilTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
   };
 }
 
-function getStatusSymbol(status: string | null): string {
+// Helper para status colorido no PDF (Símbolos mais visíveis)
+function getStatusHtml(status: string | null): string {
   if (!status || !status.trim()) return "";
   const s = status.toLowerCase().trim();
-  if (s === "executada") return "✓";
-  if (s === "não feita" || s === "nao feita") return "×";
-  return "●";
+
+  if (s === "executada") return '<span style="color:#166534; font-size: 14px; font-weight:bold;">✓</span>'; // Verde Escuro
+  if (s === "não feita" || s === "nao feita")
+    return '<span style="color:#dc2626; font-size: 14px; font-weight:bold;">×</span>'; // Vermelho
+  return '<span style="color:#94a3b8; font-size: 16px;">•</span>'; // Cinza (Planejado)
 }
 
 function sortSetores(setores: string[]): string[] {
@@ -62,97 +69,104 @@ function sortSetores(setores: string[]): string[] {
   });
 }
 
+// Gera o HTML Bonito com Design Grifo
 async function generateHtmlContent(
   tasks: TaskData[],
   obraNome: string,
   weekStart: Date,
   weekEnd: Date,
-  groupBy: 'setor' | 'executante' = 'setor',
-  executanteFilter?: string
+  groupBy: "setor" | "executante" = "setor",
+  executanteFilter?: string,
 ): Promise<string> {
   const { date: currentDate, time: currentTime } = getCurrentDateTimeBR();
-  
-  // Logo em base64 (griffin dourado)
-  const logoBase64 = "data:image/png;base64,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";
-  
-  // Agrupa por setor ou executante
+
+  // URL da Logo fornecida
+  const logoUrl = "https://qacaerwosglbayjfskyx.supabase.co/storage/v1/object/public/templates/LogoSemFundo.png";
+
   const grouped: GroupedTasks = {};
   for (const t of tasks) {
-    const key = groupBy === 'executante' ? t.executante : t.setor;
+    const key = groupBy === "executante" ? t.executante : t.setor;
     (grouped[key] ||= []).push(t);
   }
-  const keys = groupBy === 'setor' ? sortSetores(Object.keys(grouped)) : Object.keys(grouped).sort();
+  const keys = groupBy === "setor" ? sortSetores(Object.keys(grouped)) : Object.keys(grouped).sort();
 
-  // Tabelas por setor ou executante
   let sections = "";
   if (keys.length === 0) {
-    sections = `<p style="text-align:center; color:#666; font-style:italic; margin:40px 0">Nenhuma atividade planejada para a semana.</p>`;
+    sections = `<p style="text-align:center; color:#64748b; font-style:italic; margin:40px 0; font-size: 14px;">Nenhuma atividade planejada para a semana.</p>`;
   } else {
     for (const key of keys) {
       const rows = grouped[key];
-      const isExecutanteGroup = groupBy === 'executante';
+      const isExecutanteGroup = groupBy === "executante";
 
-      const body = rows.map(r => `
-        <tr>
-          <td class="text">${r.descricao ?? ""}</td>
-          ${isExecutanteGroup ? `<td class="text">${r.setor ?? ""}</td>` : ''}
-          <td class="text">${r.disciplina ?? ""}</td>
-          ${!isExecutanteGroup ? `<td class="text">${r.executante ?? ""}</td>` : ''}
-          <td class="text">${r.responsavel ?? ""}</td>
-          <td class="text">${r.encarregado ?? ""}</td>
-          <td class="day">${getStatusSymbol(r.seg)}</td>
-          <td class="day">${getStatusSymbol(r.ter)}</td>
-          <td class="day">${getStatusSymbol(r.qua)}</td>
-          <td class="day">${getStatusSymbol(r.qui)}</td>
-          <td class="day">${getStatusSymbol(r.sex)}</td>
-          <td class="day">${getStatusSymbol(r.sab)}</td>
-          <td class="day">${getStatusSymbol(r.dom)}</td>
+      const body = rows
+        .map(
+          (r, idx) => `
+        <tr class="${idx % 2 === 0 ? "even" : "odd"}">
+          <td class="text-cell font-medium">${r.descricao ?? ""}</td>
+          ${isExecutanteGroup ? `<td class="text-cell">${r.setor ?? ""}</td>` : ""}
+          <td class="text-cell">${r.disciplina ?? ""}</td>
+          ${!isExecutanteGroup ? `<td class="text-cell">${r.executante ?? ""}</td>` : ""}
+          <td class="text-cell">${r.responsavel ?? ""}</td>
+          <td class="text-cell">${r.encarregado ?? ""}</td>
+          <td class="day-cell">${getStatusHtml(r.seg)}</td>
+          <td class="day-cell">${getStatusHtml(r.ter)}</td>
+          <td class="day-cell">${getStatusHtml(r.qua)}</td>
+          <td class="day-cell">${getStatusHtml(r.qui)}</td>
+          <td class="day-cell">${getStatusHtml(r.sex)}</td>
+          <td class="day-cell">${getStatusHtml(r.sab)}</td>
+          <td class="day-cell">${getStatusHtml(r.dom)}</td>
         </tr>
-      `).join("");
+      `,
+        )
+        .join("");
 
-      const groupLabel = isExecutanteGroup ? 'Executante' : 'Setor';
+      const groupLabel = isExecutanteGroup ? "Executante" : "Setor";
       const groupValue = key || (isExecutanteGroup ? "Sem Executante" : "Sem Setor");
-      
+
       sections += `
         <section class="sector">
-          <div class="sector-title">
-            <h2>${groupLabel}: ${groupValue}</h2>
-            <span class="pill">${rows.length} atividade${rows.length !== 1 ? "s" : ""}</span>
+          <div class="sector-header">
+            <h2 class="sector-title">${groupLabel}: ${groupValue}</h2>
+            <span class="sector-badge">${rows.length} itens</span>
           </div>
 
-          <table class="grid">
+          <table class="data-table">
             <colgroup>
-              ${isExecutanteGroup ? `
-                <col style="width:20%">
-                <col style="width:10%">
+              ${
+                isExecutanteGroup
+                  ? `
+                <col style="width:25%">
                 <col style="width:12%">
-                <col style="width:9%">
-                <col style="width:9%">
-              ` : `
-                <col style="width:20%">
-                <col style="width:14%">
-                <col style="width:13%">
-                <col style="width:9%">
-                <col style="width:9%">
-              `}
-              <col style="width:5%">
-              <col style="width:5%">
-              <col style="width:5%">
-              <col style="width:5%">
-              <col style="width:5%">
-              <col style="width:5%">
-              <col style="width:5%">
+                <col style="width:12%">
+                <col style="width:10%">
+                <col style="width:10%">
+              `
+                  : `
+                <col style="width:25%">
+                <col style="width:12%">
+                <col style="width:12%">
+                <col style="width:10%">
+                <col style="width:10%">
+              `
+              }
+              <col style="width:4.4%">
+              <col style="width:4.4%">
+              <col style="width:4.4%">
+              <col style="width:4.4%">
+              <col style="width:4.4%">
+              <col style="width:4.4%">
+              <col style="width:4.4%">
             </colgroup>
 
             <thead>
               <tr>
                 <th>Atividade</th>
-                ${isExecutanteGroup ? '<th>Setor</th>' : ''}
+                ${isExecutanteGroup ? "<th>Setor</th>" : ""}
                 <th>Disciplina</th>
-                ${!isExecutanteGroup ? '<th>Executante</th>' : ''}
-                <th>Responsável</th>
-                <th>Encarregado</th>
-                ${DOW_PT.map(n => `<th class="center nowrap">${n}</th>`).join("")}
+                ${!isExecutanteGroup ? "<th>Executante</th>" : ""}
+                <th>Resp.</th>
+                <th>Enc.</th>
+                ${DOW_PT.map((n) => `<th class="center">${n}</th>`).join("")}
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -162,131 +176,145 @@ async function generateHtmlContent(
     }
   }
 
-  // HTML completo
+  // HTML + CSS com Cores da Grifo
   return `<!doctype html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <title> </title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Disket+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <title>Relatório de Produção - ${obraNome}</title>
   <style>
-    /* CSS de impressão para renderização perfeita */
-    @page { 
-      size: A4; 
-      margin: 16mm 14mm; 
-    }
-    @page :first { 
-      margin-top: 16mm; 
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    html, body { 
+    @page { margin: 10mm 10mm; size: A4 landscape; }
+    
+    body { 
+      font-family: 'Inter', Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      margin: 0;
+      font-size: 10px;
+      line-height: 1.4;
       -webkit-print-color-adjust: exact; 
       print-color-adjust: exact;
-      margin: 0;
-      color: #111;
-      font: 11px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    .page { padding: 0; }
-    
-    @media print { 
-      html, body { margin: 0; }
-      .sector { page-break-inside: avoid; }
-      thead { display: table-header-group; }
+      background-color: #ffffff;
     }
 
-    .logo-header { 
-      background: #061928; 
-      padding: 20px 40px; 
-      margin: 0 -14mm 20px -14mm;
-      border-radius: 0;
+    /* Cores Grifo */
+    :root {
+      --grifo-dark: #0F1F2C;
+      --grifo-gold: #EAB308;
+      --grifo-gray: #f8fafc;
+    }
+
+    /* Header Seguro (Dentro da Margem) */
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #EAB308; /* Linha Dourada da Grifo */
+    }
+    .logo-container img { height: 60px; width: auto; object-fit: contain; }
+    
+    .header-info { text-align: right; }
+    .header-info h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0F1F2C; text-transform: uppercase; letter-spacing: -0.5px; }
+    .header-info p { margin: 4px 0 0; color: #64748b; font-size: 11px; font-weight: 500; }
+
+    /* Sections */
+    .sector { margin-bottom: 25px; page-break-inside: avoid; }
+    .sector-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      color: #ffffff;
+      gap: 10px;
+      margin-bottom: 8px;
+      padding-left: 4px;
+      border-left: 4px solid #EAB308; /* Acento Dourado */
     }
-    .logo-header img { 
-      height: 50px; 
-      width: auto;
-    }
-    .logo-header .company-name {
-      font-family: 'Disket Mono', monospace;
-      font-size: 24px;
-      font-weight: 700;
-      color: #FFFFFF;
+    .sector-title { margin: 0; font-size: 14px; font-weight: 700; color: #0F1F2C; text-transform: uppercase; }
+    .sector-badge { background: #f1f5f9; color: #64748b; font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 600; border: 1px solid #e2e8f0; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    
+    /* Cabeçalho da Tabela - Cores Grifo */
+    .data-table th {
+      background-color: #0F1F2C; /* Azul Escuro Grifo */
+      color: #ffffff; /* Texto Branco */
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-    .header { text-align:center; margin-bottom:20px; }
-    .header h1 { margin:0 0 8px; font-size:18px; font-weight:700; }
-    .meta { color:#666; font-size:11px; margin:4px 0 14px; }
-    hr { border:0; border-top:1px solid #e5e7eb; margin: 10px 0 20px; }
-
-    .sector { page-break-inside: avoid; break-inside: avoid; margin: 0 0 24px; }
-    .sector-title { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-    .sector-title h2 { margin:0; font-size:15px; font-weight:700; color:#1f2937; }
-    .pill { background:#e5e7eb; color:#374151; font-size:11px; padding:3px 8px; border-radius:12px; }
-
-    table.grid { width:100%; border-collapse: collapse; table-layout: fixed; }
-    thead { display: table-header-group; }
-    tfoot { display: table-footer-group; }
-    tr { break-inside: avoid; page-break-inside: avoid; }
-    th, td { 
-      border:1px solid #d1d5db; 
-      padding: 4px 3px; 
-      vertical-align: middle; 
+      font-size: 9px;
+      padding: 8px 6px;
       text-align: left;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      border-bottom: 2px solid #EAB308; /* Borda Dourada Inferior */
     }
-    th { 
-      background:#f3f4f6; 
-      font-weight:600; 
+    .data-table th:first-child { border-top-left-radius: 4px; }
+    .data-table th:last-child { border-top-right-radius: 4px; }
+    .data-table th.center { text-align: center; }
+    
+    .data-table td {
+      padding: 6px 5px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top; /* Melhor para textos longos */
       font-size: 10px;
-      white-space: nowrap;
-      overflow: visible;
-      text-overflow: clip;
+      color: #334155;
     }
-    tbody tr:nth-child(even) td { background:#fafbfc; }
+    
+    /* Zebrado */
+    .data-table tr:nth-child(even) { background-color: #f8fafc; }
+    .data-table tr:hover { background-color: #f1f5f9; }
 
-    .center { text-align:center; }
-    .nowrap { white-space:nowrap; }
-    .text { 
-      word-break: break-word; 
-      overflow-wrap: anywhere;
-      font-size: 10px;
+    .text-cell { 
+      word-wrap: break-word; 
+      white-space: normal;
       line-height: 1.3;
     }
-    thead th { word-break: keep-all; }
-    .day { 
-      text-align:center; 
-      font-size: 14px;
-      padding: 4px 1px;
-      white-space: nowrap;
+    .font-medium { font-weight: 600; color: #0F1F2C; }
+    
+    .day-cell { 
+      text-align: center; 
+      font-size: 12px; 
+      border-left: 1px solid #f1f5f9; /* Separador sutil entre dias */
     }
+
+    /* Footer */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      font-size: 9px;
+      color: #94a3b8;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+      background: white;
+    }
+    .legend { display: flex; justify-content: flex-end; gap: 20px; margin-top: 10px; font-size: 10px; color: #475569; padding-right: 10px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="logo-header">
-      <img src="${logoBase64}" alt="Grifo Logo" />
-      <div class="company-name">Grifo Engenharia</div>
-      <img src="${logoBase64}" alt="Grifo Logo" />
+  <div class="report-header">
+    <div class="logo-container">
+      <img src="${logoUrl}" alt="Grifo Engenharia" />
     </div>
-    <div class="header">
-      <h1>Relatório Semanal de Atividades – ${obraNome}</h1>
-      <div class="meta">Período: ${formatDateRange(weekStart, weekEnd)}</div>
-      <div class="meta" style="font-size:11px;">Gerado em: ${currentDate} às ${currentTime}</div>
-      <hr />
+    <div class="header-info">
+      <h1>Relatório de Planejamento Semanal</h1>
+      <p><strong>Obra:</strong> ${obraNome} &nbsp;|&nbsp; <strong>Período:</strong> ${formatDateRange(weekStart, weekEnd)}</p>
+      <p>Gerado em: ${currentDate} às ${currentTime}</p>
     </div>
+  </div>
 
-    ${sections}
+  <div class="legend">
+    <span><strong style="color:#166534">✓</strong> Executada</span>
+    <span><strong style="color:#dc2626">×</strong> Não Feita</span>
+    <span><strong style="color:#94a3b8">•</strong> Planejada</span>
+  </div>
 
-    <div class="meta" style="text-align:center; border-top:1px solid #e5e7eb; padding-top:12px;">
-      <strong>Legenda:</strong> ● Planejada &nbsp;|&nbsp; ✓ Executada &nbsp;|&nbsp; × Não Feita
-    </div>
+  ${sections}
+
+  <div class="footer">
+    Grifo Engenharia - Sistema Integrado de Gestão
   </div>
 </body>
 </html>`;
@@ -297,118 +325,76 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Variáveis de ambiente do Supabase ausentes (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!; // USANDO ANON KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Variáveis de ambiente do Supabase ausentes.");
     }
-    
-    // Authentication check
+
+    // Auth Check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("[export-pdf] Missing Authorization header");
-      return new Response(JSON.stringify({ error: "Unauthorized - No authentication token provided" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized - No token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Validate JWT and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error("[export-pdf] Authentication failed:", authError?.message);
-      return new Response(JSON.stringify({ error: "Unauthorized - Invalid or expired token" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized - Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    
-    console.log(`[export-pdf] Request from user: ${user.id}`);
 
-    // Params (GET ou POST)
-    let obraId = "", obraNome = "", weekStart = "", groupBy: 'setor' | 'executante' = 'setor', executante = "";
-    if (req.method === "GET") {
-      const u = new URL(req.url);
-      obraId = u.searchParams.get("obraId") || "";
-      obraNome = u.searchParams.get("obraNome") || "";
-      weekStart = u.searchParams.get("weekStart") || "";
-      groupBy = (u.searchParams.get("groupBy") as 'setor' | 'executante') || 'setor';
-      executante = u.searchParams.get("executante") || "";
-    } else {
-      const body = await req.json();
-      obraId = body.obraId;
-      obraNome = body.obraNome;
-      weekStart = body.weekStart;
-      groupBy = body.groupBy || 'setor';
-      executante = body.executante || "";
-    }
+    console.log(`[export-pdf] Export solicitado por: ${user.id}`);
+
+    // Parse Body
+    const body = await req.json();
+    let { obraId, obraNome, weekStart, groupBy = "setor", executante = "" } = body;
 
     if (!obraId || !weekStart) {
-      return new Response(JSON.stringify({ error: "obraId e weekStart são obrigatórios" }), {
+      return new Response(JSON.stringify({ error: "Dados incompletos (obraId/weekStart)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Authorization check - verify user has access to the obra
-    const { data: obra, error: obraError } = await supabase
-      .from("obras")
-      .select("usuario_id, created_by, empresa_id, nome_obra")
-      .eq("id", obraId)
-      .single();
+    // Busca Obra
+    const { data: obra, error: obraError } = await supabase.from("obras").select("nome_obra").eq("id", obraId).single();
 
     if (obraError || !obra) {
-      console.error(`[export-pdf] Obra not found: ${obraId}`, obraError?.message);
-      return new Response(JSON.stringify({ error: "Obra not found" }), {
+      return new Response(JSON.stringify({ error: "Obra não encontrada ou acesso negado." }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Get user's empresa_id and role
-    const { data: usuario, error: usuarioError } = await supabase
-      .from("usuarios")
-      .select("empresa_id, role")
-      .eq("id", user.id)
-      .single();
+    if (!obraNome) obraNome = obra.nome_obra || "Obra";
 
-    // Check authorization: user created the obra, OR user is company admin and obra belongs to same empresa
-    const isOwner = obra.created_by === user.id || obra.usuario_id === user.id;
-    const isCompanyAdmin = usuario?.role === 'admin' && usuario?.empresa_id === obra.empresa_id;
-    const isMasterAdmin = usuario?.role === 'master_admin';
-
-    if (!isOwner && !isCompanyAdmin && !isMasterAdmin) {
-      console.error(`[export-pdf] Unauthorized access attempt: user ${user.id} tried to access obra ${obraId}`);
-      return new Response(JSON.stringify({ error: "Forbidden - You do not have access to this obra" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    console.log(`[export-pdf] Authorized export for obra: ${obraId}, week: ${weekStart}`);
-
-    // Use the obra name from database if not provided
-    if (!obraNome) {
-      obraNome = obra.nome_obra || "Obra";
-    }
-
-    // Dados
+    // Busca Tarefas
     let query = supabase
       .from("tarefas")
       .select("setor, descricao, disciplina, executante, responsavel, encarregado, seg, ter, qua, qui, sex, sab, dom")
       .eq("obra_id", obraId)
       .eq("semana", weekStart);
-    
-    // Filter by executante if specified
-    if (groupBy === 'executante' && executante) {
+
+    if (groupBy === "executante" && executante) {
       query = query.eq("executante", executante);
     }
-    
-    query = query.order(groupBy === 'executante' ? "executante" : "setor", { ascending: true })
+
+    query = query
+      .order(groupBy === "executante" ? "executante" : "setor", { ascending: true })
       .order("descricao", { ascending: true });
-    
+
     const { data: tasks, error } = await query;
     if (error) throw error;
 
@@ -417,11 +403,8 @@ serve(async (req) => {
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-    // Gera HTML otimizado para impressão
-    const html = await generateHtmlContent(tasks || [], obraNome || "Obra", weekStartDate, weekEndDate, groupBy, executante);
-    
-    console.log("[export-pdf] HTML gerado com sucesso para conversão no cliente");
-    
+    const html = await generateHtmlContent(tasks || [], obraNome, weekStartDate, weekEndDate, groupBy, executante);
+
     return new Response(html, {
       headers: {
         ...corsHeaders,
@@ -430,6 +413,7 @@ serve(async (req) => {
       },
     });
   } catch (e: any) {
+    console.error("Erro interno:", e);
     return new Response(JSON.stringify({ error: e?.message || "Erro inesperado" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
