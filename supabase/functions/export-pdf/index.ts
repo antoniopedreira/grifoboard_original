@@ -352,10 +352,10 @@ serve(async (req) => {
       });
     }
 
-    // Authorization check - verify user owns the obra
+    // Authorization check - verify user has access to the obra
     const { data: obra, error: obraError } = await supabase
       .from("obras")
-      .select("usuario_id, nome_obra")
+      .select("usuario_id, created_by, empresa_id, nome_obra")
       .eq("id", obraId)
       .single();
 
@@ -367,8 +367,20 @@ serve(async (req) => {
       });
     }
 
-    if (obra.usuario_id !== user.id) {
-      console.error(`[export-pdf] Unauthorized access attempt: user ${user.id} tried to access obra ${obraId} owned by ${obra.usuario_id}`);
+    // Get user's empresa_id and role
+    const { data: usuario, error: usuarioError } = await supabase
+      .from("usuarios")
+      .select("empresa_id, role")
+      .eq("id", user.id)
+      .single();
+
+    // Check authorization: user created the obra, OR user is company admin and obra belongs to same empresa
+    const isOwner = obra.created_by === user.id || obra.usuario_id === user.id;
+    const isCompanyAdmin = usuario?.role === 'admin' && usuario?.empresa_id === obra.empresa_id;
+    const isMasterAdmin = usuario?.role === 'master_admin';
+
+    if (!isOwner && !isCompanyAdmin && !isMasterAdmin) {
+      console.error(`[export-pdf] Unauthorized access attempt: user ${user.id} tried to access obra ${obraId}`);
       return new Response(JSON.stringify({ error: "Forbidden - You do not have access to this obra" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
