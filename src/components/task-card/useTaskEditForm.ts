@@ -67,9 +67,17 @@ export const useTaskEditForm = (task: Task, onSaveSuccess?: (updatedTask: Task) 
     }
 
     try {
+      // Rebuild dailyStatus based on new plannedDays
+      // Keep existing status for days that were already planned, add "planned" for new days
+      const newDailyStatus = editFormData.plannedDays.map((day: DayOfWeek) => {
+        const existingStatus = task.dailyStatus.find(ds => ds.day === day);
+        return existingStatus || { day, status: 'planned' as const };
+      });
+
       const updatedTask: Task = {
         ...task,
         ...editFormData,
+        dailyStatus: newDailyStatus,
       };
 
       // Converter para formato do banco antes de enviar

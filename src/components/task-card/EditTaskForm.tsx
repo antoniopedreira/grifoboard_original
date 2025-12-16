@@ -15,6 +15,7 @@ interface EditTaskFormProps {
   onDayToggle: (day: DayOfWeek) => void;
   onDelete: () => void;
   onSave: () => Promise<void> | void;
+  onCancel?: () => void;
   isFormValid: () => boolean;
   onWeekDateChange: (date: Date) => void;
 }
@@ -24,6 +25,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
   onEditFormChange,
   onDayToggle,
   onSave,
+  onCancel,
   isFormValid,
 }) => {
   const { sectors, disciplines, teams, responsibles, executors } = useRegistry();
@@ -208,9 +210,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
       <div className="flex-none p-4 bg-white border-t border-slate-100 flex justify-end gap-3 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] z-20">
-        <Button variant="outline" onClick={onSave} className="border-slate-200 text-slate-600 hover:bg-slate-50">
+        <Button variant="outline" onClick={onCancel} className="border-slate-200 text-slate-600 hover:bg-slate-50">
           Cancelar
         </Button>
         <Button
