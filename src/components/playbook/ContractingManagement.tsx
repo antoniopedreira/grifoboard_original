@@ -205,6 +205,126 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
     }
   };
 
+  const calculateSummary = (filtered: EnrichedContractingItem[]) => {
+    const statuses = ["Negociada", "Em Andamento", "A Negociar"];
+    
+    const byStatus = statuses.map((status) => {
+      const items = filtered.filter((i) => (i.status_contratacao || "A Negociar") === status);
+      const totalMeta = items.reduce((sum, i) => sum + i.precoTotalMeta, 0);
+      const totalContratado = items.reduce((sum, i) => sum + (i.valor_contratado || 0), 0);
+      return { status, totalMeta, totalContratado, count: items.length };
+    });
+
+    const totalMeta = byStatus.reduce((sum, s) => sum + s.totalMeta, 0);
+    const totalContratado = byStatus.reduce((sum, s) => sum + s.totalContratado, 0);
+
+    return { byStatus, totalMeta, totalContratado };
+  };
+
+  const formatPercent = (value: number, total: number) => {
+    if (total === 0) return "0,00%";
+    return ((value / total) * 100).toFixed(2).replace(".", ",") + "%";
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Negociada": return "bg-green-500";
+      case "Em Andamento": return "bg-yellow-500";
+      case "A Negociar": return "bg-slate-400";
+      default: return "bg-slate-400";
+    }
+  };
+
+  const renderSummary = (filtered: EnrichedContractingItem[]) => {
+    const { byStatus, totalMeta, totalContratado } = calculateSummary(filtered);
+
+    if (filtered.length === 0) return null;
+
+    return (
+      <div className="mt-4 border border-slate-200 rounded-lg bg-white overflow-hidden shadow-sm">
+        <Table>
+          <TableHeader className="bg-[#112231]">
+            <TableRow className="hover:bg-[#112231]">
+              <TableHead className="w-[180px] text-white font-bold text-xs">SITUAÇÃO</TableHead>
+              <TableHead className="text-right text-white font-bold text-xs">ORÇADO</TableHead>
+              <TableHead className="text-center text-white font-bold text-xs w-[80px]">%</TableHead>
+              <TableHead className="text-right text-white font-bold text-xs">EFETIVADO</TableHead>
+              <TableHead className="text-center text-white font-bold text-xs w-[80px]">%</TableHead>
+              <TableHead className="text-right text-white font-bold text-xs">VERBA DISPONÍVEL</TableHead>
+              <TableHead className="text-center text-white font-bold text-xs w-[80px]">%</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {byStatus.map((row) => {
+              const verbaDisponivel = row.totalMeta - row.totalContratado;
+              const percentVerba = row.totalMeta > 0 ? (row.totalContratado / row.totalMeta) * 100 : 0;
+              
+              return (
+                <TableRow key={row.status} className="hover:bg-slate-50">
+                  <TableCell className="font-medium text-sm text-slate-700 flex items-center gap-2">
+                    <span className={cn("w-2 h-2 rounded-full", getStatusColor(row.status))} />
+                    {row.status.toUpperCase()}
+                  </TableCell>
+                  <TableCell className="text-right text-sm font-mono text-slate-700">
+                    {formatCurrency(row.totalMeta)}
+                  </TableCell>
+                  <TableCell className="text-center text-sm font-mono text-slate-500">
+                    {formatPercent(row.totalMeta, totalMeta)}
+                  </TableCell>
+                  <TableCell className="text-right text-sm font-mono text-slate-700">
+                    {row.totalContratado > 0 ? formatCurrency(row.totalContratado) : "-"}
+                  </TableCell>
+                  <TableCell className="text-center text-sm font-mono text-slate-500">
+                    {row.totalContratado > 0 ? formatPercent(row.totalContratado, totalContratado) : "0,00%"}
+                  </TableCell>
+                  <TableCell className="text-right text-sm font-mono text-slate-700">
+                    {formatCurrency(verbaDisponivel)}
+                  </TableCell>
+                  <TableCell className="text-center text-sm font-mono">
+                    <span className={cn(
+                      "font-medium",
+                      percentVerba >= 100 ? "text-green-600" : percentVerba > 0 ? "text-amber-600" : "text-slate-500"
+                    )}>
+                      {percentVerba.toFixed(2).replace(".", ",")}%
+                    </span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {/* TOTAL Row */}
+            <TableRow className="bg-[#A47528]/10 hover:bg-[#A47528]/15 border-t-2 border-[#A47528]/30">
+              <TableCell className="font-bold text-sm text-slate-900">
+                TOTAL
+              </TableCell>
+              <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
+                {formatCurrency(totalMeta)}
+              </TableCell>
+              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">
+                100,00%
+              </TableCell>
+              <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
+                {formatCurrency(totalContratado)}
+              </TableCell>
+              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">
+                100,00%
+              </TableCell>
+              <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
+                {formatCurrency(totalMeta - totalContratado)}
+              </TableCell>
+              <TableCell className="text-center text-sm font-mono font-bold">
+                <span className={cn(
+                  totalContratado >= totalMeta ? "text-green-600" : "text-amber-600"
+                )}>
+                  {totalMeta > 0 ? ((totalContratado / totalMeta) * 100).toFixed(2).replace(".", ",") : "0,00"}%
+                </span>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
   const renderTable = (filterDestino: string) => {
     const filtered = activeItems.filter((i) => i.destino === filterDestino);
 
@@ -218,96 +338,99 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
     }
 
     return (
-      <div className="border border-slate-200 rounded-lg bg-white overflow-hidden mt-4 shadow-sm">
-        <Table>
-          <TableHeader className="bg-slate-50 border-b border-slate-200">
-            <TableRow>
-              <TableHead className="w-[140px] font-bold text-slate-900">Etapa</TableHead>
-              <TableHead>Proposta</TableHead>
-              <TableHead className="w-[110px]">Responsável</TableHead>
-              <TableHead className="w-[90px]">Data</TableHead>
-              <TableHead className="text-right w-[100px]">Meta</TableHead>
-              <TableHead className="text-right w-[100px]">Contratado</TableHead>
-              <TableHead className="w-[110px]">Status</TableHead>
-              <TableHead className="w-[40px]">Obs</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((item) => {
-              const valorNum = item.valor_contratado || 0;
-              const diferenca = valorNum - item.precoTotalMeta;
-              return (
-                <TableRow key={item.id} className="hover:bg-slate-50">
-                  <TableCell className="font-bold text-[10px] text-slate-500 uppercase truncate">
-                    {item.etapaPrincipal.toLowerCase()}
-                  </TableCell>
-                  <TableCell className="font-medium text-sm text-slate-700">
-                    {capitalize(item.descricao)}
-                  </TableCell>
-                  <TableCell 
-                    className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                    onClick={(e) => openFieldModal(item, "responsavel", e)}
-                  >
-                    {item.responsavel || <span className="text-blue-400 text-[10px]">+ adicionar</span>}
-                  </TableCell>
-                  <TableCell 
-                    className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                    onClick={(e) => openFieldModal(item, "data", e)}
-                  >
-                    {item.data_limite ? (
-                      format(new Date(item.data_limite), "dd/MM/yy")
-                    ) : (
-                      <CalendarIcon className="h-3 w-3 text-blue-400" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-mono text-blue-700 font-medium">
-                    {formatCurrency(item.precoTotalMeta)}
-                  </TableCell>
-                  <TableCell 
-                    className="text-right text-xs font-mono cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                    onClick={(e) => openFieldModal(item, "valor", e)}
-                  >
-                    {valorNum > 0 ? (
-                      <span className={diferenca <= 0 ? "text-green-600" : "text-red-600"}>
-                        {formatCurrency(valorNum)}
-                      </span>
-                    ) : (
-                      <span className="text-blue-400 text-[10px]">+ valor</span>
-                    )}
-                  </TableCell>
-                  <TableCell 
-                    className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                    onClick={(e) => openFieldModal(item, "status", e)}
-                  >
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "text-[10px]",
-                        item.status_contratacao === "Negociada" && "bg-green-100 text-green-800",
-                        item.status_contratacao === "Em Andamento" && "bg-yellow-100 text-yellow-800",
-                        (!item.status_contratacao || item.status_contratacao === "A Negociar") && "bg-slate-100 text-slate-500"
-                      )}
+      <>
+        <div className="border border-slate-200 rounded-lg bg-white overflow-hidden mt-4 shadow-sm">
+          <Table>
+            <TableHeader className="bg-slate-50 border-b border-slate-200">
+              <TableRow>
+                <TableHead className="w-[140px] font-bold text-slate-900">Etapa</TableHead>
+                <TableHead>Proposta</TableHead>
+                <TableHead className="w-[110px]">Responsável</TableHead>
+                <TableHead className="w-[90px]">Data</TableHead>
+                <TableHead className="text-right w-[100px]">Meta</TableHead>
+                <TableHead className="text-right w-[100px]">Contratado</TableHead>
+                <TableHead className="w-[110px]">Status</TableHead>
+                <TableHead className="w-[40px]">Obs</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((item) => {
+                const valorNum = item.valor_contratado || 0;
+                const diferenca = valorNum - item.precoTotalMeta;
+                return (
+                  <TableRow key={item.id} className="hover:bg-slate-50">
+                    <TableCell className="font-bold text-[10px] text-slate-500 uppercase truncate">
+                      {item.etapaPrincipal.toLowerCase()}
+                    </TableCell>
+                    <TableCell className="font-medium text-sm text-slate-700">
+                      {capitalize(item.descricao)}
+                    </TableCell>
+                    <TableCell 
+                      className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                      onClick={(e) => openFieldModal(item, "responsavel", e)}
                     >
-                      {item.status_contratacao || "A Negociar"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell 
-                    className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                    onClick={(e) => openFieldModal(item, "obs", e)}
-                  >
-                    <MessageSquare 
-                      className={cn(
-                        "h-4 w-4",
-                        item.observacao ? "text-amber-500" : "text-slate-300"
+                      {item.responsavel || <span className="text-blue-400 text-[10px]">+ adicionar</span>}
+                    </TableCell>
+                    <TableCell 
+                      className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                      onClick={(e) => openFieldModal(item, "data", e)}
+                    >
+                      {item.data_limite ? (
+                        format(new Date(item.data_limite), "dd/MM/yy")
+                      ) : (
+                        <CalendarIcon className="h-3 w-3 text-blue-400" />
                       )}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-xs font-mono text-blue-700 font-medium">
+                      {formatCurrency(item.precoTotalMeta)}
+                    </TableCell>
+                    <TableCell 
+                      className="text-right text-xs font-mono cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                      onClick={(e) => openFieldModal(item, "valor", e)}
+                    >
+                      {valorNum > 0 ? (
+                        <span className={diferenca <= 0 ? "text-green-600" : "text-red-600"}>
+                          {formatCurrency(valorNum)}
+                        </span>
+                      ) : (
+                        <span className="text-blue-400 text-[10px]">+ valor</span>
+                      )}
+                    </TableCell>
+                    <TableCell 
+                      className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                      onClick={(e) => openFieldModal(item, "status", e)}
+                    >
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-[10px]",
+                          item.status_contratacao === "Negociada" && "bg-green-100 text-green-800",
+                          item.status_contratacao === "Em Andamento" && "bg-yellow-100 text-yellow-800",
+                          (!item.status_contratacao || item.status_contratacao === "A Negociar") && "bg-slate-100 text-slate-500"
+                        )}
+                      >
+                        {item.status_contratacao || "A Negociar"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell 
+                      className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                      onClick={(e) => openFieldModal(item, "obs", e)}
+                    >
+                      <MessageSquare 
+                        className={cn(
+                          "h-4 w-4",
+                          item.observacao ? "text-amber-500" : "text-slate-300"
+                        )}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+        {renderSummary(filtered)}
+      </>
     );
   };
 
