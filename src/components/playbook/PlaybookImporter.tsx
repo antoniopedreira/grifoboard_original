@@ -8,6 +8,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ import {
   TableRow,
   TableFooter,
 } from "@/components/ui/table";
-import { Upload, FileSpreadsheet, ArrowRight, Save, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, ArrowRight, Save, AlertCircle, X, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -61,6 +62,52 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
   const [coef1, setCoef1] = useState<string>("0.57");
   const [coef2, setCoef2] = useState<string>("0.75");
   const [selectedCoef, setSelectedCoef] = useState<"1" | "2">("1");
+
+  // Função para baixar template XLSX
+  const handleDownloadTemplate = () => {
+    // Criar workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Cabeçalhos
+    const headers = ["Descrição", "Unidade", "Qtd", "Preço Unitário", "Preço Total"];
+    
+    // Criar worksheet com cabeçalhos
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    
+    // Definir largura das colunas (45 caracteres = ~320px aprox)
+    ws['!cols'] = [
+      { wch: 45 }, // Descrição
+      { wch: 45 }, // Unidade
+      { wch: 45 }, // Qtd
+      { wch: 45 }, // Preço Unitário
+      { wch: 45 }, // Preço Total
+    ];
+    
+    // Adicionar estilos ao cabeçalho (cores #112231 fundo e #A47528 fonte)
+    // Nota: xlsx não suporta estilos nativamente, precisamos usar xlsx-style ou processar manualmente
+    // Para funcionar com estilos, vamos usar a propriedade 's' de cada célula
+    const headerCells = ['A1', 'B1', 'C1', 'D1', 'E1'];
+    headerCells.forEach(cell => {
+      if (ws[cell]) {
+        ws[cell].s = {
+          fill: { fgColor: { rgb: "112231" } },
+          font: { color: { rgb: "A47528" }, bold: true },
+          alignment: { horizontal: "center" }
+        };
+      }
+    });
+    
+    // Adicionar worksheet ao workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Orçamento");
+    
+    // Gerar e baixar arquivo
+    XLSX.writeFile(wb, "modelo_orcamento_playbook.xlsx");
+    
+    toast({
+      title: "Template baixado!",
+      description: "Preencha o arquivo e importe novamente.",
+    });
+  };
 
   // 1. Processar Arquivo (Upload)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -215,9 +262,17 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
                         : "Ajuste os coeficientes para calcular a meta de cada item."}
                 </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
-                <div className={cn("h-2 w-8 rounded-full", step === 1 ? "bg-primary" : "bg-primary/30")} />
-                <div className={cn("h-2 w-8 rounded-full", step === 2 ? "bg-primary" : "bg-slate-200")} />
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <div className={cn("h-2 w-8 rounded-full", step === 1 ? "bg-primary" : "bg-primary/30")} />
+                    <div className={cn("h-2 w-8 rounded-full", step === 2 ? "bg-primary" : "bg-slate-200")} />
+                </div>
+                <DialogClose asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100">
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Fechar</span>
+                    </Button>
+                </DialogClose>
             </div>
         </div>
 
@@ -236,6 +291,16 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
                         </div>
                     </Label>
                     <Input id="file-upload" type="file" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleFileUpload} />
+                    
+                    {/* Botão de baixar template */}
+                    <Button 
+                      variant="outline" 
+                      onClick={handleDownloadTemplate}
+                      className="mt-4 gap-2 text-slate-600 border-slate-300 hover:bg-slate-100"
+                    >
+                      <Download className="h-4 w-4" />
+                      Baixar Modelo Excel
+                    </Button>
                 </div>
             ) : (
                 <div className="flex flex-col h-full gap-4">
