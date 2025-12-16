@@ -239,9 +239,26 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
                 </div>
             ) : (
                 <div className="flex flex-col h-full gap-4">
-                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg text-blue-800 text-sm flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-blue-600" />
-                        <span>Clique nas linhas abaixo para marcá-las como <strong>ETAPA (Título)</strong> ou <strong>ITEM (Subetapa)</strong>.</span>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg text-blue-800 text-sm flex items-center gap-3 flex-1">
+                          <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                          <span>Clique nas linhas abaixo para marcá-las como <strong>ETAPA (Título)</strong> ou <strong>ITEM (Subetapa)</strong>.</span>
+                      </div>
+                      <div className="shrink-0">
+                        <Label htmlFor="file-replace" className="cursor-pointer">
+                          <div className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 transition-colors text-sm text-slate-600">
+                            <Upload className="h-4 w-4" />
+                            Trocar arquivo
+                          </div>
+                        </Label>
+                        <Input 
+                          id="file-replace" 
+                          type="file" 
+                          accept=".xlsx, .xls, .csv" 
+                          className="hidden" 
+                          onChange={handleFileUpload} 
+                        />
+                      </div>
                     </div>
                     
                     <div className="flex-1 border rounded-lg bg-white overflow-hidden flex flex-col">
