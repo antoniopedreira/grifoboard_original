@@ -70,26 +70,28 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  const ContractingRow = ({ item, isFirstInGroup }: { item: EnrichedContractingItem; isFirstInGroup: boolean }) => {
+  // Função para capitalizar primeira letra de cada palavra
+  const capitalize = (str: string) => {
+    return str.toLowerCase().replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
+  };
+
+  const ContractingRow = ({ item }: { item: EnrichedContractingItem }) => {
     const diferenca = (item.valor_contratado || 0) - item.precoTotalMeta;
     const isSaving = diferenca <= 0;
 
     return (
       <TableRow className="hover:bg-slate-50 transition-colors">
-        {/* Etapa Principal - só mostra se for o primeiro do grupo */}
+        {/* Etapa Principal */}
         <TableCell
-          className={cn(
-            "font-bold text-[10px] text-slate-500 uppercase tracking-wide max-w-[150px]",
-            !isFirstInGroup && "border-t-0"
-          )}
+          className="font-bold text-[10px] text-slate-500 uppercase tracking-wide max-w-[150px] truncate"
           title={item.etapaPrincipal}
         >
-          {isFirstInGroup ? item.etapaPrincipal.toLowerCase() : ""}
+          {item.etapaPrincipal.toLowerCase()}
         </TableCell>
 
-        {/* Proposta (antiga Item/Subetapa) */}
+        {/* Proposta */}
         <TableCell className="font-medium text-sm text-slate-700 max-w-[200px] truncate" title={item.descricao}>
-          {item.descricao.toLowerCase()}
+          {capitalize(item.descricao)}
         </TableCell>
 
         {/* Responsável */}
@@ -107,7 +109,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
         {/* Data Limite */}
         <TableCell onClick={(e) => e.stopPropagation()}>
-          <Popover>
+          <Popover modal={false}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
@@ -196,7 +198,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
         {/* Obs */}
         <TableCell onClick={(e) => e.stopPropagation()}>
-          <Popover>
+          <Popover modal={false}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary">
                 <FileText className={cn("h-4 w-4", item.observacao && "text-blue-500 fill-blue-100")} />
@@ -246,10 +248,9 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((item, index) => {
-              const isFirstInGroup = index === 0 || filtered[index - 1].etapaPrincipal !== item.etapaPrincipal;
-              return <ContractingRow key={item.id} item={item} isFirstInGroup={isFirstInGroup} />;
-            })}
+            {filtered.map((item) => (
+              <ContractingRow key={item.id} item={item} />
+            ))}
           </TableBody>
         </Table>
       </div>
