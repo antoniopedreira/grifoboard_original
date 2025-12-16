@@ -14,7 +14,6 @@ export interface PlaybookItem {
   qtd: number;
   precoUnitario: number;
   precoTotal: number;
-  // Mantemos isEtapa, mas a renderização principal usa 'nivel' (0, 1, 2)
   isEtapa: boolean;
   nivel?: number; // 0=Principal, 1=Subetapa, 2=Item
   precoUnitarioMeta: number;
@@ -66,16 +65,13 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
   const filteredData = data.filter((item) => item.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
 
   // --- CÁLCULO DE TOTAIS POR AGRUPADOR ---
-  // Mapa para guardar totais de L0 (Principal) e L1 (Subetapa)
   const totalsMap = new Map<number | string, { precoTotal: number; precoTotalMeta: number }>();
-
-  // Variáveis auxiliares para o loop de soma
   let currentL0_Id: number | string | null = null;
   let currentL1_Id: number | string | null = null;
 
   // 1. Passada para calcular somas (Items somam para seus pais)
   data.forEach((item) => {
-    const level = item.nivel ?? (item.isEtapa ? 0 : 2); // Fallback
+    const level = item.nivel ?? (item.isEtapa ? 0 : 2);
 
     if (level === 0) {
       currentL0_Id = item.id;
@@ -85,7 +81,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
       currentL1_Id = item.id;
       totalsMap.set(item.id, { precoTotal: 0, precoTotalMeta: 0 });
     } else if (level === 2) {
-      // Soma para o pai L1 se existir
+      // Soma para L1 se existir
       if (currentL1_Id !== null) {
         const t1 = totalsMap.get(currentL1_Id) || { precoTotal: 0, precoTotalMeta: 0 };
         totalsMap.set(currentL1_Id, {
@@ -93,7 +89,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
           precoTotalMeta: t1.precoTotalMeta + item.precoTotalMeta,
         });
       }
-      // Soma para o pai L0 se existir
+      // Soma para L0 se existir
       if (currentL0_Id !== null) {
         const t0 = totalsMap.get(currentL0_Id) || { precoTotal: 0, precoTotalMeta: 0 };
         totalsMap.set(currentL0_Id, {
@@ -105,7 +101,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
   });
 
   // --- LÓGICA DE RENDERIZAÇÃO HIERÁRQUICA ---
-  // Resetamos variáveis para usar no loop de renderização (visibilidade)
   currentL0_Id = null;
   currentL1_Id = null;
 
@@ -114,7 +109,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
     const itemId = item.id;
     let isVisible = true;
 
-    // Atualiza rastreamento de pais para visibilidade
     if (level === 0) {
       currentL0_Id = itemId;
       currentL1_Id = null;
@@ -122,50 +116,48 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
       currentL1_Id = itemId;
     }
 
-    // Se tiver busca, mostra tudo
     if (searchTerm) {
-      const totals = level === 0 || level === 1 ? totalsMap.get(itemId) : undefined;
-      const displayTotalMetaSearch = totals?.precoTotalMeta || item.precoTotalMeta;
-      const calculatedPercentageSearch = grandTotalMeta > 0 ? (displayTotalMetaSearch / grandTotalMeta) * 100 : 0;
-      return {
-        ...item,
-        level,
-        visible: true,
-        isExpanded: true,
-        displayTotal: totals?.precoTotal || item.precoTotal,
-        displayTotalMeta: displayTotalMetaSearch,
-        displayPercentage: calculatedPercentageSearch,
-      };
+      isVisible = true;
+    } else {
+      if (level === 1) {
+        if (currentL0_Id !== null && !expandedIds[currentL0_Id]) isVisible = false;
+      } else if (level === 2) {
+        if (currentL0_Id !== null && !expandedIds[currentL0_Id]) isVisible = false;
+        else if (currentL1_Id !== null && !expandedIds[currentL1_Id]) isVisible = false;
+      }
     }
 
-    // Visibilidade Cascata (L0 -> L1 -> L2)
-    if (level === 1) {
-      if (currentL0_Id !== null && !expandedIds[currentL0_Id]) isVisible = false;
-    } else if (level === 2) {
-      if (currentL0_Id !== null && !expandedIds[currentL0_Id]) isVisible = false;
-      else if (currentL1_Id !== null && !expandedIds[currentL1_Id]) isVisible = false;
-    }
-
+    const isExpanded = !!expandedIds[itemId];
     const totals = level === 0 || level === 1 ? totalsMap.get(itemId) : undefined;
-    const displayTotalMeta = level === 0 || level === 1 ? totals?.precoTotalMeta || 0 : item.precoTotalMeta;
-    
-    // Calcula porcentagem para todos os níveis
-    const calculatedPercentage = grandTotalMeta > 0 ? (displayTotalMeta / grandTotalMeta) * 100 : 0;
+
+    // Cálculo da porcentagem para exibição
+    const valMeta = totals ? totals.precoTotalMeta : item.precoTotalMeta;
+    const displayPercentage = grandTotalMeta > 0 ? (valMeta / grandTotalMeta) * 100 : 0;
 
     return {
       ...item,
       level,
       visible: isVisible,
-      isExpanded: !!expandedIds[itemId],
-      // Se for pai, mostra o total calculado. Se for item, mostra o próprio valor.
-      displayTotal: level === 0 || level === 1 ? totals?.precoTotal || 0 : item.precoTotal,
-      displayTotalMeta,
-      displayPercentage: calculatedPercentage,
+      isExpanded,
+      displayTotal: totals ? totals.precoTotal : item.precoTotal,
+      displayTotalMeta: totals ? totals.precoTotalMeta : item.precoTotalMeta,
+      displayPercentage,
     };
   });
 
   return (
     <div className="space-y-4">
+      {/* Estilo local para animação suave */}
+      <style>{`
+        @keyframes soft-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.85; transform: scale(1.05); }
+        }
+        .animate-soft-pulse {
+          animation: soft-pulse 3s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Toolbar da Tabela */}
       <div className="flex justify-between items-center gap-4">
         <div className="relative flex-1 max-w-sm">
@@ -221,13 +213,13 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                     onClick={item.level === 0 || item.level === 1 ? () => toggleRow(item.id) : undefined}
                   >
                     <TableCell
-                      className={cn("py-3 relative", item.level === 0 ? "pl-4" : item.level === 1 ? "pl-8" : "pl-12")}
+                      className={cn("py-3 relative", item.level === 0 ? "pl-6" : item.level === 1 ? "pl-10" : "pl-14")}
                     >
                       <div
                         className={cn(
                           "flex items-center gap-2",
                           item.level === 0
-                            ? "font-black text-slate-800 uppercase text-sm"
+                            ? "font-bold text-slate-800 uppercase text-sm"
                             : item.level === 1
                               ? "font-bold text-blue-900 text-xs uppercase tracking-wide"
                               : "text-slate-600 capitalize text-sm",
@@ -262,7 +254,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                     </TableCell>
 
                     <TableCell className="text-right text-xs font-mono text-slate-600 font-medium">
-                      {/* Usa o displayTotal calculado (Soma para pais, Valor próprio para itens) */}
                       {formatCurrency(item.displayTotal)}
                     </TableCell>
 
@@ -279,12 +270,12 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                         <Badge
                           variant="secondary"
                           className={cn(
-                            "font-mono text-[10px] border transition-all duration-300",
+                            "font-mono text-[10px] border transition-all",
                             item.displayPercentage > 2
-                              ? "bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm shadow-emerald-200 animate-[pulse_3s_ease-in-out_infinite]"
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-300 animate-soft-pulse font-bold shadow-sm"
                               : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200",
                             item.level === 0 && "text-[11px] font-bold",
-                            item.level === 1 && "text-[10px] font-semibold"
+                            item.level === 1 && "text-[10px] font-semibold",
                           )}
                         >
                           {item.displayPercentage.toFixed(2)}%
