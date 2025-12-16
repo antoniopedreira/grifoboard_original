@@ -400,17 +400,17 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                       className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
                       onClick={(e) => openFieldModal(item, "status", e)}
                     >
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[10px]",
-                          item.status_contratacao === "Negociada" && "bg-green-100 text-green-800",
-                          item.status_contratacao === "Em Andamento" && "bg-yellow-100 text-yellow-800",
-                          (!item.status_contratacao || item.status_contratacao === "A Negociar") && "bg-slate-100 text-slate-500"
-                        )}
-                      >
-                        {item.status_contratacao || "A Negociar"}
-                      </Badge>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "text-[10px] transition-all",
+                        item.status_contratacao === "Negociada" && "bg-green-100 text-green-800 hover:bg-green-200",
+                        item.status_contratacao === "Em Andamento" && "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+                        (!item.status_contratacao || item.status_contratacao === "A Negociar") && "bg-red-100 text-red-700 hover:bg-red-200"
+                      )}
+                    >
+                      {item.status_contratacao || "A Negociar"}
+                    </Badge>
                     </TableCell>
                     <TableCell 
                       className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
