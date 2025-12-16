@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Task } from "@/types";
 import TaskFilters from "./task/TaskFilters";
 import TaskGrid from "./task/TaskGrid";
@@ -31,35 +31,40 @@ const TaskList: React.FC<TaskListProps> = ({
   const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
   const { toast } = useToast();
   
-  // Apply cause filter first if there's a selected cause
-  const tasksAfterCauseFilter = selectedCause
-    ? tasks.filter(task => task.causeIfNotDone === selectedCause)
-    : tasks;
+  // Memoize tasksAfterCauseFilter to avoid recalculating on every render
+  const tasksAfterCauseFilter = useMemo(() => {
+    return selectedCause
+      ? tasks.filter(task => task.causeIfNotDone === selectedCause)
+      : tasks;
+  }, [tasks, selectedCause]);
   
-  const handleTaskUpdate = (updatedTask: Task) => {
+  // Memoize handleTaskUpdate to maintain reference stability
+  const handleTaskUpdate = useCallback((updatedTask: Task) => {
     onTaskUpdate(updatedTask);
     
-    // Show a toast notification when a task is updated
-      if (updatedTask.isFullyCompleted) {
-        toast({
-          title: "Tarefa concluída",
-          description: updatedTask.description,
-        });
-      }
-  };
+    if (updatedTask.isFullyCompleted) {
+      toast({
+        title: "Tarefa concluída",
+        description: updatedTask.description,
+      });
+    }
+  }, [onTaskUpdate, toast]);
+
+  // Memoize setFilteredTasks callback for TaskFilters
+  const handleFiltersChange = useCallback((filtered: Task[]) => {
+    setFilteredTasks(filtered);
+  }, []);
 
   useEffect(() => {
-    // When selectedCause changes, we need to reset the filteredTasks
-    // to allow the TaskFilters component to work with the pre-filtered list
     setFilteredTasks(tasksAfterCauseFilter);
-  }, [tasksAfterCauseFilter, selectedCause]);
+  }, [tasksAfterCauseFilter]);
 
   return (
     <div className="w-full space-y-6">
       <div className="glass-card p-5 rounded-xl shadow-sm">
         <TaskFilters 
           tasks={tasksAfterCauseFilter} 
-          onFiltersChange={setFilteredTasks} 
+          onFiltersChange={handleFiltersChange}
           selectedCause={selectedCause}
           sortBy={sortBy}
           onSortChange={onSortChange}

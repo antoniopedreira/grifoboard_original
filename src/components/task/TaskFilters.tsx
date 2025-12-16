@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Task } from "@/types";
@@ -14,28 +14,44 @@ interface TaskFiltersProps {
 
 const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selectedCause, sortBy, onSortChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [filterSector, setFilterSector] = useState("all");
   const [filterDiscipline, setFilterDiscipline] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
   const [filterTeam, setFilterTeam] = useState("all");
   const [filterExecutor, setFilterExecutor] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const debounceRef = useRef<NodeJS.Timeout>();
   
-  // Extract unique values for filters and filter out empty values
-  const sectors = Array.from(new Set(tasks.map(task => task.sector))).filter(Boolean);
-  const disciplines = Array.from(new Set(tasks.map(task => task.discipline))).filter(Boolean);
-  const responsibles = Array.from(new Set(tasks.map(task => task.responsible))).filter(Boolean);
-  const teams = Array.from(new Set(tasks.map(task => task.team))).filter(Boolean);
-  const executors = Array.from(new Set(tasks.map(task => task.executor).filter(Boolean))).filter(Boolean);
-  
+  // Memoized unique filter options
+  const sectors = useMemo(() => Array.from(new Set(tasks.map(task => task.sector))).filter(Boolean), [tasks]);
+  const disciplines = useMemo(() => Array.from(new Set(tasks.map(task => task.discipline))).filter(Boolean), [tasks]);
+  const responsibles = useMemo(() => Array.from(new Set(tasks.map(task => task.responsible))).filter(Boolean), [tasks]);
+  const teams = useMemo(() => Array.from(new Set(tasks.map(task => task.team))).filter(Boolean), [tasks]);
+  const executors = useMemo(() => Array.from(new Set(tasks.map(task => task.executor).filter(Boolean))).filter(Boolean), [tasks]);
 
-  // Apply filters whenever filter values change
+  // Debounce search term
   useEffect(() => {
-    const filteredTasks = tasks.filter(task => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
+
+  // Memoized filter and sort logic
+  const processedTasks = useMemo(() => {
+    const filtered = tasks.filter(task => {
       const matchesSearch = 
-        searchTerm === "" ||
-        task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.item.toLowerCase().includes(searchTerm.toLowerCase());
+        debouncedSearchTerm === "" ||
+        task.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        task.item.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
         
       const matchesSector = filterSector === "all" || task.sector === filterSector;
       const matchesDiscipline = filterDiscipline === "all" || task.discipline === filterDiscipline;
@@ -51,9 +67,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
     });
 
     // Apply sorting/grouping in alphabetical order
-    let sortedTasks = [...filteredTasks];
     if (sortBy !== "none") {
-      sortedTasks.sort((a, b) => {
+      filtered.sort((a, b) => {
         let valueA = "";
         let valueB = "";
         
@@ -61,7 +76,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
           valueA = (a.sector || "").toLowerCase();
           valueB = (b.sector || "").toLowerCase();
         } else if (sortBy === "executor") {
-          valueA = (a.team || "").toLowerCase(); // Note: team is the Executante field
+          valueA = (a.team || "").toLowerCase();
           valueB = (b.team || "").toLowerCase();
         } else if (sortBy === "discipline") {
           valueA = (a.discipline || "").toLowerCase();
@@ -72,8 +87,13 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ tasks, onFiltersChange, selec
       });
     }
 
-    onFiltersChange(sortedTasks);
-  }, [searchTerm, filterSector, filterDiscipline, filterResponsible, filterTeam, filterExecutor, filterStatus, sortBy, tasks, onFiltersChange]);
+    return filtered;
+  }, [tasks, debouncedSearchTerm, filterSector, filterDiscipline, filterResponsible, filterTeam, filterExecutor, filterStatus, sortBy]);
+
+  // Only call onFiltersChange when processedTasks changes
+  useEffect(() => {
+    onFiltersChange(processedTasks);
+  }, [processedTasks, onFiltersChange]);
 
   // Reset filters when selectedCause changes
   useEffect(() => {

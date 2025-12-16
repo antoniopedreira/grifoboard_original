@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Task, WeeklyPCPData, PCPBreakdown } from "@/types";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Task, WeeklyPCPData } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { calculatePCP } from "@/utils/pcp";
@@ -12,33 +12,37 @@ export const useTaskManager = (weekStartDate: Date) => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-
-  // CORREÇÃO: Restaurado o estado de weeklyPCPData para compatibilidade com MainPageContent
   const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { filterTasksByWeek, filteredTasks, setFilteredTasks } = useTaskFilters(tasks, weekStartDate);
   const { loadTasks } = useTaskData(session, toast, setTasks, setIsLoading);
 
-  // Função para calcular dados do PCP
+  // Memoized PCP calculation to avoid recalculating on every render
+  const pcpData = useMemo(() => {
+    return calculatePCP(filteredTasks || []);
+  }, [filteredTasks]);
+
+  // Update weeklyPCPData when pcpData changes
+  const updateWeeklyPCPData = useCallback((percentage: number) => {
+    const weeklyData: WeeklyPCPData = {
+      week: "Atual",
+      percentage,
+      date: weekStartDate,
+      isCurrentWeek: true,
+    };
+    setWeeklyPCPData([weeklyData]);
+  }, [weekStartDate]);
+
+  // Simplified calculatePCPData for use in actions (only updates weeklyPCPData)
   const calculatePCPData = useCallback(
     (tasksList: Task[]) => {
-      // Proteção contra undefined
       const safeList = tasksList || [];
-      const pcpData = calculatePCP(safeList);
-
-      // CORREÇÃO: Recriando o objeto weeklyPCPData necessário para o componente PCPSection
-      const weeklyData: WeeklyPCPData = {
-        week: "Atual",
-        percentage: pcpData.overall.percentage,
-        date: weekStartDate,
-        isCurrentWeek: true,
-      };
-      setWeeklyPCPData([weeklyData]);
-
-      return pcpData;
+      const data = calculatePCP(safeList);
+      updateWeeklyPCPData(data.overall.percentage);
+      return data;
     },
-    [weekStartDate],
+    [updateWeeklyPCPData],
   );
 
   const { handleTaskUpdate, handleTaskDelete, handleTaskCreate, handleTaskDuplicate, handleCopyToNextWeek } =
@@ -53,7 +57,7 @@ export const useTaskManager = (weekStartDate: Date) => {
       session,
     });
 
-  // Carregar tarefas quando a obra ativa mudar
+  // Load tasks when obraAtiva changes
   useEffect(() => {
     if (session.obraAtiva) {
       loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks);
@@ -61,27 +65,23 @@ export const useTaskManager = (weekStartDate: Date) => {
       setTasks([]);
       setFilteredTasks([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.obraAtiva]);
+  }, [session.obraAtiva]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Atualizar lista filtrada ao mudar semana
+  // Filter tasks and update weeklyPCPData when weekStartDate or tasks change
   useEffect(() => {
     if (tasks && tasks.length > 0) {
       const filtered = filterTasksByWeek(tasks, weekStartDate);
       setFilteredTasks(filtered);
-      calculatePCPData(filtered);
+      updateWeeklyPCPData(calculatePCP(filtered).overall.percentage);
     }
-  }, [weekStartDate, tasks, filterTasksByWeek, calculatePCPData, setFilteredTasks]);
-
-  // Cálculo final seguro
-  const pcpData = calculatePCP(filteredTasks || []);
+  }, [weekStartDate, tasks, filterTasksByWeek, setFilteredTasks, updateWeeklyPCPData]);
 
   return {
     tasks: filteredTasks || [],
     allTasks: tasks || [],
     isLoading,
     pcpData,
-    weeklyPCPData, // Propriedade restaurada para corrigir o erro
+    weeklyPCPData,
     loadTasks: (callback?: () => void) =>
       loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks, callback),
     handleTaskUpdate,

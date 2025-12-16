@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { motion } from "framer-motion";
+import React from "react";
 import { cn } from "@/lib/utils";
 import EditTaskDialog from "./task-card/EditTaskDialog";
 import { useState } from "react";
@@ -160,12 +160,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
 
   return (
     <>
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div
         className={cn(
-          "group relative bg-white rounded-xl shadow-sm border border-border/60 overflow-hidden hover:shadow-md transition-all duration-300",
+          "group relative bg-white rounded-xl shadow-sm border border-border/60 overflow-hidden hover:shadow-md transition-shadow duration-200",
           isDone ? "bg-slate-50/50" : "",
         )}
       >
@@ -426,11 +423,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onDuplica
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       <EditTaskDialog task={task} isOpen={isEditOpen} onOpenChange={setIsEditOpen} onUpdate={onUpdate} />
     </>
   );
 };
 
-export default TaskCard;
+export default React.memo(TaskCard);
