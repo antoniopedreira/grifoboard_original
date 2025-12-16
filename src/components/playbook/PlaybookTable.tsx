@@ -67,11 +67,24 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
     item.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Lógica de Renderização Hierárquica
-  // Precisamos iterar sobre os dados e decidir quem mostrar baseado no estado 'expanded'
-  // Como os dados vêm planos do importer (lista sequencial), vamos renderizar na ordem
-  // Mas esconder itens cujo "pai" (etapa anterior) não está expandido.
+  // Calcula totais por etapa
+  const etapaTotals = new Map<number, { precoTotal: number; precoTotalMeta: number }>();
+  let currentEtapaIdForCalc: number | null = null;
   
+  data.forEach((item) => {
+    if (item.isEtapa) {
+      currentEtapaIdForCalc = item.id;
+      etapaTotals.set(item.id, { precoTotal: 0, precoTotalMeta: 0 });
+    } else if (currentEtapaIdForCalc !== null) {
+      const current = etapaTotals.get(currentEtapaIdForCalc) || { precoTotal: 0, precoTotalMeta: 0 };
+      etapaTotals.set(currentEtapaIdForCalc, {
+        precoTotal: current.precoTotal + item.precoTotal,
+        precoTotalMeta: current.precoTotalMeta + item.precoTotalMeta,
+      });
+    }
+  });
+
+  // Lógica de Renderização Hierárquica
   let currentEtapaId: number | null = null;
   let isCurrentEtapaExpanded = true;
 
@@ -79,10 +92,10 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
     if (item.isEtapa) {
       currentEtapaId = item.id;
       isCurrentEtapaExpanded = expandedEtapas.includes(item.id);
-      return { ...item, visible: true, isExpanded: isCurrentEtapaExpanded };
+      const totals = etapaTotals.get(item.id) || { precoTotal: 0, precoTotalMeta: 0 };
+      return { ...item, visible: true, isExpanded: isCurrentEtapaExpanded, etapaTotal: totals.precoTotal, etapaTotalMeta: totals.precoTotalMeta };
     } else {
-      // Se estamos buscando, mostrar tudo para não esconder resultados
-      return { ...item, visible: searchTerm ? true : isCurrentEtapaExpanded, isExpanded: false };
+      return { ...item, visible: searchTerm ? true : isCurrentEtapaExpanded, isExpanded: false, etapaTotal: 0, etapaTotalMeta: 0 };
     }
   });
 
@@ -158,7 +171,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                   </TableCell>
                   
                   <TableCell className="text-right text-xs font-mono text-slate-600 font-medium">
-                    {!item.isEtapa && formatCurrency(item.precoTotal)}
+                    {item.isEtapa ? formatCurrency(item.etapaTotal) : formatCurrency(item.precoTotal)}
                   </TableCell>
                   
                   {/* Meta Columns */}
@@ -166,7 +179,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                     {!item.isEtapa && formatCurrency(item.precoUnitarioMeta)}
                   </TableCell>
                   <TableCell className="text-right text-xs font-mono font-bold text-blue-700 bg-blue-50/30">
-                    {!item.isEtapa && formatCurrency(item.precoTotalMeta)}
+                    {item.isEtapa ? formatCurrency(item.etapaTotalMeta) : formatCurrency(item.precoTotalMeta)}
                   </TableCell>
                   
                   <TableCell className="text-right">
