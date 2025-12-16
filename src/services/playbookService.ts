@@ -54,7 +54,7 @@ export const playbookService = {
 
     // C. Inserir novos itens
     if (items.length > 0) {
-      const { error: insertError } = await supabase.from("playbook_items").insert(items);
+      const { error: insertError } = await supabase.from("playbook_items").insert(items as any); // "as any" para evitar conflito com tipos gerados antigos
 
       if (insertError) throw insertError;
     }
@@ -72,7 +72,6 @@ export const playbookService = {
       .single();
 
     if (configError && configError.code !== "PGRST116") {
-      // Ignora erro se não existir ainda
       console.error("Erro ao buscar config:", configError);
     }
 
@@ -89,8 +88,13 @@ export const playbookService = {
   },
 
   // 3. Atualizar Item Individual (Fase 2 - Gestão de Contratação)
-  async updateItem(itemId: number | string, updates: PlaybookItemUpdate) {
-    const { error } = await supabase.from("playbook_items").update(updates).eq("id", itemId);
+  // Alterado itemId para 'string' (UUID)
+  async updateItem(itemId: string, updates: PlaybookItemUpdate) {
+    const { error } = await supabase
+      .from("playbook_items")
+      // "as any" aqui resolve o erro TS2559 (propriedades novas não reconhecidas)
+      .update(updates as any)
+      .eq("id", itemId);
 
     if (error) throw error;
     return true;
