@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, User, FileText } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -13,6 +12,15 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { playbookService } from "@/services/playbookService";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface ContractingItem {
   id: number | string;
@@ -20,7 +28,7 @@ export interface ContractingItem {
   unidade: string;
   qtd: number;
   precoTotalMeta: number;
-  nivel?: number; // Importante para lógica de Etapa Principal
+  nivel?: number;
   destino: string | null;
   responsavel: string | null;
   data_limite: string | null;
@@ -29,7 +37,6 @@ export interface ContractingItem {
   observacao: string | null;
 }
 
-// Interface auxiliar para item com Etapa Principal calculada
 interface EnrichedContractingItem extends ContractingItem {
   etapaPrincipal: string;
 }
@@ -41,231 +48,59 @@ interface ContractingManagementProps {
 
 export function ContractingManagement({ items, onUpdate }: ContractingManagementProps) {
   const { toast } = useToast();
+  const [editingItem, setEditingItem] = useState<EnrichedContractingItem | null>(null);
+  const [formData, setFormData] = useState({
+    responsavel: "",
+    data_limite: undefined as Date | undefined,
+    valor_contratado: "",
+    status_contratacao: "A Negociar",
+    observacao: "",
+  });
 
-  // 1. Processar itens para adicionar "Etapa Principal"
-  // Como a lista vem ordenada, percorremos e guardamos o último Nível 0 visto
   let currentMainStage = "";
   const enrichedItems: EnrichedContractingItem[] = items.map((item) => {
     if (item.nivel === 0) {
       currentMainStage = item.descricao;
     }
-    return {
-      ...item,
-      etapaPrincipal: currentMainStage || item.descricao, // Fallback para a própria descrição se não achar pai
-    };
+    return { ...item, etapaPrincipal: currentMainStage || item.descricao };
   });
 
-  // 2. Filtrar apenas itens que têm destino definido
   const activeItems = enrichedItems.filter((i) => i.destino);
 
-  const handleUpdate = async (id: number | string, field: string, value: any) => {
-    try {
-      await playbookService.updateItem(String(id), { [field]: value });
-      onUpdate();
-    } catch (error) {
-      toast({ title: "Erro", description: "Falha ao atualizar item.", variant: "destructive" });
-    }
+  const capitalize = (str: string) => {
+    return str.toLowerCase().replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
   };
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  // Função para capitalizar primeira letra de cada palavra
-  const capitalize = (str: string) => {
-    return str.toLowerCase().replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
+  const openEditModal = (item: EnrichedContractingItem) => {
+    setEditingItem(item);
+    setFormData({
+      responsavel: item.responsavel || "",
+      data_limite: item.data_limite ? new Date(item.data_limite) : undefined,
+      valor_contratado: item.valor_contratado?.toString() || "",
+      status_contratacao: item.status_contratacao || "A Negociar",
+      observacao: item.observacao || "",
+    });
   };
 
-  const ContractingRow = ({ item }: { item: EnrichedContractingItem }) => {
-    const [responsavel, setResponsavel] = useState(item.responsavel || "");
-    const [dataLimite, setDataLimite] = useState<Date | undefined>(
-      item.data_limite ? new Date(item.data_limite) : undefined
-    );
-    const [valorContratado, setValorContratado] = useState(item.valor_contratado?.toString() || "");
-    const [status, setStatus] = useState(item.status_contratacao || "A Negociar");
-    const [observacao, setObservacao] = useState(item.observacao || "");
-    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-    const [isObsOpen, setIsObsOpen] = useState(false);
-
-    const valorNum = parseFloat(valorContratado) || 0;
-    const diferenca = valorNum - item.precoTotalMeta;
-    const isSaving = diferenca <= 0;
-
-    const saveResponsavel = () => {
-      if (responsavel !== (item.responsavel || "")) {
-        handleUpdate(item.id, "responsavel", responsavel);
-      }
-    };
-
-    const saveDataLimite = (date: Date | undefined) => {
-      setDataLimite(date);
-      if (date) {
-        handleUpdate(item.id, "data_limite", date.toISOString());
-      }
-      setIsCalendarOpen(false);
-    };
-
-    const saveValorContratado = () => {
-      const val = parseFloat(valorContratado);
-      if (!isNaN(val) && val !== item.valor_contratado) {
-        handleUpdate(item.id, "valor_contratado", val);
-      }
-    };
-
-    const saveStatus = (val: string) => {
-      setStatus(val);
-      handleUpdate(item.id, "status_contratacao", val);
-    };
-
-    const saveObservacao = () => {
-      if (observacao !== (item.observacao || "")) {
-        handleUpdate(item.id, "observacao", observacao);
-      }
-    };
-
-    return (
-      <TableRow className="hover:bg-slate-50 transition-colors">
-        {/* Etapa Principal */}
-        <TableCell
-          className="font-bold text-[10px] text-slate-500 uppercase tracking-wide max-w-[150px] truncate"
-          title={item.etapaPrincipal}
-        >
-          {item.etapaPrincipal.toLowerCase()}
-        </TableCell>
-
-        {/* Proposta */}
-        <TableCell className="font-medium text-sm text-slate-700 max-w-[200px] truncate" title={item.descricao}>
-          {capitalize(item.descricao)}
-        </TableCell>
-
-        {/* Responsável */}
-        <TableCell>
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <User className="h-3 w-3 text-slate-400 flex-shrink-0" />
-            <Input
-              className="h-8 text-xs bg-white border-slate-200 hover:border-slate-300 focus:border-primary transition-all w-[100px]"
-              placeholder="Nome..."
-              value={responsavel}
-              onChange={(e) => setResponsavel(e.target.value)}
-              onBlur={saveResponsavel}
-            />
-          </div>
-        </TableCell>
-
-        {/* Data Limite */}
-        <TableCell>
-          <div onClick={(e) => e.stopPropagation()}>
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "h-8 text-xs justify-start text-left font-normal w-[100px] px-2",
-                    !dataLimite && "text-slate-400",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-3 w-3" />
-                  {dataLimite ? format(dataLimite, "dd/MM/yy") : "Definir"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-[100] bg-white shadow-lg border" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dataLimite}
-                  onSelect={saveDataLimite}
-                  initialFocus
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </TableCell>
-
-        {/* Meta Total */}
-        <TableCell className="text-right text-xs font-mono text-blue-700 bg-blue-50/30 font-medium">
-          {formatCurrency(item.precoTotalMeta)}
-        </TableCell>
-
-        {/* Valor Contratado */}
-        <TableCell>
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">R$</span>
-            <Input
-              type="number"
-              className="h-8 text-xs pl-6 text-right font-mono bg-white border-slate-200 focus:border-primary w-[90px]"
-              placeholder="0,00"
-              value={valorContratado}
-              onChange={(e) => setValorContratado(e.target.value)}
-              onBlur={saveValorContratado}
-            />
-          </div>
-        </TableCell>
-
-        {/* Diferença */}
-        <TableCell className="text-right">
-          {valorNum > 0 ? (
-            <Badge
-              variant="outline"
-              className={cn(
-                "font-mono text-[10px]",
-                isSaving ? "text-green-700 bg-green-50 border-green-200" : "text-red-700 bg-red-50 border-red-200",
-              )}
-            >
-              {formatCurrency(diferenca)}
-            </Badge>
-          ) : (
-            <span className="text-slate-300">-</span>
-          )}
-        </TableCell>
-
-        {/* Status */}
-        <TableCell>
-          <div onClick={(e) => e.stopPropagation()}>
-            <Select value={status} onValueChange={saveStatus}>
-              <SelectTrigger
-                className={cn(
-                  "h-7 text-[10px] w-[110px] border-0",
-                  status === "Negociada"
-                    ? "bg-green-100 text-green-800 font-bold"
-                    : status === "Em Andamento"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-slate-100 text-slate-500",
-                )}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="z-[100] bg-white shadow-lg border">
-                <SelectItem value="A Negociar">A Negociar</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                <SelectItem value="Negociada">Negociada</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </TableCell>
-
-        {/* Obs */}
-        <TableCell>
-          <div onClick={(e) => e.stopPropagation()}>
-            <Popover open={isObsOpen} onOpenChange={setIsObsOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary">
-                  <FileText className={cn("h-4 w-4", observacao && "text-blue-500 fill-blue-100")} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4 z-[100] bg-white shadow-lg border">
-                <h4 className="font-medium text-sm mb-2 text-slate-700">Observações</h4>
-                <textarea
-                  className="w-full min-h-[100px] text-sm p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-slate-600 bg-white"
-                  placeholder="Detalhes..."
-                  value={observacao}
-                  onChange={(e) => setObservacao(e.target.value)}
-                  onBlur={saveObservacao}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </TableCell>
-      </TableRow>
-    );
+  const handleSave = async () => {
+    if (!editingItem) return;
+    try {
+      await playbookService.updateItem(String(editingItem.id), {
+        responsavel: formData.responsavel || null,
+        data_limite: formData.data_limite?.toISOString() || null,
+        valor_contratado: formData.valor_contratado ? parseFloat(formData.valor_contratado) : null,
+        status_contratacao: formData.status_contratacao,
+        observacao: formData.observacao || null,
+      });
+      toast({ description: "Salvo com sucesso!" });
+      setEditingItem(null);
+      onUpdate();
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao salvar.", variant: "destructive" });
+    }
   };
 
   const renderTable = (filterDestino: string) => {
@@ -285,21 +120,65 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         <Table>
           <TableHeader className="bg-slate-50 border-b border-slate-200">
             <TableRow>
-              <TableHead className="w-[150px] font-bold text-slate-900">Etapa Principal</TableHead>
-              <TableHead className="w-[200px]">Proposta</TableHead>
-              <TableHead className="w-[120px]">Responsável</TableHead>
-              <TableHead className="w-[120px]">Data Limite</TableHead>
-              <TableHead className="text-right text-xs">Meta Total</TableHead>
-              <TableHead className="w-[110px] text-right">Contratado</TableHead>
-              <TableHead className="text-right w-[100px]">Diferença</TableHead>
-              <TableHead className="w-[130px]">Status</TableHead>
-              <TableHead className="w-[50px] text-center">Obs</TableHead>
+              <TableHead className="w-[150px] font-bold text-slate-900">Etapa</TableHead>
+              <TableHead>Proposta</TableHead>
+              <TableHead className="w-[100px]">Responsável</TableHead>
+              <TableHead className="w-[90px]">Data</TableHead>
+              <TableHead className="text-right w-[100px]">Meta</TableHead>
+              <TableHead className="text-right w-[100px]">Contratado</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="w-[60px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((item) => (
-              <ContractingRow key={item.id} item={item} />
-            ))}
+            {filtered.map((item) => {
+              const valorNum = item.valor_contratado || 0;
+              const diferenca = valorNum - item.precoTotalMeta;
+              return (
+                <TableRow key={item.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => openEditModal(item)}>
+                  <TableCell className="font-bold text-[10px] text-slate-500 uppercase truncate">
+                    {item.etapaPrincipal.toLowerCase()}
+                  </TableCell>
+                  <TableCell className="font-medium text-sm text-slate-700">
+                    {capitalize(item.descricao)}
+                  </TableCell>
+                  <TableCell className="text-xs text-slate-600">
+                    {item.responsavel || <span className="text-slate-300">-</span>}
+                  </TableCell>
+                  <TableCell className="text-xs text-slate-600">
+                    {item.data_limite ? format(new Date(item.data_limite), "dd/MM/yy") : <span className="text-slate-300">-</span>}
+                  </TableCell>
+                  <TableCell className="text-right text-xs font-mono text-blue-700 font-medium">
+                    {formatCurrency(item.precoTotalMeta)}
+                  </TableCell>
+                  <TableCell className="text-right text-xs font-mono">
+                    {valorNum > 0 ? (
+                      <span className={diferenca <= 0 ? "text-green-600" : "text-red-600"}>
+                        {formatCurrency(valorNum)}
+                      </span>
+                    ) : <span className="text-slate-300">-</span>}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "text-[10px]",
+                        item.status_contratacao === "Negociada" && "bg-green-100 text-green-800",
+                        item.status_contratacao === "Em Andamento" && "bg-yellow-100 text-yellow-800",
+                        (!item.status_contratacao || item.status_contratacao === "A Negociar") && "bg-slate-100 text-slate-500"
+                      )}
+                    >
+                      {item.status_contratacao || "A Negociar"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -307,14 +186,101 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6">
+      {/* Modal de Edição */}
+      <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Item</DialogTitle>
+          </DialogHeader>
+          {editingItem && (
+            <div className="space-y-4 py-4">
+              <p className="text-sm font-medium text-slate-700">{capitalize(editingItem.descricao)}</p>
+              
+              <div className="space-y-2">
+                <Label>Responsável</Label>
+                <Input
+                  placeholder="Nome do responsável"
+                  value={formData.responsavel}
+                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data Limite</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.data_limite ? format(formData.data_limite, "dd/MM/yyyy") : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-50" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.data_limite}
+                      onSelect={(date) => setFormData({ ...formData, data_limite: date })}
+                      locale={ptBR}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Valor Contratado (R$)</Label>
+                <Input
+                  type="number"
+                  placeholder="0,00"
+                  value={formData.valor_contratado}
+                  onChange={(e) => setFormData({ ...formData, valor_contratado: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={formData.status_contratacao}
+                  onValueChange={(val) => setFormData({ ...formData, status_contratacao: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A Negociar">A Negociar</SelectItem>
+                    <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                    <SelectItem value="Negociada">Negociada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Observação</Label>
+                <textarea
+                  className="w-full min-h-[80px] text-sm p-2 border rounded-md"
+                  placeholder="Observações..."
+                  value={formData.observacao}
+                  onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingItem(null)}>Cancelar</Button>
+            <Button onClick={handleSave}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-800">Farol de Contratações</h2>
-          <p className="text-sm text-slate-500">Gestão detalhada de itens críticos da obra.</p>
+          <p className="text-sm text-slate-500">Clique em um item para editar.</p>
         </div>
       </div>
 
+      {/* Tabs */}
       <Tabs defaultValue="Obra" className="w-full">
         <TabsList className="bg-slate-100 p-1 border border-slate-200 w-full justify-start h-auto">
           <TabsTrigger
