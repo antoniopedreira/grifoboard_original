@@ -612,42 +612,60 @@ export type Database = {
       playbook_items: {
         Row: {
           created_at: string
+          data_limite: string | null
           descricao: string
+          destino: string | null
           id: string
           is_etapa: boolean | null
           nivel: number | null
           obra_id: string
+          observacao: string | null
           ordem: number
           preco_total: number | null
           preco_unitario: number | null
           qtd: number | null
+          responsavel: string | null
+          status_contratacao: string | null
           unidade: string | null
+          valor_contratado: number | null
         }
         Insert: {
           created_at?: string
+          data_limite?: string | null
           descricao: string
+          destino?: string | null
           id?: string
           is_etapa?: boolean | null
           nivel?: number | null
           obra_id: string
+          observacao?: string | null
           ordem: number
           preco_total?: number | null
           preco_unitario?: number | null
           qtd?: number | null
+          responsavel?: string | null
+          status_contratacao?: string | null
           unidade?: string | null
+          valor_contratado?: number | null
         }
         Update: {
           created_at?: string
+          data_limite?: string | null
           descricao?: string
+          destino?: string | null
           id?: string
           is_etapa?: boolean | null
           nivel?: number | null
           obra_id?: string
+          observacao?: string | null
           ordem?: number
           preco_total?: number | null
           preco_unitario?: number | null
           qtd?: number | null
+          responsavel?: string | null
+          status_contratacao?: string | null
           unidade?: string | null
+          valor_contratado?: number | null
         }
         Relationships: [
           {
