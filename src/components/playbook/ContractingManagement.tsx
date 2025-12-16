@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Pencil } from "lucide-react";
+import { CalendarIcon, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -19,8 +18,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface ContractingItem {
   id: number | string;
@@ -46,16 +43,14 @@ interface ContractingManagementProps {
   onUpdate: () => void;
 }
 
+type FieldType = "responsavel" | "data" | "valor" | "status" | "obs";
+
 export function ContractingManagement({ items, onUpdate }: ContractingManagementProps) {
   const { toast } = useToast();
   const [editingItem, setEditingItem] = useState<EnrichedContractingItem | null>(null);
-  const [formData, setFormData] = useState({
-    responsavel: "",
-    data_limite: undefined as Date | undefined,
-    valor_contratado: "",
-    status_contratacao: "A Negociar",
-    observacao: "",
-  });
+  const [editingField, setEditingField] = useState<FieldType | null>(null);
+  const [fieldValue, setFieldValue] = useState<string>("");
+  const [dateValue, setDateValue] = useState<Date | undefined>(undefined);
 
   let currentMainStage = "";
   const enrichedItems: EnrichedContractingItem[] = items.map((item) => {
@@ -74,32 +69,139 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  const openEditModal = (item: EnrichedContractingItem) => {
+  const openFieldModal = (item: EnrichedContractingItem, field: FieldType, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEditingItem(item);
-    setFormData({
-      responsavel: item.responsavel || "",
-      data_limite: item.data_limite ? new Date(item.data_limite) : undefined,
-      valor_contratado: item.valor_contratado?.toString() || "",
-      status_contratacao: item.status_contratacao || "A Negociar",
-      observacao: item.observacao || "",
-    });
+    setEditingField(field);
+    
+    switch (field) {
+      case "responsavel":
+        setFieldValue(item.responsavel || "");
+        break;
+      case "data":
+        setDateValue(item.data_limite ? new Date(item.data_limite) : undefined);
+        break;
+      case "valor":
+        setFieldValue(item.valor_contratado?.toString() || "");
+        break;
+      case "status":
+        setFieldValue(item.status_contratacao || "A Negociar");
+        break;
+      case "obs":
+        setFieldValue(item.observacao || "");
+        break;
+    }
+  };
+
+  const closeModal = () => {
+    setEditingItem(null);
+    setEditingField(null);
+    setFieldValue("");
+    setDateValue(undefined);
   };
 
   const handleSave = async () => {
-    if (!editingItem) return;
+    if (!editingItem || !editingField) return;
+    
     try {
-      await playbookService.updateItem(String(editingItem.id), {
-        responsavel: formData.responsavel || null,
-        data_limite: formData.data_limite?.toISOString() || null,
-        valor_contratado: formData.valor_contratado ? parseFloat(formData.valor_contratado) : null,
-        status_contratacao: formData.status_contratacao,
-        observacao: formData.observacao || null,
-      });
-      toast({ description: "Salvo com sucesso!" });
-      setEditingItem(null);
+      const updates: Record<string, unknown> = {};
+      
+      switch (editingField) {
+        case "responsavel":
+          updates.responsavel = fieldValue || null;
+          break;
+        case "data":
+          updates.data_limite = dateValue?.toISOString() || null;
+          break;
+        case "valor":
+          updates.valor_contratado = fieldValue ? parseFloat(fieldValue) : null;
+          break;
+        case "status":
+          updates.status_contratacao = fieldValue;
+          break;
+        case "obs":
+          updates.observacao = fieldValue || null;
+          break;
+      }
+      
+      await playbookService.updateItem(String(editingItem.id), updates);
+      toast({ description: "Salvo!" });
+      closeModal();
       onUpdate();
     } catch (error) {
       toast({ title: "Erro", description: "Falha ao salvar.", variant: "destructive" });
+    }
+  };
+
+  const getModalTitle = () => {
+    switch (editingField) {
+      case "responsavel": return "Responsável";
+      case "data": return "Data Limite";
+      case "valor": return "Valor Contratado";
+      case "status": return "Status";
+      case "obs": return "Observação";
+      default: return "";
+    }
+  };
+
+  const renderFieldInput = () => {
+    switch (editingField) {
+      case "responsavel":
+        return (
+          <Input
+            autoFocus
+            placeholder="Nome do responsável"
+            value={fieldValue}
+            onChange={(e) => setFieldValue(e.target.value)}
+          />
+        );
+      case "data":
+        return (
+          <Calendar
+            mode="single"
+            selected={dateValue}
+            onSelect={setDateValue}
+            locale={ptBR}
+            className="rounded-md border"
+          />
+        );
+      case "valor":
+        return (
+          <Input
+            autoFocus
+            type="number"
+            placeholder="0.00"
+            value={fieldValue}
+            onChange={(e) => setFieldValue(e.target.value)}
+          />
+        );
+      case "status":
+        return (
+          <div className="flex flex-col gap-2">
+            {["A Negociar", "Em Andamento", "Negociada"].map((status) => (
+              <Button
+                key={status}
+                variant={fieldValue === status ? "default" : "outline"}
+                className="justify-start"
+                onClick={() => setFieldValue(status)}
+              >
+                {status}
+              </Button>
+            ))}
+          </div>
+        );
+      case "obs":
+        return (
+          <textarea
+            autoFocus
+            className="w-full min-h-[100px] text-sm p-3 border rounded-md resize-none"
+            placeholder="Observações..."
+            value={fieldValue}
+            onChange={(e) => setFieldValue(e.target.value)}
+          />
+        );
+      default:
+        return null;
     }
   };
 
@@ -120,14 +222,14 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         <Table>
           <TableHeader className="bg-slate-50 border-b border-slate-200">
             <TableRow>
-              <TableHead className="w-[150px] font-bold text-slate-900">Etapa</TableHead>
+              <TableHead className="w-[140px] font-bold text-slate-900">Etapa</TableHead>
               <TableHead>Proposta</TableHead>
-              <TableHead className="w-[100px]">Responsável</TableHead>
+              <TableHead className="w-[110px]">Responsável</TableHead>
               <TableHead className="w-[90px]">Data</TableHead>
               <TableHead className="text-right w-[100px]">Meta</TableHead>
               <TableHead className="text-right w-[100px]">Contratado</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead className="w-[60px]"></TableHead>
+              <TableHead className="w-[110px]">Status</TableHead>
+              <TableHead className="w-[40px]">Obs</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,30 +237,48 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
               const valorNum = item.valor_contratado || 0;
               const diferenca = valorNum - item.precoTotalMeta;
               return (
-                <TableRow key={item.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => openEditModal(item)}>
+                <TableRow key={item.id} className="hover:bg-slate-50">
                   <TableCell className="font-bold text-[10px] text-slate-500 uppercase truncate">
                     {item.etapaPrincipal.toLowerCase()}
                   </TableCell>
                   <TableCell className="font-medium text-sm text-slate-700">
                     {capitalize(item.descricao)}
                   </TableCell>
-                  <TableCell className="text-xs text-slate-600">
-                    {item.responsavel || <span className="text-slate-300">-</span>}
+                  <TableCell 
+                    className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                    onClick={(e) => openFieldModal(item, "responsavel", e)}
+                  >
+                    {item.responsavel || <span className="text-blue-400 text-[10px]">+ adicionar</span>}
                   </TableCell>
-                  <TableCell className="text-xs text-slate-600">
-                    {item.data_limite ? format(new Date(item.data_limite), "dd/MM/yy") : <span className="text-slate-300">-</span>}
+                  <TableCell 
+                    className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                    onClick={(e) => openFieldModal(item, "data", e)}
+                  >
+                    {item.data_limite ? (
+                      format(new Date(item.data_limite), "dd/MM/yy")
+                    ) : (
+                      <CalendarIcon className="h-3 w-3 text-blue-400" />
+                    )}
                   </TableCell>
                   <TableCell className="text-right text-xs font-mono text-blue-700 font-medium">
                     {formatCurrency(item.precoTotalMeta)}
                   </TableCell>
-                  <TableCell className="text-right text-xs font-mono">
+                  <TableCell 
+                    className="text-right text-xs font-mono cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                    onClick={(e) => openFieldModal(item, "valor", e)}
+                  >
                     {valorNum > 0 ? (
                       <span className={diferenca <= 0 ? "text-green-600" : "text-red-600"}>
                         {formatCurrency(valorNum)}
                       </span>
-                    ) : <span className="text-slate-300">-</span>}
+                    ) : (
+                      <span className="text-blue-400 text-[10px]">+ valor</span>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell 
+                    className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                    onClick={(e) => openFieldModal(item, "status", e)}
+                  >
                     <Badge
                       variant="secondary"
                       className={cn(
@@ -171,10 +291,16 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                       {item.status_contratacao || "A Negociar"}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                      <Pencil className="h-3 w-3" />
-                    </Button>
+                  <TableCell 
+                    className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                    onClick={(e) => openFieldModal(item, "obs", e)}
+                  >
+                    <MessageSquare 
+                      className={cn(
+                        "h-4 w-4",
+                        item.observacao ? "text-amber-500" : "text-slate-300"
+                      )}
+                    />
                   </TableCell>
                 </TableRow>
               );
@@ -187,87 +313,21 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
   return (
     <div className="space-y-6">
-      {/* Modal de Edição */}
-      <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
-        <DialogContent className="sm:max-w-md">
+      {/* Mini-Modal por Campo */}
+      <Dialog open={!!editingItem && !!editingField} onOpenChange={(open) => !open && closeModal()}>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Editar Item</DialogTitle>
+            <DialogTitle>{getModalTitle()}</DialogTitle>
+            {editingItem && (
+              <p className="text-xs text-slate-500 truncate">{capitalize(editingItem.descricao)}</p>
+            )}
           </DialogHeader>
-          {editingItem && (
-            <div className="space-y-4 py-4">
-              <p className="text-sm font-medium text-slate-700">{capitalize(editingItem.descricao)}</p>
-              
-              <div className="space-y-2">
-                <Label>Responsável</Label>
-                <Input
-                  placeholder="Nome do responsável"
-                  value={formData.responsavel}
-                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Data Limite</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.data_limite ? format(formData.data_limite, "dd/MM/yyyy") : "Selecionar data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-50" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.data_limite}
-                      onSelect={(date) => setFormData({ ...formData, data_limite: date })}
-                      locale={ptBR}
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Valor Contratado (R$)</Label>
-                <Input
-                  type="number"
-                  placeholder="0,00"
-                  value={formData.valor_contratado}
-                  onChange={(e) => setFormData({ ...formData, valor_contratado: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={formData.status_contratacao}
-                  onValueChange={(val) => setFormData({ ...formData, status_contratacao: val })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A Negociar">A Negociar</SelectItem>
-                    <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                    <SelectItem value="Negociada">Negociada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Observação</Label>
-                <textarea
-                  className="w-full min-h-[80px] text-sm p-2 border rounded-md"
-                  placeholder="Observações..."
-                  value={formData.observacao}
-                  onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
-                />
-              </div>
-            </div>
-          )}
+          <div className="py-4">
+            {renderFieldInput()}
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingItem(null)}>Cancelar</Button>
-            <Button onClick={handleSave}>Salvar</Button>
+            <Button variant="outline" size="sm" onClick={closeModal}>Cancelar</Button>
+            <Button size="sm" onClick={handleSave}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -276,7 +336,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-800">Farol de Contratações</h2>
-          <p className="text-sm text-slate-500">Clique em um item para editar.</p>
+          <p className="text-sm text-slate-500">Clique em cada campo para editar.</p>
         </div>
       </div>
 
