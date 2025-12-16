@@ -9,48 +9,41 @@ import { cn } from "@/lib/utils";
 import { playbookService } from "@/services/playbookService";
 import { useToast } from "@/hooks/use-toast";
 
-// Tipagem compatível com o Importer atualizado
 export interface PlaybookItem {
-  id: number | string; // ou string, dependendo do backend
+  id: number | string;
   descricao: string;
   unidade: string;
   qtd: number;
   precoUnitario: number;
   precoTotal: number;
   isEtapa: boolean;
-  nivel?: number; // 0=Principal, 1=Subetapa, 2=Item
+  nivel?: number;
   precoUnitarioMeta: number;
   precoTotalMeta: number;
   porcentagem: number;
-  destino?: string | null; // Novo campo da Fase 2
+  destino?: string | null;
 }
 
 interface PlaybookTableProps {
   data: PlaybookItem[];
   grandTotalOriginal: number;
   grandTotalMeta: number;
-  onUpdate?: () => void; // Callback para atualizar dados após mudança de destino
+  onUpdate?: () => void;
 }
 
 export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpdate }: PlaybookTableProps) {
   const { toast } = useToast();
-  // Alterado para um objeto map para suportar expandir múltiplos níveis independentemente
   const [expandedIds, setExpandedIds] = useState<Record<string | number, boolean>>({});
   const [searchTerm, setSearchTerm] = useState("");
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  // Toggle genérico (funciona para L0 e L1)
   const toggleRow = (id: number | string) => {
-    setExpandedIds((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const expandAll = () => {
-    // Expande tudo que é pai (Nivel 0 ou 1)
     const allParents = data
       .filter((i) => i.nivel === 0 || i.nivel === 1 || i.isEtapa)
       .reduce(
@@ -63,40 +56,29 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
     setExpandedIds(allParents);
   };
 
-  const collapseAll = () => {
-    setExpandedIds({});
-  };
+  const collapseAll = () => setExpandedIds({});
 
-  // Função para salvar o destino (Fase 2)
   const handleSetDestination = async (id: number | string, destino: string) => {
     try {
-      // Se for "clean", enviamos null para limpar o banco
-      // CORREÇÃO AQUI: String(id)
       await playbookService.updateItem(String(id), { destino: destino === "clean" ? null : destino });
-
       toast({
         description: destino === "clean" ? "Item removido da gestão." : `Item enviado para ${destino}.`,
         className: "bg-green-50 border-green-200",
       });
-
       if (onUpdate) onUpdate();
     } catch (e) {
       toast({ title: "Erro", description: "Não foi possível definir o destino.", variant: "destructive" });
     }
   };
 
-  // Filtragem básica para busca
   const filteredData = data.filter((item) => item.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  // --- CÁLCULO DE TOTAIS POR AGRUPADOR ---
   const totalsMap = new Map<number | string, { precoTotal: number; precoTotalMeta: number }>();
   let currentL0_Id: number | string | null = null;
   let currentL1_Id: number | string | null = null;
 
-  // 1. Passada para calcular somas (Items somam para seus pais)
   data.forEach((item) => {
     const level = item.nivel ?? (item.isEtapa ? 0 : 2);
-
     if (level === 0) {
       currentL0_Id = item.id;
       currentL1_Id = null;
@@ -105,7 +87,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
       currentL1_Id = item.id;
       totalsMap.set(item.id, { precoTotal: 0, precoTotalMeta: 0 });
     } else if (level === 2) {
-      // Soma para L1 se existir
       if (currentL1_Id !== null) {
         const t1 = totalsMap.get(currentL1_Id) || { precoTotal: 0, precoTotalMeta: 0 };
         totalsMap.set(currentL1_Id, {
@@ -113,7 +94,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
           precoTotalMeta: t1.precoTotalMeta + item.precoTotalMeta,
         });
       }
-      // Soma para L0 se existir
       if (currentL0_Id !== null) {
         const t0 = totalsMap.get(currentL0_Id) || { precoTotal: 0, precoTotalMeta: 0 };
         totalsMap.set(currentL0_Id, {
@@ -124,7 +104,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
     }
   });
 
-  // --- LÓGICA DE RENDERIZAÇÃO HIERÁRQUICA ---
   currentL0_Id = null;
   currentL1_Id = null;
 
@@ -140,12 +119,9 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
       currentL1_Id = itemId;
     }
 
-    if (searchTerm) {
-      isVisible = true;
-    } else {
-      if (level === 1) {
-        if (currentL0_Id !== null && !expandedIds[currentL0_Id]) isVisible = false;
-      } else if (level === 2) {
+    if (!searchTerm) {
+      if (level === 1 && currentL0_Id !== null && !expandedIds[currentL0_Id]) isVisible = false;
+      else if (level === 2) {
         if (currentL0_Id !== null && !expandedIds[currentL0_Id]) isVisible = false;
         else if (currentL1_Id !== null && !expandedIds[currentL1_Id]) isVisible = false;
       }
@@ -153,8 +129,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
 
     const isExpanded = !!expandedIds[itemId];
     const totals = level === 0 || level === 1 ? totalsMap.get(itemId) : undefined;
-
-    // Cálculo da porcentagem para exibição
     const valMeta = totals ? totals.precoTotalMeta : item.precoTotalMeta;
     const displayPercentage = grandTotalMeta > 0 ? (valMeta / grandTotalMeta) * 100 : 0;
 
@@ -171,18 +145,11 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
 
   return (
     <div className="space-y-4">
-      {/* Estilo local para animação suave */}
       <style>{`
-        @keyframes soft-pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.85; transform: scale(1.05); }
-        }
-        .animate-soft-pulse {
-          animation: soft-pulse 3s ease-in-out infinite;
-        }
+        @keyframes soft-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.05); } }
+        .animate-soft-pulse { animation: soft-pulse 3s ease-in-out infinite; }
       `}</style>
 
-      {/* Toolbar da Tabela */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="relative flex-1 w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -218,7 +185,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                 </TableHead>
                 <TableHead className="text-right bg-blue-50/50 text-blue-900 font-bold">Total Meta</TableHead>
                 <TableHead className="text-right w-[50px]">%</TableHead>
-                <TableHead className="text-center w-[120px]">Gestão</TableHead> {/* Nova Coluna */}
+                <TableHead className="text-center w-[120px]">Gestão</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -228,11 +195,10 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                   <TableRow
                     key={item.id}
                     className={cn(
-                      // Estilo condicional para Níveis 0, 1 e 2
                       item.level === 0
-                        ? "bg-slate-100/80 hover:bg-slate-200/50 cursor-pointer border-t-2 border-slate-200"
+                        ? "bg-slate-100/80 hover:bg-slate-200/50 border-t-2 border-slate-200 cursor-pointer"
                         : item.level === 1
-                          ? "bg-blue-50/30 hover:bg-blue-50 cursor-pointer border-t border-blue-100"
+                          ? "bg-blue-50/30 hover:bg-blue-50 border-t border-blue-100 cursor-pointer"
                           : "hover:bg-slate-50 border-b border-slate-50",
                     )}
                     onClick={item.level === 0 || item.level === 1 ? () => toggleRow(item.id) : undefined}
@@ -250,7 +216,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                               : "text-slate-600 capitalize text-sm",
                         )}
                       >
-                        {/* Ícone Expandir para Pais */}
                         {(item.level === 0 || item.level === 1) && (
                           <div className="p-1 rounded-md hover:bg-black/5 transition-colors">
                             {item.isExpanded ? (
@@ -260,36 +225,26 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                             )}
                           </div>
                         )}
-
-                        {/* Ícone Item para Filhos Nível 1 */}
                         {item.level === 1 && <ListTree className="h-3 w-3 text-blue-400 mr-1 opacity-50" />}
-
-                        {/* Linha vertical visual para Itens */}
                         {item.level === 2 && <div className="absolute left-8 top-0 bottom-0 w-px bg-slate-200" />}
-
                         <span>{item.descricao.toLowerCase()}</span>
                       </div>
                     </TableCell>
 
                     <TableCell className="text-right text-xs text-slate-500">{item.unidade}</TableCell>
                     <TableCell className="text-right text-xs text-slate-500">{item.qtd > 0 ? item.qtd : "-"}</TableCell>
-
                     <TableCell className="text-right text-xs font-mono text-slate-600">
                       {item.level === 2 && formatCurrency(item.precoUnitario)}
                     </TableCell>
-
                     <TableCell className="text-right text-xs font-mono text-slate-600 font-medium">
                       {formatCurrency(item.displayTotal)}
                     </TableCell>
-
-                    {/* Meta Columns */}
                     <TableCell className="text-right text-xs font-mono text-blue-600 bg-blue-50/30 border-l border-blue-50">
                       {item.level === 2 && formatCurrency(item.precoUnitarioMeta)}
                     </TableCell>
                     <TableCell className="text-right text-xs font-mono font-bold text-blue-700 bg-blue-50/30">
                       {formatCurrency(item.displayTotalMeta)}
                     </TableCell>
-
                     <TableCell className="text-right">
                       {item.displayPercentage > 0 && (
                         <Badge
@@ -308,9 +263,9 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                       )}
                     </TableCell>
 
-                    {/* Coluna de GESTÃO (Nova) */}
+                    {/* Coluna GESTÃO Atualizada: Permite selecionar se >2% OU se já tem destino, independente do nível */}
                     <TableCell className="text-center p-1">
-                      {item.displayPercentage > 2 && item.level === 2 ? (
+                      {item.displayPercentage > 2 || item.destino ? (
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={item.destino || ""}
@@ -329,7 +284,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                                   <span>{item.destino}</span>
                                 ) : (
                                   <>
-                                    <span>Definir</span>
+                                    <span className="hidden sm:inline">Definir</span>
                                     <ArrowUpRight className="h-3 w-3 opacity-50" />
                                   </>
                                 )}
@@ -353,13 +308,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                             </SelectContent>
                           </Select>
                         </div>
-                      ) : item.destino ? (
-                        <Badge
-                          variant="outline"
-                          className="text-[9px] bg-slate-50 text-slate-500 border-slate-200 font-normal"
-                        >
-                          {item.destino}
-                        </Badge>
                       ) : (
                         <span className="text-slate-200 text-[10px]">-</span>
                       )}
@@ -375,7 +323,6 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                 </TableRow>
               )}
             </TableBody>
-
             <TableFooter className="bg-slate-800 text-white hover:bg-slate-800 border-t-4 border-yellow-500 sticky bottom-0 z-20 shadow-xl">
               <TableRow>
                 <TableCell colSpan={4} className="pl-6 font-bold uppercase tracking-wider text-sm py-4">
@@ -389,7 +336,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
                   {formatCurrency(grandTotalMeta)}
                 </TableCell>
                 <TableCell className="text-right font-bold text-xs text-slate-300">100%</TableCell>
-                <TableCell /> {/* Coluna vazia para alinhar com Gestão */}
+                <TableCell />
               </TableRow>
             </TableFooter>
           </Table>

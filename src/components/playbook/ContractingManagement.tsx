@@ -3,9 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, User, DollarSign, FileText } from "lucide-react";
+import { CalendarIcon, User, FileText } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,38 +14,54 @@ import { cn } from "@/lib/utils";
 import { playbookService } from "@/services/playbookService";
 import { useToast } from "@/hooks/use-toast";
 
-// Tipagem estendida para incluir dados da fase 2
 export interface ContractingItem {
   id: number | string;
   descricao: string;
   unidade: string;
   qtd: number;
   precoTotalMeta: number;
-  // Campos Fase 2
+  nivel?: number; // Importante para lógica de Etapa Principal
   destino: string | null;
   responsavel: string | null;
   data_limite: string | null;
   valor_contratado: number | null;
-  status_contratacao: string; // 'A Negociar', 'Em Andamento', 'Negociada'
+  status_contratacao: string;
   observacao: string | null;
+}
+
+// Interface auxiliar para item com Etapa Principal calculada
+interface EnrichedContractingItem extends ContractingItem {
+  etapaPrincipal: string;
 }
 
 interface ContractingManagementProps {
   items: ContractingItem[];
-  onUpdate: () => void; // Callback para recarregar dados
+  onUpdate: () => void;
 }
 
 export function ContractingManagement({ items, onUpdate }: ContractingManagementProps) {
   const { toast } = useToast();
-  // Filtrar apenas itens que têm destino definido
-  const activeItems = items.filter((i) => i.destino);
 
-  // Função genérica de atualização
+  // 1. Processar itens para adicionar "Etapa Principal"
+  // Como a lista vem ordenada, percorremos e guardamos o último Nível 0 visto
+  let currentMainStage = "";
+  const enrichedItems: EnrichedContractingItem[] = items.map((item) => {
+    if (item.nivel === 0) {
+      currentMainStage = item.descricao;
+    }
+    return {
+      ...item,
+      etapaPrincipal: currentMainStage || item.descricao, // Fallback para a própria descrição se não achar pai
+    };
+  });
+
+  // 2. Filtrar apenas itens que têm destino definido
+  const activeItems = enrichedItems.filter((i) => i.destino);
+
   const handleUpdate = async (id: number | string, field: string, value: any) => {
     try {
-      // CORREÇÃO AQUI: String(id) para garantir que seja string
       await playbookService.updateItem(String(id), { [field]: value });
-      onUpdate(); // Recarrega os dados locais
+      onUpdate();
     } catch (error) {
       toast({ title: "Erro", description: "Falha ao atualizar item.", variant: "destructive" });
     }
@@ -55,24 +70,31 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  // Componente de Linha da Tabela (para isolar lógica)
-  const ContractingRow = ({ item }: { item: ContractingItem }) => {
+  const ContractingRow = ({ item }: { item: EnrichedContractingItem }) => {
     const diferenca = (item.valor_contratado || 0) - item.precoTotalMeta;
-    const isSaving = diferenca <= 0; // Se gastou menos ou igual a meta, é bom (Verde)
+    const isSaving = diferenca <= 0;
 
     return (
       <TableRow className="hover:bg-slate-50 transition-colors">
-        {/* Descrição Fixa */}
-        <TableCell className="font-medium text-sm text-slate-700 max-w-[250px] truncate" title={item.descricao}>
-          {item.descricao}
+        {/* Etapa Principal (Nova Coluna) */}
+        <TableCell
+          className="font-bold text-[10px] text-slate-500 uppercase tracking-wide max-w-[150px] truncate"
+          title={item.etapaPrincipal}
+        >
+          {item.etapaPrincipal.toLowerCase()}
         </TableCell>
 
-        {/* Responsável (Input) */}
+        {/* Item (Descrição) */}
+        <TableCell className="font-medium text-sm text-slate-700 max-w-[200px] truncate" title={item.descricao}>
+          {item.descricao.toLowerCase()}
+        </TableCell>
+
+        {/* Responsável */}
         <TableCell>
           <div className="flex items-center gap-2">
             <User className="h-3 w-3 text-slate-400" />
             <Input
-              className="h-8 text-xs bg-transparent border-transparent hover:border-slate-200 focus:bg-white transition-all w-[120px]"
+              className="h-8 text-xs bg-transparent border-transparent hover:border-slate-200 focus:bg-white transition-all w-[100px]"
               placeholder="Nome..."
               defaultValue={item.responsavel || ""}
               onBlur={(e) => handleUpdate(item.id, "responsavel", e.target.value)}
@@ -80,14 +102,14 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           </div>
         </TableCell>
 
-        {/* Data Limite (Date Picker) */}
+        {/* Data Limite */}
         <TableCell>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 className={cn(
-                  "h-8 text-xs justify-start text-left font-normal w-[110px] px-2",
+                  "h-8 text-xs justify-start text-left font-normal w-[100px] px-2",
                   !item.data_limite && "text-slate-400",
                 )}
               >
@@ -107,21 +129,18 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           </Popover>
         </TableCell>
 
-        {/* Dados da Meta (Read Only) */}
-        <TableCell className="text-right text-xs text-slate-500">
-          {item.qtd} {item.unidade}
-        </TableCell>
+        {/* Meta Total */}
         <TableCell className="text-right text-xs font-mono text-blue-700 bg-blue-50/30 font-medium">
           {formatCurrency(item.precoTotalMeta)}
         </TableCell>
 
-        {/* Valor Contratado (Input Currency) */}
+        {/* Valor Contratado */}
         <TableCell>
           <div className="relative">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">R$</span>
             <Input
               type="number"
-              className="h-8 text-xs pl-6 text-right font-mono bg-white border-slate-200 focus:border-primary w-[100px]"
+              className="h-8 text-xs pl-6 text-right font-mono bg-white border-slate-200 focus:border-primary w-[90px]"
               placeholder="0,00"
               defaultValue={item.valor_contratado || ""}
               onBlur={(e) => handleUpdate(item.id, "valor_contratado", parseFloat(e.target.value))}
@@ -129,7 +148,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           </div>
         </TableCell>
 
-        {/* Diferença (Calculada) */}
+        {/* Diferença */}
         <TableCell className="text-right">
           {item.valor_contratado ? (
             <Badge
@@ -146,7 +165,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           )}
         </TableCell>
 
-        {/* Status (Select) */}
+        {/* Status */}
         <TableCell>
           <Select
             defaultValue={item.status_contratacao || "A Negociar"}
@@ -172,7 +191,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           </Select>
         </TableCell>
 
-        {/* Obs (Input) */}
+        {/* Obs */}
         <TableCell>
           <Popover>
             <PopoverTrigger asChild>
@@ -184,7 +203,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
               <h4 className="font-medium text-sm mb-2 text-slate-700">Observações</h4>
               <textarea
                 className="w-full min-h-[100px] text-sm p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-slate-600"
-                placeholder="Detalhes da negociação..."
+                placeholder="Detalhes..."
                 defaultValue={item.observacao || ""}
                 onBlur={(e) => handleUpdate(item.id, "observacao", e.target.value)}
               />
@@ -212,12 +231,12 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         <Table>
           <TableHeader className="bg-slate-50 border-b border-slate-200">
             <TableRow>
-              <TableHead className="w-[250px]">Item</TableHead>
-              <TableHead className="w-[140px]">Responsável</TableHead>
-              <TableHead className="w-[130px]">Data Limite</TableHead>
-              <TableHead className="text-right text-xs">Qtd/Unid</TableHead>
+              <TableHead className="w-[150px] font-bold text-slate-900">Etapa Principal</TableHead>
+              <TableHead className="w-[200px]">Item / Subetapa</TableHead>
+              <TableHead className="w-[120px]">Responsável</TableHead>
+              <TableHead className="w-[120px]">Data Limite</TableHead>
               <TableHead className="text-right text-xs">Meta Total</TableHead>
-              <TableHead className="w-[120px] text-right">Contratado</TableHead>
+              <TableHead className="w-[110px] text-right">Contratado</TableHead>
               <TableHead className="text-right w-[100px]">Diferença</TableHead>
               <TableHead className="w-[130px]">Status</TableHead>
               <TableHead className="w-[50px] text-center">Obs</TableHead>
