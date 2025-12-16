@@ -615,6 +615,7 @@ export type Database = {
           descricao: string
           id: string
           is_etapa: boolean | null
+          nivel: number | null
           obra_id: string
           ordem: number
           preco_total: number | null
@@ -627,6 +628,7 @@ export type Database = {
           descricao: string
           id?: string
           is_etapa?: boolean | null
+          nivel?: number | null
           obra_id: string
           ordem: number
           preco_total?: number | null
@@ -639,6 +641,7 @@ export type Database = {
           descricao?: string
           id?: string
           is_etapa?: boolean | null
+          nivel?: number | null
           obra_id?: string
           ordem?: number
           preco_total?: number | null

@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
-// CORREÇÃO: Usando chaves para importação nomeada
-import { PlaybookSummary } from "@/components/playbook/PlaybookSummary";
+import PlaybookSummary from "@/components/playbook/PlaybookSummary";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Trash2, Loader2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
