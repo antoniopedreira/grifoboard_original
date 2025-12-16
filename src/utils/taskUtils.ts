@@ -72,6 +72,9 @@ export const convertTaskStatusToTarefa = (task: Task): Partial<Tarefa> => {
     (tarefaToUpdate as Record<string, unknown>)[dbField] = null;
   });
   
+  // Track which days have been set from dailyStatus
+  const daysWithStatus = new Set<string>();
+  
   // Update day status fields based on dailyStatus
   if (task.dailyStatus && task.dailyStatus.length > 0) {
     task.dailyStatus.forEach(dailyStatus => {
@@ -90,15 +93,20 @@ export const convertTaskStatusToTarefa = (task: Task): Partial<Tarefa> => {
         // Only set field if we have a valid status
         if (dbStatus) {
           (tarefaToUpdate as Record<string, unknown>)[dbField] = dbStatus;
+          daysWithStatus.add(dailyStatus.day);
         }
       }
     });
-  } else if (task.plannedDays && task.plannedDays.length > 0) {
-    // Fallback: if no dailyStatus but plannedDays exist, set them as "Planejada"
+  }
+  
+  // For any planned day that doesn't have a dailyStatus entry, set it as "Planejada"
+  if (task.plannedDays && task.plannedDays.length > 0) {
     task.plannedDays.forEach(plannedDay => {
-      const dbField = REVERSE_DAY_FIELD_MAPPING[plannedDay];
-      if (dbField) {
-        (tarefaToUpdate as Record<string, unknown>)[dbField] = 'Planejada';
+      if (!daysWithStatus.has(plannedDay)) {
+        const dbField = REVERSE_DAY_FIELD_MAPPING[plannedDay];
+        if (dbField) {
+          (tarefaToUpdate as Record<string, unknown>)[dbField] = 'Planejada';
+        }
       }
     });
   }
