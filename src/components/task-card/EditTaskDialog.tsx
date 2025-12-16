@@ -52,6 +52,7 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ isOpen, onOpenChange, t
             onDayToggle={handleDayToggle}
             onDelete={() => {}}
             onSave={handleSave}
+            onCancel={() => onOpenChange(false)}
             isFormValid={isFormValid}
             onWeekDateChange={handleWeekDateChange}
           />
