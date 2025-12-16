@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
-import { PlaybookSummary } from "@/components/playbook/PlaybookSummary";
+// CORREÇÃO 1: Import default para resolver TS2614
+import PlaybookSummary from "@/components/playbook/PlaybookSummary";
 import { ContractingManagement } from "@/components/playbook/ContractingManagement";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Trash2, Loader2, Settings2, ListChecks } from "lucide-react";
@@ -38,14 +39,12 @@ const Playbook = () => {
     grandTotalOriginal: number;
   } | null>(null);
 
-  // Estado para coeficientes
   const [coeficiente1, setCoeficiente1] = useState<number>(0.57);
   const [coeficiente2, setCoeficiente2] = useState<number>(0.75);
   const [coeficienteSelecionado, setCoeficienteSelecionado] = useState<"1" | "2">("1");
   const [rawItems, setRawItems] = useState<any[]>([]);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
 
-  // Função para processar items com coeficiente
   const processItems = (items: any[], coef: number) => {
     let grandTotalMeta = 0;
     let grandTotalOriginal = 0;
@@ -54,7 +53,6 @@ const Playbook = () => {
       const precoUnitarioMeta = (item.preco_unitario || 0) * coef;
       const precoTotalMeta = (item.preco_total || 0) * coef;
 
-      // Define nível com fallback
       const nivel = item.nivel ?? (item.is_etapa ? 0 : 2);
 
       if (nivel === 2) {
@@ -63,7 +61,7 @@ const Playbook = () => {
       }
 
       return {
-        id: item.id,
+        id: item.id, // CORREÇÃO 2: Mantém o UUID original do banco!
         descricao: item.descricao,
         unidade: item.unidade,
         qtd: Number(item.qtd),
@@ -84,16 +82,16 @@ const Playbook = () => {
       };
     });
 
+    // Calcula porcentagem e formata o objeto final
     const finalItems = processedItems.map((item) => ({
       ...item,
-      id: (item as any).ordem || Math.random(),
+      // Não sobrescrevemos mais o ID com Math.random ou ordem
       porcentagem: grandTotalMeta > 0 && item.nivel === 2 ? (item.precoTotalMeta / grandTotalMeta) * 100 : 0,
     }));
 
-    return { items: finalItems, grandTotalMeta, grandTotalOriginal };
+    return { items: finalItems as PlaybookItem[], grandTotalMeta, grandTotalOriginal };
   };
 
-  // Função para carregar dados do banco
   const fetchPlaybook = async () => {
     if (!obraId) {
       setIsLoading(false);
@@ -110,7 +108,6 @@ const Playbook = () => {
         return;
       }
 
-      // Carregar coeficientes salvos
       const c1 = config?.coeficiente_1 || 0.57;
       const c2 = config?.coeficiente_2 || 0.75;
       const selected = (config?.coeficiente_selecionado as "1" | "2") || "1";
@@ -131,7 +128,6 @@ const Playbook = () => {
     }
   };
 
-  // Recalcular quando coeficiente muda
   const handleCoeficienteChange = async (newSelected: "1" | "2", newC1?: number, newC2?: number) => {
     const c1 = newC1 ?? coeficiente1;
     const c2 = newC2 ?? coeficiente2;
@@ -143,7 +139,6 @@ const Playbook = () => {
     }
   };
 
-  // Salvar configuração de coeficientes
   const saveCoeficienteConfig = async () => {
     if (!obraId) return;
     setIsSavingConfig(true);
@@ -181,11 +176,9 @@ const Playbook = () => {
     fetchPlaybook();
   }, [obraId]);
 
-  // Função para limpar dados
   const handleClearData = async () => {
     if (!obraId) return;
     try {
-      // Salva uma lista vazia para limpar
       await playbookService.savePlaybook(
         obraId,
         {
@@ -278,7 +271,6 @@ const Playbook = () => {
               </p>
             </div>
             <div className="pt-2">
-              {/* Botão de atalho para importar */}
               <PlaybookImporter onSave={fetchPlaybook} />
             </div>
           </CardContent>
@@ -290,14 +282,14 @@ const Playbook = () => {
               <TabsList className="bg-white border border-slate-200 p-1 rounded-full shadow-sm">
                 <TabsTrigger
                   value="orcamento"
-                  className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-white flex items-center gap-2"
+                  className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-white flex items-center gap-2 transition-all"
                 >
                   <BookOpen className="h-4 w-4" />
                   1. Orçamento & Metas
                 </TabsTrigger>
                 <TabsTrigger
                   value="contratacao"
-                  className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-white flex items-center gap-2"
+                  className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-white flex items-center gap-2 transition-all"
                 >
                   <ListChecks className="h-4 w-4" />
                   2. Gestão de Contratações
@@ -306,7 +298,6 @@ const Playbook = () => {
             </div>
 
             <TabsContent value="orcamento" className="space-y-6 animate-in fade-in duration-300">
-              {/* 0. Configuração de Coeficientes */}
               <Card className="border border-slate-200 bg-white shadow-sm">
                 <CardContent className="py-4 px-5">
                   <div className="flex items-center gap-2 mb-4">
@@ -376,13 +367,11 @@ const Playbook = () => {
                 </CardContent>
               </Card>
 
-              {/* 1. KPIs */}
               <PlaybookSummary
                 totalOriginal={playbookData.grandTotalOriginal}
                 totalMeta={playbookData.grandTotalMeta}
               />
 
-              {/* 2. Tabela Detalhada */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <h3 className="text-lg font-bold text-slate-700">Estrutura Analítica</h3>
