@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +17,16 @@ interface BreakdownData {
   percentage: number;
 }
 
+const getPercentageColor = (pct: number) => {
+  if (pct >= 85) return "text-green-600 bg-green-500";
+  if (pct >= 70) return "text-amber-600 bg-amber-500";
+  return "text-red-600 bg-red-500";
+};
+
+const capitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
 const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) => {
   const [filterBy, setFilterBy] = useState<"sector" | "discipline">("sector");
   const [breakdownData, setBreakdownData] = useState<BreakdownData[]>([]);
@@ -24,87 +34,88 @@ const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) 
   const { userSession } = useAuth();
 
   useEffect(() => {
-    fetchBreakdownData();
-  }, [userSession?.obraAtiva?.id, filterBy]);
-
-  const fetchBreakdownData = async () => {
     const obraId = userSession?.obraAtiva?.id;
     if (!obraId) {
       setIsLoading(false);
       return;
     }
 
-    try {
-      setIsLoading(true);
+    let isMounted = true;
 
-      const { data, error } = await supabase
-        .from('tarefas')
-        .select('setor, disciplina, percentual_executado')
-        .eq('obra_id', obraId);
+    const fetchBreakdownData = async () => {
+      try {
+        setIsLoading(true);
 
-      if (error) {
-        console.error("Erro ao buscar dados:", error);
+        const { data, error } = await supabase
+          .from('tarefas')
+          .select('setor, disciplina, percentual_executado')
+          .eq('obra_id', obraId);
+
+        if (error || !isMounted) {
+          if (error) console.error("Erro ao buscar dados:", error);
+          if (isMounted) setIsLoading(false);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const stats: Record<string, { total: number; completed: number }> = {};
+          const field = filterBy === "sector" ? "setor" : "disciplina";
+
+          data.forEach(task => {
+            const key = task[field] || 'Não definido';
+            if (!stats[key]) {
+              stats[key] = { total: 0, completed: 0 };
+            }
+
+            stats[key].total++;
+            if (task.percentual_executado === 1) {
+              stats[key].completed++;
+            }
+          });
+
+          const processedData: BreakdownData[] = Object.entries(stats)
+            .filter(([_, s]) => s.total > 0)
+            .map(([name, s]) => ({
+              name,
+              total: s.total,
+              completed: s.completed,
+              percentage: s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0,
+            }))
+            .sort((a, b) => b.percentage - a.percentage);
+
+          setBreakdownData(processedData);
+        } else {
+          setBreakdownData([]);
+        }
+
         setIsLoading(false);
-        return;
+      } catch (err) {
+        console.error("Erro ao calcular breakdown:", err);
+        if (isMounted) setIsLoading(false);
       }
+    };
 
-      if (data && data.length > 0) {
-        const stats: Record<string, { total: number; completed: number }> = {};
-        const field = filterBy === "sector" ? "setor" : "disciplina";
+    fetchBreakdownData();
 
-        data.forEach(task => {
-          const key = task[field] || 'Não definido';
-          if (!stats[key]) {
-            stats[key] = { total: 0, completed: 0 };
-          }
+    return () => {
+      isMounted = false;
+    };
+  }, [userSession?.obraAtiva?.id, filterBy]);
 
-          stats[key].total++;
-          if (task.percentual_executado === 1) {
-            stats[key].completed++;
-          }
-        });
+  const title = useMemo(() => 
+    filterBy === "sector" ? "Detalhamento por Setor" : "Detalhamento por Disciplina",
+    [filterBy]
+  );
 
-        const processedData: BreakdownData[] = Object.entries(stats)
-          .filter(([_, s]) => s.total > 0)
-          .map(([name, s]) => ({
-            name,
-            total: s.total,
-            completed: s.completed,
-            percentage: s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0,
-          }))
-          .sort((a, b) => b.percentage - a.percentage);
-
-        setBreakdownData(processedData);
-      } else {
-        setBreakdownData([]);
-      }
-
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Erro ao calcular breakdown:", err);
-      setIsLoading(false);
-    }
-  };
-
-  const getTitle = () => {
-    return filterBy === "sector" ? "Detalhamento por Setor" : "Detalhamento por Disciplina";
-  };
-
-  const getPercentageColor = (pct: number) => {
-    if (pct >= 85) return "text-green-600 bg-green-500";
-    if (pct >= 70) return "text-amber-600 bg-amber-500";
-    return "text-red-600 bg-red-500";
-  };
-
-  const capitalize = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  };
+  const handleFilterChange = useCallback((value: "sector" | "discipline") => {
+    setFilterBy(value);
+  }, []);
 
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-primary font-heading">{getTitle()}</CardTitle>
-        <Select value={filterBy} onValueChange={(value: "sector" | "discipline") => setFilterBy(value)}>
+        <CardTitle className="text-primary font-heading">{title}</CardTitle>
+        <Select value={filterBy} onValueChange={handleFilterChange}>
           <SelectTrigger className="w-[160px] h-9">
             <SelectValue placeholder="Filtrar por" />
           </SelectTrigger>
@@ -131,8 +142,7 @@ const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) 
                 return (
                   <div
                     key={index}
-                    className="p-3 rounded-lg border border-border bg-background transition-all duration-300 ease-out hover:scale-[1.01] hover:shadow-sm animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    className="p-3 rounded-lg border border-border bg-background transition-all duration-200 hover:scale-[1.01] hover:shadow-sm"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium text-sm text-primary truncate uppercase">
@@ -149,7 +159,7 @@ const BreakdownWithFilter: React.FC<BreakdownWithFilterProps> = ({ className }) 
                     </div>
                     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className={cn("h-full rounded-full transition-all duration-500", colorClasses.split(' ')[1])}
+                        className={cn("h-full rounded-full transition-all duration-300", colorClasses.split(' ')[1])}
                         style={{ width: `${item.percentage}%` }}
                       />
                     </div>
