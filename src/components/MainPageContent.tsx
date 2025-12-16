@@ -1,58 +1,38 @@
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-
 import TaskForm from "@/components/TaskForm";
-
 import WeekNavigation from "@/components/WeekNavigation";
-
 import RegistryDialog from "@/components/RegistryDialog";
-
 import { getPreviousWeekDates, getNextWeekDates, getWeekStartDate } from "@/utils/pcp";
-
 import { useToast } from "@/hooks/use-toast";
-
 import { useTaskManager } from "@/hooks/useTaskManager";
-
 import MainHeader from "@/components/MainHeader";
-
 import PCPSection from "@/components/PCPSection";
-
 import TasksSection from "@/components/TasksSection";
-
-
-
 import { Loader2, LayoutList, PieChart } from "lucide-react";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
+// Lazy load analytics components to improve tab switching performance
+const PCPWeeklyChart = lazy(() => import("@/components/chart/PCPWeeklyChart"));
+const PCPGeneralCard = lazy(() => import("@/components/chart/PCPGeneralCard"));
+const AllCausesChart = lazy(() => import("@/components/chart/AllCausesChart"));
+const ExecutorRankingChart = lazy(() => import("@/components/chart/ExecutorRankingChart"));
+const BreakdownWithFilter = lazy(() => import("@/components/chart/BreakdownWithFilter"));
 
-
-import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
-
-import PCPGeneralCard from "@/components/chart/PCPGeneralCard";
-
-import AllCausesChart from "@/components/chart/AllCausesChart";
-
-import ExecutorRankingChart from "@/components/chart/ExecutorRankingChart";
-
-import BreakdownWithFilter from "@/components/chart/BreakdownWithFilter";
+const AnalyticsLoader = () => (
+  <div className="flex items-center justify-center py-12">
+    <Loader2 className="h-8 w-8 text-secondary animate-spin" />
+  </div>
+);
 
 const MainPageContent = () => {
   const navigate = useNavigate();
-
   const { toast } = useToast();
-
   const [isFormOpen, setIsFormOpen] = useState(false);
-
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
-
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
-
   const [sortBy, setSortBy] = useState<"none" | "sector" | "executor" | "discipline">("none");
-
   const [activeTab, setActiveTab] = useState("planning");
 
   const [weekStartDate, setWeekStartDate] = useState(getWeekStartDate(new Date()));
@@ -197,41 +177,44 @@ const MainPageContent = () => {
         </TabsContent>
 
         {/* === ABA 2: INDICADORES (ESTRATÉGICO - DADOS GLOBAIS) === */}
-
         <TabsContent value="analytics" className="space-y-6 outline-none">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Gráfico de Evolução Semanal */}
-            <div className="lg:col-span-2 h-full">
-              <Card className="bg-white h-full border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                  <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
-                  <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <PCPWeeklyChart barColor="#112232" />
-                </CardContent>
-              </Card>
-            </div>
+          {activeTab === "analytics" && (
+            <Suspense fallback={<AnalyticsLoader />}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Gráfico de Evolução Semanal */}
+                <div className="lg:col-span-2 h-full">
+                  <Card className="bg-white h-full border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300">
+                    <CardHeader>
+                      <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
+                      <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <PCPWeeklyChart barColor="#112232" />
+                    </CardContent>
+                  </Card>
+                </div>
 
-            <div className="space-y-6">
-              <PCPGeneralCard
-                className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
-              />
-              <AllCausesChart
-                className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
-              />
-            </div>
-          </div>
+                <div className="space-y-6">
+                  <PCPGeneralCard
+                    className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+                  />
+                  <AllCausesChart
+                    className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+                  />
+                </div>
+              </div>
 
-          {/* Ranking e Detalhamento */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ExecutorRankingChart
-              className="shadow-sm hover:shadow-xl transition-shadow duration-300"
-            />
-            <BreakdownWithFilter
-              className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
-            />
-          </div>
+              {/* Ranking e Detalhamento */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ExecutorRankingChart
+                  className="shadow-sm hover:shadow-xl transition-shadow duration-300"
+                />
+                <BreakdownWithFilter
+                  className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+                />
+              </div>
+            </Suspense>
+          )}
         </TabsContent>
       </Tabs>
 
