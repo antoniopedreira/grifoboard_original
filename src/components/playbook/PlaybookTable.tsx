@@ -82,7 +82,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
       return { ...item, visible: true, isExpanded: isCurrentEtapaExpanded };
     } else {
       // Se estamos buscando, mostrar tudo para não esconder resultados
-      return { ...item, visible: searchTerm ? true : isCurrentEtapaExpanded };
+      return { ...item, visible: searchTerm ? true : isCurrentEtapaExpanded, isExpanded: false };
     }
   });
 

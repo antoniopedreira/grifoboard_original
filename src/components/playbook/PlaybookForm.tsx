@@ -28,7 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { PlaybookItem } from '@/pages/Playbook';
+import { PlaybookFarolItem } from '@/types/playbook';
 
 const formSchema = z.object({
   etapa: z.string().min(1, 'Etapa é obrigatória'),
@@ -56,7 +56,7 @@ interface PlaybookFormProps {
   onSuccess: () => void;
   obraId: string;
   table: 'fornecimentos' | 'obra';
-  editingItem: PlaybookItem | null;
+  editingItem: PlaybookFarolItem | null;
 }
 
 export default function PlaybookForm({
