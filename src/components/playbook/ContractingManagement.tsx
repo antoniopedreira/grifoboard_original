@@ -230,8 +230,8 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
     switch (status) {
       case "Negociada": return "bg-green-500";
       case "Em Andamento": return "bg-yellow-500";
-      case "A Negociar": return "bg-slate-400";
-      default: return "bg-slate-400";
+      case "A Negociar": return "bg-red-500";
+      default: return "bg-red-500";
     }
   };
 
