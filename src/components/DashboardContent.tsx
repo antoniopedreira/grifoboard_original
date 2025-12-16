@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useTaskManager } from "@/hooks/useTaskManager";
@@ -8,7 +8,6 @@ import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 import PCPBreakdownCard from "@/components/chart/PCPBreakdownCard";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
 import WeekNavigation from "@/components/WeekNavigation";
-import { motion } from "framer-motion";
 import { startOfWeek, endOfWeek, addDays } from "date-fns";
 
 const DashboardContent = () => {
@@ -42,7 +41,7 @@ const DashboardContent = () => {
 
   const safeTasks = tasks || [];
 
-  const stats = [
+  const stats = useMemo(() => [
     {
       label: "Total de Tarefas",
       value: safeTasks.length,
@@ -64,15 +63,14 @@ const DashboardContent = () => {
       color: "text-orange-600",
       bg: "bg-orange-100",
     },
-  ];
+  ], [safeTasks, pcpData?.overall?.percentage]);
 
-  // Classes de animação reutilizáveis para consistência
   const cardHoverEffect =
     "hover:shadow-xl transition-all duration-300 hover:scale-[1.01] cursor-pointer border-border/60 shadow-sm";
 
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 animate-fade-in">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
             <h1 className="text-3xl font-heading font-bold text-primary tracking-tight">Dashboard</h1>
@@ -88,7 +86,7 @@ const DashboardContent = () => {
           onPreviousWeek={handlePreviousWeek}
           onNextWeek={handleNextWeek}
         />
-      </motion.div>
+      </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center h-[40vh]">
@@ -98,16 +96,9 @@ const DashboardContent = () => {
         <>
           {/* Grid de KPIs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card
-                  className={`bg-white hover:shadow-md transition-all hover:-translate-y-1 border-border/60 shadow-sm`}
-                >
+            {stats.map((stat) => (
+              <div key={stat.label} className="animate-fade-in">
+                <Card className="bg-white hover:shadow-md transition-all hover:-translate-y-1 border-border/60 shadow-sm">
                   <CardContent className="p-6 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
@@ -118,18 +109,13 @@ const DashboardContent = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* 1. Gráfico de Evolução Semanal (Com animação de Hover) */}
-            <motion.div
-              className="lg:col-span-2 h-full"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-            >
+            {/* 1. Gráfico de Evolução Semanal */}
+            <div className="lg:col-span-2 h-full animate-fade-in">
               <Card className={`bg-white h-full ${cardHoverEffect}`}>
                 <CardHeader>
                   <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
@@ -139,30 +125,29 @@ const DashboardContent = () => {
                   <PCPWeeklyChart barColor="#112232" />
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
 
             <div className="space-y-6">
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                {/* PCP Overall já tem animação interna, mantemos consistente */}
+              <div className="animate-fade-in">
                 <PCPOverallCard
                   data={pcpData?.overall || { completedTasks: 0, totalTasks: 0, percentage: 0 }}
                   className={`bg-white ${cardHoverEffect}`}
                 />
-              </motion.div>
+              </div>
 
-              {/* 2. Causas da Semana (Com animação de Hover) */}
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
+              {/* 2. Causas da Semana */}
+              <div className="animate-fade-in">
                 <WeeklyCausesChart
                   tasks={safeTasks}
                   weekStartDate={weekStartDate}
                   className={`bg-white ${cardHoverEffect}`}
                 />
-              </motion.div>
+              </div>
             </div>
           </div>
 
-          {/* 3. Detalhamento por Setor (Com animação de Hover) */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          {/* 3. Detalhamento por Setor */}
+          <div className="animate-fade-in">
             <Card className={`bg-white ${cardHoverEffect}`}>
               <CardHeader>
                 <CardTitle className="text-primary font-heading">Detalhamento por Setor</CardTitle>
@@ -171,7 +156,7 @@ const DashboardContent = () => {
                 <PCPBreakdownCard title="" data={pcpData?.bySector || {}} />
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </>
       )}
     </div>
