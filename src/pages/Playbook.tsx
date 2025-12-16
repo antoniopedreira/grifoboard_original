@@ -35,7 +35,11 @@ const Playbook = () => {
 
   // Função para carregar dados do banco
   const fetchPlaybook = async () => {
-    if (!obraId) return;
+    if (!obraId) {
+      setIsLoading(false);
+      setPlaybookData(null);
+      return;
+    }
     setIsLoading(true);
     try {
       const { config, items } = await playbookService.getPlaybook(obraId);
@@ -169,7 +173,21 @@ const Playbook = () => {
         </div>
       </div>
 
-      {isLoading ? (
+      {!obraId ? (
+        <Card className="border-dashed border-2 border-slate-200 shadow-none bg-white/50 min-h-[400px]">
+          <CardContent className="flex flex-col items-center justify-center h-full py-20 text-center space-y-4">
+            <div className="bg-white p-4 rounded-full shadow-sm border border-slate-100">
+              <BookOpen className="h-10 w-10 text-slate-300" />
+            </div>
+            <div className="max-w-md space-y-2">
+              <h3 className="text-lg font-semibold text-slate-700">Selecione uma obra</h3>
+              <p className="text-sm text-slate-500">
+                Para visualizar o Playbook, selecione uma obra no menu lateral.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 min-h-[400px]">
           <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
           <p className="text-slate-500">Carregando orçamento...</p>
