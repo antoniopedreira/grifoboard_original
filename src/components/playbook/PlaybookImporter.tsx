@@ -20,15 +20,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TableFooter, // Importando Footer
+  TableFooter,
 } from "@/components/ui/table";
-import { Upload, FileSpreadsheet, Check, ArrowRight, Save, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, ArrowRight, Save, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
+import { playbookService } from "@/services/playbookService";
 
-// Interface dos dados
+// Interface interna do componente
 interface PlaybookItem {
   id: number;
   descricao: string;
@@ -40,18 +42,27 @@ interface PlaybookItem {
   parentIndex?: number; 
 }
 
-export function PlaybookImporter() {
+// Prop para atualizar a tela principal
+interface PlaybookImporterProps {
+  onSave?: () => void;
+}
+
+export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
   const { toast } = useToast();
+  const { userSession } = useAuth();
+  const obraId = userSession?.obraAtiva?.id;
+
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [rawData, setRawData] = useState<PlaybookItem[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Coeficientes
   const [coef1, setCoef1] = useState<string>("0.57");
   const [coef2, setCoef2] = useState<string>("0.75");
   const [selectedCoef, setSelectedCoef] = useState<"1" | "2">("1");
 
-  // 1. Processar Arquivo
+  // 1. Processar Arquivo (Upload)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -65,6 +76,7 @@ export function PlaybookImporter() {
       
       const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
 
+      // Mapeamento das colunas (Assumindo ordem A, B, C, D, E)
       const formatted: PlaybookItem[] = data.slice(1).map((row, index) => ({
         id: index,
         descricao: row[0] ? String(row[0]).trim() : "",
@@ -75,10 +87,10 @@ export function PlaybookImporter() {
         isEtapa: false 
       })).filter(item => item.descricao !== ""); 
 
-      // Auto-detecção simples
+      // Auto-detecção simples: Sem unidade/qtd mas com preço ou texto = Etapa
       const autoDetected = formatted.map(item => ({
         ...item,
-        isEtapa: (!item.unidade || item.unidade === 'vb') && (!item.qtd || item.qtd === 0) && item.precoTotal > 0
+        isEtapa: (!item.unidade || item.unidade.toLowerCase() === 'vb') && (!item.qtd || item.qtd === 0)
       }));
 
       setRawData(autoDetected);
@@ -86,27 +98,26 @@ export function PlaybookImporter() {
     reader.readAsBinaryString(file);
   };
 
-  // 2. Alternar Etapa/Subetapa
+  // 2. Alternar manualmente se é Etapa ou Item
   const toggleEtapa = (index: number) => {
     setRawData(prev => prev.map((item, i) => 
       i === index ? { ...item, isEtapa: !item.isEtapa } : item
     ));
   };
 
-  // 3. Cálculos e Hierarquia
+  // 3. Cálculos Dinâmicos (Metas, Totais e Porcentagens)
   const processedData = useMemo(() => {
     const activeCoef = selectedCoef === "1" ? parseFloat(coef1) : parseFloat(coef2);
     const validCoef = isNaN(activeCoef) ? 1 : activeCoef;
 
-    // Calcular Total Geral da Meta e Original (Baseado nos ITENS para evitar erros se Etapa estiver zerada)
     let grandTotalMeta = 0;
     let grandTotalOriginal = 0;
 
-    const hierarchyData = rawData.map((item, index) => {
+    // Passo 1: Calcular valores individuais e acumular totais (apenas de itens para não duplicar)
+    const hierarchyData = rawData.map((item) => {
       const precoUnitarioMeta = item.precoUnitario * validCoef;
       const precoTotalMeta = item.precoTotal * validCoef;
 
-      // Soma ao total apenas se NÃO for etapa (para não duplicar e pegar o valor real dos itens)
       if (!item.isEtapa) {
         grandTotalMeta += precoTotalMeta;
         grandTotalOriginal += item.precoTotal;
@@ -119,7 +130,7 @@ export function PlaybookImporter() {
       };
     });
 
-    // Calcular Porcentagem individual e retornar dados finais com Totais Gerais acessíveis
+    // Passo 2: Calcular porcentagem relativa ao total da meta
     const finalData = hierarchyData.map(item => ({
       ...item,
       porcentagem: grandTotalMeta > 0 && !item.isEtapa 
@@ -131,14 +142,51 @@ export function PlaybookImporter() {
 
   }, [rawData, coef1, coef2, selectedCoef]);
 
-  const handleSave = () => {
-    console.log("Salvando Playbook:", processedData.items);
-    toast({
-      title: "Orçamento Processado",
-      description: `Importado com sucesso. Total Meta: ${formatCurrency(processedData.grandTotalMeta)}`,
-      className: "bg-green-50 border-green-200"
-    });
-    setIsOpen(false);
+  // 4. Salvar no Banco de Dados
+  const handleSave = async () => {
+    if (!obraId) {
+      toast({ title: "Erro", description: "Nenhuma obra selecionada.", variant: "destructive" });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Formatar itens para o Supabase
+      const itemsToSave = processedData.items.map((item, index) => ({
+        obra_id: obraId,
+        descricao: item.descricao,
+        unidade: item.unidade,
+        qtd: item.qtd,
+        preco_unitario: item.precoUnitario,
+        preco_total: item.precoTotal,
+        is_etapa: item.isEtapa,
+        ordem: index
+      }));
+
+      const configToSave = {
+        obra_id: obraId,
+        coeficiente_1: parseFloat(coef1),
+        coeficiente_2: parseFloat(coef2),
+        coeficiente_selecionado: selectedCoef as '1' | '2'
+      };
+
+      await playbookService.savePlaybook(obraId, configToSave, itemsToSave);
+
+      toast({
+        title: "Playbook Salvo!",
+        description: `Orçamento de ${formatCurrency(processedData.grandTotalOriginal)} importado com sucesso.`,
+        className: "bg-green-50 border-green-200"
+      });
+
+      if (onSave) onSave();
+      setIsOpen(false);
+
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao salvar", description: "Verifique sua conexão.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatCurrency = (val: number) => 
@@ -173,7 +221,7 @@ export function PlaybookImporter() {
             </div>
         </div>
 
-        {/* CONTENT - STEP 1 */}
+        {/* --- PASSO 1: UPLOAD E SELEÇÃO DE ETAPAS --- */}
         {step === 1 && (
           <div className="flex-1 flex flex-col p-6 gap-6 overflow-hidden">
             {rawData.length === 0 ? (
@@ -183,8 +231,8 @@ export function PlaybookImporter() {
                             <Upload className="h-8 w-8 text-primary" />
                         </div>
                         <div className="text-center space-y-1">
-                            <span className="text-lg font-medium text-slate-700">Clique para selecionar o arquivo .xlsx</span>
-                            <p className="text-sm text-slate-400">Modelo Grifo: Descrição | Unidade | Qtd | Preço Unit. | Preço Total</p>
+                            <span className="text-lg font-medium text-slate-700">Clique para selecionar o arquivo .xlsx ou .csv</span>
+                            <p className="text-sm text-slate-400">Modelo: Descrição | Unidade | Qtd | Preço Unit. | Preço Total</p>
                         </div>
                     </Label>
                     <Input id="file-upload" type="file" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleFileUpload} />
@@ -240,10 +288,10 @@ export function PlaybookImporter() {
           </div>
         )}
 
-        {/* CONTENT - STEP 2 */}
+        {/* --- PASSO 2: CONFIGURAÇÃO DE METAS E VISUALIZAÇÃO --- */}
         {step === 2 && (
             <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Controls Bar */}
+                {/* Barra de Controles */}
                 <div className="bg-slate-50 border-b border-slate-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-6 items-end shadow-sm z-10">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-bold text-slate-500 uppercase">Coeficiente 1</Label>
@@ -286,7 +334,7 @@ export function PlaybookImporter() {
                     </div>
                 </div>
 
-                {/* Table Preview */}
+                {/* Tabela de Pré-visualização */}
                 <div className="flex-1 overflow-auto bg-slate-50/30 p-6">
                     <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden flex flex-col h-full">
                         <ScrollArea className="flex-1">
@@ -345,20 +393,20 @@ export function PlaybookImporter() {
                                     ))}
                                 </TableBody>
                                 
-                                {/* FOOTER COM TOTAIS */}
-                                <TableFooter className="bg-slate-100/80 border-t-2 border-slate-300 sticky bottom-0 z-20 shadow-[0_-5px_10px_rgba(0,0,0,0.05)]">
+                                {/* RODAPÉ COM TOTAIS GERAIS */}
+                                <TableFooter className="bg-slate-800 text-white border-t-2 border-slate-300 sticky bottom-0 z-20 shadow-[0_-5px_10px_rgba(0,0,0,0.1)]">
                                     <TableRow>
-                                        <TableCell colSpan={3} className="pl-6 font-bold text-slate-700 uppercase tracking-wider text-sm">
-                                            Total Geral da Obra
+                                        <TableCell colSpan={3} className="pl-6 font-bold uppercase tracking-wider text-sm py-4">
+                                            Total Geral Consolidado (Soma dos Itens)
                                         </TableCell>
-                                        <TableCell className="text-right font-bold font-mono text-slate-800 text-sm">
+                                        <TableCell className="text-right font-bold font-mono text-white text-sm">
                                             {formatCurrency(processedData.grandTotalOriginal)}
                                         </TableCell>
-                                        <TableCell className="text-right border-l border-slate-200 bg-blue-100/50" />
-                                        <TableCell className="text-right font-bold font-mono text-blue-800 text-sm bg-blue-100/50">
+                                        <TableCell className="text-right border-l border-slate-600/50" />
+                                        <TableCell className="text-right font-bold font-mono text-yellow-400 text-sm">
                                             {formatCurrency(processedData.grandTotalMeta)}
                                         </TableCell>
-                                        <TableCell className="text-right bg-slate-100/50 font-bold text-xs text-slate-600">
+                                        <TableCell className="text-right font-bold text-xs text-slate-300">
                                             100%
                                         </TableCell>
                                     </TableRow>
@@ -370,7 +418,7 @@ export function PlaybookImporter() {
             </div>
         )}
 
-        {/* FOOTER DIALOG */}
+        {/* FOOTER DO DIÁLOGO */}
         <div className="p-4 bg-white border-t border-slate-200 flex justify-between items-center">
             {step === 2 ? (
                 <Button variant="outline" onClick={() => setStep(1)} className="text-slate-600">
@@ -391,9 +439,13 @@ export function PlaybookImporter() {
             )}
 
             {step === 2 && (
-                <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700 gap-2 pl-6 pr-6 shadow-md hover:shadow-lg transition-all">
+                <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving}
+                    className="bg-green-600 hover:bg-green-700 gap-2 pl-6 pr-6 shadow-md hover:shadow-lg transition-all"
+                >
                     <Save className="h-4 w-4" />
-                    Salvar Playbook e Metas
+                    {isSaving ? "Salvando..." : "Salvar Playbook e Metas"}
                 </Button>
             )}
         </div>
