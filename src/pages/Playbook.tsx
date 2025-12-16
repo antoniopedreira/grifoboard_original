@@ -1,213 +1,223 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PlaybookTable from '@/components/playbook/PlaybookTable';
-import PlaybookForm from '@/components/playbook/PlaybookForm';
-import PlaybookSummary from '@/components/playbook/PlaybookSummary';
-import PlaybookDetailsModal from '@/components/playbook/PlaybookDetailsModal';
-export interface PlaybookItem {
-  id: string;
-  obra_id: string;
-  etapa: string;
-  proposta: string;
-  responsavel: string;
-  quantidade: number;
-  unidade: string;
-  orcamento_meta_unitario: number;
-  valor_contratado: number | null;
-  status: 'Negociadas' | 'Em Andamento' | 'A Negociar';
-  observacao: string | null;
-}
-export default function Playbook() {
-  const {
-    userSession
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
-  const [fornecimentosData, setFornecimentosData] = useState<PlaybookItem[]>([]);
-  const [obraData, setObraData] = useState<PlaybookItem[]>([]);
+import { useState, useEffect } from "react";
+import MainHeader from "@/components/MainHeader";
+import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
+import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
+import { PlaybookSummary } from "@/components/playbook/PlaybookSummary";
+import { Card, CardContent } from "@/components/ui/card";
+import { BookOpen, Trash2, Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { playbookService } from "@/services/playbookService";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const Playbook = () => {
+  const { userSession } = useAuth();
+  const { toast } = useToast();
+  const obraId = userSession?.obraAtiva?.id;
+
   const [isLoading, setIsLoading] = useState(true);
-  const [showFornecimentosForm, setShowFornecimentosForm] = useState(false);
-  const [showObraForm, setShowObraForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<PlaybookItem | null>(null);
-  const [editingTable, setEditingTable] = useState<'fornecimentos' | 'obra' | null>(null);
-  const [selectedItem, setSelectedItem] = useState<PlaybookItem | null>(null);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  useEffect(() => {
-    if (userSession?.obraAtiva?.id) {
-      loadData();
-    }
-  }, [userSession?.obraAtiva?.id]);
-  const loadData = async () => {
-    if (!userSession?.obraAtiva?.id) return;
+  const [playbookData, setPlaybookData] = useState<{
+    items: PlaybookItem[];
+    grandTotalMeta: number;
+    grandTotalOriginal: number;
+  } | null>(null);
+
+  // Função para carregar dados do banco
+  const fetchPlaybook = async () => {
+    if (!obraId) return;
     setIsLoading(true);
     try {
-      const [fornecimentosResponse, obraResponse] = await Promise.all([supabase.from('playbook_fornecimentos').select('*').eq('obra_id', userSession.obraAtiva.id).order('created_at', {
-        ascending: true
-      }), supabase.from('playbook_obra').select('*').eq('obra_id', userSession.obraAtiva.id).order('created_at', {
-        ascending: true
-      })]);
-      if (fornecimentosResponse.error) throw fornecimentosResponse.error;
-      if (obraResponse.error) throw obraResponse.error;
-      setFornecimentosData(fornecimentosResponse.data as PlaybookItem[] || []);
-      setObraData(obraResponse.data as PlaybookItem[] || []);
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao carregar dados',
-        description: error.message,
-        variant: 'destructive'
+      const { config, items } = await playbookService.getPlaybook(obraId);
+
+      if (!items || items.length === 0) {
+        setPlaybookData(null);
+        return;
+      }
+
+      // Recalcular as metas no front com base no coeficiente salvo
+      const coef = config?.coeficiente_selecionado === '2' 
+        ? (config.coeficiente_2 || 1) 
+        : (config?.coeficiente_1 || 1);
+
+      let grandTotalMeta = 0;
+      let grandTotalOriginal = 0;
+
+      // Primeiro passo: Calcular totais
+      const processedItems = items.map(item => {
+        const precoUnitarioMeta = (item.preco_unitario || 0) * coef;
+        const precoTotalMeta = (item.preco_total || 0) * coef;
+
+        // Soma ao total apenas se NÃO for etapa (para não duplicar)
+        if (!item.is_etapa) {
+          grandTotalMeta += precoTotalMeta;
+          grandTotalOriginal += (item.preco_total || 0);
+        }
+
+        return {
+          id: item.id, // Supabase ID, pode ser usado como key, mas cuidado com a tipagem no componente filho se esperar number
+          descricao: item.descricao,
+          unidade: item.unidade,
+          qtd: Number(item.qtd),
+          precoUnitario: Number(item.preco_unitario),
+          precoTotal: Number(item.preco_total),
+          isEtapa: item.is_etapa,
+          precoUnitarioMeta,
+          precoTotalMeta,
+          porcentagem: 0 
+        };
       });
+
+      // Segundo passo: Calcular % individual
+      const finalItems = processedItems.map(item => ({
+        ...item,
+        // Conversão de ID UUID string para number é impossível diretamente se o componente espera number.
+        // Vamos ajustar o componente Table para aceitar string ou usar o índice 'ordem' se disponível
+        // Hack rápido: vamos usar item.ordem se o ID for UUID
+        id: (item as any).ordem || Math.random(), 
+        porcentagem: grandTotalMeta > 0 && !item.isEtapa
+          ? (item.precoTotalMeta / grandTotalMeta) * 100
+          : 0
+      }));
+
+      setPlaybookData({
+        items: finalItems,
+        grandTotalMeta,
+        grandTotalOriginal
+      });
+
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro", description: "Falha ao carregar dados do playbook.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
-  const handleAddFornecimentos = () => {
-    setEditingItem(null);
-    setEditingTable('fornecimentos');
-    setShowFornecimentosForm(true);
-  };
-  const handleAddObra = () => {
-    setEditingItem(null);
-    setEditingTable('obra');
-    setShowObraForm(true);
-  };
-  const handleEdit = (item: PlaybookItem, table: 'fornecimentos' | 'obra') => {
-    setSelectedItem(null);
-    setDetailsModalOpen(false);
-    setEditingItem(item);
-    setEditingTable(table);
-    if (table === 'fornecimentos') {
-      setShowFornecimentosForm(true);
-    } else {
-      setShowObraForm(true);
-    }
-  };
-  const handleRowClick = (item: PlaybookItem, table: 'fornecimentos' | 'obra') => {
-    setSelectedItem(item);
-    setEditingTable(table);
-    setDetailsModalOpen(true);
-  };
-  const handleDelete = async (id: string, table: 'fornecimentos' | 'obra') => {
+
+  useEffect(() => {
+    fetchPlaybook();
+  }, [obraId]);
+
+  // Função para limpar dados
+  const handleClearData = async () => {
+    if (!obraId) return;
     try {
-      const tableName = table === 'fornecimentos' ? 'playbook_fornecimentos' : 'playbook_obra';
-      const {
-        error
-      } = await supabase.from(tableName).delete().eq('id', id);
-      if (error) throw error;
-      toast({
-        title: 'Sucesso',
-        description: 'Item excluído com sucesso'
-      });
-      loadData();
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao excluir',
-        description: error.message,
-        variant: 'destructive'
-      });
+      // Salva uma lista vazia para limpar
+      await playbookService.savePlaybook(obraId, { 
+        obra_id: obraId, coeficiente_1: 0, coeficiente_2: 0, coeficiente_selecionado: '1' 
+      }, []);
+      
+      setPlaybookData(null);
+      toast({ title: "Dados limpos", description: "O orçamento foi removido com sucesso." });
+    } catch (e) {
+      toast({ title: "Erro", description: "Não foi possível limpar os dados.", variant: "destructive" });
     }
   };
-  const handleFormSuccess = () => {
-    setShowFornecimentosForm(false);
-    setShowObraForm(false);
-    setEditingItem(null);
-    setEditingTable(null);
-    loadData();
-  };
-  if (!userSession?.obraAtiva) {
-    return <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">
-              Selecione uma obra para visualizar o Playbook
-            </p>
-          </CardContent>
-        </Card>
-      </div>;
-  }
-  return <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Playbook - {userSession.obraAtiva.nome_obra}</h1>
+
+  return (
+    <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-8 bg-slate-50/30">
+      
+      <MainHeader onNewTaskClick={() => {}} onRegistryClick={() => {}} onChecklistClick={() => {}} />
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-heading font-bold text-slate-900 flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <BookOpen className="h-6 w-6 text-primary" />
+            </div>
+            Playbook de Obras
+          </h1>
+          <p className="text-slate-500 mt-1 ml-1 text-sm max-w-2xl">
+            Controle orçamentário detalhado: Orçamento Original vs. Meta Grifo.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+           {playbookData && (
+             <AlertDialog>
+               <AlertDialogTrigger asChild>
+                 <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                   <Trash2 className="h-4 w-4 mr-2" /> Limpar
+                 </Button>
+               </AlertDialogTrigger>
+               <AlertDialogContent>
+                 <AlertDialogHeader>
+                   <AlertDialogTitle>Excluir Playbook?</AlertDialogTitle>
+                   <AlertDialogDescription>
+                     Esta ação apagará todos os dados orçamentários importados para esta obra.
+                   </AlertDialogDescription>
+                 </AlertDialogHeader>
+                 <AlertDialogFooter>
+                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                   <AlertDialogAction onClick={handleClearData} className="bg-red-600 hover:bg-red-700">Confirmar Exclusão</AlertDialogAction>
+                 </AlertDialogFooter>
+               </AlertDialogContent>
+             </AlertDialog>
+           )}
+           
+           <PlaybookImporter onSave={fetchPlaybook} />
+        </div>
       </div>
 
-      <Tabs defaultValue="fornecimentos" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="fornecimentos">Fornecimentos</TabsTrigger>
-          <TabsTrigger value="obra">Obra</TabsTrigger>
-        </TabsList>
-
-        {/* Farol de Contratação de Fornecimentos */}
-        <TabsContent value="fornecimentos" className="mt-6 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumo das Negociações     </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlaybookSummary data={fornecimentosData} />
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20 min-h-[400px]">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <p className="text-slate-500">Carregando orçamento...</p>
+        </div>
+      ) : !playbookData ? (
+        <Card className="border-dashed border-2 border-slate-200 shadow-none bg-white/50 min-h-[400px]">
+            <CardContent className="flex flex-col items-center justify-center h-full py-20 text-center space-y-4">
+                <div className="bg-white p-4 rounded-full shadow-sm border border-slate-100">
+                    <BookOpen className="h-10 w-10 text-slate-300" />
+                </div>
+                <div className="max-w-md space-y-2">
+                    <h3 className="text-lg font-semibold text-slate-700">Seu Playbook está vazio</h3>
+                    <p className="text-sm text-slate-500">
+                      Importe sua planilha de orçamento padrão para começar a definir as metas.
+                    </p>
+                </div>
+                <div className="pt-2">
+                   {/* Botão de atalho para importar */}
+                   <PlaybookImporter onSave={fetchPlaybook} />
+                </div>
             </CardContent>
-          </Card>
+        </Card>
+      ) : (
+        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+          {/* 1. KPIs */}
+          <PlaybookSummary 
+            totalOriginal={playbookData.grandTotalOriginal} 
+            totalMeta={playbookData.grandTotalMeta} 
+          />
+          
+          {/* 2. Tabela Detalhada */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-lg font-bold text-slate-700">Estrutura Analítica</h3>
+              <span className="text-xs text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-200">
+                {playbookData.items.length} registros
+              </span>
+            </div>
+            <PlaybookTable 
+              data={playbookData.items} 
+              grandTotalOriginal={playbookData.grandTotalOriginal}
+              grandTotalMeta={playbookData.grandTotalMeta}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <CardTitle>Farol de Contratação de Fornecimentos</CardTitle>
-              <Button onClick={handleAddFornecimentos} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Item
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <PlaybookTable data={fornecimentosData} isLoading={isLoading} onRowClick={item => handleRowClick(item, 'fornecimentos')} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Farol de Contratação de Obra */}
-        <TabsContent value="obra" className="mt-6 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumo das Negociações    </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlaybookSummary data={obraData} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <CardTitle>Farol de Contratação de Obra</CardTitle>
-              <Button onClick={handleAddObra} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Item
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <PlaybookTable data={obraData} isLoading={isLoading} onRowClick={item => handleRowClick(item, 'obra')} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Form Dialogs */}
-      {showFornecimentosForm && <PlaybookForm isOpen={showFornecimentosForm} onClose={() => {
-      setShowFornecimentosForm(false);
-      setEditingItem(null);
-    }} onSuccess={handleFormSuccess} obraId={userSession.obraAtiva.id} table="fornecimentos" editingItem={editingItem} />}
-
-      {showObraForm && <PlaybookForm isOpen={showObraForm} onClose={() => {
-      setShowObraForm(false);
-      setEditingItem(null);
-    }} onSuccess={handleFormSuccess} obraId={userSession.obraAtiva.id} table="obra" editingItem={editingItem} />}
-
-      {/* Details Modal */}
-      <PlaybookDetailsModal item={selectedItem} isOpen={detailsModalOpen} onClose={() => {
-      setDetailsModalOpen(false);
-      setSelectedItem(null);
-    }} onEdit={item => handleEdit(item, editingTable || 'fornecimentos')} onDelete={id => handleDelete(id, editingTable || 'fornecimentos')} />
-    </div>;
-}
+export default Playbook;
