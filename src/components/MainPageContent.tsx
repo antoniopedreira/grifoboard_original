@@ -20,7 +20,7 @@ import PCPSection from "@/components/PCPSection";
 
 import TasksSection from "@/components/TasksSection";
 
-import { motion } from "framer-motion";
+
 
 import { Loader2, LayoutList, PieChart } from "lucide-react";
 
@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-import { cn } from "@/lib/utils";
+
 
 import PCPWeeklyChart from "@/components/chart/PCPWeeklyChart";
 
@@ -114,23 +114,16 @@ const MainPageContent = () => {
   return (
     <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-6">
       {/* 1. Header Global */}
-
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <MainHeader
-          onNewTaskClick={() => setIsFormOpen(true)}
-          onRegistryClick={() => setIsRegistryOpen(true)}
-          onChecklistClick={() => navigate("/checklist")}
-        />
-      </motion.div>
+      <MainHeader
+        onNewTaskClick={() => setIsFormOpen(true)}
+        onRegistryClick={() => setIsRegistryOpen(true)}
+        onChecklistClick={() => navigate("/checklist")}
+      />
 
       {/* 2. Sistema de Abas - Design Premium */}
       <Tabs defaultValue="planning" value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
         {/* Header Unificado */}
-        <motion.div 
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-white via-white to-slate-50/80 rounded-2xl shadow-lg border border-border/40 p-2 sticky top-0 z-20 backdrop-blur-xl"
-        >
+        <div className="bg-gradient-to-r from-white via-white to-slate-50/80 rounded-2xl shadow-lg border border-border/40 p-2 sticky top-0 z-20 backdrop-blur-xl">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
             {/* Tabs com design refinado */}
             <TabsList className="bg-slate-100/80 p-1.5 rounded-xl h-auto w-full lg:w-auto">
@@ -167,17 +160,11 @@ const MainPageContent = () => {
               />
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* === ABA 1: PLANEJAMENTO (OPERACIONAL) === */}
-
-        <TabsContent value="planning" className="space-y-6 outline-none animate-in fade-in-50 duration-300">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="w-full"
-          >
+        <TabsContent value="planning" className="space-y-6 outline-none">
+          <div className="w-full">
             <PCPSection
               pcpData={pcpData}
               weeklyPCPData={weeklyPCPData}
@@ -186,84 +173,64 @@ const MainPageContent = () => {
               onCauseSelect={handleCauseSelect}
               onClearFilter={() => setSelectedCause(null)}
             />
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <Loader2 className="h-10 w-10 text-secondary animate-spin" />
-
-                <p className="text-muted-foreground font-medium">Carregando planejamento...</p>
-              </div>
-            ) : (
-              <TasksSection
-                tasks={tasks}
-                isLoading={isLoading}
-                onTaskUpdate={handleTaskUpdate}
-                onTaskDelete={handleTaskDelete}
-                onTaskDuplicate={handleTaskDuplicate}
-                onCopyToNextWeek={handleCopyToNextWeek}
-                selectedCause={selectedCause}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-              />
-            )}
-          </motion.div>
+          {/* Mostrar loading apenas na primeira carga (sem tarefas) */}
+          {isLoading && tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <Loader2 className="h-10 w-10 text-secondary animate-spin" />
+              <p className="text-muted-foreground font-medium">Carregando planejamento...</p>
+            </div>
+          ) : (
+            <TasksSection
+              tasks={tasks}
+              isLoading={false}
+              onTaskUpdate={handleTaskUpdate}
+              onTaskDelete={handleTaskDelete}
+              onTaskDuplicate={handleTaskDuplicate}
+              onCopyToNextWeek={handleCopyToNextWeek}
+              selectedCause={selectedCause}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
+          )}
         </TabsContent>
 
         {/* === ABA 2: INDICADORES (ESTRATÉGICO - DADOS GLOBAIS) === */}
 
-        <TabsContent value="analytics" className="space-y-6 outline-none animate-in fade-in-50 duration-300">
+        <TabsContent value="analytics" className="space-y-6 outline-none">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Gráfico de Evolução Semanal */}
-
-            <motion.div
-              className="lg:col-span-2 h-full"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card className="bg-white h-full border-border/60 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="lg:col-span-2 h-full">
+              <Card className="bg-white h-full border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
                   <CardTitle className="text-primary font-heading">Evolução do PCP</CardTitle>
-
                   <CardDescription>Histórico completo de todas as semanas do projeto</CardDescription>
                 </CardHeader>
-
                 <CardContent>
                   <PCPWeeklyChart barColor="#112232" />
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
 
             <div className="space-y-6">
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-                <PCPGeneralCard
-                  className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
-                />
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                <AllCausesChart
-                  className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
-                />
-              </motion.div>
+              <PCPGeneralCard
+                className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+              />
+              <AllCausesChart
+                className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+              />
             </div>
           </div>
 
           {/* Ranking e Detalhamento */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <ExecutorRankingChart
-                className="shadow-sm hover:shadow-xl transition-all duration-300"
-              />
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              <BreakdownWithFilter
-                className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
-              />
-            </motion.div>
+            <ExecutorRankingChart
+              className="shadow-sm hover:shadow-xl transition-shadow duration-300"
+            />
+            <BreakdownWithFilter
+              className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+            />
           </div>
         </TabsContent>
       </Tabs>
