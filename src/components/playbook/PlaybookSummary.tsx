@@ -1,158 +1,76 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlaybookItem } from '@/pages/Playbook';
+import { Card, CardContent } from "@/components/ui/card";
+import { TrendingDown, TrendingUp, Target, DollarSign } from "lucide-react";
 
 interface PlaybookSummaryProps {
-  data: PlaybookItem[];
+  totalOriginal: number;
+  totalMeta: number;
 }
 
 const formatCurrency = (value: number) => {
-  return value.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
 };
 
-const formatPercentage = (value: number) => {
-  return `${value.toFixed(2)}%`;
-};
-
-export default function PlaybookSummary({ data }: PlaybookSummaryProps) {
-  // Calculate totals by status
-  const calculateTotals = () => {
-    const statusTotals = {
-      'Negociadas': { orcado: 0, efetivado: 0 },
-      'Em Andamento': { orcado: 0, efetivado: 0 },
-      'A Negociar': { orcado: 0, efetivado: 0 },
-    };
-
-    data.forEach(item => {
-      const orcado = item.orcamento_meta_unitario * item.quantidade;
-      const efetivado = item.valor_contratado || 0;
-      
-      if (statusTotals[item.status]) {
-        statusTotals[item.status].orcado += orcado;
-        statusTotals[item.status].efetivado += efetivado;
-      }
-    });
-
-    return statusTotals;
-  };
-
-  const totals = calculateTotals();
-  
-  // Calculate grand totals
-  const totalOrcado = Object.values(totals).reduce((sum, item) => sum + item.orcado, 0);
-  const totalEfetivado = Object.values(totals).reduce((sum, item) => sum + item.efetivado, 0);
-  const totalVerbaDisponivel = totalOrcado - totalEfetivado;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Negociadas':
-        return 'text-green-600';
-      case 'Em Andamento':
-        return 'text-yellow-600';
-      case 'A Negociar':
-        return 'text-red-600';
-      default:
-        return '';
-    }
-  };
+export default function PlaybookSummary({ totalOriginal, totalMeta }: PlaybookSummaryProps) {
+  const diferenca = totalOriginal - totalMeta;
+  const percentualEconomia = totalOriginal > 0 ? ((diferenca / totalOriginal) * 100) : 0;
 
   return (
-    <div className="rounded-md border overflow-hidden">
-      <Table>
-        <TableHeader className="bg-slate-800">
-          <TableRow>
-            <TableHead className="text-white font-bold">SITUAÇÃO</TableHead>
-            <TableHead className="text-white font-bold text-right">ORÇADO</TableHead>
-            <TableHead className="text-white font-bold text-right">%</TableHead>
-            <TableHead className="text-white font-bold text-right">EFETIVADO</TableHead>
-            <TableHead className="text-white font-bold text-right">%</TableHead>
-            <TableHead className="text-white font-bold text-right">VERBA DISPONÍVEL</TableHead>
-            <TableHead className="text-white font-bold text-right">%</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {/* Negociadas */}
-          <TableRow>
-            <TableCell className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-600"></div>
-              <span className={getStatusColor('Negociadas')}>NEGOCIADAS</span>
-            </TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totals['Negociadas'].orcado)}</TableCell>
-            <TableCell className="text-right">
-              {totalOrcado > 0 ? formatPercentage((totals['Negociadas'].orcado / totalOrcado) * 100) : '0,00%'}
-            </TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totals['Negociadas'].efetivado)}</TableCell>
-            <TableCell className="text-right">
-              {totalEfetivado > 0 ? formatPercentage((totals['Negociadas'].efetivado / totalEfetivado) * 100) : '0,00%'}
-            </TableCell>
-            <TableCell className="text-right">
-              R$ {formatCurrency(totals['Negociadas'].orcado - totals['Negociadas'].efetivado)}
-            </TableCell>
-            <TableCell className="text-right">
-              {totals['Negociadas'].orcado > 0 ? formatPercentage((1 - (totals['Negociadas'].efetivado / totals['Negociadas'].orcado)) * 100) : '100,00%'}
-            </TableCell>
-          </TableRow>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-500 font-medium">Orçamento Original</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{formatCurrency(totalOriginal)}</p>
+            </div>
+            <div className="p-3 bg-slate-100 rounded-xl">
+              <DollarSign className="h-6 w-6 text-slate-600" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* Em Andamento */}
-          <TableRow>
-            <TableCell className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-600"></div>
-              <span className={getStatusColor('Em Andamento')}>EM ANDAMENTO</span>
-            </TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totals['Em Andamento'].orcado)}</TableCell>
-            <TableCell className="text-right">
-              {totalOrcado > 0 ? formatPercentage((totals['Em Andamento'].orcado / totalOrcado) * 100) : '0,00%'}
-            </TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totals['Em Andamento'].efetivado)}</TableCell>
-            <TableCell className="text-right">
-              {totalEfetivado > 0 ? formatPercentage((totals['Em Andamento'].efetivado / totalEfetivado) * 100) : '0,00%'}
-            </TableCell>
-            <TableCell className="text-right">
-              R$ {formatCurrency(totals['Em Andamento'].orcado - totals['Em Andamento'].efetivado)}
-            </TableCell>
-            <TableCell className="text-right">
-              {totals['Em Andamento'].orcado > 0 ? formatPercentage((1 - (totals['Em Andamento'].efetivado / totals['Em Andamento'].orcado)) * 100) : '100,00%'}
-            </TableCell>
-          </TableRow>
+      <Card className="bg-blue-50 border-blue-200 shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-blue-600 font-medium">Meta Grifo</p>
+              <p className="text-2xl font-bold text-blue-900 mt-1">{formatCurrency(totalMeta)}</p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-xl">
+              <Target className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* A Negociar */}
-          <TableRow>
-            <TableCell className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-600"></div>
-              <span className={getStatusColor('A Negociar')}>A NEGOCIAR</span>
-            </TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totals['A Negociar'].orcado)}</TableCell>
-            <TableCell className="text-right">
-              {totalOrcado > 0 ? formatPercentage((totals['A Negociar'].orcado / totalOrcado) * 100) : '0,00%'}
-            </TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totals['A Negociar'].efetivado)}</TableCell>
-            <TableCell className="text-right">
-              {totalEfetivado > 0 ? formatPercentage((totals['A Negociar'].efetivado / totalEfetivado) * 100) : '0,00%'}
-            </TableCell>
-            <TableCell className="text-right">
-              R$ {formatCurrency(totals['A Negociar'].orcado - totals['A Negociar'].efetivado)}
-            </TableCell>
-            <TableCell className="text-right">
-              {totals['A Negociar'].orcado > 0 ? formatPercentage((1 - (totals['A Negociar'].efetivado / totals['A Negociar'].orcado)) * 100) : '100,00%'}
-            </TableCell>
-          </TableRow>
-
-          {/* TOTAL */}
-          <TableRow className="bg-slate-100 font-bold">
-            <TableCell>TOTAL</TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totalOrcado)}</TableCell>
-            <TableCell className="text-right">100,00%</TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totalEfetivado)}</TableCell>
-            <TableCell className="text-right">100,00%</TableCell>
-            <TableCell className="text-right">R$ {formatCurrency(totalVerbaDisponivel)}</TableCell>
-            <TableCell className="text-right">
-              {totalOrcado > 0 ? formatPercentage((1 - (totalEfetivado / totalOrcado)) * 100) : '100,00%'}
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+      <Card className={`shadow-sm ${diferenca >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${diferenca >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                Economia Projetada
+              </p>
+              <p className={`text-2xl font-bold mt-1 ${diferenca >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+                {formatCurrency(diferenca)}
+              </p>
+              <p className={`text-xs mt-1 ${diferenca >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {percentualEconomia.toFixed(1)}% do orçamento
+              </p>
+            </div>
+            <div className={`p-3 rounded-xl ${diferenca >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+              {diferenca >= 0 ? (
+                <TrendingDown className="h-6 w-6 text-green-600" />
+              ) : (
+                <TrendingUp className="h-6 w-6 text-red-600" />
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

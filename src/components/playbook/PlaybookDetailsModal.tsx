@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlaybookItem } from '@/pages/Playbook';
+import { PlaybookFarolItem } from '@/types/playbook';
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,10 @@ import { Pencil, Trash2, X } from 'lucide-react';
 import { capitalizeWords } from '@/lib/utils/textUtils';
 
 interface PlaybookDetailsModalProps {
-  item: PlaybookItem | null;
+  item: PlaybookFarolItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (item: PlaybookItem) => void;
+  onEdit: (item: PlaybookFarolItem) => void;
   onDelete: (id: string) => void;
 }
 

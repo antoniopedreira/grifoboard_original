@@ -515,6 +515,44 @@ export type Database = {
           },
         ]
       }
+      playbook_config: {
+        Row: {
+          coeficiente_1: number | null
+          coeficiente_2: number | null
+          coeficiente_selecionado: string | null
+          created_at: string
+          id: string
+          obra_id: string
+          updated_at: string
+        }
+        Insert: {
+          coeficiente_1?: number | null
+          coeficiente_2?: number | null
+          coeficiente_selecionado?: string | null
+          created_at?: string
+          id?: string
+          obra_id: string
+          updated_at?: string
+        }
+        Update: {
+          coeficiente_1?: number | null
+          coeficiente_2?: number | null
+          coeficiente_selecionado?: string | null
+          created_at?: string
+          id?: string
+          obra_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playbook_config_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: true
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playbook_fornecimentos: {
         Row: {
           created_at: string | null
@@ -564,6 +602,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "playbook_fornecimentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      playbook_items: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          is_etapa: boolean | null
+          obra_id: string
+          ordem: number
+          preco_total: number | null
+          preco_unitario: number | null
+          qtd: number | null
+          unidade: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          is_etapa?: boolean | null
+          obra_id: string
+          ordem: number
+          preco_total?: number | null
+          preco_unitario?: number | null
+          qtd?: number | null
+          unidade?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          is_etapa?: boolean | null
+          obra_id?: string
+          ordem?: number
+          preco_total?: number | null
+          preco_unitario?: number | null
+          qtd?: number | null
+          unidade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playbook_items_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
