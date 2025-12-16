@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
+// CORREÇÃO: Usando chaves para importação nomeada
 import { PlaybookSummary } from "@/components/playbook/PlaybookSummary";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Trash2, Loader2, Settings2 } from "lucide-react";
@@ -42,7 +43,7 @@ const Playbook = () => {
   const [rawItems, setRawItems] = useState<any[]>([]);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
 
-  // Função para processar items com coeficiente (Agora com lógica de 3 níveis)
+  // Função para processar items com coeficiente
   const processItems = (items: any[], coef: number) => {
     let grandTotalMeta = 0;
     let grandTotalOriginal = 0;
@@ -54,7 +55,6 @@ const Playbook = () => {
       // Define nível com fallback
       const nivel = item.nivel ?? (item.is_etapa ? 0 : 2);
 
-      // Soma apenas ITENS (Nível 2)
       if (nivel === 2) {
         grandTotalMeta += precoTotalMeta;
         grandTotalOriginal += item.preco_total || 0;
@@ -68,7 +68,7 @@ const Playbook = () => {
         precoUnitario: Number(item.preco_unitario),
         precoTotal: Number(item.preco_total),
         isEtapa: item.is_etapa,
-        nivel: nivel, // Passa o nível para a tabela
+        nivel: nivel,
         precoUnitarioMeta,
         precoTotalMeta,
         porcentagem: 0,
@@ -101,6 +101,7 @@ const Playbook = () => {
         return;
       }
 
+      // Carregar coeficientes salvos
       const c1 = config?.coeficiente_1 || 0.57;
       const c2 = config?.coeficiente_2 || 0.75;
       const selected = (config?.coeficiente_selecionado as "1" | "2") || "1";
@@ -121,6 +122,7 @@ const Playbook = () => {
     }
   };
 
+  // Recalcular quando coeficiente muda
   const handleCoeficienteChange = async (newSelected: "1" | "2", newC1?: number, newC2?: number) => {
     const c1 = newC1 ?? coeficiente1;
     const c2 = newC2 ?? coeficiente2;
@@ -132,6 +134,7 @@ const Playbook = () => {
     }
   };
 
+  // Salvar configuração de coeficientes
   const saveCoeficienteConfig = async () => {
     if (!obraId) return;
     setIsSavingConfig(true);
@@ -152,7 +155,7 @@ const Playbook = () => {
           preco_unitario: item.preco_unitario || 0,
           preco_total: item.preco_total || 0,
           is_etapa: item.is_etapa || false,
-          nivel: item.nivel ?? (item.is_etapa ? 0 : 2), // Garante que o nível é salvo ao atualizar config
+          nivel: item.nivel ?? (item.is_etapa ? 0 : 2),
           ordem: index,
         })),
       );
@@ -169,9 +172,11 @@ const Playbook = () => {
     fetchPlaybook();
   }, [obraId]);
 
+  // Função para limpar dados
   const handleClearData = async () => {
     if (!obraId) return;
     try {
+      // Salva uma lista vazia para limpar
       await playbookService.savePlaybook(
         obraId,
         {
@@ -264,13 +269,14 @@ const Playbook = () => {
               </p>
             </div>
             <div className="pt-2">
+              {/* Botão de atalho para importar */}
               <PlaybookImporter onSave={fetchPlaybook} />
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
-          {/* Configuração de Coeficientes */}
+          {/* 0. Configuração de Coeficientes */}
           <Card className="border border-slate-200 bg-white shadow-sm">
             <CardContent className="py-4 px-5">
               <div className="flex items-center gap-2 mb-4">
