@@ -109,7 +109,7 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
           qtd: row[2] ? Number(row[2]) : 0,
           precoUnitario: row[3] ? Number(row[3]) : 0,
           precoTotal: row[4] ? Number(row[4]) : 0,
-          nivel: 2, // Padrão: Item
+          nivel: 2 as 0 | 1 | 2, // Padrão: Item
           isEtapa: false,
         }))
         .filter((item) => item.descricao !== "");
