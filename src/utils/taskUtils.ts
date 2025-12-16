@@ -77,8 +77,20 @@ export const convertTaskStatusToTarefa = (task: Task): Partial<Tarefa> => {
     task.dailyStatus.forEach(dailyStatus => {
       const dbField = REVERSE_DAY_FIELD_MAPPING[dailyStatus.day];
       if (dbField) {
-        const status = REVERSE_TASK_STATUS_MAPPING[dailyStatus.status];
-        (tarefaToUpdate as Record<string, unknown>)[dbField] = status;
+        // Get status with proper type casting
+        let dbStatus: string | null = REVERSE_TASK_STATUS_MAPPING[dailyStatus.status as keyof typeof REVERSE_TASK_STATUS_MAPPING];
+        
+        // Fallback mapping in case type lookup fails (ensures 'planned' always saves as 'Planejada')
+        if (!dbStatus) {
+          if (dailyStatus.status === 'planned') dbStatus = 'Planejada';
+          else if (dailyStatus.status === 'completed') dbStatus = 'Executada';
+          else if (dailyStatus.status === 'not_done') dbStatus = 'Não Feita';
+        }
+        
+        // Only set field if we have a valid status
+        if (dbStatus) {
+          (tarefaToUpdate as Record<string, unknown>)[dbField] = dbStatus;
+        }
       }
     });
   } else if (task.plannedDays && task.plannedDays.length > 0) {
