@@ -2,13 +2,16 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Search, ListTree } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, ListTree, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { playbookService } from "@/services/playbookService";
+import { useToast } from "@/hooks/use-toast";
 
 // Tipagem compatível com o Importer atualizado
 export interface PlaybookItem {
-  id: number; // ou string, dependendo do backend
+  id: number | string; // ou string, dependendo do backend
   descricao: string;
   unidade: string;
   qtd: number;
@@ -19,15 +22,18 @@ export interface PlaybookItem {
   precoUnitarioMeta: number;
   precoTotalMeta: number;
   porcentagem: number;
+  destino?: string | null; // Novo campo da Fase 2
 }
 
 interface PlaybookTableProps {
   data: PlaybookItem[];
   grandTotalOriginal: number;
   grandTotalMeta: number;
+  onUpdate?: () => void; // Callback para atualizar dados após mudança de destino
 }
 
-export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: PlaybookTableProps) {
+export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpdate }: PlaybookTableProps) {
+  const { toast } = useToast();
   // Alterado para um objeto map para suportar expandir múltiplos níveis independentemente
   const [expandedIds, setExpandedIds] = useState<Record<string | number, boolean>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,6 +65,23 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
 
   const collapseAll = () => {
     setExpandedIds({});
+  };
+
+  // Função para salvar o destino (Fase 2)
+  const handleSetDestination = async (id: number | string, destino: string) => {
+    try {
+      // Se for "clean", enviamos null para limpar o banco
+      await playbookService.updateItem(id, { destino: destino === "clean" ? null : destino });
+
+      toast({
+        description: destino === "clean" ? "Item removido da gestão." : `Item enviado para ${destino}.`,
+        className: "bg-green-50 border-green-200",
+      });
+
+      if (onUpdate) onUpdate();
+    } catch (e) {
+      toast({ title: "Erro", description: "Não foi possível definir o destino.", variant: "destructive" });
+    }
   };
 
   // Filtragem básica para busca
@@ -159,8 +182,8 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
       `}</style>
 
       {/* Toolbar da Tabela */}
-      <div className="flex justify-between items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="relative flex-1 w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Buscar item ou etapa..."
@@ -169,11 +192,11 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
             className="pl-9 bg-white"
           />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={expandAll} className="text-slate-600">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={expandAll} className="flex-1 sm:flex-none text-slate-600">
             Expandir Todos
           </Button>
-          <Button variant="outline" size="sm" onClick={collapseAll} className="text-slate-600">
+          <Button variant="outline" size="sm" onClick={collapseAll} className="flex-1 sm:flex-none text-slate-600">
             Recolher Todos
           </Button>
         </div>
@@ -194,6 +217,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                 </TableHead>
                 <TableHead className="text-right bg-blue-50/50 text-blue-900 font-bold">Total Meta</TableHead>
                 <TableHead className="text-right w-[50px]">%</TableHead>
+                <TableHead className="text-center w-[120px]">Gestão</TableHead> {/* Nova Coluna */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -282,12 +306,69 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                         </Badge>
                       )}
                     </TableCell>
+
+                    {/* Coluna de GESTÃO (Nova) */}
+                    <TableCell className="text-center p-1">
+                      {item.displayPercentage > 2 && item.level === 2 ? (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={item.destino || ""}
+                            onValueChange={(val) => handleSetDestination(item.id, val)}
+                          >
+                            <SelectTrigger
+                              className={cn(
+                                "h-7 text-[10px] w-full border-0 shadow-sm transition-all",
+                                item.destino
+                                  ? "bg-blue-100 text-blue-800 font-bold hover:bg-blue-200"
+                                  : "bg-white text-slate-400 hover:bg-slate-50 border border-slate-200",
+                              )}
+                            >
+                              <div className="flex items-center gap-1 justify-center w-full">
+                                {item.destino ? (
+                                  <span>{item.destino}</span>
+                                ) : (
+                                  <>
+                                    <span>Definir</span>
+                                    <ArrowUpRight className="h-3 w-3 opacity-50" />
+                                  </>
+                                )}
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Obra">Obra Direta</SelectItem>
+                              <SelectItem value="Fornecimento">Fornecimento</SelectItem>
+                              <SelectItem value="Cliente">Cliente</SelectItem>
+                              {item.destino && (
+                                <>
+                                  <div className="h-px bg-slate-100 my-1" />
+                                  <SelectItem
+                                    value="clean"
+                                    className="text-red-500 focus:text-red-600 focus:bg-red-50 font-medium"
+                                  >
+                                    Remover
+                                  </SelectItem>
+                                </>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : item.destino ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] bg-slate-50 text-slate-500 border-slate-200 font-normal"
+                        >
+                          {item.destino}
+                        </Badge>
+                      ) : (
+                        <span className="text-slate-200 text-[10px]">-</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
 
               {rowsToRender.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-slate-400">
+                  <TableCell colSpan={9} className="text-center py-8 text-slate-400">
                     Nenhum item encontrado.
                   </TableCell>
                 </TableRow>
@@ -307,6 +388,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                   {formatCurrency(grandTotalMeta)}
                 </TableCell>
                 <TableCell className="text-right font-bold text-xs text-slate-300">100%</TableCell>
+                <TableCell /> {/* Coluna vazia para alinhar com Gestão */}
               </TableRow>
             </TableFooter>
           </Table>
