@@ -143,7 +143,12 @@ const MainPageContent = () => {
         </div>
 
         {/* === ABA 1: PLANEJAMENTO (OPERACIONAL) === */}
-        <TabsContent value="planning" className="space-y-6 outline-none">
+        {/* forceMount keeps it mounted, hidden class hides it when not active */}
+        <TabsContent 
+          value="planning" 
+          className="space-y-6 outline-none data-[state=inactive]:hidden"
+          forceMount
+        >
           <div className="w-full">
             <PCPSection
               pcpData={pcpData}
