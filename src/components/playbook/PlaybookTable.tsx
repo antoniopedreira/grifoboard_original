@@ -125,13 +125,16 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
     // Se tiver busca, mostra tudo
     if (searchTerm) {
       const totals = level === 0 || level === 1 ? totalsMap.get(itemId) : undefined;
+      const displayTotalMetaSearch = totals?.precoTotalMeta || item.precoTotalMeta;
+      const calculatedPercentageSearch = grandTotalMeta > 0 ? (displayTotalMetaSearch / grandTotalMeta) * 100 : 0;
       return {
         ...item,
         level,
         visible: true,
         isExpanded: true,
-        displayTotal: totals?.precoTotal || 0,
-        displayTotalMeta: totals?.precoTotalMeta || 0,
+        displayTotal: totals?.precoTotal || item.precoTotal,
+        displayTotalMeta: displayTotalMetaSearch,
+        displayPercentage: calculatedPercentageSearch,
       };
     }
 
@@ -144,6 +147,10 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
     }
 
     const totals = level === 0 || level === 1 ? totalsMap.get(itemId) : undefined;
+    const displayTotalMeta = level === 0 || level === 1 ? totals?.precoTotalMeta || 0 : item.precoTotalMeta;
+    
+    // Calcula porcentagem para todos os níveis
+    const calculatedPercentage = grandTotalMeta > 0 ? (displayTotalMeta / grandTotalMeta) * 100 : 0;
 
     return {
       ...item,
@@ -152,7 +159,8 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
       isExpanded: !!expandedIds[itemId],
       // Se for pai, mostra o total calculado. Se for item, mostra o próprio valor.
       displayTotal: level === 0 || level === 1 ? totals?.precoTotal || 0 : item.precoTotal,
-      displayTotalMeta: level === 0 || level === 1 ? totals?.precoTotalMeta || 0 : item.precoTotalMeta,
+      displayTotalMeta,
+      displayPercentage: calculatedPercentage,
     };
   });
 
@@ -267,15 +275,20 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                     </TableCell>
 
                     <TableCell className="text-right">
-                      {item.level === 2 && item.porcentagem > 0 ? (
+                      {item.displayPercentage > 0 && (
                         <Badge
                           variant="secondary"
-                          className="font-mono text-[10px] bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200"
+                          className={cn(
+                            "font-mono text-[10px] border transition-all duration-300",
+                            item.displayPercentage > 2
+                              ? "bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm shadow-emerald-200 animate-pulse"
+                              : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200",
+                            item.level === 0 && "text-[11px] font-bold",
+                            item.level === 1 && "text-[10px] font-semibold"
+                          )}
                         >
-                          {item.porcentagem.toFixed(2)}%
+                          {item.displayPercentage.toFixed(2)}%
                         </Badge>
-                      ) : (
-                        ""
                       )}
                     </TableCell>
                   </TableRow>
