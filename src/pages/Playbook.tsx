@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
-import PlaybookSummary from "@/components/playbook/PlaybookSummary";
+import { PlaybookSummary } from "@/components/playbook/PlaybookSummary";
+import { ContractingManagement } from "@/components/playbook/ContractingManagement";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Trash2, Loader2, Settings2 } from "lucide-react";
+import { BookOpen, Trash2, Loader2, Settings2, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +12,7 @@ import { playbookService } from "@/services/playbookService";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +31,7 @@ const Playbook = () => {
   const obraId = userSession?.obraAtiva?.id;
 
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("orcamento");
   const [playbookData, setPlaybookData] = useState<{
     items: PlaybookItem[];
     grandTotalMeta: number;
@@ -71,6 +74,13 @@ const Playbook = () => {
         precoUnitarioMeta,
         precoTotalMeta,
         porcentagem: 0,
+        // Campos da Fase 2
+        destino: item.destino,
+        responsavel: item.responsavel,
+        data_limite: item.data_limite,
+        valor_contratado: item.valor_contratado,
+        status_contratacao: item.status_contratacao,
+        observacao: item.observacao,
       };
     });
 
@@ -275,93 +285,124 @@ const Playbook = () => {
         </Card>
       ) : (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
-          {/* 0. Configuração de Coeficientes */}
-          <Card className="border border-slate-200 bg-white shadow-sm">
-            <CardContent className="py-4 px-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Settings2 className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold text-slate-700">Configuração de Coeficientes</h3>
-              </div>
-
-              <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
-                <RadioGroup
-                  value={coeficienteSelecionado}
-                  onValueChange={(value: "1" | "2") => {
-                    setCoeficienteSelecionado(value);
-                    handleCoeficienteChange(value);
-                  }}
-                  className="flex gap-6"
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="flex justify-center mb-6">
+              <TabsList className="bg-white border border-slate-200 p-1 rounded-full shadow-sm">
+                <TabsTrigger
+                  value="orcamento"
+                  className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-white flex items-center gap-2"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="1" id="coef1" />
-                      <Label htmlFor="coef1" className="text-sm text-slate-600 cursor-pointer">
-                        Coeficiente 1
-                      </Label>
-                    </div>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={coeficiente1}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        setCoeficiente1(val);
-                        if (coeficienteSelecionado === "1") {
-                          handleCoeficienteChange("1", val, coeficiente2);
-                        }
-                      }}
-                      className="w-24 h-8 text-sm"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="2" id="coef2" />
-                      <Label htmlFor="coef2" className="text-sm text-slate-600 cursor-pointer">
-                        Coeficiente 2
-                      </Label>
-                    </div>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={coeficiente2}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        setCoeficiente2(val);
-                        if (coeficienteSelecionado === "2") {
-                          handleCoeficienteChange("2", coeficiente1, val);
-                        }
-                      }}
-                      className="w-24 h-8 text-sm"
-                    />
-                  </div>
-                </RadioGroup>
-
-                <Button size="sm" onClick={saveCoeficienteConfig} disabled={isSavingConfig} className="h-8">
-                  {isSavingConfig ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Salvar Coeficientes
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 1. KPIs */}
-          <PlaybookSummary totalOriginal={playbookData.grandTotalOriginal} totalMeta={playbookData.grandTotalMeta} />
-
-          {/* 2. Tabela Detalhada */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-lg font-bold text-slate-700">Estrutura Analítica</h3>
-              <span className="text-xs text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-200">
-                {playbookData.items.length} registros
-              </span>
+                  <BookOpen className="h-4 w-4" />
+                  1. Orçamento & Metas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="contratacao"
+                  className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-white flex items-center gap-2"
+                >
+                  <ListChecks className="h-4 w-4" />
+                  2. Gestão de Contratações
+                </TabsTrigger>
+              </TabsList>
             </div>
-            <PlaybookTable
-              data={playbookData.items}
-              grandTotalOriginal={playbookData.grandTotalOriginal}
-              grandTotalMeta={playbookData.grandTotalMeta}
-            />
-          </div>
+
+            <TabsContent value="orcamento" className="space-y-6 animate-in fade-in duration-300">
+              {/* 0. Configuração de Coeficientes */}
+              <Card className="border border-slate-200 bg-white shadow-sm">
+                <CardContent className="py-4 px-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Settings2 className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-slate-700">Configuração de Coeficientes</h3>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+                    <RadioGroup
+                      value={coeficienteSelecionado}
+                      onValueChange={(value: "1" | "2") => {
+                        setCoeficienteSelecionado(value);
+                        handleCoeficienteChange(value);
+                      }}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="1" id="coef1" />
+                          <Label htmlFor="coef1" className="text-sm text-slate-600 cursor-pointer">
+                            Coeficiente 1
+                          </Label>
+                        </div>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={coeficiente1}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0;
+                            setCoeficiente1(val);
+                            if (coeficienteSelecionado === "1") {
+                              handleCoeficienteChange("1", val, coeficiente2);
+                            }
+                          }}
+                          className="w-24 h-8 text-sm"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="2" id="coef2" />
+                          <Label htmlFor="coef2" className="text-sm text-slate-600 cursor-pointer">
+                            Coeficiente 2
+                          </Label>
+                        </div>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={coeficiente2}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0;
+                            setCoeficiente2(val);
+                            if (coeficienteSelecionado === "2") {
+                              handleCoeficienteChange("2", coeficiente1, val);
+                            }
+                          }}
+                          className="w-24 h-8 text-sm"
+                        />
+                      </div>
+                    </RadioGroup>
+
+                    <Button size="sm" onClick={saveCoeficienteConfig} disabled={isSavingConfig} className="h-8">
+                      {isSavingConfig ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Salvar Coeficientes
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 1. KPIs */}
+              <PlaybookSummary
+                totalOriginal={playbookData.grandTotalOriginal}
+                totalMeta={playbookData.grandTotalMeta}
+              />
+
+              {/* 2. Tabela Detalhada */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-lg font-bold text-slate-700">Estrutura Analítica</h3>
+                  <span className="text-xs text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-200">
+                    {playbookData.items.length} registros
+                  </span>
+                </div>
+                <PlaybookTable
+                  data={playbookData.items}
+                  grandTotalOriginal={playbookData.grandTotalOriginal}
+                  grandTotalMeta={playbookData.grandTotalMeta}
+                  onUpdate={fetchPlaybook}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="contratacao" className="space-y-6 animate-in fade-in duration-300">
+              <ContractingManagement items={playbookData.items as any} onUpdate={fetchPlaybook} />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>
