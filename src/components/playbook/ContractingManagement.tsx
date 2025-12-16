@@ -70,21 +70,24 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  const ContractingRow = ({ item }: { item: EnrichedContractingItem }) => {
+  const ContractingRow = ({ item, isFirstInGroup }: { item: EnrichedContractingItem; isFirstInGroup: boolean }) => {
     const diferenca = (item.valor_contratado || 0) - item.precoTotalMeta;
     const isSaving = diferenca <= 0;
 
     return (
       <TableRow className="hover:bg-slate-50 transition-colors">
-        {/* Etapa Principal (Nova Coluna) */}
+        {/* Etapa Principal - só mostra se for o primeiro do grupo */}
         <TableCell
-          className="font-bold text-[10px] text-slate-500 uppercase tracking-wide max-w-[150px] truncate"
+          className={cn(
+            "font-bold text-[10px] text-slate-500 uppercase tracking-wide max-w-[150px]",
+            !isFirstInGroup && "border-t-0"
+          )}
           title={item.etapaPrincipal}
         >
-          {item.etapaPrincipal.toLowerCase()}
+          {isFirstInGroup ? item.etapaPrincipal.toLowerCase() : ""}
         </TableCell>
 
-        {/* Item (Descrição) */}
+        {/* Proposta (antiga Item/Subetapa) */}
         <TableCell className="font-medium text-sm text-slate-700 max-w-[200px] truncate" title={item.descricao}>
           {item.descricao.toLowerCase()}
         </TableCell>
@@ -232,7 +235,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           <TableHeader className="bg-slate-50 border-b border-slate-200">
             <TableRow>
               <TableHead className="w-[150px] font-bold text-slate-900">Etapa Principal</TableHead>
-              <TableHead className="w-[200px]">Item / Subetapa</TableHead>
+              <TableHead className="w-[200px]">Proposta</TableHead>
               <TableHead className="w-[120px]">Responsável</TableHead>
               <TableHead className="w-[120px]">Data Limite</TableHead>
               <TableHead className="text-right text-xs">Meta Total</TableHead>
@@ -243,9 +246,10 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((item) => (
-              <ContractingRow key={item.id} item={item} />
-            ))}
+            {filtered.map((item, index) => {
+              const isFirstInGroup = index === 0 || filtered[index - 1].etapaPrincipal !== item.etapaPrincipal;
+              return <ContractingRow key={item.id} item={item} isFirstInGroup={isFirstInGroup} />;
+            })}
           </TableBody>
         </Table>
       </div>
