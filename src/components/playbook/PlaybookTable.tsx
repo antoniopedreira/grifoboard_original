@@ -281,7 +281,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                           className={cn(
                             "font-mono text-[10px] border transition-all duration-300",
                             item.displayPercentage > 2
-                              ? "bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm shadow-emerald-200 animate-pulse"
+                              ? "bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm shadow-emerald-200 animate-[pulse_3s_ease-in-out_infinite]"
                               : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200",
                             item.level === 0 && "text-[11px] font-bold",
                             item.level === 1 && "text-[10px] font-semibold"
