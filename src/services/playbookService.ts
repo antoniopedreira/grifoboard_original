@@ -16,14 +16,24 @@ export interface PlaybookItemInsert {
   preco_unitario: number;
   preco_total: number;
   is_etapa: boolean;
-  nivel: number; // --- NOVO CAMPO ADICIONADO ---
+  nivel: number; // 0=Principal, 1=Subetapa, 2=Item
   ordem: number;
 }
 
+// Interface para atualização individual (Fase 2 - Gestão)
+export interface PlaybookItemUpdate {
+  destino?: string | null;
+  responsavel?: string | null;
+  data_limite?: string | null;
+  valor_contratado?: number | null;
+  status_contratacao?: string;
+  observacao?: string | null;
+}
+
 export const playbookService = {
-  // Salvar tudo (Config + Itens)
+  // 1. Salvar Playbook Completo (Importação)
   async savePlaybook(obraId: string, config: PlaybookConfig, items: PlaybookItemInsert[]) {
-    // 1. Salvar/Atualizar Configuração (Upsert)
+    // A. Salvar/Atualizar Configuração (Upsert)
     const { error: configError } = await supabase.from("playbook_config").upsert(
       {
         obra_id: obraId,
@@ -37,14 +47,14 @@ export const playbookService = {
 
     if (configError) throw configError;
 
-    // 2. Limpar itens antigos dessa obra (para substituir pela nova importação)
+    // B. Limpar itens antigos dessa obra (para substituir pela nova importação)
     const { error: deleteError } = await supabase.from("playbook_items").delete().eq("obra_id", obraId);
 
     if (deleteError) throw deleteError;
 
-    // 3. Inserir novos itens
+    // C. Inserir novos itens
     if (items.length > 0) {
-      const { error: insertError } = await supabase.from("playbook_items").insert(items); // O Supabase deve aceitar o campo 'nivel' se a migration foi rodada
+      const { error: insertError } = await supabase.from("playbook_items").insert(items);
 
       if (insertError) throw insertError;
     }
@@ -52,7 +62,7 @@ export const playbookService = {
     return true;
   },
 
-  // Buscar dados
+  // 2. Buscar Dados
   async getPlaybook(obraId: string) {
     // Buscar Config
     const { data: config, error: configError } = await supabase
@@ -76,5 +86,13 @@ export const playbookService = {
     if (itemsError) throw itemsError;
 
     return { config, items };
+  },
+
+  // 3. Atualizar Item Individual (Fase 2 - Gestão de Contratação)
+  async updateItem(itemId: number | string, updates: PlaybookItemUpdate) {
+    const { error } = await supabase.from("playbook_items").update(updates).eq("id", itemId);
+
+    if (error) throw error;
+    return true;
   },
 };
