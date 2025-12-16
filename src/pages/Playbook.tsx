@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import MainHeader from "@/components/MainHeader";
 import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
 import PlaybookSummary from "@/components/playbook/PlaybookSummary";
@@ -129,9 +128,7 @@ const Playbook = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-8 bg-slate-50/30">
-      
-      <MainHeader onNewTaskClick={() => {}} onRegistryClick={() => {}} onChecklistClick={() => {}} />
+    <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-4 min-h-screen pb-24 space-y-6 bg-slate-50/30">
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
