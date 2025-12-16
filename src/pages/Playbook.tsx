@@ -92,13 +92,13 @@ const Playbook = () => {
     return { items: finalItems as PlaybookItem[], grandTotalMeta, grandTotalOriginal };
   };
 
-  const fetchPlaybook = async () => {
+  const fetchPlaybook = async (silent = false) => {
     if (!obraId) {
       setIsLoading(false);
       setPlaybookData(null);
       return;
     }
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     try {
       const { config, items } = await playbookService.getPlaybook(obraId);
 
@@ -124,9 +124,11 @@ const Playbook = () => {
       console.error(error);
       toast({ title: "Erro", description: "Falha ao carregar dados do playbook.", variant: "destructive" });
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
+
+  const silentRefetch = () => fetchPlaybook(true);
 
   const handleCoeficienteChange = async (newSelected: "1" | "2", newC1?: number, newC2?: number) => {
     const c1 = newC1 ?? coeficiente1;
@@ -383,13 +385,13 @@ const Playbook = () => {
                   data={playbookData.items}
                   grandTotalOriginal={playbookData.grandTotalOriginal}
                   grandTotalMeta={playbookData.grandTotalMeta}
-                  onUpdate={fetchPlaybook}
+                  onUpdate={silentRefetch}
                 />
               </div>
             </TabsContent>
 
             <TabsContent value="contratacao" className="space-y-6 animate-in fade-in duration-300">
-              <ContractingManagement items={playbookData.items as any} onUpdate={fetchPlaybook} />
+              <ContractingManagement items={playbookData.items as any} onUpdate={silentRefetch} />
             </TabsContent>
           </Tabs>
         </div>
