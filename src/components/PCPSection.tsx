@@ -1,6 +1,5 @@
 import { PCPBreakdown, WeeklyPCPData, Task } from "@/types";
 import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
 import PCPOverallCard from "@/components/chart/PCPOverallCard";
 import WeeklyCausesChart from "@/components/dashboard/WeeklyCausesChart";
 import { startOfWeek } from "date-fns";
@@ -21,31 +20,23 @@ const PCPSection = ({ pcpData, tasks }: PCPSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full items-stretch">
       {/* Card 1: Indicador Principal */}
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ type: "spring", stiffness: 300 }}
-        className="h-full min-h-[300px]"
-      >
+      <div className="h-full min-h-[300px] hover:-translate-y-0.5 transition-transform duration-200">
         <PCPOverallCard
           data={pcpData?.overall || { percentage: 0, completedTasks: 0, totalTasks: 0 }}
-          className="h-full bg-white border-border/60 shadow-md hover:shadow-xl transition-all duration-300"
+          className="h-full bg-white border-border/60 shadow-md hover:shadow-xl transition-shadow duration-200"
         />
-      </motion.div>
+      </div>
 
       {/* Card 2: Causas */}
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ type: "spring", stiffness: 300 }}
-        className="h-full min-h-[300px]"
-      >
-        <Card className="h-full bg-white border-border/60 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+      <div className="h-full min-h-[300px] hover:-translate-y-0.5 transition-transform duration-200">
+        <Card className="h-full bg-white border-border/60 shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
           <WeeklyCausesChart
             tasks={tasks}
             weekStartDate={currentWeekStart}
             className="h-full border-none shadow-none"
           />
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 };
