@@ -76,8 +76,51 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   };
 
   const ContractingRow = ({ item }: { item: EnrichedContractingItem }) => {
-    const diferenca = (item.valor_contratado || 0) - item.precoTotalMeta;
+    const [responsavel, setResponsavel] = useState(item.responsavel || "");
+    const [dataLimite, setDataLimite] = useState<Date | undefined>(
+      item.data_limite ? new Date(item.data_limite) : undefined
+    );
+    const [valorContratado, setValorContratado] = useState(item.valor_contratado?.toString() || "");
+    const [status, setStatus] = useState(item.status_contratacao || "A Negociar");
+    const [observacao, setObservacao] = useState(item.observacao || "");
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [isObsOpen, setIsObsOpen] = useState(false);
+
+    const valorNum = parseFloat(valorContratado) || 0;
+    const diferenca = valorNum - item.precoTotalMeta;
     const isSaving = diferenca <= 0;
+
+    const saveResponsavel = () => {
+      if (responsavel !== (item.responsavel || "")) {
+        handleUpdate(item.id, "responsavel", responsavel);
+      }
+    };
+
+    const saveDataLimite = (date: Date | undefined) => {
+      setDataLimite(date);
+      if (date) {
+        handleUpdate(item.id, "data_limite", date.toISOString());
+      }
+      setIsCalendarOpen(false);
+    };
+
+    const saveValorContratado = () => {
+      const val = parseFloat(valorContratado);
+      if (!isNaN(val) && val !== item.valor_contratado) {
+        handleUpdate(item.id, "valor_contratado", val);
+      }
+    };
+
+    const saveStatus = (val: string) => {
+      setStatus(val);
+      handleUpdate(item.id, "status_contratacao", val);
+    };
+
+    const saveObservacao = () => {
+      if (observacao !== (item.observacao || "")) {
+        handleUpdate(item.id, "observacao", observacao);
+      }
+    };
 
     return (
       <TableRow className="hover:bg-slate-50 transition-colors">
@@ -95,43 +138,46 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Responsável */}
-        <TableCell onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-2">
-            <User className="h-3 w-3 text-slate-400" />
+        <TableCell>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <User className="h-3 w-3 text-slate-400 flex-shrink-0" />
             <Input
               className="h-8 text-xs bg-white border-slate-200 hover:border-slate-300 focus:border-primary transition-all w-[100px]"
               placeholder="Nome..."
-              defaultValue={item.responsavel || ""}
-              onBlur={(e) => handleUpdate(item.id, "responsavel", e.target.value)}
+              value={responsavel}
+              onChange={(e) => setResponsavel(e.target.value)}
+              onBlur={saveResponsavel}
             />
           </div>
         </TableCell>
 
         {/* Data Limite */}
-        <TableCell onClick={(e) => e.stopPropagation()}>
-          <Popover modal={false}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "h-8 text-xs justify-start text-left font-normal w-[100px] px-2",
-                  !item.data_limite && "text-slate-400",
-                )}
-              >
-                <CalendarIcon className="mr-2 h-3 w-3" />
-                {item.data_limite ? format(new Date(item.data_limite), "dd/MM/yy") : "Definir"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 z-50 bg-white shadow-lg border" align="start">
-              <Calendar
-                mode="single"
-                selected={item.data_limite ? new Date(item.data_limite) : undefined}
-                onSelect={(date) => date && handleUpdate(item.id, "data_limite", date.toISOString())}
-                initialFocus
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+        <TableCell>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "h-8 text-xs justify-start text-left font-normal w-[100px] px-2",
+                    !dataLimite && "text-slate-400",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-3 w-3" />
+                  {dataLimite ? format(dataLimite, "dd/MM/yy") : "Definir"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-[100] bg-white shadow-lg border" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dataLimite}
+                  onSelect={saveDataLimite}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </TableCell>
 
         {/* Meta Total */}
@@ -140,22 +186,23 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Valor Contratado */}
-        <TableCell onClick={(e) => e.stopPropagation()}>
-          <div className="relative">
+        <TableCell>
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">R$</span>
             <Input
               type="number"
               className="h-8 text-xs pl-6 text-right font-mono bg-white border-slate-200 focus:border-primary w-[90px]"
               placeholder="0,00"
-              defaultValue={item.valor_contratado || ""}
-              onBlur={(e) => handleUpdate(item.id, "valor_contratado", parseFloat(e.target.value))}
+              value={valorContratado}
+              onChange={(e) => setValorContratado(e.target.value)}
+              onBlur={saveValorContratado}
             />
           </div>
         </TableCell>
 
         {/* Diferença */}
         <TableCell className="text-right">
-          {item.valor_contratado ? (
+          {valorNum > 0 ? (
             <Badge
               variant="outline"
               className={cn(
@@ -171,49 +218,51 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Status */}
-        <TableCell onClick={(e) => e.stopPropagation()}>
-          <Select
-            defaultValue={item.status_contratacao || "A Negociar"}
-            onValueChange={(val) => handleUpdate(item.id, "status_contratacao", val)}
-          >
-            <SelectTrigger
-              className={cn(
-                "h-7 text-[10px] w-[110px] border-0",
-                item.status_contratacao === "Negociada"
-                  ? "bg-green-100 text-green-800 font-bold"
-                  : item.status_contratacao === "Em Andamento"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-slate-100 text-slate-500",
-              )}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="z-50 bg-white shadow-lg border">
-              <SelectItem value="A Negociar">A Negociar</SelectItem>
-              <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-              <SelectItem value="Negociada">Negociada</SelectItem>
-            </SelectContent>
-          </Select>
+        <TableCell>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Select value={status} onValueChange={saveStatus}>
+              <SelectTrigger
+                className={cn(
+                  "h-7 text-[10px] w-[110px] border-0",
+                  status === "Negociada"
+                    ? "bg-green-100 text-green-800 font-bold"
+                    : status === "Em Andamento"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-slate-100 text-slate-500",
+                )}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-white shadow-lg border">
+                <SelectItem value="A Negociar">A Negociar</SelectItem>
+                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem value="Negociada">Negociada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </TableCell>
 
         {/* Obs */}
-        <TableCell onClick={(e) => e.stopPropagation()}>
-          <Popover modal={false}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary">
-                <FileText className={cn("h-4 w-4", item.observacao && "text-blue-500 fill-blue-100")} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-4 z-50 bg-white shadow-lg border">
-              <h4 className="font-medium text-sm mb-2 text-slate-700">Observações</h4>
-              <textarea
-                className="w-full min-h-[100px] text-sm p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-slate-600 bg-white"
-                placeholder="Detalhes..."
-                defaultValue={item.observacao || ""}
-                onBlur={(e) => handleUpdate(item.id, "observacao", e.target.value)}
-              />
-            </PopoverContent>
-          </Popover>
+        <TableCell>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Popover open={isObsOpen} onOpenChange={setIsObsOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary">
+                  <FileText className={cn("h-4 w-4", observacao && "text-blue-500 fill-blue-100")} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4 z-[100] bg-white shadow-lg border">
+                <h4 className="font-medium text-sm mb-2 text-slate-700">Observações</h4>
+                <textarea
+                  className="w-full min-h-[100px] text-sm p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-slate-600 bg-white"
+                  placeholder="Detalhes..."
+                  value={observacao}
+                  onChange={(e) => setObservacao(e.target.value)}
+                  onBlur={saveObservacao}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </TableCell>
       </TableRow>
     );
