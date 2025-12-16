@@ -3,11 +3,14 @@ import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
 import PlaybookSummary from "@/components/playbook/PlaybookSummary";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Trash2, Loader2, RefreshCw } from "lucide-react";
+import { BookOpen, Trash2, Loader2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { playbookService } from "@/services/playbookService";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +34,52 @@ const Playbook = () => {
     grandTotalMeta: number;
     grandTotalOriginal: number;
   } | null>(null);
+  
+  // Estado para coeficientes
+  const [coeficiente1, setCoeficiente1] = useState<number>(0.57);
+  const [coeficiente2, setCoeficiente2] = useState<number>(0.75);
+  const [coeficienteSelecionado, setCoeficienteSelecionado] = useState<'1' | '2'>('1');
+  const [rawItems, setRawItems] = useState<any[]>([]);
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+
+  // Função para processar items com coeficiente
+  const processItems = (items: any[], coef: number) => {
+    let grandTotalMeta = 0;
+    let grandTotalOriginal = 0;
+
+    const processedItems = items.map(item => {
+      const precoUnitarioMeta = (item.preco_unitario || 0) * coef;
+      const precoTotalMeta = (item.preco_total || 0) * coef;
+
+      if (!item.is_etapa) {
+        grandTotalMeta += precoTotalMeta;
+        grandTotalOriginal += (item.preco_total || 0);
+      }
+
+      return {
+        id: item.id,
+        descricao: item.descricao,
+        unidade: item.unidade,
+        qtd: Number(item.qtd),
+        precoUnitario: Number(item.preco_unitario),
+        precoTotal: Number(item.preco_total),
+        isEtapa: item.is_etapa,
+        precoUnitarioMeta,
+        precoTotalMeta,
+        porcentagem: 0 
+      };
+    });
+
+    const finalItems = processedItems.map(item => ({
+      ...item,
+      id: (item as any).ordem || Math.random(), 
+      porcentagem: grandTotalMeta > 0 && !item.isEtapa
+        ? (item.precoTotalMeta / grandTotalMeta) * 100
+        : 0
+    }));
+
+    return { items: finalItems, grandTotalMeta, grandTotalOriginal };
+  };
 
   // Função para carregar dados do banco
   const fetchPlaybook = async () => {
@@ -45,65 +94,70 @@ const Playbook = () => {
 
       if (!items || items.length === 0) {
         setPlaybookData(null);
+        setRawItems([]);
         return;
       }
 
-      // Recalcular as metas no front com base no coeficiente salvo
-      const coef = config?.coeficiente_selecionado === '2' 
-        ? (config.coeficiente_2 || 1) 
-        : (config?.coeficiente_1 || 1);
+      // Carregar coeficientes salvos
+      const c1 = config?.coeficiente_1 || 0.57;
+      const c2 = config?.coeficiente_2 || 0.75;
+      const selected = (config?.coeficiente_selecionado as '1' | '2') || '1';
+      
+      setCoeficiente1(c1);
+      setCoeficiente2(c2);
+      setCoeficienteSelecionado(selected);
+      setRawItems(items);
 
-      let grandTotalMeta = 0;
-      let grandTotalOriginal = 0;
-
-      // Primeiro passo: Calcular totais
-      const processedItems = items.map(item => {
-        const precoUnitarioMeta = (item.preco_unitario || 0) * coef;
-        const precoTotalMeta = (item.preco_total || 0) * coef;
-
-        // Soma ao total apenas se NÃO for etapa (para não duplicar)
-        if (!item.is_etapa) {
-          grandTotalMeta += precoTotalMeta;
-          grandTotalOriginal += (item.preco_total || 0);
-        }
-
-        return {
-          id: item.id, // Supabase ID, pode ser usado como key, mas cuidado com a tipagem no componente filho se esperar number
-          descricao: item.descricao,
-          unidade: item.unidade,
-          qtd: Number(item.qtd),
-          precoUnitario: Number(item.preco_unitario),
-          precoTotal: Number(item.preco_total),
-          isEtapa: item.is_etapa,
-          precoUnitarioMeta,
-          precoTotalMeta,
-          porcentagem: 0 
-        };
-      });
-
-      // Segundo passo: Calcular % individual
-      const finalItems = processedItems.map(item => ({
-        ...item,
-        // Conversão de ID UUID string para number é impossível diretamente se o componente espera number.
-        // Vamos ajustar o componente Table para aceitar string ou usar o índice 'ordem' se disponível
-        // Hack rápido: vamos usar item.ordem se o ID for UUID
-        id: (item as any).ordem || Math.random(), 
-        porcentagem: grandTotalMeta > 0 && !item.isEtapa
-          ? (item.precoTotalMeta / grandTotalMeta) * 100
-          : 0
-      }));
-
-      setPlaybookData({
-        items: finalItems,
-        grandTotalMeta,
-        grandTotalOriginal
-      });
+      const coef = selected === '2' ? c2 : c1;
+      const processed = processItems(items, coef);
+      setPlaybookData(processed);
 
     } catch (error) {
       console.error(error);
       toast({ title: "Erro", description: "Falha ao carregar dados do playbook.", variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Recalcular quando coeficiente muda
+  const handleCoeficienteChange = async (newSelected: '1' | '2', newC1?: number, newC2?: number) => {
+    const c1 = newC1 ?? coeficiente1;
+    const c2 = newC2 ?? coeficiente2;
+    const coef = newSelected === '2' ? c2 : c1;
+    
+    if (rawItems.length > 0) {
+      const processed = processItems(rawItems, coef);
+      setPlaybookData(processed);
+    }
+  };
+
+  // Salvar configuração de coeficientes
+  const saveCoeficienteConfig = async () => {
+    if (!obraId) return;
+    setIsSavingConfig(true);
+    try {
+      await playbookService.savePlaybook(obraId, {
+        obra_id: obraId,
+        coeficiente_1: coeficiente1,
+        coeficiente_2: coeficiente2,
+        coeficiente_selecionado: coeficienteSelecionado
+      }, rawItems.map((item, index) => ({
+        obra_id: obraId,
+        descricao: item.descricao,
+        unidade: item.unidade || '',
+        qtd: item.qtd || 0,
+        preco_unitario: item.preco_unitario || 0,
+        preco_total: item.preco_total || 0,
+        is_etapa: item.is_etapa || false,
+        ordem: index
+      })));
+      toast({ title: "Sucesso", description: "Coeficientes atualizados com sucesso." });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro", description: "Falha ao salvar coeficientes.", variant: "destructive" });
+    } finally {
+      setIsSavingConfig(false);
     }
   };
 
@@ -208,7 +262,80 @@ const Playbook = () => {
             </CardContent>
         </Card>
       ) : (
-        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
+          {/* 0. Configuração de Coeficientes */}
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="py-4 px-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Settings2 className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-slate-700">Configuração de Coeficientes</h3>
+              </div>
+              
+              <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+                <RadioGroup 
+                  value={coeficienteSelecionado} 
+                  onValueChange={(value: '1' | '2') => {
+                    setCoeficienteSelecionado(value);
+                    handleCoeficienteChange(value);
+                  }}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="1" id="coef1" />
+                      <Label htmlFor="coef1" className="text-sm text-slate-600 cursor-pointer">Coeficiente 1</Label>
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={coeficiente1}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setCoeficiente1(val);
+                        if (coeficienteSelecionado === '1') {
+                          handleCoeficienteChange('1', val, coeficiente2);
+                        }
+                      }}
+                      className="w-24 h-8 text-sm"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="2" id="coef2" />
+                      <Label htmlFor="coef2" className="text-sm text-slate-600 cursor-pointer">Coeficiente 2</Label>
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={coeficiente2}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setCoeficiente2(val);
+                        if (coeficienteSelecionado === '2') {
+                          handleCoeficienteChange('2', coeficiente1, val);
+                        }
+                      }}
+                      className="w-24 h-8 text-sm"
+                    />
+                  </div>
+                </RadioGroup>
+                
+                <Button 
+                  size="sm" 
+                  onClick={saveCoeficienteConfig}
+                  disabled={isSavingConfig}
+                  className="h-8"
+                >
+                  {isSavingConfig ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  Salvar Coeficientes
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* 1. KPIs */}
           <PlaybookSummary 
             totalOriginal={playbookData.grandTotalOriginal} 
