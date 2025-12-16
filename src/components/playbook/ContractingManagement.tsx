@@ -90,11 +90,11 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Responsável */}
-        <TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-2">
             <User className="h-3 w-3 text-slate-400" />
             <Input
-              className="h-8 text-xs bg-transparent border-transparent hover:border-slate-200 focus:bg-white transition-all w-[100px]"
+              className="h-8 text-xs bg-white border-slate-200 hover:border-slate-300 focus:border-primary transition-all w-[100px]"
               placeholder="Nome..."
               defaultValue={item.responsavel || ""}
               onBlur={(e) => handleUpdate(item.id, "responsavel", e.target.value)}
@@ -103,7 +103,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Data Limite */}
-        <TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()}>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -117,7 +117,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                 {item.data_limite ? format(new Date(item.data_limite), "dd/MM/yy") : "Definir"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 z-50 bg-white shadow-lg border" align="start">
               <Calendar
                 mode="single"
                 selected={item.data_limite ? new Date(item.data_limite) : undefined}
@@ -135,7 +135,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Valor Contratado */}
-        <TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()}>
           <div className="relative">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">R$</span>
             <Input
@@ -166,7 +166,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Status */}
-        <TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()}>
           <Select
             defaultValue={item.status_contratacao || "A Negociar"}
             onValueChange={(val) => handleUpdate(item.id, "status_contratacao", val)}
@@ -183,7 +183,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
             >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-50 bg-white shadow-lg border">
               <SelectItem value="A Negociar">A Negociar</SelectItem>
               <SelectItem value="Em Andamento">Em Andamento</SelectItem>
               <SelectItem value="Negociada">Negociada</SelectItem>
@@ -192,17 +192,17 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </TableCell>
 
         {/* Obs */}
-        <TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()}>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary">
                 <FileText className={cn("h-4 w-4", item.observacao && "text-blue-500 fill-blue-100")} />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-4">
+            <PopoverContent className="w-80 p-4 z-50 bg-white shadow-lg border">
               <h4 className="font-medium text-sm mb-2 text-slate-700">Observações</h4>
               <textarea
-                className="w-full min-h-[100px] text-sm p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-slate-600"
+                className="w-full min-h-[100px] text-sm p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-slate-600 bg-white"
                 placeholder="Detalhes..."
                 defaultValue={item.observacao || ""}
                 onBlur={(e) => handleUpdate(item.id, "observacao", e.target.value)}
