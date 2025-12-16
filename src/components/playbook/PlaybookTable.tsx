@@ -71,7 +71,8 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta, onUpda
   const handleSetDestination = async (id: number | string, destino: string) => {
     try {
       // Se for "clean", enviamos null para limpar o banco
-      await playbookService.updateItem(id, { destino: destino === "clean" ? null : destino });
+      // CORREÇÃO AQUI: String(id)
+      await playbookService.updateItem(String(id), { destino: destino === "clean" ? null : destino });
 
       toast({
         description: destino === "clean" ? "Item removido da gestão." : `Item enviado para ${destino}.`,
