@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
-import PlaybookSummary from "@/components/playbook/PlaybookSummary";
+import { PlaybookSummary } from "@/components/playbook/PlaybookSummary";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Trash2, Loader2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,26 +34,30 @@ const Playbook = () => {
     grandTotalMeta: number;
     grandTotalOriginal: number;
   } | null>(null);
-  
+
   // Estado para coeficientes
   const [coeficiente1, setCoeficiente1] = useState<number>(0.57);
   const [coeficiente2, setCoeficiente2] = useState<number>(0.75);
-  const [coeficienteSelecionado, setCoeficienteSelecionado] = useState<'1' | '2'>('1');
+  const [coeficienteSelecionado, setCoeficienteSelecionado] = useState<"1" | "2">("1");
   const [rawItems, setRawItems] = useState<any[]>([]);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
 
-  // Função para processar items com coeficiente
+  // Função para processar items com coeficiente (Agora com lógica de 3 níveis)
   const processItems = (items: any[], coef: number) => {
     let grandTotalMeta = 0;
     let grandTotalOriginal = 0;
 
-    const processedItems = items.map(item => {
+    const processedItems = items.map((item) => {
       const precoUnitarioMeta = (item.preco_unitario || 0) * coef;
       const precoTotalMeta = (item.preco_total || 0) * coef;
 
-      if (!item.is_etapa) {
+      // Define nível com fallback
+      const nivel = item.nivel ?? (item.is_etapa ? 0 : 2);
+
+      // Soma apenas ITENS (Nível 2)
+      if (nivel === 2) {
         grandTotalMeta += precoTotalMeta;
-        grandTotalOriginal += (item.preco_total || 0);
+        grandTotalOriginal += item.preco_total || 0;
       }
 
       return {
@@ -64,18 +68,17 @@ const Playbook = () => {
         precoUnitario: Number(item.preco_unitario),
         precoTotal: Number(item.preco_total),
         isEtapa: item.is_etapa,
+        nivel: nivel, // Passa o nível para a tabela
         precoUnitarioMeta,
         precoTotalMeta,
-        porcentagem: 0 
+        porcentagem: 0,
       };
     });
 
-    const finalItems = processedItems.map(item => ({
+    const finalItems = processedItems.map((item) => ({
       ...item,
-      id: (item as any).ordem || Math.random(), 
-      porcentagem: grandTotalMeta > 0 && !item.isEtapa
-        ? (item.precoTotalMeta / grandTotalMeta) * 100
-        : 0
+      id: (item as any).ordem || Math.random(),
+      porcentagem: grandTotalMeta > 0 && item.nivel === 2 ? (item.precoTotalMeta / grandTotalMeta) * 100 : 0,
     }));
 
     return { items: finalItems, grandTotalMeta, grandTotalOriginal };
@@ -98,20 +101,18 @@ const Playbook = () => {
         return;
       }
 
-      // Carregar coeficientes salvos
       const c1 = config?.coeficiente_1 || 0.57;
       const c2 = config?.coeficiente_2 || 0.75;
-      const selected = (config?.coeficiente_selecionado as '1' | '2') || '1';
-      
+      const selected = (config?.coeficiente_selecionado as "1" | "2") || "1";
+
       setCoeficiente1(c1);
       setCoeficiente2(c2);
       setCoeficienteSelecionado(selected);
       setRawItems(items);
 
-      const coef = selected === '2' ? c2 : c1;
+      const coef = selected === "2" ? c2 : c1;
       const processed = processItems(items, coef);
       setPlaybookData(processed);
-
     } catch (error) {
       console.error(error);
       toast({ title: "Erro", description: "Falha ao carregar dados do playbook.", variant: "destructive" });
@@ -120,38 +121,41 @@ const Playbook = () => {
     }
   };
 
-  // Recalcular quando coeficiente muda
-  const handleCoeficienteChange = async (newSelected: '1' | '2', newC1?: number, newC2?: number) => {
+  const handleCoeficienteChange = async (newSelected: "1" | "2", newC1?: number, newC2?: number) => {
     const c1 = newC1 ?? coeficiente1;
     const c2 = newC2 ?? coeficiente2;
-    const coef = newSelected === '2' ? c2 : c1;
-    
+    const coef = newSelected === "2" ? c2 : c1;
+
     if (rawItems.length > 0) {
       const processed = processItems(rawItems, coef);
       setPlaybookData(processed);
     }
   };
 
-  // Salvar configuração de coeficientes
   const saveCoeficienteConfig = async () => {
     if (!obraId) return;
     setIsSavingConfig(true);
     try {
-      await playbookService.savePlaybook(obraId, {
-        obra_id: obraId,
-        coeficiente_1: coeficiente1,
-        coeficiente_2: coeficiente2,
-        coeficiente_selecionado: coeficienteSelecionado
-      }, rawItems.map((item, index) => ({
-        obra_id: obraId,
-        descricao: item.descricao,
-        unidade: item.unidade || '',
-        qtd: item.qtd || 0,
-        preco_unitario: item.preco_unitario || 0,
-        preco_total: item.preco_total || 0,
-        is_etapa: item.is_etapa || false,
-        ordem: index
-      })));
+      await playbookService.savePlaybook(
+        obraId,
+        {
+          obra_id: obraId,
+          coeficiente_1: coeficiente1,
+          coeficiente_2: coeficiente2,
+          coeficiente_selecionado: coeficienteSelecionado,
+        },
+        rawItems.map((item, index) => ({
+          obra_id: obraId,
+          descricao: item.descricao,
+          unidade: item.unidade || "",
+          qtd: item.qtd || 0,
+          preco_unitario: item.preco_unitario || 0,
+          preco_total: item.preco_total || 0,
+          is_etapa: item.is_etapa || false,
+          nivel: item.nivel ?? (item.is_etapa ? 0 : 2), // Garante que o nível é salvo ao atualizar config
+          ordem: index,
+        })),
+      );
       toast({ title: "Sucesso", description: "Coeficientes atualizados com sucesso." });
     } catch (error) {
       console.error(error);
@@ -165,15 +169,20 @@ const Playbook = () => {
     fetchPlaybook();
   }, [obraId]);
 
-  // Função para limpar dados
   const handleClearData = async () => {
     if (!obraId) return;
     try {
-      // Salva uma lista vazia para limpar
-      await playbookService.savePlaybook(obraId, { 
-        obra_id: obraId, coeficiente_1: 0, coeficiente_2: 0, coeficiente_selecionado: '1' 
-      }, []);
-      
+      await playbookService.savePlaybook(
+        obraId,
+        {
+          obra_id: obraId,
+          coeficiente_1: 0,
+          coeficiente_2: 0,
+          coeficiente_selecionado: "1",
+        },
+        [],
+      );
+
       setPlaybookData(null);
       toast({ title: "Dados limpos", description: "O orçamento foi removido com sucesso." });
     } catch (e) {
@@ -183,7 +192,6 @@ const Playbook = () => {
 
   return (
     <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-4 min-h-screen pb-24 space-y-6 bg-slate-50/30">
-
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-heading font-bold text-slate-900 flex items-center gap-3">
@@ -198,29 +206,31 @@ const Playbook = () => {
         </div>
 
         <div className="flex items-center gap-2">
-           {playbookData && (
-             <AlertDialog>
-               <AlertDialogTrigger asChild>
-                 <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                   <Trash2 className="h-4 w-4 mr-2" /> Limpar
-                 </Button>
-               </AlertDialogTrigger>
-               <AlertDialogContent>
-                 <AlertDialogHeader>
-                   <AlertDialogTitle>Excluir Playbook?</AlertDialogTitle>
-                   <AlertDialogDescription>
-                     Esta ação apagará todos os dados orçamentários importados para esta obra.
-                   </AlertDialogDescription>
-                 </AlertDialogHeader>
-                 <AlertDialogFooter>
-                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                   <AlertDialogAction onClick={handleClearData} className="bg-red-600 hover:bg-red-700">Confirmar Exclusão</AlertDialogAction>
-                 </AlertDialogFooter>
-               </AlertDialogContent>
-             </AlertDialog>
-           )}
-           
-           <PlaybookImporter onSave={fetchPlaybook} />
+          {playbookData && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                  <Trash2 className="h-4 w-4 mr-2" /> Limpar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir Playbook?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação apagará todos os dados orçamentários importados para esta obra.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearData} className="bg-red-600 hover:bg-red-700">
+                    Confirmar Exclusão
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
+          <PlaybookImporter onSave={fetchPlaybook} />
         </div>
       </div>
 
@@ -232,9 +242,7 @@ const Playbook = () => {
             </div>
             <div className="max-w-md space-y-2">
               <h3 className="text-lg font-semibold text-slate-700">Selecione uma obra</h3>
-              <p className="text-sm text-slate-500">
-                Para visualizar o Playbook, selecione uma obra no menu lateral.
-              </p>
+              <p className="text-sm text-slate-500">Para visualizar o Playbook, selecione uma obra no menu lateral.</p>
             </div>
           </CardContent>
         </Card>
@@ -245,36 +253,35 @@ const Playbook = () => {
         </div>
       ) : !playbookData ? (
         <Card className="border-dashed border-2 border-slate-200 shadow-none bg-white/50 min-h-[400px]">
-            <CardContent className="flex flex-col items-center justify-center h-full py-20 text-center space-y-4">
-                <div className="bg-white p-4 rounded-full shadow-sm border border-slate-100">
-                    <BookOpen className="h-10 w-10 text-slate-300" />
-                </div>
-                <div className="max-w-md space-y-2">
-                    <h3 className="text-lg font-semibold text-slate-700">Seu Playbook está vazio</h3>
-                    <p className="text-sm text-slate-500">
-                      Importe sua planilha de orçamento padrão para começar a definir as metas.
-                    </p>
-                </div>
-                <div className="pt-2">
-                   {/* Botão de atalho para importar */}
-                   <PlaybookImporter onSave={fetchPlaybook} />
-                </div>
-            </CardContent>
+          <CardContent className="flex flex-col items-center justify-center h-full py-20 text-center space-y-4">
+            <div className="bg-white p-4 rounded-full shadow-sm border border-slate-100">
+              <BookOpen className="h-10 w-10 text-slate-300" />
+            </div>
+            <div className="max-w-md space-y-2">
+              <h3 className="text-lg font-semibold text-slate-700">Seu Playbook está vazio</h3>
+              <p className="text-sm text-slate-500">
+                Importe sua planilha de orçamento padrão para começar a definir as metas.
+              </p>
+            </div>
+            <div className="pt-2">
+              <PlaybookImporter onSave={fetchPlaybook} />
+            </div>
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
-          {/* 0. Configuração de Coeficientes */}
+          {/* Configuração de Coeficientes */}
           <Card className="border border-slate-200 bg-white shadow-sm">
             <CardContent className="py-4 px-5">
               <div className="flex items-center gap-2 mb-4">
                 <Settings2 className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-semibold text-slate-700">Configuração de Coeficientes</h3>
               </div>
-              
+
               <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
-                <RadioGroup 
-                  value={coeficienteSelecionado} 
-                  onValueChange={(value: '1' | '2') => {
+                <RadioGroup
+                  value={coeficienteSelecionado}
+                  onValueChange={(value: "1" | "2") => {
                     setCoeficienteSelecionado(value);
                     handleCoeficienteChange(value);
                   }}
@@ -283,7 +290,9 @@ const Playbook = () => {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="1" id="coef1" />
-                      <Label htmlFor="coef1" className="text-sm text-slate-600 cursor-pointer">Coeficiente 1</Label>
+                      <Label htmlFor="coef1" className="text-sm text-slate-600 cursor-pointer">
+                        Coeficiente 1
+                      </Label>
                     </div>
                     <Input
                       type="number"
@@ -292,18 +301,20 @@ const Playbook = () => {
                       onChange={(e) => {
                         const val = parseFloat(e.target.value) || 0;
                         setCoeficiente1(val);
-                        if (coeficienteSelecionado === '1') {
-                          handleCoeficienteChange('1', val, coeficiente2);
+                        if (coeficienteSelecionado === "1") {
+                          handleCoeficienteChange("1", val, coeficiente2);
                         }
                       }}
                       className="w-24 h-8 text-sm"
                     />
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="2" id="coef2" />
-                      <Label htmlFor="coef2" className="text-sm text-slate-600 cursor-pointer">Coeficiente 2</Label>
+                      <Label htmlFor="coef2" className="text-sm text-slate-600 cursor-pointer">
+                        Coeficiente 2
+                      </Label>
                     </div>
                     <Input
                       type="number"
@@ -312,24 +323,17 @@ const Playbook = () => {
                       onChange={(e) => {
                         const val = parseFloat(e.target.value) || 0;
                         setCoeficiente2(val);
-                        if (coeficienteSelecionado === '2') {
-                          handleCoeficienteChange('2', coeficiente1, val);
+                        if (coeficienteSelecionado === "2") {
+                          handleCoeficienteChange("2", coeficiente1, val);
                         }
                       }}
                       className="w-24 h-8 text-sm"
                     />
                   </div>
                 </RadioGroup>
-                
-                <Button 
-                  size="sm" 
-                  onClick={saveCoeficienteConfig}
-                  disabled={isSavingConfig}
-                  className="h-8"
-                >
-                  {isSavingConfig ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
+
+                <Button size="sm" onClick={saveCoeficienteConfig} disabled={isSavingConfig} className="h-8">
+                  {isSavingConfig ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Salvar Coeficientes
                 </Button>
               </div>
@@ -337,11 +341,8 @@ const Playbook = () => {
           </Card>
 
           {/* 1. KPIs */}
-          <PlaybookSummary 
-            totalOriginal={playbookData.grandTotalOriginal} 
-            totalMeta={playbookData.grandTotalMeta} 
-          />
-          
+          <PlaybookSummary totalOriginal={playbookData.grandTotalOriginal} totalMeta={playbookData.grandTotalMeta} />
+
           {/* 2. Tabela Detalhada */}
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
@@ -350,8 +351,8 @@ const Playbook = () => {
                 {playbookData.items.length} registros
               </span>
             </div>
-            <PlaybookTable 
-              data={playbookData.items} 
+            <PlaybookTable
+              data={playbookData.items}
               grandTotalOriginal={playbookData.grandTotalOriginal}
               grandTotalMeta={playbookData.grandTotalMeta}
             />
