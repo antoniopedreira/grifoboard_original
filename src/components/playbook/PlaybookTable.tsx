@@ -122,13 +122,14 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
           <Table>
             <TableHeader className="bg-slate-50 border-b border-slate-200">
               <TableRow>
-                <TableHead className="w-[40%] pl-6">Descrição</TableHead>
-                <TableHead className="text-right w-[80px]">Unid.</TableHead>
-                <TableHead className="text-right w-[80px]">Qtd</TableHead>
+                <TableHead className="w-[30%] pl-6">Descrição</TableHead>
+                <TableHead className="text-right w-[60px]">Unid.</TableHead>
+                <TableHead className="text-right w-[60px]">Qtd</TableHead>
+                <TableHead className="text-right">Preço Unit.</TableHead>
                 <TableHead className="text-right">Preço Total</TableHead>
                 <TableHead className="text-right bg-blue-50/50 text-blue-900 border-l border-blue-100">Unit. Meta</TableHead>
                 <TableHead className="text-right bg-blue-50/50 text-blue-900 font-bold">Total Meta</TableHead>
-                <TableHead className="text-right w-[80px]">Rep. (%)</TableHead>
+                <TableHead className="text-right w-[50px]">%</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,6 +171,10 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
                     {item.qtd > 0 ? item.qtd : "-"}
                   </TableCell>
                   
+                  <TableCell className="text-right text-xs font-mono text-slate-600">
+                    {!item.isEtapa && formatCurrency(item.precoUnitario)}
+                  </TableCell>
+                  
                   <TableCell className="text-right text-xs font-mono text-slate-600 font-medium">
                     {item.isEtapa ? formatCurrency(item.etapaTotal) : formatCurrency(item.precoTotal)}
                   </TableCell>
@@ -194,7 +199,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
               
               {rowsToRender.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                  <TableCell colSpan={8} className="text-center py-8 text-slate-400">
                     Nenhum item encontrado.
                   </TableCell>
                 </TableRow>
@@ -203,7 +208,7 @@ export function PlaybookTable({ data, grandTotalOriginal, grandTotalMeta }: Play
 
             <TableFooter className="bg-slate-800 text-white hover:bg-slate-800 border-t-4 border-yellow-500 sticky bottom-0 z-20 shadow-xl">
               <TableRow>
-                <TableCell colSpan={3} className="pl-6 font-bold uppercase tracking-wider text-sm py-4">
+                <TableCell colSpan={4} className="pl-6 font-bold uppercase tracking-wider text-sm py-4">
                   Total Geral Consolidado
                 </TableCell>
                 <TableCell className="text-right font-bold font-mono text-white text-sm">
