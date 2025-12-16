@@ -283,9 +283,9 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                   <TableCell className="text-center text-sm font-mono">
                     <span className={cn(
                       "font-medium",
-                      percentVerba >= 100 ? "text-green-600" : percentVerba > 0 ? "text-amber-600" : "text-slate-500"
+                      percentVerba <= 0 ? "text-green-600" : percentVerba < 100 ? "text-amber-600" : "text-red-500"
                     )}>
-                      {percentVerba.toFixed(2).replace(".", ",")}%
+                      {(100 - percentVerba).toFixed(2).replace(".", ",")}%
                     </span>
                   </TableCell>
                 </TableRow>
@@ -315,7 +315,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                 <span className={cn(
                   totalContratado >= totalMeta ? "text-green-600" : "text-amber-600"
                 )}>
-                  {totalMeta > 0 ? ((totalContratado / totalMeta) * 100).toFixed(2).replace(".", ",") : "0,00"}%
+                  {totalMeta > 0 ? ((1 - (totalContratado / totalMeta)) * 100).toFixed(2).replace(".", ",") : "100,00"}%
                 </span>
               </TableCell>
             </TableRow>
