@@ -349,7 +349,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                 <TableHead className="w-[90px]">Data</TableHead>
                 <TableHead className="text-right w-[100px]">Meta</TableHead>
                 <TableHead className="text-right w-[100px]">Contratado</TableHead>
-                <TableHead className="w-[110px]">Status</TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
                 <TableHead className="w-[40px]">Obs</TableHead>
               </TableRow>
             </TableHeader>
@@ -403,7 +403,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                     <Badge
                       variant="secondary"
                       className={cn(
-                        "text-[10px] transition-all",
+                        "text-[10px] transition-all whitespace-nowrap",
                         item.status_contratacao === "Negociada" && "bg-green-100 text-green-800 hover:bg-green-200",
                         item.status_contratacao === "Em Andamento" && "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
                         (!item.status_contratacao || item.status_contratacao === "A Negociar") && "bg-red-100 text-red-700 hover:bg-red-200"
@@ -470,7 +470,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
             value="Obra"
             className="px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700 font-medium"
           >
-            Obra Direta
+            Obra
             <Badge variant="secondary" className="ml-2 bg-slate-200 text-slate-600 text-[10px] h-5 px-1.5">
               {activeItems.filter((i) => i.destino === "Obra").length}
             </Badge>
