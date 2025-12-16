@@ -77,10 +77,10 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
     // Definir largura das colunas (45 caracteres = ~320px aprox)
     ws['!cols'] = [
       { wch: 45 }, // Descrição
-      { wch: 45 }, // Unidade
-      { wch: 45 }, // Qtd
-      { wch: 45 }, // Preço Unitário
-      { wch: 45 }, // Preço Total
+      { wch: 20 }, // Unidade
+      { wch: 20 }, // Qtd
+      { wch: 20 }, // Preço Unitário
+      { wch: 20 }, // Preço Total
     ];
     
     // Adicionar estilos ao cabeçalho (cores #112231 fundo e #A47528 fonte)
