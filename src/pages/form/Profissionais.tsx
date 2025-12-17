@@ -220,10 +220,10 @@ export default function Profissionais() {
       const fileExt = file.name.split(".").pop();
       const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      const { data, error } = await supabase.storage.from("public-uploads").upload(fileName, file);
+      const { data, error } = await supabase.storage.from("formularios-profissionais").upload(fileName, file);
 
       if (!error && data) {
-        const { data: urlData } = supabase.storage.from("public-uploads").getPublicUrl(data.path);
+        const { data: urlData } = supabase.storage.from("formularios-profissionais").getPublicUrl(data.path);
         urls.push(urlData.publicUrl);
       }
     }
