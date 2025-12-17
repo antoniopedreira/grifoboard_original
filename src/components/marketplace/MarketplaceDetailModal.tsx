@@ -16,11 +16,7 @@ import {
   User,
   Truck,
   Phone,
-  Mail,
-  Globe,
-  Calendar,
   Briefcase,
-  Award,
   Send,
   Edit2,
   Trash2,
@@ -28,8 +24,6 @@ import {
   Image,
   Download,
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   X,
   ZoomIn,
 } from "lucide-react";
@@ -49,7 +43,6 @@ interface MarketplaceItem {
   data: any;
 }
 
-// ... (Interfaces Review e Props mantidas iguais) ...
 interface Review {
   id: string;
   user_id: string;
@@ -66,6 +59,20 @@ interface MarketplaceDetailModalProps {
   onReviewSubmitted: () => void;
 }
 
+// Função auxiliar para selecionar o bucket correto
+const getBucketName = (type: string) => {
+  switch (type) {
+    case "empresa":
+      return "formularios-empresas";
+    case "profissional":
+      return "formularios-profissionais";
+    case "fornecedor":
+      return "formularios-fornecedores";
+    default:
+      return "public-uploads";
+  }
+};
+
 export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitted }: MarketplaceDetailModalProps) => {
   const { userSession } = useAuth();
   const user = userSession?.user;
@@ -76,7 +83,6 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingReview, setExistingReview] = useState<Review | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isLogoLightboxOpen, setIsLogoLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (item && isOpen) {
@@ -109,7 +115,6 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
     }
   };
 
-  // ... (handleSubmitReview e handleDeleteReview mantidos iguais) ...
   const handleSubmitReview = async () => {
     if (!item || !user || myRating === 0) {
       toast.error("Selecione uma avaliação de 1 a 5 estrelas");
@@ -175,20 +180,13 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
 
   if (!item) return null;
 
-  // Lógica de URL da imagem
+  // Lógica de URL da imagem com Bucket Correto
   const getLogoUrl = () => {
     const path = item.data.logo_path;
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    
-    // Usa o bucket correto baseado no tipo
-    const bucketName = item.type === "empresa" 
-      ? "formularios-empresas" 
-      : item.type === "profissional" 
-        ? "formularios-profissionais" 
-        : "formularios-fornecedores";
-    
-    const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
+    const bucket = getBucketName(item.type);
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
   };
 
@@ -232,7 +230,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden border-0 rounded-2xl shadow-2xl bg-white flex flex-col">
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden border-0 rounded-2xl shadow-2xl bg-white">
         {/* Header with gradient */}
         <div className={`relative bg-gradient-to-r ${getTypeColor()} p-6 pb-24`}>
           <button
@@ -259,17 +257,9 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
         <div className="relative -mt-20 mx-6 mb-2">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
             {/* Avatar / Logo */}
-            <div 
-              className={`rounded-2xl p-1 bg-white shadow-xl ${logoUrl ? 'cursor-pointer group' : ''}`}
-              onClick={() => logoUrl && setIsLogoLightboxOpen(true)}
-            >
+            <div className="rounded-2xl p-1 bg-white shadow-xl">
               {logoUrl ? (
-                <div className="relative">
-                  <img src={logoUrl} alt={item.name} className="w-32 h-32 rounded-xl object-cover bg-slate-100 transition-transform group-hover:scale-105" />
-                  <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6" />
-                  </div>
-                </div>
+                <img src={logoUrl} alt={item.name} className="w-32 h-32 rounded-xl object-cover bg-slate-100" />
               ) : (
                 <div
                   className={`w-32 h-32 rounded-xl bg-gradient-to-br ${getTypeColor()} flex items-center justify-center text-white`}
@@ -278,19 +268,6 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                 </div>
               )}
             </div>
-
-            {/* Logo Lightbox */}
-            {isLogoLightboxOpen && logoUrl && (
-              <div
-                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
-                onClick={() => setIsLogoLightboxOpen(false)}
-              >
-                <button className="absolute top-4 right-4 text-white hover:text-white/80 transition-colors">
-                  <X className="h-8 w-8" />
-                </button>
-                <img src={logoUrl} alt={item.name} className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl" />
-              </div>
-            )}
 
             <div className="flex-1 pb-2">
               <Badge variant="secondary" className="mb-2">
@@ -306,7 +283,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4 min-h-0 overflow-hidden">
+        <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4">
           <TabsList className="w-full justify-start gap-2 bg-transparent p-0 h-auto border-b border-slate-100 pb-1 mb-4 overflow-x-auto">
             <TabsTrigger
               value="info"
@@ -334,7 +311,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
             </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 -mx-6 px-6 pb-6 h-full overflow-y-auto">
+          <ScrollArea className="flex-1 -mx-6 px-6 pb-6">
             <TabsContent value="info" className="mt-0 space-y-0">
               <DetailInfo item={item} />
             </TabsContent>
@@ -348,7 +325,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
             </TabsContent>
 
             <TabsContent value="reviews" className="mt-0">
-              {/* Review content same as previous code... */}
+              {/* Review content */}
               <div className="bg-muted/30 rounded-2xl p-5 mb-6 border">
                 <h4 className="font-semibold mb-4">
                   {existingReview && !isEditing ? "Sua avaliação" : "Deixe sua avaliação"}
@@ -360,11 +337,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`h-5 w-5 ${
-                            star <= existingReview.rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-muted-foreground/30"
-                          }`}
+                          className={`h-5 w-5 ${star <= existingReview.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`}
                         />
                       ))}
                     </div>
@@ -373,8 +346,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                     )}
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                        <Edit2 className="h-3.5 w-3.5 mr-1" />
-                        Editar
+                        <Edit2 className="h-3.5 w-3.5 mr-1" /> Editar
                       </Button>
                       <Button
                         variant="ghost"
@@ -382,8 +354,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                         onClick={handleDeleteReview}
                         className="text-destructive hover:text-destructive"
                       >
-                        <Trash2 className="h-3.5 w-3.5 mr-1" />
-                        Remover
+                        <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
                       </Button>
                     </div>
                   </div>
@@ -400,11 +371,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                           className="p-1 transition-transform hover:scale-125"
                         >
                           <Star
-                            className={`h-7 w-7 transition-colors ${
-                              star <= (hoveredStar || myRating)
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "text-muted-foreground/30 hover:text-muted-foreground/50"
-                            }`}
+                            className={`h-7 w-7 transition-colors ${star <= (hoveredStar || myRating) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30 hover:text-muted-foreground/50"}`}
                           />
                         </button>
                       ))}
@@ -422,8 +389,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                         disabled={myRating === 0 || isSubmitting}
                         className="rounded-full"
                       >
-                        <Send className="h-4 w-4 mr-2" />
-                        {existingReview ? "Atualizar" : "Enviar Avaliação"}
+                        <Send className="h-4 w-4 mr-2" /> {existingReview ? "Atualizar" : "Enviar Avaliação"}
                       </Button>
                       {isEditing && (
                         <Button
@@ -461,11 +427,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <Star
                                   key={star}
-                                  className={`h-4 w-4 ${
-                                    star <= review.rating
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-muted-foreground/30"
-                                  }`}
+                                  className={`h-4 w-4 ${star <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`}
                                 />
                               ))}
                             </div>
@@ -487,21 +449,23 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
   );
 };
 
-// =========================
-// PhotosSection Component
-// =========================
 const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
+  // Mapeamento corrigido para incluir fotos_trabalhos_path para fornecedores
+  const fields =
+    item.type === "profissional"
+      ? ["fotos_trabalhos_path"]
+      : item.type === "fornecedor"
+        ? ["portfolio_path", "fotos_trabalhos_path"] // AGORA LÊ A COLUNA NOVA
+        : [];
+
+  // Função auxiliar com bucket dinâmico
   const getPublicUrl = (path: string) => {
-    const bucketName = item.type === "empresa" 
-      ? "formularios-empresas" 
-      : item.type === "profissional" 
-        ? "formularios-profissionais" 
-        : "formularios-fornecedores";
-    const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(path);
+    const bucket = getBucketName(item.type);
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
     return urlData?.publicUrl || "";
   };
 
@@ -512,14 +476,7 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
 
   const images: { label: string; url: string }[] = [];
 
-  // Campos de fotos por tipo
-  const fields = 
-    item.type === "profissional" 
-      ? ["fotos_trabalhos_path"] 
-      : item.type === "fornecedor" 
-        ? ["portfolio_path"] 
-        : [];
-
+  // Parse JSON strings
   fields.forEach((field) => {
     const rawValue = data[field];
     if (!rawValue) return;
@@ -536,7 +493,7 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
     paths.forEach((path) => {
       const url = path.startsWith("http") ? path : getPublicUrl(path);
       if (isImageFile(path) || path.startsWith("http")) {
-        images.push({ label: field.includes("portfolio") ? "Portfólio" : "Trabalhos", url });
+        images.push({ label: "Galeria", url });
       }
     });
   });
@@ -591,38 +548,25 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
   );
 };
 
-// =========================
-// DocumentsSection Component  
-// =========================
 const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
 
   const getPublicUrl = (path: string) => {
-    const bucketName = item.type === "empresa" 
-      ? "formularios-empresas" 
-      : item.type === "profissional" 
-        ? "formularios-profissionais" 
-        : "formularios-fornecedores";
-    const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(path);
+    const bucket = getBucketName(item.type);
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
     return urlData?.publicUrl || "";
   };
 
   const docs: { label: string; url: string }[] = [];
 
-  // Campos de documentos por tipo
-  const fieldConfigs = 
+  const fields =
     item.type === "profissional"
-      ? [
-          { field: "curriculo_path", label: "Currículo" },
-          { field: "certificacoes_path", label: "Certificação" }
-        ]
+      ? ["curriculo_path", "certificacoes_path"]
       : item.type === "empresa"
-        ? [{ field: "apresentacao_path", label: "Apresentação" }]
-        : item.type === "fornecedor"
-          ? [{ field: "certificacoes_path", label: "Certificação" }]
-          : [];
+        ? ["apresentacao_path"]
+        : [];
 
-  fieldConfigs.forEach(({ field, label }) => {
+  fields.forEach((field) => {
     const rawValue = data[field];
     if (!rawValue) return;
 
@@ -637,18 +581,12 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
 
     paths.forEach((path, idx) => {
       const url = path.startsWith("http") ? path : getPublicUrl(path);
-      docs.push({ label: paths.length > 1 ? `${label} ${idx + 1}` : label, url });
+      const label = field.includes("curriculo") ? "Currículo" : field.includes("cert") ? "Certificado" : "Apresentação";
+      docs.push({ label: `${label} ${idx + 1}`, url });
     });
   });
 
-  if (docs.length === 0) {
-    return (
-      <div className="text-center py-16 text-muted-foreground bg-muted/20 rounded-2xl">
-        <FileText className="h-16 w-16 mx-auto mb-4 opacity-20" />
-        <p className="font-medium">Nenhum documento disponível</p>
-      </div>
-    );
-  }
+  if (docs.length === 0) return <div className="text-center py-10 text-muted-foreground">Nenhum documento</div>;
 
   return (
     <div className="grid gap-3">
@@ -671,417 +609,41 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
   );
 };
 
-// =========================
-// DetailInfo Component - Complete Info Display
-// =========================
 const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
-
-  // Formatador de valores legíveis
-  const formatValue = (value: string | undefined): string => {
-    if (!value) return "";
-    
-    const mappings: Record<string, string> = {
-      // Ticket médio / valores
-      "ate-200k": "Até R$ 200.000",
-      "200k-800k": "R$ 200.000 a R$ 800.000",
-      "800k-2m": "R$ 800.000 a R$ 2.000.000",
-      "2m-5m": "R$ 2.000.000 a R$ 5.000.000",
-      "acima-5m": "Acima de R$ 5.000.000",
-      "ate-5000": "Até R$ 5.000",
-      "5000-20000": "R$ 5.000 a R$ 20.000",
-      "20000-50000": "R$ 20.000 a R$ 50.000",
-      "acima-50000": "Acima de R$ 50.000",
-      
-      // Tempo de atuação / experiência
-      "menos-1-ano": "Menos de 1 ano",
-      "1-3-anos": "1 a 3 anos",
-      "3-5-anos": "3 a 5 anos",
-      "5-mais-anos": "Mais de 5 anos",
-      "5-10-anos": "5 a 10 anos",
-      "mais-10-anos": "Mais de 10 anos",
-      
-      // Capacidade / Obras
-      "1-2-obras": "1 a 2 obras",
-      "3-5-obras": "3 a 5 obras",
-      "6-mais-obras": "Mais de 6 obras",
-      "0-2": "0 a 2 obras",
-      "3-5": "3 a 5 obras",
-      "6-10": "6 a 10 obras",
-      "11-20": "11 a 20 obras",
-      "21+": "Mais de 21 obras",
-      
-      // Tamanho empresa
-      "micro-1-9": "Micro (1-9 funcionários)",
-      "pequena-10-49": "Pequena (10-49 funcionários)",
-      "media-50-99": "Média (50-99 funcionários)",
-      "grande-100+": "Grande (100+ funcionários)",
-      
-      // Disponibilidade
-      "imediata": "Imediata",
-      "15-dias": "Em 15 dias",
-      "30-dias": "Em 30 dias",
-      "somente-contrato": "Somente com contrato",
-      
-      // Modalidade trabalho
-      "clt": "CLT",
-      "pj": "PJ",
-      "autonomo-diaria": "Autônomo/Diária",
-      "freelance-projeto": "Freelance por projeto",
-    };
-    
-    return mappings[value.toLowerCase()] || value.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  // Helper para exibir arrays com "outro"
-  const formatArrayWithOutro = (arr: string[] | undefined, outro: string | undefined) => {
-    if (!arr || arr.length === 0) return null;
-    let items = [...arr].filter(i => i !== "Outro");
-    if (outro) items.push(outro);
-    return items.length > 0 ? items.join(", ") : null;
-  };
-
-  // FORNECEDOR
-  if (item.type === "fornecedor") {
-    return (
-      <div className="grid gap-6">
-        {/* Contatos */}
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <Phone className="h-4 w-4" /> Contatos
-          </h4>
-          <div className="space-y-2 text-sm">
-            {data.nome_responsavel && <p><span className="text-muted-foreground">Responsável:</span> {data.nome_responsavel}</p>}
-            {data.telefone && <p><span className="text-muted-foreground">Telefone:</span> {formatPhoneNumber(data.telefone)}</p>}
-            {data.email && <p><span className="text-muted-foreground">Email:</span> {data.email}</p>}
-            {data.site && <p><span className="text-muted-foreground">Site:</span> <a href={data.site} target="_blank" className="text-primary hover:underline">{data.site}</a></p>}
-          </div>
+  return (
+    <div className="grid gap-6">
+      <div className="bg-slate-50 rounded-2xl p-5 border">
+        <h4 className="font-semibold mb-4 flex items-center gap-2">
+          <Phone className="h-4 w-4" /> Contatos
+        </h4>
+        <div className="space-y-2">
+          {data.telefone && <p>Telefone: {formatPhoneNumber(data.telefone)}</p>}
+          {data.email && <p>Email: {data.email}</p>}
+          {data.site && <p>Site: {data.site}</p>}
         </div>
-
-        {/* Dados da Empresa */}
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <Building2 className="h-4 w-4" /> Dados da Empresa
-          </h4>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            {data.cnpj_cpf && (
-              <div>
-                <p className="text-xs text-muted-foreground">CNPJ/CPF</p>
-                <p>{data.cnpj_cpf}</p>
-              </div>
-            )}
-            {data.tempo_atuacao && (
-              <div>
-                <p className="text-xs text-muted-foreground">Tempo de Atuação</p>
-                <p>{formatValue(data.tempo_atuacao)}</p>
-              </div>
-            )}
-            {data.ticket_medio && (
-              <div>
-                <p className="text-xs text-muted-foreground">Ticket Médio</p>
-                <p>{formatValue(data.ticket_medio)}</p>
-              </div>
-            )}
-            {data.capacidade_atendimento && (
-              <div>
-                <p className="text-xs text-muted-foreground">Capacidade de Atendimento</p>
-                <p>{formatValue(data.capacidade_atendimento)}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Atuação */}
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <Briefcase className="h-4 w-4" /> Área de Atuação
-          </h4>
-          <div className="space-y-4 text-sm">
-            {(data.tipos_atuacao || data.tipo_atuacao_outro) && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Tipos de Atuação</p>
-                <p>{formatArrayWithOutro(data.tipos_atuacao, data.tipo_atuacao_outro)}</p>
-              </div>
-            )}
-            {(data.categorias_atendidas || data.categorias_outro) && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Categorias Atendidas</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {formatArrayWithOutro(data.categorias_atendidas, data.categorias_outro)?.split(", ").map((cat, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">{cat}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {(data.regioes_atendidas || data.cidades_frequentes) && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Regiões Atendidas</p>
-                <p>{formatArrayWithOutro(data.regioes_atendidas, null)}</p>
-                {data.cidades_frequentes && <p className="text-xs text-muted-foreground mt-1">Cidades frequentes: {data.cidades_frequentes}</p>}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Diferenciais */}
-        {(data.diferenciais || data.diferenciais_outro) && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Award className="h-4 w-4" /> Diferenciais
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {formatArrayWithOutro(data.diferenciais, data.diferenciais_outro)?.split(", ").map((dif, i) => (
-                <Badge key={i} variant="outline" className="text-xs">{dif}</Badge>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
-    );
-  }
-
-  // PROFISSIONAL
-  if (item.type === "profissional") {
-    return (
-      <div className="grid gap-6">
-        {/* Contatos */}
+      {item.type === "profissional" && (
         <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <Phone className="h-4 w-4" /> Contatos
+          <h4 className="font-semibold mb-4">
+            <Briefcase className="h-4 w-4 inline mr-2" /> Dados Profissionais
           </h4>
-          <div className="space-y-2 text-sm">
-            {data.telefone && <p><span className="text-muted-foreground">Telefone:</span> {formatPhoneNumber(data.telefone)}</p>}
-            {data.email && <p><span className="text-muted-foreground">Email:</span> {data.email}</p>}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Função</p>
+              <p>{data.funcao_principal}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Experiência</p>
+              <p>{data.tempo_experiencia}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Disponibilidade</p>
+              <p>{data.disponibilidade_atual}</p>
+            </div>
           </div>
         </div>
-
-        {/* Dados Pessoais */}
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <User className="h-4 w-4" /> Dados Pessoais
-          </h4>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            {data.cpf && (
-              <div>
-                <p className="text-xs text-muted-foreground">CPF</p>
-                <p>{data.cpf}</p>
-              </div>
-            )}
-            {data.data_nascimento && (
-              <div>
-                <p className="text-xs text-muted-foreground">Data de Nascimento</p>
-                <p>{format(new Date(data.data_nascimento), "dd/MM/yyyy")}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Dados Profissionais */}
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <Briefcase className="h-4 w-4" /> Dados Profissionais
-          </h4>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            {(data.funcao_principal || data.funcao_principal_outro) && (
-              <div>
-                <p className="text-xs text-muted-foreground">Função Principal</p>
-                <p>{data.funcao_principal === "Outro" ? data.funcao_principal_outro : data.funcao_principal}</p>
-              </div>
-            )}
-            {data.tempo_experiencia && (
-              <div>
-                <p className="text-xs text-muted-foreground">Tempo de Experiência</p>
-                <p>{formatValue(data.tempo_experiencia)}</p>
-              </div>
-            )}
-            {data.disponibilidade_atual && (
-              <div>
-                <p className="text-xs text-muted-foreground">Disponibilidade</p>
-                <p>{formatValue(data.disponibilidade_atual)}</p>
-              </div>
-            )}
-            {data.modalidade_trabalho && (
-              <div>
-                <p className="text-xs text-muted-foreground">Modalidade de Trabalho</p>
-                <p>{formatValue(data.modalidade_trabalho)}</p>
-              </div>
-            )}
-            {data.pretensao_valor && (
-              <div>
-                <p className="text-xs text-muted-foreground">Pretensão Salarial/Valor</p>
-                <p>{data.pretensao_valor}</p>
-              </div>
-            )}
-            {data.equipamentos_proprios && (
-              <div>
-                <p className="text-xs text-muted-foreground">Equipamentos Próprios</p>
-                <p>{formatValue(data.equipamentos_proprios)}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Especialidades */}
-        {(data.especialidades || data.especialidades_outro) && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Award className="h-4 w-4" /> Especialidades
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {formatArrayWithOutro(data.especialidades, data.especialidades_outro)?.split(", ").map((esp, i) => (
-                <Badge key={i} variant="secondary" className="text-xs">{esp}</Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Regiões */}
-        {(data.regioes_atendidas || data.cidades_frequentes) && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <MapPin className="h-4 w-4" /> Regiões Atendidas
-            </h4>
-            <div className="text-sm">
-              {data.regioes_atendidas && <p>{formatArrayWithOutro(data.regioes_atendidas, null)}</p>}
-              {data.cidades_frequentes && <p className="text-muted-foreground mt-1">Cidades frequentes: {data.cidades_frequentes}</p>}
-            </div>
-          </div>
-        )}
-
-        {/* Diferenciais */}
-        {(data.diferenciais || data.diferenciais_outro) && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Award className="h-4 w-4" /> Diferenciais
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {formatArrayWithOutro(data.diferenciais, data.diferenciais_outro)?.split(", ").map((dif, i) => (
-                <Badge key={i} variant="outline" className="text-xs">{dif}</Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Obras Relevantes */}
-        {data.obras_relevantes && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4">Obras Relevantes</h4>
-            <p className="text-sm whitespace-pre-wrap">{data.obras_relevantes}</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // EMPRESA
-  if (item.type === "empresa") {
-    return (
-      <div className="grid gap-6">
-        {/* Contatos */}
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <Phone className="h-4 w-4" /> Contatos
-          </h4>
-          <div className="space-y-2 text-sm">
-            {data.nome_contato && <p><span className="text-muted-foreground">Contato:</span> {data.nome_contato} {data.cargo_contato && `(${data.cargo_contato})`}</p>}
-            {data.whatsapp_contato && <p><span className="text-muted-foreground">WhatsApp:</span> {formatPhoneNumber(data.whatsapp_contato)}</p>}
-            {data.email_contato && <p><span className="text-muted-foreground">Email:</span> {data.email_contato}</p>}
-            {data.site && <p><span className="text-muted-foreground">Site:</span> <a href={data.site} target="_blank" className="text-primary hover:underline">{data.site}</a></p>}
-          </div>
-        </div>
-
-        {/* Dados da Empresa */}
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4 flex items-center gap-2">
-            <Building2 className="h-4 w-4" /> Dados da Empresa
-          </h4>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            {data.cnpj && (
-              <div>
-                <p className="text-xs text-muted-foreground">CNPJ</p>
-                <p>{data.cnpj}</p>
-              </div>
-            )}
-            {data.ano_fundacao && (
-              <div>
-                <p className="text-xs text-muted-foreground">Ano de Fundação</p>
-                <p>{data.ano_fundacao}</p>
-              </div>
-            )}
-            {data.tamanho_empresa && (
-              <div>
-                <p className="text-xs text-muted-foreground">Tamanho</p>
-                <p>{formatValue(data.tamanho_empresa)}</p>
-              </div>
-            )}
-            {data.obras_andamento && (
-              <div>
-                <p className="text-xs text-muted-foreground">Obras em Andamento</p>
-                <p>{formatValue(data.obras_andamento)}</p>
-              </div>
-            )}
-            {data.ticket_medio && (
-              <div>
-                <p className="text-xs text-muted-foreground">Ticket Médio</p>
-                <p>{formatValue(data.ticket_medio)}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Tipos de Obras */}
-        {(data.tipos_obras || data.tipos_obras_outro) && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Briefcase className="h-4 w-4" /> Tipos de Obras
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {formatArrayWithOutro(data.tipos_obras, data.tipos_obras_outro)?.split(", ").map((tipo, i) => (
-                <Badge key={i} variant="secondary" className="text-xs">{tipo}</Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Planejamento */}
-        {(data.planejamento_curto_prazo || data.ferramentas_gestao) && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4" /> Planejamento e Gestão
-            </h4>
-            <div className="space-y-3 text-sm">
-              {data.planejamento_curto_prazo && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Planejamento de Curto Prazo</p>
-                  <p>{data.planejamento_curto_prazo}</p>
-                </div>
-              )}
-              {data.ferramentas_gestao && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Ferramentas de Gestão</p>
-                  <p>{data.ferramentas_gestao}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Desafios */}
-        {(data.principais_desafios || data.desafios_outro) && (
-          <div className="bg-slate-50 rounded-2xl p-5 border">
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Award className="h-4 w-4" /> Principais Desafios
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {formatArrayWithOutro(data.principais_desafios, data.desafios_outro)?.split(", ").map((des, i) => (
-                <Badge key={i} variant="outline" className="text-xs">{des}</Badge>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return null;
+      )}
+    </div>
+  );
 };
