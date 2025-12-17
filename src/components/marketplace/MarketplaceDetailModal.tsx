@@ -487,20 +487,13 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
   );
 };
 
-// ... (PhotosSection, DocumentsSection, DetailInfo mantidos iguais - apenas certifique-se de que estão no arquivo) ...
-// Para economizar espaço na resposta, assumo que você manterá os componentes auxiliares que já existiam
-// ou que eu possa enviá-los se precisar. Mas o foco aqui foi a lógica do Header e do Card.
-
-// Vou recolocar os componentes auxiliares abaixo para garantir que o arquivo fique completo e funcional.
-
+// =========================
+// PhotosSection Component
+// =========================
 const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-
-  // ... (Manter lógica existente de PhotosSection, mas usando 'public-uploads' se necessário ou os buckets antigos se existirem)
-  // Recomendo padronizar para 'public-uploads' se for migrar tudo.
-  // Por enquanto, mantenho a lógica anterior para não quebrar uploads antigos, mas adiciono fallback.
 
   const getPublicUrl = (path: string) => {
     const bucketName = item.type === "empresa" 
@@ -519,31 +512,31 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
 
   const images: { label: string; url: string }[] = [];
 
-  // Mapeamento de campos de imagem
-  const fields =
-    item.type === "profissional" ? ["fotos_trabalhos_path"] : item.type === "fornecedor" ? ["portfolio_path"] : []; // Logo já está no header
+  // Campos de fotos por tipo
+  const fields = 
+    item.type === "profissional" 
+      ? ["fotos_trabalhos_path"] 
+      : item.type === "fornecedor" 
+        ? ["portfolio_path"] 
+        : [];
 
-  // Parse JSON strings from new upload system
   fields.forEach((field) => {
     const rawValue = data[field];
     if (!rawValue) return;
 
     let paths: string[] = [];
     try {
-      // Tenta parsear como JSON (novo formato)
       const parsed = JSON.parse(rawValue);
       if (Array.isArray(parsed)) paths = parsed;
       else paths = [rawValue];
     } catch {
-      // Fallback para CSV (formato antigo)
       paths = rawValue.split(",").map((p: string) => p.trim());
     }
 
     paths.forEach((path) => {
-      // Se já for URL completa (novo upload retorna URL), usa. Se não, gera.
       const url = path.startsWith("http") ? path : getPublicUrl(path);
       if (isImageFile(path) || path.startsWith("http")) {
-        images.push({ label: "Galeria", url });
+        images.push({ label: field.includes("portfolio") ? "Portfólio" : "Trabalhos", url });
       }
     });
   });
@@ -557,7 +550,6 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
     );
   }
 
-  // ... (Renderização da galeria mantida igual)
   return (
     <div className="space-y-4">
       <ScrollArea className="max-h-[400px] pr-4">
@@ -584,7 +576,6 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
         </div>
       </ScrollArea>
 
-      {/* Lightbox Implementation ... (Manter igual) */}
       {isLightboxOpen && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
@@ -600,6 +591,9 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
   );
 };
 
+// =========================
+// DocumentsSection Component  
+// =========================
 const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
 
@@ -615,14 +609,20 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
 
   const docs: { label: string; url: string }[] = [];
 
-  const fields =
+  // Campos de documentos por tipo
+  const fieldConfigs = 
     item.type === "profissional"
-      ? ["curriculo_path", "certificacoes_path"]
+      ? [
+          { field: "curriculo_path", label: "Currículo" },
+          { field: "certificacoes_path", label: "Certificação" }
+        ]
       : item.type === "empresa"
-        ? ["apresentacao_path"]
-        : [];
+        ? [{ field: "apresentacao_path", label: "Apresentação" }]
+        : item.type === "fornecedor"
+          ? [{ field: "certificacoes_path", label: "Certificação" }]
+          : [];
 
-  fields.forEach((field) => {
+  fieldConfigs.forEach(({ field, label }) => {
     const rawValue = data[field];
     if (!rawValue) return;
 
@@ -637,12 +637,18 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
 
     paths.forEach((path, idx) => {
       const url = path.startsWith("http") ? path : getPublicUrl(path);
-      const label = field.includes("curriculo") ? "Currículo" : field.includes("cert") ? "Certificado" : "Apresentação";
-      docs.push({ label: `${label} ${idx + 1}`, url });
+      docs.push({ label: paths.length > 1 ? `${label} ${idx + 1}` : label, url });
     });
   });
 
-  if (docs.length === 0) return <div className="text-center py-10 text-muted-foreground">Nenhum documento</div>;
+  if (docs.length === 0) {
+    return (
+      <div className="text-center py-16 text-muted-foreground bg-muted/20 rounded-2xl">
+        <FileText className="h-16 w-16 mx-auto mb-4 opacity-20" />
+        <p className="font-medium">Nenhum documento disponível</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-3">
@@ -665,44 +671,361 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
   );
 };
 
+// =========================
+// DetailInfo Component - Complete Info Display
+// =========================
 const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
-  // ... (Manter a mesma lógica de renderização de informações baseada no tipo que já existia) ...
-  // Para economizar caracteres, vou resumir:
-  return (
-    <div className="grid gap-6">
-      <div className="bg-slate-50 rounded-2xl p-5 border">
-        <h4 className="font-semibold mb-4 flex items-center gap-2">
-          <Phone className="h-4 w-4" /> Contatos
-        </h4>
-        <div className="space-y-2">
-          {data.telefone && <p>Telefone: {formatPhoneNumber(data.telefone)}</p>}
-          {data.email && <p>Email: {data.email}</p>}
-          {data.site && <p>Site: {data.site}</p>}
-        </div>
-      </div>
-      {/* Renderizar outros campos específicos (experiência, etc) conforme o item.type */}
-      {item.type === "profissional" && (
+
+  // Helper para exibir arrays com "outro"
+  const formatArrayWithOutro = (arr: string[] | undefined, outro: string | undefined) => {
+    if (!arr || arr.length === 0) return null;
+    let items = [...arr].filter(i => i !== "Outro");
+    if (outro) items.push(outro);
+    return items.length > 0 ? items.join(", ") : null;
+  };
+
+  // FORNECEDOR
+  if (item.type === "fornecedor") {
+    return (
+      <div className="grid gap-6">
+        {/* Contatos */}
         <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4">
-            <Briefcase className="h-4 w-4 inline mr-2" /> Dados Profissionais
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <Phone className="h-4 w-4" /> Contatos
           </h4>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Função</p>
-              <p>{data.funcao_principal}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Experiência</p>
-              <p>{data.tempo_experiencia}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Disponibilidade</p>
-              <p>{data.disponibilidade_atual}</p>
-            </div>
+          <div className="space-y-2 text-sm">
+            {data.nome_responsavel && <p><span className="text-muted-foreground">Responsável:</span> {data.nome_responsavel}</p>}
+            {data.telefone && <p><span className="text-muted-foreground">Telefone:</span> {formatPhoneNumber(data.telefone)}</p>}
+            {data.email && <p><span className="text-muted-foreground">Email:</span> {data.email}</p>}
+            {data.site && <p><span className="text-muted-foreground">Site:</span> <a href={data.site} target="_blank" className="text-primary hover:underline">{data.site}</a></p>}
           </div>
         </div>
-      )}
-    </div>
-  );
+
+        {/* Dados da Empresa */}
+        <div className="bg-slate-50 rounded-2xl p-5 border">
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <Building2 className="h-4 w-4" /> Dados da Empresa
+          </h4>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            {data.cnpj_cpf && (
+              <div>
+                <p className="text-xs text-muted-foreground">CNPJ/CPF</p>
+                <p>{data.cnpj_cpf}</p>
+              </div>
+            )}
+            {data.tempo_atuacao && (
+              <div>
+                <p className="text-xs text-muted-foreground">Tempo de Atuação</p>
+                <p>{data.tempo_atuacao}</p>
+              </div>
+            )}
+            {data.ticket_medio && (
+              <div>
+                <p className="text-xs text-muted-foreground">Ticket Médio</p>
+                <p>{data.ticket_medio}</p>
+              </div>
+            )}
+            {data.capacidade_atendimento && (
+              <div>
+                <p className="text-xs text-muted-foreground">Capacidade de Atendimento</p>
+                <p>{data.capacidade_atendimento}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Atuação */}
+        <div className="bg-slate-50 rounded-2xl p-5 border">
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <Briefcase className="h-4 w-4" /> Área de Atuação
+          </h4>
+          <div className="space-y-4 text-sm">
+            {(data.tipos_atuacao || data.tipo_atuacao_outro) && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Tipos de Atuação</p>
+                <p>{formatArrayWithOutro(data.tipos_atuacao, data.tipo_atuacao_outro)}</p>
+              </div>
+            )}
+            {(data.categorias_atendidas || data.categorias_outro) && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Categorias Atendidas</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {formatArrayWithOutro(data.categorias_atendidas, data.categorias_outro)?.split(", ").map((cat, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs">{cat}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(data.regioes_atendidas || data.cidades_frequentes) && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Regiões Atendidas</p>
+                <p>{formatArrayWithOutro(data.regioes_atendidas, null)}</p>
+                {data.cidades_frequentes && <p className="text-xs text-muted-foreground mt-1">Cidades frequentes: {data.cidades_frequentes}</p>}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Diferenciais */}
+        {(data.diferenciais || data.diferenciais_outro) && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Award className="h-4 w-4" /> Diferenciais
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {formatArrayWithOutro(data.diferenciais, data.diferenciais_outro)?.split(", ").map((dif, i) => (
+                <Badge key={i} variant="outline" className="text-xs">{dif}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // PROFISSIONAL
+  if (item.type === "profissional") {
+    return (
+      <div className="grid gap-6">
+        {/* Contatos */}
+        <div className="bg-slate-50 rounded-2xl p-5 border">
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <Phone className="h-4 w-4" /> Contatos
+          </h4>
+          <div className="space-y-2 text-sm">
+            {data.telefone && <p><span className="text-muted-foreground">Telefone:</span> {formatPhoneNumber(data.telefone)}</p>}
+            {data.email && <p><span className="text-muted-foreground">Email:</span> {data.email}</p>}
+          </div>
+        </div>
+
+        {/* Dados Pessoais */}
+        <div className="bg-slate-50 rounded-2xl p-5 border">
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <User className="h-4 w-4" /> Dados Pessoais
+          </h4>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            {data.cpf && (
+              <div>
+                <p className="text-xs text-muted-foreground">CPF</p>
+                <p>{data.cpf}</p>
+              </div>
+            )}
+            {data.data_nascimento && (
+              <div>
+                <p className="text-xs text-muted-foreground">Data de Nascimento</p>
+                <p>{format(new Date(data.data_nascimento), "dd/MM/yyyy")}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Dados Profissionais */}
+        <div className="bg-slate-50 rounded-2xl p-5 border">
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <Briefcase className="h-4 w-4" /> Dados Profissionais
+          </h4>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            {(data.funcao_principal || data.funcao_principal_outro) && (
+              <div>
+                <p className="text-xs text-muted-foreground">Função Principal</p>
+                <p>{data.funcao_principal === "Outro" ? data.funcao_principal_outro : data.funcao_principal}</p>
+              </div>
+            )}
+            {data.tempo_experiencia && (
+              <div>
+                <p className="text-xs text-muted-foreground">Tempo de Experiência</p>
+                <p>{data.tempo_experiencia}</p>
+              </div>
+            )}
+            {data.disponibilidade_atual && (
+              <div>
+                <p className="text-xs text-muted-foreground">Disponibilidade</p>
+                <p>{data.disponibilidade_atual}</p>
+              </div>
+            )}
+            {data.modalidade_trabalho && (
+              <div>
+                <p className="text-xs text-muted-foreground">Modalidade de Trabalho</p>
+                <p>{data.modalidade_trabalho}</p>
+              </div>
+            )}
+            {data.pretensao_valor && (
+              <div>
+                <p className="text-xs text-muted-foreground">Pretensão Salarial/Valor</p>
+                <p>{data.pretensao_valor}</p>
+              </div>
+            )}
+            {data.equipamentos_proprios && (
+              <div>
+                <p className="text-xs text-muted-foreground">Equipamentos Próprios</p>
+                <p>{data.equipamentos_proprios}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Especialidades */}
+        {(data.especialidades || data.especialidades_outro) && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Award className="h-4 w-4" /> Especialidades
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {formatArrayWithOutro(data.especialidades, data.especialidades_outro)?.split(", ").map((esp, i) => (
+                <Badge key={i} variant="secondary" className="text-xs">{esp}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Regiões */}
+        {(data.regioes_atendidas || data.cidades_frequentes) && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <MapPin className="h-4 w-4" /> Regiões Atendidas
+            </h4>
+            <div className="text-sm">
+              {data.regioes_atendidas && <p>{formatArrayWithOutro(data.regioes_atendidas, null)}</p>}
+              {data.cidades_frequentes && <p className="text-muted-foreground mt-1">Cidades frequentes: {data.cidades_frequentes}</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Diferenciais */}
+        {(data.diferenciais || data.diferenciais_outro) && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Award className="h-4 w-4" /> Diferenciais
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {formatArrayWithOutro(data.diferenciais, data.diferenciais_outro)?.split(", ").map((dif, i) => (
+                <Badge key={i} variant="outline" className="text-xs">{dif}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Obras Relevantes */}
+        {data.obras_relevantes && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4">Obras Relevantes</h4>
+            <p className="text-sm whitespace-pre-wrap">{data.obras_relevantes}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // EMPRESA
+  if (item.type === "empresa") {
+    return (
+      <div className="grid gap-6">
+        {/* Contatos */}
+        <div className="bg-slate-50 rounded-2xl p-5 border">
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <Phone className="h-4 w-4" /> Contatos
+          </h4>
+          <div className="space-y-2 text-sm">
+            {data.nome_contato && <p><span className="text-muted-foreground">Contato:</span> {data.nome_contato} {data.cargo_contato && `(${data.cargo_contato})`}</p>}
+            {data.whatsapp_contato && <p><span className="text-muted-foreground">WhatsApp:</span> {formatPhoneNumber(data.whatsapp_contato)}</p>}
+            {data.email_contato && <p><span className="text-muted-foreground">Email:</span> {data.email_contato}</p>}
+            {data.site && <p><span className="text-muted-foreground">Site:</span> <a href={data.site} target="_blank" className="text-primary hover:underline">{data.site}</a></p>}
+          </div>
+        </div>
+
+        {/* Dados da Empresa */}
+        <div className="bg-slate-50 rounded-2xl p-5 border">
+          <h4 className="font-semibold mb-4 flex items-center gap-2">
+            <Building2 className="h-4 w-4" /> Dados da Empresa
+          </h4>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            {data.cnpj && (
+              <div>
+                <p className="text-xs text-muted-foreground">CNPJ</p>
+                <p>{data.cnpj}</p>
+              </div>
+            )}
+            {data.ano_fundacao && (
+              <div>
+                <p className="text-xs text-muted-foreground">Ano de Fundação</p>
+                <p>{data.ano_fundacao}</p>
+              </div>
+            )}
+            {data.tamanho_empresa && (
+              <div>
+                <p className="text-xs text-muted-foreground">Tamanho</p>
+                <p>{data.tamanho_empresa}</p>
+              </div>
+            )}
+            {data.obras_andamento && (
+              <div>
+                <p className="text-xs text-muted-foreground">Obras em Andamento</p>
+                <p>{data.obras_andamento}</p>
+              </div>
+            )}
+            {data.ticket_medio && (
+              <div>
+                <p className="text-xs text-muted-foreground">Ticket Médio</p>
+                <p>{data.ticket_medio}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tipos de Obras */}
+        {(data.tipos_obras || data.tipos_obras_outro) && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Briefcase className="h-4 w-4" /> Tipos de Obras
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {formatArrayWithOutro(data.tipos_obras, data.tipos_obras_outro)?.split(", ").map((tipo, i) => (
+                <Badge key={i} variant="secondary" className="text-xs">{tipo}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Planejamento */}
+        {(data.planejamento_curto_prazo || data.ferramentas_gestao) && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Calendar className="h-4 w-4" /> Planejamento e Gestão
+            </h4>
+            <div className="space-y-3 text-sm">
+              {data.planejamento_curto_prazo && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Planejamento de Curto Prazo</p>
+                  <p>{data.planejamento_curto_prazo}</p>
+                </div>
+              )}
+              {data.ferramentas_gestao && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Ferramentas de Gestão</p>
+                  <p>{data.ferramentas_gestao}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Desafios */}
+        {(data.principais_desafios || data.desafios_outro) && (
+          <div className="bg-slate-50 rounded-2xl p-5 border">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Award className="h-4 w-4" /> Principais Desafios
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {formatArrayWithOutro(data.principais_desafios, data.desafios_outro)?.split(", ").map((des, i) => (
+                <Badge key={i} variant="outline" className="text-xs">{des}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 };
