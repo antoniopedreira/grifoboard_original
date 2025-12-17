@@ -1,15 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// --- PROFISSIONAIS (formulario_profissionais) ---
+// --- PROFISSIONAIS ---
 export interface ProfissionalPayload {
   nome_completo: string;
   cpf: string;
-  data_nascimento: string; // Formato YYYY-MM-DD
+  data_nascimento: string;
   cidade: string;
   estado: string;
   funcao_principal: string;
   funcao_principal_outro?: string | null;
-  especialidades: string[]; // Array de texto (enviado como array, Supabase converte)
+  especialidades: string[];
   especialidades_outro?: string | null;
   tempo_experiencia: string;
   obras_relevantes?: string | null;
@@ -24,14 +24,13 @@ export interface ProfissionalPayload {
   telefone: string;
   email?: string | null;
 
-  // --- ARQUIVOS (URLs ou JSON Strings) ---
-  logo_path?: string | null; // Foto de Perfil
-  fotos_trabalhos_path?: string | null; // JSON String com array de URLs
-  curriculo_path?: string | null; // JSON String ou URL única
-  certificacoes_path?: string | null; // JSON String com array de URLs
+  logo_path?: string | null;
+  fotos_trabalhos_path?: string | null;
+  curriculo_path?: string | null;
+  certificacoes_path?: string | null;
 }
 
-// --- FORNECEDORES (formulario_fornecedores) ---
+// --- FORNECEDORES (Atualizado) ---
 export interface FornecedorPayload {
   nome_empresa: string;
   cnpj_cpf: string;
@@ -53,13 +52,14 @@ export interface FornecedorPayload {
   telefone: string;
   email: string;
 
-  // --- ARQUIVOS ---
+  // Arquivos
   logo_path?: string | null;
-  portfolio_path?: string | null;
-  certificacoes_path?: string | null;
+  portfolio_path?: string | null; // Para Catálogos/PDFs
+  certificacoes_path?: string | null; // Para Documentos
+  fotos_trabalhos_path?: string | null; // NOVA COLUNA: Para fotos reais
 }
 
-// --- EMPRESAS (formulario_empresas) ---
+// --- EMPRESAS ---
 export interface EmpresaPayload {
   nome_empresa: string;
   cnpj: string;
@@ -81,25 +81,21 @@ export interface EmpresaPayload {
   principais_desafios: string[];
   desafios_outro?: string | null;
 
-  // --- ARQUIVOS ---
   logo_path?: string | null;
   apresentacao_path?: string | null;
 }
 
 export const cadastrosService = {
-  // Envia para formulario_profissionais
   async createProfissional(data: ProfissionalPayload) {
     const { error } = await supabase.from("formulario_profissionais").insert(data);
     if (error) throw error;
   },
 
-  // Envia para formulario_fornecedores
   async createFornecedor(data: FornecedorPayload) {
     const { error } = await supabase.from("formulario_fornecedores").insert(data);
     if (error) throw error;
   },
 
-  // Envia para formulario_empresas
   async createEmpresa(data: EmpresaPayload) {
     const { error } = await supabase.from("formulario_empresas").insert(data);
     if (error) throw error;
