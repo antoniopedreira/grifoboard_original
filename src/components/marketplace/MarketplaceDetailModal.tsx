@@ -26,6 +26,8 @@ import {
   ArrowLeft,
   X,
   ZoomIn,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -537,11 +539,60 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
           onClick={() => setIsLightboxOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowLeft" && currentImageIndex > 0) {
+              setCurrentImageIndex(prev => prev - 1);
+            } else if (e.key === "ArrowRight" && currentImageIndex < images.length - 1) {
+              setCurrentImageIndex(prev => prev + 1);
+            } else if (e.key === "Escape") {
+              setIsLightboxOpen(false);
+            }
+          }}
+          tabIndex={0}
+          ref={(el) => el?.focus()}
         >
-          <button className="absolute top-4 right-4 text-white">
+          {/* Botão Fechar */}
+          <button 
+            className="absolute top-4 right-4 text-white hover:text-white/80 transition-colors z-10"
+            onClick={() => setIsLightboxOpen(false)}
+          >
             <X className="h-8 w-8" />
           </button>
-          <img src={images[currentImageIndex].url} className="max-w-[90vw] max-h-[90vh] object-contain" />
+          
+          {/* Navegação Anterior */}
+          {currentImageIndex > 0 && (
+            <button 
+              className="absolute left-4 text-white bg-black/50 p-3 rounded-full hover:bg-black/70 transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev - 1); }}
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </button>
+          )}
+          
+          {/* Imagem */}
+          <img 
+            src={images[currentImageIndex].url} 
+            alt={`Foto ${currentImageIndex + 1}`}
+            className="max-w-[90vw] max-h-[80vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          {/* Navegação Próximo */}
+          {currentImageIndex < images.length - 1 && (
+            <button 
+              className="absolute right-4 text-white bg-black/50 p-3 rounded-full hover:bg-black/70 transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev + 1); }}
+            >
+              <ChevronRight className="h-8 w-8" />
+            </button>
+          )}
+          
+          {/* Contador de fotos */}
+          {images.length > 1 && (
+            <div className="absolute bottom-6 text-white text-sm bg-black/50 px-4 py-2 rounded-full">
+              {currentImageIndex + 1} / {images.length}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -254,6 +254,7 @@ export type Database = {
           diferenciais_outro: string | null
           email: string
           estado: string
+          fotos_trabalhos_path: string | null
           id: string
           logo_path: string | null
           nome_empresa: string
@@ -280,6 +281,7 @@ export type Database = {
           diferenciais_outro?: string | null
           email: string
           estado: string
+          fotos_trabalhos_path?: string | null
           id?: string
           logo_path?: string | null
           nome_empresa: string
@@ -306,6 +308,7 @@ export type Database = {
           diferenciais_outro?: string | null
           email?: string
           estado?: string
+          fotos_trabalhos_path?: string | null
           id?: string
           logo_path?: string | null
           nome_empresa?: string
