@@ -232,7 +232,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden border-0 rounded-2xl shadow-2xl bg-white">
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden border-0 rounded-2xl shadow-2xl bg-white flex flex-col">
         {/* Header with gradient */}
         <div className={`relative bg-gradient-to-r ${getTypeColor()} p-6 pb-24`}>
           <button
