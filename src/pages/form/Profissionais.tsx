@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Users,
   Loader2,
@@ -24,7 +25,37 @@ import { cadastrosService } from "@/services/cadastrosService";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-// --- Componente Reutilizável de Upload ---
+// --- Constantes ---
+const OPCOES_REGIOES = ["Região Norte", "Região Nordeste", "Região Centro-Oeste", "Região Sudeste", "Região Sul"];
+
+const OPCOES_DIFERENCIAIS = [
+  "Experiência com obras de médio/grande porte",
+  "Especialização técnica",
+  "Curso profissionalizante",
+  "Certificação NR (10, 35, etc)",
+  "Carteira de motorista (CNH)",
+  "Veículo próprio",
+  "Disponibilidade para viagens",
+  "Outro",
+];
+
+const OPCOES_ESPECIALIDADES = [
+  "Acabamentos (Pisos/Revestimentos)",
+  "Alvenaria / Estrutura",
+  "Carpintaria / Marcenaria",
+  "Elétrica Residencial",
+  "Elétrica Predial/Industrial",
+  "Gesso / Drywall",
+  "Hidráulica",
+  "Impermeabilização",
+  "Pintura",
+  "Serralheria",
+  "Telhados / Coberturas",
+  "Vidraçaria",
+  "Outro",
+];
+
+// --- Componente de Upload ---
 const UploadField = ({
   label,
   sublabel,
@@ -50,7 +81,7 @@ const UploadField = ({
       if (multiple) {
         onFilesChange([...files, ...newFiles]);
       } else {
-        onFilesChange(newFiles); // Substitui se for single
+        onFilesChange(newFiles);
       }
     }
   };
@@ -65,7 +96,6 @@ const UploadField = ({
         <Icon className="h-4 w-4 text-primary" /> {label}
       </Label>
 
-      {/* Área de Clique */}
       <div
         onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed border-slate-300 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 hover:border-primary/50 transition-all group bg-white min-h-[100px]"
@@ -85,7 +115,6 @@ const UploadField = ({
         />
       </div>
 
-      {/* Lista de Arquivos */}
       {files.length > 0 && (
         <div className="grid grid-cols-1 gap-2 mt-2">
           {files.map((file, idx) => (
@@ -134,6 +163,7 @@ export default function Profissionais() {
 
   // Estado dos Dados
   const [formData, setFormData] = useState({
+    // Pessoais
     nome_completo: "",
     cpf: "",
     data_nascimento: "",
@@ -141,16 +171,24 @@ export default function Profissionais() {
     email: "",
     cidade: "",
     estado: "",
+    // Profissional
     funcao_principal: "",
+    funcao_principal_outro: "",
+    especialidades: [] as string[],
+    especialidades_outro: "",
     tempo_experiencia: "",
     obras_relevantes: "",
     disponibilidade_atual: "",
     modalidade_trabalho: "",
     pretensao_valor: "",
     equipamentos_proprios: "Não",
+    // Extras
+    cidades_frequentes: "",
+    regioes_atendidas: [] as string[],
+    diferenciais: [] as string[],
+    diferenciais_outro: "",
   });
 
-  // Estado dos Arquivos Separados
   const [filesLogo, setFilesLogo] = useState<File[]>([]);
   const [filesFotos, setFilesFotos] = useState<File[]>([]);
   const [filesCurriculo, setFilesCurriculo] = useState<File[]>([]);
@@ -160,23 +198,30 @@ export default function Profissionais() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Função para fazer Upload de um Array de arquivos
+  const handleCheckboxChange = (
+    field: "regioes_atendidas" | "diferenciais" | "especialidades",
+    item: string,
+    checked: boolean,
+  ) => {
+    setFormData((prev) => {
+      const list = prev[field];
+      if (checked) {
+        return { ...prev, [field]: [...list, item] };
+      } else {
+        return { ...prev, [field]: list.filter((i) => i !== item) };
+      }
+    });
+  };
+
   const uploadFiles = async (files: File[], folder: string) => {
     const urls: string[] = [];
     for (const file of files) {
       const fileExt = file.name.split(".").pop();
       const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      const { data, error } = await supabase.storage
-        .from("public-uploads") // Certifique-se que este bucket existe e é público
-        .upload(fileName, file);
+      const { data, error } = await supabase.storage.from("public-uploads").upload(fileName, file);
 
-      if (error) {
-        console.error("Erro upload:", error);
-        continue;
-      }
-
-      if (data) {
+      if (!error && data) {
         const { data: urlData } = supabase.storage.from("public-uploads").getPublicUrl(data.path);
         urls.push(urlData.publicUrl);
       }
@@ -185,15 +230,25 @@ export default function Profissionais() {
   };
 
   const handleSubmit = async () => {
+    // Validações
     if (!formData.nome_completo || !formData.telefone || !formData.funcao_principal) {
-      toast({ title: "Campos obrigatórios", description: "Verifique seus dados pessoais.", variant: "destructive" });
+      toast({
+        title: "Campos obrigatórios",
+        description: "Verifique seus dados pessoais e função.",
+        variant: "destructive",
+      });
       setStep(1);
+      return;
+    }
+
+    if (formData.funcao_principal === "Outros" && !formData.funcao_principal_outro) {
+      toast({ title: "Atenção", description: "Especifique sua função principal.", variant: "destructive" });
+      setStep(2);
       return;
     }
 
     setLoading(true);
     try {
-      // 1. Uploads Paralelos
       const [logoUrls, fotosUrls, curriculoUrls, certificadosUrls] = await Promise.all([
         uploadFiles(filesLogo, "logos"),
         uploadFiles(filesFotos, "trabalhos"),
@@ -201,21 +256,14 @@ export default function Profissionais() {
         uploadFiles(filesCertificados, "certificados"),
       ]);
 
-      // 2. Prepara Payload
       const payload = {
         ...formData,
-        // Arrays obrigatórios do banco
-        regioes_atendidas: [formData.cidade],
-        especialidades: [formData.funcao_principal],
-        diferenciais: ["Cadastro Online"],
-
-        // Mapeamento dos Arquivos para as Colunas do Banco
-        logo_path: logoUrls[0] || null, // Apenas 1 logo
+        // Arquivos
+        logo_path: logoUrls[0] || null,
         fotos_trabalhos_path: JSON.stringify(fotosUrls),
         curriculo_path: JSON.stringify(curriculoUrls),
         certificacoes_path: JSON.stringify(certificadosUrls),
 
-        // Fallback para data
         data_nascimento: formData.data_nascimento || "2000-01-01",
       };
 
@@ -224,11 +272,7 @@ export default function Profissionais() {
       window.scrollTo(0, 0);
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Erro ao enviar",
-        description: "Houve um problema técnico. Tente novamente.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao enviar", description: "Tente novamente mais tarde.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -259,7 +303,6 @@ export default function Profissionais() {
       description="Junte-se à elite da construção civil."
       icon={<Users className="h-8 w-8" />}
     >
-      {/* Steps Indicator */}
       <div className="flex items-center justify-center mb-8 gap-2">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center">
@@ -337,7 +380,7 @@ export default function Profissionais() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Cidade</Label>
+                <Label>Cidade (Base)</Label>
                 <Input
                   value={formData.cidade}
                   onChange={(e) => handleChange("cidade", e.target.value)}
@@ -355,6 +398,36 @@ export default function Profissionais() {
                 />
               </div>
             </div>
+
+            <div className="space-y-3 pt-2">
+              <Label>Regiões onde aceita trabalhar</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-md border border-slate-100">
+                {OPCOES_REGIOES.map((regiao) => (
+                  <div key={regiao} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`reg-${regiao}`}
+                      checked={formData.regioes_atendidas.includes(regiao)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange("regioes_atendidas", regiao, checked as boolean)
+                      }
+                    />
+                    <Label htmlFor={`reg-${regiao}`} className="text-sm font-normal cursor-pointer">
+                      {regiao}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cidades Frequentes (Onde mais trabalha)</Label>
+              <Input
+                value={formData.cidades_frequentes}
+                onChange={(e) => handleChange("cidades_frequentes", e.target.value)}
+                placeholder="Ex: Goiânia, Anápolis, Aparecida..."
+                className="bg-slate-50"
+              />
+            </div>
           </div>
         )}
 
@@ -365,7 +438,7 @@ export default function Profissionais() {
               <Label>Função Principal *</Label>
               <Select onValueChange={(val) => handleChange("funcao_principal", val)} value={formData.funcao_principal}>
                 <SelectTrigger className="bg-slate-50">
-                  <SelectValue placeholder="Selecione sua especialidade" />
+                  <SelectValue placeholder="Selecione sua função principal" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Engenheiro Civil">Engenheiro Civil</SelectItem>
@@ -378,11 +451,51 @@ export default function Profissionais() {
                   <SelectItem value="Gesseiro">Gesseiro</SelectItem>
                   <SelectItem value="Serralheiro">Serralheiro</SelectItem>
                   <SelectItem value="Ajudante">Ajudante</SelectItem>
+                  <SelectItem value="Outros">Outros (Especifique)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {formData.funcao_principal === "Outros" && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <Label>Especifique sua função *</Label>
+                <Input
+                  value={formData.funcao_principal_outro}
+                  onChange={(e) => handleChange("funcao_principal_outro", e.target.value)}
+                  placeholder="Ex: Azulejista, Carpinteiro..."
+                  className="bg-slate-50 border-primary/50"
+                />
+              </div>
+            )}
+
+            {/* NOVA SEÇÃO: ESPECIALIDADES */}
+            <div className="space-y-3 pt-2 border-t mt-4">
+              <Label>Especialidades (O que você domina?)</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-md border border-slate-100">
+                {OPCOES_ESPECIALIDADES.map((item) => (
+                  <div key={item} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`esp-${item}`}
+                      checked={formData.especialidades.includes(item)}
+                      onCheckedChange={(checked) => handleCheckboxChange("especialidades", item, checked as boolean)}
+                    />
+                    <Label htmlFor={`esp-${item}`} className="text-sm font-normal cursor-pointer">
+                      {item}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {formData.especialidades.includes("Outro") && (
+                <Input
+                  placeholder="Qual outra especialidade?"
+                  value={formData.especialidades_outro}
+                  onChange={(e) => handleChange("especialidades_outro", e.target.value)}
+                  className="mt-2"
+                />
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-2">
               <div className="space-y-2">
                 <Label>Tempo de Experiência</Label>
                 <Select
@@ -402,6 +515,26 @@ export default function Profissionais() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>Disponibilidade *</Label>
+                <Select
+                  onValueChange={(val) => handleChange("disponibilidade_atual", val)}
+                  value={formData.disponibilidade_atual}
+                >
+                  <SelectTrigger className="bg-slate-50">
+                    <SelectValue placeholder="Quando pode?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Imediata">Imediata</SelectItem>
+                    <SelectItem value="Em 15 dias">Em 15 dias</SelectItem>
+                    <SelectItem value="Em 30 dias">Em 30 dias</SelectItem>
+                    <SelectItem value="Apenas por contrato pontual">Apenas por contrato pontual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label>Modalidade</Label>
                 <Select
                   onValueChange={(val) => handleChange("modalidade_trabalho", val)}
@@ -417,6 +550,15 @@ export default function Profissionais() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Pretensão (R$)</Label>
+                <Input
+                  placeholder="Valor dia/mês"
+                  value={formData.pretensao_valor}
+                  onChange={(e) => handleChange("pretensao_valor", e.target.value)}
+                  className="bg-slate-50"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -429,7 +571,7 @@ export default function Profissionais() {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="Sim" id="sim" />
                   <Label htmlFor="sim" className="cursor-pointer">
-                    Sim, tenho ferramentas
+                    Sim
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -441,30 +583,36 @@ export default function Profissionais() {
               </RadioGroup>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Disponibilidade</Label>
-                <Input
-                  placeholder="Ex: Imediata"
-                  value={formData.disponibilidade_atual}
-                  onChange={(e) => handleChange("disponibilidade_atual", e.target.value)}
-                  className="bg-slate-50"
-                />
+            {/* Diferenciais / Qualificações */}
+            <div className="space-y-3 pt-2">
+              <Label>Diferenciais e Qualificações (Selecione todos que se aplicam)</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-md border border-slate-100">
+                {OPCOES_DIFERENCIAIS.map((item) => (
+                  <div key={item} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`dif-${item}`}
+                      checked={formData.diferenciais.includes(item)}
+                      onCheckedChange={(checked) => handleCheckboxChange("diferenciais", item, checked as boolean)}
+                    />
+                    <Label htmlFor={`dif-${item}`} className="text-sm font-normal cursor-pointer">
+                      {item}
+                    </Label>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2">
-                <Label>Pretensão (R$)</Label>
+              {formData.diferenciais.includes("Outro") && (
                 <Input
-                  placeholder="Valor dia/mês"
-                  value={formData.pretensao_valor}
-                  onChange={(e) => handleChange("pretensao_valor", e.target.value)}
-                  className="bg-slate-50"
+                  placeholder="Qual outro diferencial?"
+                  value={formData.diferenciais_outro}
+                  onChange={(e) => handleChange("diferenciais_outro", e.target.value)}
+                  className="mt-2"
                 />
-              </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* ETAPA 3: ARQUIVOS (Separados e Organizados) */}
+        {/* ETAPA 3: ARQUIVOS */}
         {step === 3 && (
           <div className="space-y-6 animate-in slide-in-from-right duration-500">
             <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm text-blue-800 mb-2">
@@ -472,7 +620,6 @@ export default function Profissionais() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 1. LOGO / FOTO */}
               <UploadField
                 label="Foto de Perfil ou Logo"
                 sublabel="JPG/PNG. Use uma foto clara do rosto."
@@ -483,7 +630,6 @@ export default function Profissionais() {
                 multiple={false}
               />
 
-              {/* 2. CURRÍCULO */}
               <UploadField
                 label="Currículo / Apresentação"
                 sublabel="PDF ou Imagem do seu CV."
@@ -495,7 +641,6 @@ export default function Profissionais() {
               />
             </div>
 
-            {/* 3. FOTOS TRABALHO */}
             <UploadField
               label="Fotos dos Trabalhos Realizados"
               sublabel="Obras que você já fez. Antes e Depois valorizam muito!"
@@ -506,7 +651,6 @@ export default function Profissionais() {
               multiple={true}
             />
 
-            {/* 4. CERTIFICAÇÕES */}
             <UploadField
               label="Certificações e NRs"
               sublabel="Diploma, NR10, NR35, Certificados Técnicos..."
@@ -536,7 +680,7 @@ export default function Profissionais() {
               <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
             </Button>
           ) : (
-            <div /> // Espaçador
+            <div />
           )}
 
           {step < 3 ? (
