@@ -660,41 +660,273 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
   );
 };
 
+// Função para formatar valores técnicos em texto legível
+const formatValue = (value: string | null | undefined): string => {
+  if (!value) return "-";
+  const mappings: Record<string, string> = {
+    // Ticket médio
+    "ate-50000": "Até R$ 50.000",
+    "50000-200000": "R$ 50.000 - R$ 200.000",
+    "200000-500000": "R$ 200.000 - R$ 500.000",
+    "500000-1000000": "R$ 500.000 - R$ 1.000.000",
+    "acima-1000000": "Acima de R$ 1.000.000",
+    "ate-200k": "Até R$ 200.000",
+    "200k-800k": "R$ 200.000 - R$ 800.000",
+    "800k-2m": "R$ 800.000 - R$ 2.000.000",
+    "2m-5m": "R$ 2.000.000 - R$ 5.000.000",
+    "acima-5m": "Acima de R$ 5.000.000",
+    // Capacidade/Obras
+    "1-2": "1 a 2 obras",
+    "3-5": "3 a 5 obras",
+    "6-10": "6 a 10 obras",
+    "11-20": "11 a 20 obras",
+    "acima-20": "Mais de 20 obras",
+    "0-2": "0 a 2 obras",
+    "21-mais": "Mais de 21 obras",
+    // Tempo de atuação/experiência
+    "menos-1-ano": "Menos de 1 ano",
+    "1-3-anos": "1 a 3 anos",
+    "3-5-anos": "3 a 5 anos",
+    "5-10-anos": "5 a 10 anos",
+    "mais-10-anos": "Mais de 10 anos",
+    "5-mais-anos": "Mais de 5 anos",
+    // Disponibilidade
+    "imediata": "Imediata",
+    "15-dias": "15 dias",
+    "30-dias": "30 dias",
+    "apenas-contrato": "Apenas por contrato",
+    // Modalidade
+    "clt": "CLT",
+    "pj": "PJ",
+    "autonomo-diaria": "Autônomo/Diária",
+    "freelance-projeto": "Freelance por projeto",
+    // Equipamentos
+    "sim": "Sim",
+    "nao": "Não",
+    "parcialmente": "Parcialmente",
+    // Tamanho empresa
+    "micro-1-9": "Micro (1-9 funcionários)",
+    "pequena-10-49": "Pequena (10-49 funcionários)",
+    "media-50-99": "Média (50-99 funcionários)",
+    "grande-100-mais": "Grande (100+ funcionários)",
+    // Planejamento
+    "planilhas": "Planilhas",
+    "whatsapp": "WhatsApp",
+    "software-gestao": "Software de gestão",
+    "sem-processo": "Sem processo definido",
+  };
+  return mappings[value] || value;
+};
+
+// Função para formatar arrays com campo "Outro"
+const formatArrayWithOutro = (arr: string[] | null | undefined, outro: string | null | undefined): string => {
+  if (!arr || arr.length === 0) return "-";
+  const items = [...arr.filter(i => i && i !== "Outro" && i !== "outro")];
+  if (outro) items.push(outro);
+  return items.length > 0 ? items.join(", ") : "-";
+};
+
 const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
-  return (
-    <div className="grid gap-6">
-      <div className="bg-slate-50 rounded-2xl p-5 border">
-        <h4 className="font-semibold mb-4 flex items-center gap-2">
-          <Phone className="h-4 w-4" /> Contatos
-        </h4>
-        <div className="space-y-2">
-          {data.telefone && <p>Telefone: {formatPhoneNumber(data.telefone)}</p>}
-          {data.email && <p>Email: {data.email}</p>}
-          {data.site && <p>Site: {data.site}</p>}
-        </div>
-      </div>
-      {item.type === "profissional" && (
-        <div className="bg-slate-50 rounded-2xl p-5 border">
-          <h4 className="font-semibold mb-4">
-            <Briefcase className="h-4 w-4 inline mr-2" /> Dados Profissionais
-          </h4>
+
+  // Seção de informação reutilizável
+  const InfoSection = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => (
+    <div className="bg-slate-50 rounded-2xl p-5 border">
+      <h4 className="font-semibold mb-4 flex items-center gap-2">
+        {icon} {title}
+      </h4>
+      {children}
+    </div>
+  );
+
+  const InfoItem = ({ label, value }: { label: string; value: string | null | undefined }) => (
+    <div>
+      <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className="font-medium">{value || "-"}</p>
+    </div>
+  );
+
+  // ========== FORNECEDOR ==========
+  if (item.type === "fornecedor") {
+    return (
+      <div className="grid gap-6">
+        {/* Contatos */}
+        <InfoSection title="Contatos" icon={<Phone className="h-4 w-4" />}>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Função</p>
-              <p>{data.funcao_principal}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Experiência</p>
-              <p>{data.tempo_experiencia}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Disponibilidade</p>
-              <p>{data.disponibilidade_atual}</p>
-            </div>
+            <InfoItem label="Telefone" value={data.telefone ? formatPhoneNumber(data.telefone) : null} />
+            <InfoItem label="Email" value={data.email} />
+            <InfoItem label="Site" value={data.site} />
+            <InfoItem label="Responsável" value={data.nome_responsavel} />
           </div>
-        </div>
-      )}
+        </InfoSection>
+
+        {/* Dados da Empresa */}
+        <InfoSection title="Dados da Empresa" icon={<Building2 className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Nome" value={data.nome_empresa} />
+            <InfoItem label="CNPJ/CPF" value={data.cnpj_cpf} />
+            <InfoItem label="Localização" value={`${data.cidade}, ${data.estado}`} />
+            <InfoItem label="Tempo de Atuação" value={formatValue(data.tempo_atuacao)} />
+          </div>
+        </InfoSection>
+
+        {/* Tipo de Atuação */}
+        <InfoSection title="Tipo de Atuação" icon={<Briefcase className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <InfoItem label="Tipos" value={formatArrayWithOutro(data.tipos_atuacao, data.tipo_atuacao_outro)} />
+            <InfoItem label="Categorias Atendidas" value={formatArrayWithOutro(data.categorias_atendidas, data.categorias_outro)} />
+          </div>
+        </InfoSection>
+
+        {/* Preços e Capacidade */}
+        <InfoSection title="Preços e Capacidade" icon={<Truck className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Ticket Médio" value={formatValue(data.ticket_medio)} />
+            <InfoItem label="Capacidade de Atendimento" value={formatValue(data.capacidade_atendimento)} />
+          </div>
+        </InfoSection>
+
+        {/* Regiões */}
+        <InfoSection title="Regiões Atendidas" icon={<MapPin className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <InfoItem label="Regiões" value={data.regioes_atendidas?.join(", ")} />
+            <InfoItem label="Cidades Frequentes" value={data.cidades_frequentes} />
+          </div>
+        </InfoSection>
+
+        {/* Diferenciais */}
+        <InfoSection title="Diferenciais" icon={<Star className="h-4 w-4" />}>
+          <p className="font-medium">{formatArrayWithOutro(data.diferenciais, data.diferenciais_outro)}</p>
+        </InfoSection>
+      </div>
+    );
+  }
+
+  // ========== PROFISSIONAL ==========
+  if (item.type === "profissional") {
+    return (
+      <div className="grid gap-6">
+        {/* Contatos */}
+        <InfoSection title="Contatos" icon={<Phone className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Telefone" value={data.telefone ? formatPhoneNumber(data.telefone) : null} />
+            <InfoItem label="Email" value={data.email} />
+          </div>
+        </InfoSection>
+
+        {/* Dados Pessoais */}
+        <InfoSection title="Dados Pessoais" icon={<User className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Nome" value={data.nome_completo} />
+            <InfoItem label="CPF" value={data.cpf} />
+            <InfoItem label="Data de Nascimento" value={data.data_nascimento} />
+            <InfoItem label="Localização" value={`${data.cidade}, ${data.estado}`} />
+          </div>
+        </InfoSection>
+
+        {/* Área de Atuação */}
+        <InfoSection title="Área de Atuação" icon={<Briefcase className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <InfoItem label="Função Principal" value={formatArrayWithOutro([data.funcao_principal], data.funcao_principal_outro)} />
+            <InfoItem label="Especialidades" value={formatArrayWithOutro(data.especialidades, data.especialidades_outro)} />
+          </div>
+        </InfoSection>
+
+        {/* Experiência */}
+        <InfoSection title="Experiência" icon={<Star className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <InfoItem label="Tempo de Experiência" value={formatValue(data.tempo_experiencia)} />
+            <InfoItem label="Obras Relevantes" value={data.obras_relevantes} />
+          </div>
+        </InfoSection>
+
+        {/* Disponibilidade */}
+        <InfoSection title="Disponibilidade" icon={<MapPin className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Disponibilidade Atual" value={formatValue(data.disponibilidade_atual)} />
+            <InfoItem label="Modalidade de Trabalho" value={formatValue(data.modalidade_trabalho)} />
+          </div>
+        </InfoSection>
+
+        {/* Regiões */}
+        <InfoSection title="Regiões Atendidas" icon={<MapPin className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <InfoItem label="Regiões" value={data.regioes_atendidas?.join(", ")} />
+            <InfoItem label="Cidades Frequentes" value={data.cidades_frequentes} />
+          </div>
+        </InfoSection>
+
+        {/* Condições */}
+        <InfoSection title="Condições e Preços" icon={<Truck className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Pretensão de Valor" value={data.pretensao_valor} />
+            <InfoItem label="Equipamentos Próprios" value={formatValue(data.equipamentos_proprios)} />
+          </div>
+        </InfoSection>
+
+        {/* Diferenciais */}
+        <InfoSection title="Diferenciais" icon={<Star className="h-4 w-4" />}>
+          <p className="font-medium">{formatArrayWithOutro(data.diferenciais, data.diferenciais_outro)}</p>
+        </InfoSection>
+      </div>
+    );
+  }
+
+  // ========== EMPRESA ==========
+  if (item.type === "empresa") {
+    return (
+      <div className="grid gap-6">
+        {/* Contatos */}
+        <InfoSection title="Contato Principal" icon={<Phone className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Nome" value={data.nome_contato} />
+            <InfoItem label="Cargo" value={data.cargo_contato} />
+            <InfoItem label="WhatsApp" value={data.whatsapp_contato ? formatPhoneNumber(data.whatsapp_contato) : null} />
+            <InfoItem label="Email" value={data.email_contato} />
+          </div>
+        </InfoSection>
+
+        {/* Dados da Empresa */}
+        <InfoSection title="Dados da Empresa" icon={<Building2 className="h-4 w-4" />}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoItem label="Nome" value={data.nome_empresa} />
+            <InfoItem label="CNPJ" value={data.cnpj} />
+            <InfoItem label="Site" value={data.site} />
+            <InfoItem label="Localização" value={`${data.cidade}, ${data.estado}`} />
+            <InfoItem label="Ano de Fundação" value={data.ano_fundacao} />
+            <InfoItem label="Tamanho" value={formatValue(data.tamanho_empresa)} />
+          </div>
+        </InfoSection>
+
+        {/* Estrutura Operacional */}
+        <InfoSection title="Estrutura Operacional" icon={<Briefcase className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <InfoItem label="Obras em Andamento" value={formatValue(data.obras_andamento)} />
+            <InfoItem label="Tipos de Obras" value={formatArrayWithOutro(data.tipos_obras, data.tipos_obras_outro)} />
+            <InfoItem label="Ticket Médio" value={formatValue(data.ticket_medio)} />
+          </div>
+        </InfoSection>
+
+        {/* Planejamento */}
+        <InfoSection title="Planejamento e Gestão" icon={<Star className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <InfoItem label="Planejamento Curto Prazo" value={formatValue(data.planejamento_curto_prazo)} />
+            <InfoItem label="Ferramentas de Gestão" value={data.ferramentas_gestao} />
+          </div>
+        </InfoSection>
+
+        {/* Desafios */}
+        <InfoSection title="Principais Desafios" icon={<Truck className="h-4 w-4" />}>
+          <p className="font-medium">{formatArrayWithOutro(data.principais_desafios, data.desafios_outro)}</p>
+        </InfoSection>
+      </div>
+    );
+  }
+
+  // Fallback
+  return (
+    <div className="text-center py-10 text-muted-foreground">
+      Nenhuma informação disponível
     </div>
   );
 };
