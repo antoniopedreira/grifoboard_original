@@ -481,8 +481,12 @@ const PhotosSection = ({ item }: { item: MarketplaceItem }) => {
   // Por enquanto, mantenho a lógica anterior para não quebrar uploads antigos, mas adiciono fallback.
 
   const getPublicUrl = (path: string) => {
-    // Tenta pegar do public-uploads primeiro (novo padrão)
-    const { data: urlData } = supabase.storage.from("public-uploads").getPublicUrl(path);
+    const bucketName = item.type === "empresa" 
+      ? "formularios-empresas" 
+      : item.type === "profissional" 
+        ? "formularios-profissionais" 
+        : "formularios-fornecedores";
+    const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(path);
     return urlData?.publicUrl || "";
   };
 
@@ -578,7 +582,12 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
 
   const getPublicUrl = (path: string) => {
-    const { data: urlData } = supabase.storage.from("public-uploads").getPublicUrl(path);
+    const bucketName = item.type === "empresa" 
+      ? "formularios-empresas" 
+      : item.type === "profissional" 
+        ? "formularios-profissionais" 
+        : "formularios-fornecedores";
+    const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(path);
     return urlData?.publicUrl || "";
   };
 
