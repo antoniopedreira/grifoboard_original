@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 const OPCOES_REGIOES = ["Região Norte", "Região Nordeste", "Região Centro-Oeste", "Região Sudeste", "Região Sul"];
 
 const OPCOES_DIFERENCIAIS = [
-  "Experiência com obras de médio/grande porte",
+  "Experiência em obras de médio/grande porte",
   "Especialização técnica",
   "Curso profissionalizante",
   "Certificação NR (10, 35, etc)",
@@ -55,7 +55,7 @@ const OPCOES_ESPECIALIDADES = [
   "Outro",
 ];
 
-// --- Componente de Upload ---
+// --- Componente de Upload Mobile-Friendly ---
 const UploadField = ({
   label,
   sublabel,
@@ -93,18 +93,19 @@ const UploadField = ({
   return (
     <div className="space-y-2">
       <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-primary" /> {label}
+        <Icon className="h-4 w-4 text-primary shrink-0" /> {label}
       </Label>
 
+      {/* Área de Clique Otimizada para Toque */}
       <div
         onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-slate-300 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 hover:border-primary/50 transition-all group bg-white min-h-[100px]"
+        className="border-2 border-dashed border-slate-300 rounded-lg p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 hover:border-primary/50 transition-all group bg-white min-h-[110px] active:bg-slate-100"
       >
-        <div className="text-slate-400 group-hover:text-primary transition-colors mb-1">
-          <UploadCloud className="h-6 w-6 mx-auto" />
+        <div className="text-slate-400 group-hover:text-primary transition-colors mb-2">
+          <UploadCloud className="h-8 w-8 mx-auto" />
         </div>
-        <p className="text-sm font-medium text-slate-600">Clique para adicionar</p>
-        <p className="text-[10px] text-slate-400">{sublabel}</p>
+        <p className="text-sm font-medium text-slate-700">Toque para adicionar</p>
+        <p className="text-[11px] text-slate-400">{sublabel}</p>
         <input
           ref={inputRef}
           type="file"
@@ -120,21 +121,21 @@ const UploadField = ({
           {files.map((file, idx) => (
             <div
               key={idx}
-              className="relative flex items-center gap-3 p-2 bg-white border border-slate-200 rounded-md shadow-sm"
+              className="relative flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-md shadow-sm"
             >
               {file.type.startsWith("image/") ? (
                 <img
                   src={URL.createObjectURL(file)}
                   alt="preview"
-                  className="h-8 w-8 object-cover rounded bg-slate-100"
+                  className="h-10 w-10 object-cover rounded bg-slate-100 border border-slate-100"
                 />
               ) : (
-                <div className="h-8 w-8 flex items-center justify-center bg-slate-100 rounded">
-                  <FileText className="h-4 w-4 text-slate-500" />
+                <div className="h-10 w-10 flex items-center justify-center bg-slate-100 rounded border border-slate-100">
+                  <FileText className="h-5 w-5 text-slate-500" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-700 truncate">{file.name}</p>
+                <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
                 <p className="text-[10px] text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
               <button
@@ -143,9 +144,9 @@ const UploadField = ({
                   e.stopPropagation();
                   removeFile(idx);
                 }}
-                className="p-1 hover:bg-red-50 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+                className="p-2 hover:bg-red-50 rounded-full text-slate-400 hover:text-red-500 transition-colors"
               >
-                <X className="h-3 w-3" />
+                <X className="h-5 w-5" />
               </button>
             </div>
           ))}
@@ -258,6 +259,11 @@ export default function Profissionais() {
 
       const payload = {
         ...formData,
+        especialidades: [
+          ...formData.especialidades,
+          // Adiciona a função principal como especialidade também para garantir busca
+          formData.funcao_principal === "Outros" ? formData.funcao_principal_outro : formData.funcao_principal,
+        ],
         // Arquivos
         logo_path: logoUrls[0] || null,
         fotos_trabalhos_path: JSON.stringify(fotosUrls),
@@ -289,7 +295,7 @@ export default function Profissionais() {
           <p className="text-slate-600">
             Nossa equipe de engenharia analisará seu portfólio. Mantenha seu WhatsApp atualizado.
           </p>
-          <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+          <Button onClick={() => window.location.reload()} variant="outline" className="w-full h-12 text-base">
             Novo Cadastro
           </Button>
         </div>
@@ -333,18 +339,20 @@ export default function Profissionais() {
                 value={formData.nome_completo}
                 onChange={(e) => handleChange("nome_completo", e.target.value)}
                 required
-                placeholder="Como prefere ser chamado"
-                className="bg-slate-50"
+                placeholder="Nome completo"
+                className="bg-slate-50 h-12"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            {/* Grid Mobile: 1 coluna | Tablet/PC: 2 colunas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>CPF *</Label>
                 <Input
                   value={formData.cpf}
                   onChange={(e) => handleChange("cpf", e.target.value)}
                   placeholder="000.000.000-00"
-                  className="bg-slate-50"
+                  className="bg-slate-50 h-12"
                 />
               </div>
               <div className="space-y-2">
@@ -353,11 +361,12 @@ export default function Profissionais() {
                   type="date"
                   value={formData.data_nascimento}
                   onChange={(e) => handleChange("data_nascimento", e.target.value)}
-                  className="bg-slate-50"
+                  className="bg-slate-50 h-12"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>WhatsApp *</Label>
                 <Input
@@ -365,7 +374,7 @@ export default function Profissionais() {
                   onChange={(e) => handleChange("telefone", e.target.value)}
                   required
                   placeholder="(DDD) 99999-9999"
-                  className="bg-slate-50"
+                  className="bg-slate-50 h-12"
                 />
               </div>
               <div className="space-y-2">
@@ -374,17 +383,18 @@ export default function Profissionais() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
-                  className="bg-slate-50"
+                  className="bg-slate-50 h-12"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Cidade (Base)</Label>
                 <Input
                   value={formData.cidade}
                   onChange={(e) => handleChange("cidade", e.target.value)}
-                  className="bg-slate-50"
+                  className="bg-slate-50 h-12"
                 />
               </div>
               <div className="space-y-2">
@@ -394,7 +404,7 @@ export default function Profissionais() {
                   onChange={(e) => handleChange("estado", e.target.value)}
                   placeholder="UF"
                   maxLength={2}
-                  className="bg-slate-50"
+                  className="bg-slate-50 h-12"
                 />
               </div>
             </div>
@@ -403,15 +413,16 @@ export default function Profissionais() {
               <Label>Regiões onde aceita trabalhar</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-md border border-slate-100">
                 {OPCOES_REGIOES.map((regiao) => (
-                  <div key={regiao} className="flex items-center space-x-2">
+                  <div key={regiao} className="flex items-center space-x-3 p-1">
                     <Checkbox
                       id={`reg-${regiao}`}
                       checked={formData.regioes_atendidas.includes(regiao)}
                       onCheckedChange={(checked) =>
                         handleCheckboxChange("regioes_atendidas", regiao, checked as boolean)
                       }
+                      className="h-5 w-5"
                     />
-                    <Label htmlFor={`reg-${regiao}`} className="text-sm font-normal cursor-pointer">
+                    <Label htmlFor={`reg-${regiao}`} className="text-sm font-normal cursor-pointer leading-none py-1">
                       {regiao}
                     </Label>
                   </div>
@@ -424,8 +435,8 @@ export default function Profissionais() {
               <Input
                 value={formData.cidades_frequentes}
                 onChange={(e) => handleChange("cidades_frequentes", e.target.value)}
-                placeholder="Ex: Goiânia, Anápolis, Aparecida..."
-                className="bg-slate-50"
+                placeholder="Ex: Goiânia, Anápolis..."
+                className="bg-slate-50 h-12"
               />
             </div>
           </div>
@@ -437,7 +448,7 @@ export default function Profissionais() {
             <div className="space-y-2">
               <Label>Função Principal *</Label>
               <Select onValueChange={(val) => handleChange("funcao_principal", val)} value={formData.funcao_principal}>
-                <SelectTrigger className="bg-slate-50">
+                <SelectTrigger className="bg-slate-50 h-12">
                   <SelectValue placeholder="Selecione sua função principal" />
                 </SelectTrigger>
                 <SelectContent>
@@ -463,23 +474,23 @@ export default function Profissionais() {
                   value={formData.funcao_principal_outro}
                   onChange={(e) => handleChange("funcao_principal_outro", e.target.value)}
                   placeholder="Ex: Azulejista, Carpinteiro..."
-                  className="bg-slate-50 border-primary/50"
+                  className="bg-slate-50 border-primary/50 h-12"
                 />
               </div>
             )}
 
-            {/* NOVA SEÇÃO: ESPECIALIDADES */}
             <div className="space-y-3 pt-2 border-t mt-4">
-              <Label>Especialidades (O que você domina?)</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-md border border-slate-100">
+              <Label>Outras Especialidades (O que você domina?)</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-md border border-slate-100">
                 {OPCOES_ESPECIALIDADES.map((item) => (
-                  <div key={item} className="flex items-center space-x-2">
+                  <div key={item} className="flex items-center space-x-3 p-1">
                     <Checkbox
                       id={`esp-${item}`}
                       checked={formData.especialidades.includes(item)}
                       onCheckedChange={(checked) => handleCheckboxChange("especialidades", item, checked as boolean)}
+                      className="h-5 w-5"
                     />
-                    <Label htmlFor={`esp-${item}`} className="text-sm font-normal cursor-pointer">
+                    <Label htmlFor={`esp-${item}`} className="text-sm font-normal cursor-pointer leading-none py-1">
                       {item}
                     </Label>
                   </div>
@@ -490,19 +501,19 @@ export default function Profissionais() {
                   placeholder="Qual outra especialidade?"
                   value={formData.especialidades_outro}
                   onChange={(e) => handleChange("especialidades_outro", e.target.value)}
-                  className="mt-2"
+                  className="mt-2 h-12"
                 />
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
               <div className="space-y-2">
                 <Label>Tempo de Experiência</Label>
                 <Select
                   onValueChange={(val) => handleChange("tempo_experiencia", val)}
                   value={formData.tempo_experiencia}
                 >
-                  <SelectTrigger className="bg-slate-50">
+                  <SelectTrigger className="bg-slate-50 h-12">
                     <SelectValue placeholder="Anos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -520,7 +531,7 @@ export default function Profissionais() {
                   onValueChange={(val) => handleChange("disponibilidade_atual", val)}
                   value={formData.disponibilidade_atual}
                 >
-                  <SelectTrigger className="bg-slate-50">
+                  <SelectTrigger className="bg-slate-50 h-12">
                     <SelectValue placeholder="Quando pode?" />
                   </SelectTrigger>
                   <SelectContent>
@@ -533,14 +544,14 @@ export default function Profissionais() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Modalidade</Label>
                 <Select
                   onValueChange={(val) => handleChange("modalidade_trabalho", val)}
                   value={formData.modalidade_trabalho}
                 >
-                  <SelectTrigger className="bg-slate-50">
+                  <SelectTrigger className="bg-slate-50 h-12">
                     <SelectValue placeholder="Prefere..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -556,7 +567,7 @@ export default function Profissionais() {
                   placeholder="Valor dia/mês"
                   value={formData.pretensao_valor}
                   onChange={(e) => handleChange("pretensao_valor", e.target.value)}
-                  className="bg-slate-50"
+                  className="bg-slate-50 h-12"
                 />
               </div>
             </div>
@@ -566,35 +577,35 @@ export default function Profissionais() {
               <RadioGroup
                 value={formData.equipamentos_proprios}
                 onValueChange={(val) => handleChange("equipamentos_proprios", val)}
-                className="flex gap-4 p-2 bg-slate-50 rounded-md border border-slate-100"
+                className="flex gap-4 p-3 bg-slate-50 rounded-md border border-slate-100"
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Sim" id="sim" />
-                  <Label htmlFor="sim" className="cursor-pointer">
+                  <RadioGroupItem value="Sim" id="sim" className="h-5 w-5" />
+                  <Label htmlFor="sim" className="cursor-pointer text-sm">
                     Sim
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Não" id="nao" />
-                  <Label htmlFor="nao" className="cursor-pointer">
+                  <RadioGroupItem value="Não" id="nao" className="h-5 w-5" />
+                  <Label htmlFor="nao" className="cursor-pointer text-sm">
                     Não
                   </Label>
                 </div>
               </RadioGroup>
             </div>
 
-            {/* Diferenciais / Qualificações */}
             <div className="space-y-3 pt-2">
-              <Label>Diferenciais e Qualificações (Selecione todos que se aplicam)</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-md border border-slate-100">
+              <Label>Diferenciais (Selecione todos que se aplicam)</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-md border border-slate-100">
                 {OPCOES_DIFERENCIAIS.map((item) => (
-                  <div key={item} className="flex items-center space-x-2">
+                  <div key={item} className="flex items-center space-x-3 p-1">
                     <Checkbox
                       id={`dif-${item}`}
                       checked={formData.diferenciais.includes(item)}
                       onCheckedChange={(checked) => handleCheckboxChange("diferenciais", item, checked as boolean)}
+                      className="h-5 w-5"
                     />
-                    <Label htmlFor={`dif-${item}`} className="text-sm font-normal cursor-pointer">
+                    <Label htmlFor={`dif-${item}`} className="text-sm font-normal cursor-pointer leading-none py-1">
                       {item}
                     </Label>
                   </div>
@@ -605,7 +616,7 @@ export default function Profissionais() {
                   placeholder="Qual outro diferencial?"
                   value={formData.diferenciais_outro}
                   onChange={(e) => handleChange("diferenciais_outro", e.target.value)}
-                  className="mt-2"
+                  className="mt-2 h-12"
                 />
               )}
             </div>
@@ -676,7 +687,13 @@ export default function Profissionais() {
         {/* CONTROLES DE NAVEGAÇÃO */}
         <div className="flex justify-between gap-4 pt-4 border-t border-slate-100 mt-8">
           {step > 1 ? (
-            <Button type="button" variant="ghost" onClick={() => setStep((prev) => prev - 1)} disabled={loading}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setStep((prev) => prev - 1)}
+              disabled={loading}
+              className="h-12"
+            >
               <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
             </Button>
           ) : (
@@ -687,7 +704,7 @@ export default function Profissionais() {
             <Button
               type="button"
               onClick={() => setStep((prev) => prev + 1)}
-              className="bg-slate-800 hover:bg-slate-900"
+              className="bg-slate-800 hover:bg-slate-900 h-12 px-6"
             >
               Próximo <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
@@ -695,7 +712,7 @@ export default function Profissionais() {
             <Button
               type="button"
               onClick={handleSubmit}
-              className="bg-green-600 hover:bg-green-700 min-w-[140px] h-11 text-base shadow-lg"
+              className="bg-green-600 hover:bg-green-700 min-w-[140px] h-12 text-base shadow-lg font-bold"
               disabled={loading}
             >
               {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Finalizar Cadastro"}
