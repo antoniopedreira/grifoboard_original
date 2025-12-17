@@ -1,9 +1,21 @@
 import { useState, useEffect } from "react";
-import MainHeader from "@/components/MainHeader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Loader2, Building2, User, Truck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Search, 
+  Filter, 
+  Loader2, 
+  Building2, 
+  User, 
+  Truck, 
+  Sparkles,
+  Users,
+  TrendingUp,
+  Shield
+} from "lucide-react";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
 import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,9 +28,9 @@ interface MarketplaceItem {
   name: string;
   location: string;
   categories: string[];
-  rating: number; // Placeholder por enquanto (ou busca de reviews)
+  rating: number;
   reviewCount: number;
-  data: any; // Objeto completo do banco para o Modal usar
+  data: any;
 }
 
 export default function Marketplace() {
@@ -36,13 +48,8 @@ export default function Marketplace() {
   const fetchMarketplaceData = async () => {
     setLoading(true);
     try {
-      // 1. Buscar Profissionais
       const { data: profs, error: errProfs } = await supabase.from("formulario_profissionais").select("*");
-
-      // 2. Buscar Empresas
       const { data: empresas, error: errEmp } = await supabase.from("formulario_empresas").select("*");
-
-      // 3. Buscar Fornecedores
       const { data: fornecedores, error: errForn } = await supabase.from("formulario_fornecedores").select("*");
 
       if (errProfs || errEmp || errForn) {
@@ -53,9 +60,7 @@ export default function Marketplace() {
 
       const allItems: MarketplaceItem[] = [];
 
-      // Mapear Profissionais
       profs?.forEach((p) => {
-        // Tenta parsear especialidades se for string JSON, ou usa array direto, ou string única
         let cats: string[] = [];
         if (Array.isArray(p.especialidades)) cats = p.especialidades;
         else if (typeof p.especialidades === "string") {
@@ -65,7 +70,7 @@ export default function Marketplace() {
             cats = [p.especialidades];
           }
         } else {
-          cats = [p.funcao_principal]; // Fallback
+          cats = [p.funcao_principal];
         }
 
         allItems.push({
@@ -74,13 +79,12 @@ export default function Marketplace() {
           name: p.nome_completo || "Sem Nome",
           location: p.cidade && p.estado ? `${p.cidade} - ${p.estado}` : "Localização não inf.",
           categories: cats,
-          rating: 5.0, // Placeholder: Futuro -> buscar média de reviews
+          rating: 5.0,
           reviewCount: 0,
-          data: p, // Guarda tudo para o Modal
+          data: p,
         });
       });
 
-      // Mapear Empresas
       empresas?.forEach((e) => {
         let cats: string[] = [];
         if (Array.isArray(e.tipos_obras)) cats = e.tipos_obras;
@@ -104,7 +108,6 @@ export default function Marketplace() {
         });
       });
 
-      // Mapear Fornecedores
       fornecedores?.forEach((f) => {
         let cats: string[] = [];
         if (Array.isArray(f.categorias_atendidas)) cats = f.categorias_atendidas;
@@ -141,7 +144,6 @@ export default function Marketplace() {
     setIsModalOpen(true);
   };
 
-  // Lógica de Filtro
   const filteredItems = items.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,78 +159,165 @@ export default function Marketplace() {
     return matchesSearch && matchesTab;
   });
 
+  const stats = {
+    profissionais: items.filter(i => i.type === "profissional").length,
+    empresas: items.filter(i => i.type === "empresa").length,
+    fornecedores: items.filter(i => i.type === "fornecedor").length,
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <MainHeader onNewTaskClick={() => {}} onRegistryClick={() => {}} onChecklistClick={() => {}} />
-
-      <main className="container mx-auto px-4 py-8 mt-16 max-w-7xl">
-        {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Marketplace Grifo</h1>
-          <p className="text-slate-500 mt-2">
-            Encontre os melhores profissionais e parceiros homologados para sua obra.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#112131] via-[#1a3045] to-[#112131]">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }} />
         </div>
+        
+        {/* Gradient Orbs */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#A47528]/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl" />
 
-        {/* Search & Filter Bar */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-            <Input
-              placeholder="Buscar por nome, cidade ou especialidade..."
-              className="pl-10 h-12 bg-white shadow-sm border-slate-200 text-base"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="relative container mx-auto px-4 py-16 md:py-20">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-6 bg-[#A47528]/20 text-[#A47528] border-[#A47528]/30 hover:bg-[#A47528]/30 px-4 py-1.5">
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              Parceiros Homologados
+            </Badge>
+            
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+              Marketplace
+              <span className="text-[#A47528]"> Grifo</span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Encontre os melhores profissionais, empresas e fornecedores 
+              verificados para sua obra.
+            </p>
+
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#A47528] via-amber-500 to-[#A47528] rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500" />
+                <div className="relative flex gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Input
+                      placeholder="Buscar por nome, cidade ou especialidade..."
+                      className="pl-12 h-14 bg-white/95 backdrop-blur border-0 shadow-xl text-base rounded-xl focus-visible:ring-2 focus-visible:ring-[#A47528]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Button className="h-14 px-6 bg-[#A47528] hover:bg-[#8B6420] text-white rounded-xl shadow-xl gap-2">
+                    <Filter className="h-4 w-4" />
+                    <span className="hidden sm:inline">Filtros</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="flex flex-wrap justify-center gap-8 mt-12">
+              <div className="flex items-center gap-3 text-white/80">
+                <div className="p-2.5 bg-emerald-500/20 rounded-lg">
+                  <Users className="h-5 w-5 text-emerald-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-2xl font-bold text-white">{stats.profissionais}</p>
+                  <p className="text-xs text-slate-400">Profissionais</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-white/80">
+                <div className="p-2.5 bg-blue-500/20 rounded-lg">
+                  <Building2 className="h-5 w-5 text-blue-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-2xl font-bold text-white">{stats.empresas}</p>
+                  <p className="text-xs text-slate-400">Empresas</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-white/80">
+                <div className="p-2.5 bg-amber-500/20 rounded-lg">
+                  <Truck className="h-5 w-5 text-amber-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-2xl font-bold text-white">{stats.fornecedores}</p>
+                  <p className="text-xs text-slate-400">Fornecedores</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <Button variant="outline" className="h-12 px-6 gap-2 bg-white border-slate-200 hover:bg-slate-50">
-            <Filter className="h-4 w-4" /> Filtros Avançados
-          </Button>
         </div>
+      </div>
 
-        {/* Tabs & Content */}
-        <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white p-1 border border-slate-200 h-12 shadow-sm rounded-lg w-full md:w-auto overflow-x-auto flex justify-start">
-            <TabsTrigger
-              value="todos"
-              className="h-9 px-6 data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 font-medium"
-            >
-              Todos
-            </TabsTrigger>
-            <TabsTrigger
-              value="profissionais"
-              className="h-9 px-6 gap-2 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700"
-            >
-              <User className="h-4 w-4" /> Profissionais
-            </TabsTrigger>
-            <TabsTrigger
-              value="empresas"
-              className="h-9 px-6 gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-            >
-              <Building2 className="h-4 w-4" /> Empresas
-            </TabsTrigger>
-            <TabsTrigger
-              value="fornecedores"
-              className="h-9 px-6 gap-2 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700"
-            >
-              <Truck className="h-4 w-4" /> Fornecedores
-            </TabsTrigger>
-          </TabsList>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-10 max-w-7xl">
+        {/* Tabs */}
+        <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <TabsList className="bg-white p-1.5 border border-slate-200 shadow-sm rounded-xl h-auto flex-wrap">
+              <TabsTrigger
+                value="todos"
+                className="h-10 px-5 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+              >
+                Todos
+                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 data-[state=active]:bg-white/20 data-[state=active]:text-white">
+                  {items.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger
+                value="profissionais"
+                className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+              >
+                <User className="h-4 w-4" />
+                Profissionais
+              </TabsTrigger>
+              <TabsTrigger
+                value="empresas"
+                className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+              >
+                <Building2 className="h-4 w-4" />
+                Empresas
+              </TabsTrigger>
+              <TabsTrigger
+                value="fornecedores"
+                className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+              >
+                <Truck className="h-4 w-4" />
+                Fornecedores
+              </TabsTrigger>
+            </TabsList>
+
+            <p className="text-sm text-slate-500">
+              {filteredItems.length} {filteredItems.length === 1 ? "resultado" : "resultados"} encontrados
+            </p>
+          </div>
 
           <TabsContent value={activeTab} className="mt-0">
             {loading ? (
-              <div className="flex justify-center items-center py-20">
-                <Loader2 className="h-10 w-10 animate-spin text-primary/50" />
+              <div className="flex flex-col justify-center items-center py-32">
+                <Loader2 className="h-12 w-12 animate-spin text-[#A47528] mb-4" />
+                <p className="text-slate-500">Carregando parceiros...</p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-                <p className="text-slate-500 text-lg">Nenhum resultado encontrado para sua busca.</p>
+              <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Search className="h-10 w-10 text-slate-300" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">Nenhum resultado encontrado</h3>
+                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                  Não encontramos parceiros com os filtros selecionados. Tente ajustar sua busca.
+                </p>
                 <Button
-                  variant="link"
+                  variant="outline"
                   onClick={() => {
                     setSearchTerm("");
                     setActiveTab("todos");
                   }}
+                  className="rounded-full px-6"
                 >
                   Limpar filtros
                 </Button>
@@ -242,6 +331,24 @@ export default function Marketplace() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Trust Badges */}
+        <div className="mt-16 pt-12 border-t border-slate-100">
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 text-slate-400">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              <span className="text-sm font-medium">Parceiros Verificados</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              <span className="text-sm font-medium">Avaliações Reais</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              <span className="text-sm font-medium">Qualidade Garantida</span>
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* Modal de Detalhes */}
@@ -249,7 +356,7 @@ export default function Marketplace() {
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onReviewSubmitted={fetchMarketplaceData} // Recarrega para atualizar reviews se necessário
+        onReviewSubmitted={fetchMarketplaceData}
       />
     </div>
   );
