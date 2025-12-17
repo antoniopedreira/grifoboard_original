@@ -179,7 +179,15 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
     const path = item.data.logo_path;
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    const { data } = supabase.storage.from("public-uploads").getPublicUrl(path);
+    
+    // Usa o bucket correto baseado no tipo
+    const bucketName = item.type === "empresa" 
+      ? "formularios-empresas" 
+      : item.type === "profissional" 
+        ? "formularios-profissionais" 
+        : "formularios-fornecedores";
+    
+    const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
     return data.publicUrl;
   };
 
