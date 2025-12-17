@@ -285,8 +285,8 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4">
-          <TabsList className="w-full justify-start gap-2 bg-transparent p-0 h-auto border-b border-slate-100 pb-1 mb-4 overflow-x-auto">
+        <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4 min-h-0 overflow-hidden">
+          <TabsList className="w-full justify-start gap-2 bg-transparent p-0 h-auto border-b border-slate-100 pb-1 mb-4 overflow-x-auto flex-shrink-0">
             <TabsTrigger
               value="info"
               className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-2 bg-transparent shadow-none"
@@ -313,7 +313,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
             </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 -mx-6 px-6 pb-6">
+          <div className="flex-1 min-h-0 overflow-auto -mx-6 px-6 pb-6">
             <TabsContent value="info" className="mt-0 space-y-0">
               <DetailInfo item={item} />
             </TabsContent>
@@ -444,7 +444,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                 )}
               </div>
             </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>
