@@ -199,21 +199,23 @@ const MainPageContent = () => {
                   </Card>
                 </div>
 
-                <div className="space-y-6">
-                  <PCPGeneralCard
-                    className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
-                  />
-                  <AllCausesChart
-                    className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
-                  />
-                </div>
+                <PCPGeneralCard
+                  className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+                />
               </div>
 
-              {/* Ranking e Detalhamento */}
+              {/* Causas e Ranking */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AllCausesChart
+                  className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
+                />
                 <ExecutorRankingChart
                   className="shadow-sm hover:shadow-xl transition-shadow duration-300"
                 />
+              </div>
+
+              {/* Detalhamento */}
+              <div className="grid grid-cols-1 gap-6">
                 <BreakdownWithFilter
                   className="bg-white border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300"
                 />
