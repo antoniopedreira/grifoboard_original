@@ -73,7 +73,14 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
     // Se for um link completo (https...), retorna ele. Se não, monta a URL do Supabase.
     if (path.startsWith("http")) return path;
 
-    const { data } = supabase.storage.from("public-uploads").getPublicUrl(path);
+    // Usa o bucket correto baseado no tipo
+    const bucketName = item.type === "empresa" 
+      ? "formularios-empresas" 
+      : item.type === "profissional" 
+        ? "formularios-profissionais" 
+        : "formularios-fornecedores";
+
+    const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
     return data.publicUrl;
   };
 
