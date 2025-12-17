@@ -1,310 +1,256 @@
-import { useState, useEffect, useMemo } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import MainHeader from "@/components/MainHeader";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Building2, User, Truck, MapPin, Star, Filter } from "lucide-react";
+import { Search, Filter, Loader2, Building2, User, Truck } from "lucide-react";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
 import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
-import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-type TargetType = "empresa" | "profissional" | "fornecedor";
-
+// Definição unificada do Item
 interface MarketplaceItem {
   id: string;
-  type: TargetType;
+  type: "empresa" | "profissional" | "fornecedor";
   name: string;
   location: string;
-  categories?: string[];
-  rating: number;
+  categories: string[];
+  rating: number; // Placeholder por enquanto (ou busca de reviews)
   reviewCount: number;
-  data: any;
+  data: any; // Objeto completo do banco para o Modal usar
 }
 
-const REGIOES = [
-  "Norte",
-  "Nordeste", 
-  "Centro-Oeste",
-  "Sudeste",
-  "Sul"
-];
-
-const Marketplace = () => {
-  const { userSession } = useAuth();
-  const [activeTab, setActiveTab] = useState<TargetType>("profissional");
+export default function Marketplace() {
+  const [items, setItems] = useState<MarketplaceItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [regiaoFiltro, setRegiaoFiltro] = useState<string>("all");
-  const [categoriaFiltro, setCategoriaFiltro] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  const [empresas, setEmpresas] = useState<any[]>([]);
-  const [profissionais, setProfissionais] = useState<any[]>([]);
-  const [fornecedores, setFornecedores] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("todos");
 
-  const fetchData = async () => {
+  useEffect(() => {
+    fetchMarketplaceData();
+  }, []);
+
+  const fetchMarketplaceData = async () => {
     setLoading(true);
     try {
-      const [empresasRes, profissionaisRes, fornecedoresRes, reviewsRes] = await Promise.all([
-        supabase.from("formulario_empresas").select("*"),
-        supabase.from("formulario_profissionais").select("*"),
-        supabase.from("formulario_fornecedores").select("*"),
-        supabase.from("marketplace_reviews").select("*")
-      ]);
+      // 1. Buscar Profissionais
+      const { data: profs, error: errProfs } = await supabase.from("formulario_profissionais").select("*");
 
-      if (empresasRes.data) setEmpresas(empresasRes.data);
-      if (profissionaisRes.data) setProfissionais(profissionaisRes.data);
-      if (fornecedoresRes.data) setFornecedores(fornecedoresRes.data);
-      if (reviewsRes.data) setReviews(reviewsRes.data);
+      // 2. Buscar Empresas
+      const { data: empresas, error: errEmp } = await supabase.from("formulario_empresas").select("*");
+
+      // 3. Buscar Fornecedores
+      const { data: fornecedores, error: errForn } = await supabase.from("formulario_fornecedores").select("*");
+
+      if (errProfs || errEmp || errForn) {
+        console.error("Erro ao buscar dados:", errProfs, errEmp, errForn);
+        toast.error("Erro ao carregar o marketplace.");
+        return;
+      }
+
+      const allItems: MarketplaceItem[] = [];
+
+      // Mapear Profissionais
+      profs?.forEach((p) => {
+        // Tenta parsear especialidades se for string JSON, ou usa array direto, ou string única
+        let cats: string[] = [];
+        if (Array.isArray(p.especialidades)) cats = p.especialidades;
+        else if (typeof p.especialidades === "string") {
+          try {
+            cats = JSON.parse(p.especialidades);
+          } catch {
+            cats = [p.especialidades];
+          }
+        } else {
+          cats = [p.funcao_principal]; // Fallback
+        }
+
+        allItems.push({
+          id: p.id,
+          type: "profissional",
+          name: p.nome_completo || "Sem Nome",
+          location: p.cidade && p.estado ? `${p.cidade} - ${p.estado}` : "Localização não inf.",
+          categories: cats,
+          rating: 5.0, // Placeholder: Futuro -> buscar média de reviews
+          reviewCount: 0,
+          data: p, // Guarda tudo para o Modal
+        });
+      });
+
+      // Mapear Empresas
+      empresas?.forEach((e) => {
+        let cats: string[] = [];
+        if (Array.isArray(e.tipos_obras)) cats = e.tipos_obras;
+        else if (typeof e.tipos_obras === "string") {
+          try {
+            cats = JSON.parse(e.tipos_obras);
+          } catch {
+            cats = [e.tipos_obras];
+          }
+        }
+
+        allItems.push({
+          id: e.id,
+          type: "empresa",
+          name: e.nome_empresa || "Empresa Sem Nome",
+          location: e.cidade && e.estado ? `${e.cidade} - ${e.estado}` : "Localização não inf.",
+          categories: cats,
+          rating: 5.0,
+          reviewCount: 0,
+          data: e,
+        });
+      });
+
+      // Mapear Fornecedores
+      fornecedores?.forEach((f) => {
+        let cats: string[] = [];
+        if (Array.isArray(f.categorias_atendidas)) cats = f.categorias_atendidas;
+        else if (typeof f.categorias_atendidas === "string") {
+          try {
+            cats = JSON.parse(f.categorias_atendidas);
+          } catch {
+            cats = [f.categorias_atendidas];
+          }
+        }
+
+        allItems.push({
+          id: f.id,
+          type: "fornecedor",
+          name: f.nome_empresa || "Fornecedor Sem Nome",
+          location: f.cidade && f.estado ? `${f.cidade} - ${f.estado}` : "Localização não inf.",
+          categories: cats,
+          rating: 5.0,
+          reviewCount: 0,
+          data: f,
+        });
+      });
+
+      setItems(allItems);
     } catch (error) {
-      console.error("Error fetching marketplace data:", error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const getAverageRating = (targetType: TargetType, targetId: string) => {
-    const targetReviews = reviews.filter(
-      r => r.target_type === targetType && r.target_id === targetId
-    );
-    if (targetReviews.length === 0) return { rating: 0, count: 0 };
-    const avg = targetReviews.reduce((acc, r) => acc + r.rating, 0) / targetReviews.length;
-    return { rating: Math.round(avg * 10) / 10, count: targetReviews.length };
-  };
-
-  const processedItems = useMemo(() => {
-    let items: MarketplaceItem[] = [];
-
-    if (activeTab === "empresa") {
-      items = empresas.map(e => {
-        const { rating, count } = getAverageRating("empresa", e.id);
-        return {
-          id: e.id,
-          type: "empresa" as TargetType,
-          name: e.nome_empresa,
-          location: `${e.cidade}, ${e.estado}`,
-          categories: e.tipos_obras || [],
-          rating,
-          reviewCount: count,
-          data: e
-        };
-      });
-    } else if (activeTab === "profissional") {
-      items = profissionais.map(p => {
-        const { rating, count } = getAverageRating("profissional", p.id);
-        return {
-          id: p.id,
-          type: "profissional" as TargetType,
-          name: p.nome_completo,
-          location: `${p.cidade}, ${p.estado}`,
-          categories: p.especialidades || [],
-          rating,
-          reviewCount: count,
-          data: p
-        };
-      });
-    } else {
-      items = fornecedores.map(f => {
-        const { rating, count } = getAverageRating("fornecedor", f.id);
-        return {
-          id: f.id,
-          type: "fornecedor" as TargetType,
-          name: f.nome_empresa,
-          location: `${f.cidade}, ${f.estado}`,
-          categories: f.categorias_atendidas || [],
-          rating,
-          reviewCount: count,
-          data: f
-        };
-      });
-    }
-
-    // Apply filters
-    if (searchTerm) {
-      items = items.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.categories?.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    if (regiaoFiltro && regiaoFiltro !== "all") {
-      items = items.filter(item => {
-        const data = item.data;
-        const regioes = data.regioes_atendidas || [];
-        return regioes.includes(regiaoFiltro);
-      });
-    }
-
-    if (categoriaFiltro && categoriaFiltro !== "all") {
-      items = items.filter(item => 
-        item.categories?.includes(categoriaFiltro)
-      );
-    }
-
-    return items;
-  }, [activeTab, empresas, profissionais, fornecedores, reviews, searchTerm, regiaoFiltro, categoriaFiltro]);
-
-  const availableCategories = useMemo(() => {
-    let categories: string[] = [];
-    if (activeTab === "empresa") {
-      empresas.forEach(e => {
-        if (e.tipos_obras) categories.push(...e.tipos_obras);
-      });
-    } else if (activeTab === "profissional") {
-      profissionais.forEach(p => {
-        if (p.especialidades) categories.push(...p.especialidades);
-      });
-    } else {
-      fornecedores.forEach(f => {
-        if (f.categorias_atendidas) categories.push(...f.categorias_atendidas);
-      });
-    }
-    return [...new Set(categories)].sort();
-  }, [activeTab, empresas, profissionais, fornecedores]);
 
   const handleCardClick = (item: MarketplaceItem) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
 
-  const handleReviewSubmitted = () => {
-    fetchData();
-  };
+  // Lógica de Filtro
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.categories.some((c) => c.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const getTabIcon = (type: TargetType) => {
-    switch (type) {
-      case "empresa": return <Building2 className="h-4 w-4" />;
-      case "profissional": return <User className="h-4 w-4" />;
-      case "fornecedor": return <Truck className="h-4 w-4" />;
-    }
-  };
+    const matchesTab =
+      activeTab === "todos" ||
+      (activeTab === "profissionais" && item.type === "profissional") ||
+      (activeTab === "empresas" && item.type === "empresa") ||
+      (activeTab === "fornecedores" && item.type === "fornecedor");
+
+    return matchesSearch && matchesTab;
+  });
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
-        {/* Header */}
+    <div className="min-h-screen bg-slate-50/50">
+      <MainHeader onNewTaskClick={() => {}} onRegistryClick={() => {}} onChecklistClick={() => {}} />
+
+      <main className="container mx-auto px-4 py-8 mt-16 max-w-7xl">
+        {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Marketplace</h1>
-          <p className="text-muted-foreground">
-            Encontre profissionais, empresas e fornecedores para sua obra
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Marketplace Grifo</h1>
+          <p className="text-slate-500 mt-2">
+            Encontre os melhores profissionais e parceiros homologados para sua obra.
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-card rounded-xl border shadow-sm p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome, cidade ou categoria..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Select value={regiaoFiltro} onValueChange={setRegiaoFiltro}>
-                <SelectTrigger className="w-[160px]">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Região" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas regiões</SelectItem>
-                  {REGIOES.map(r => (
-                    <SelectItem key={r} value={r}>{r}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas categorias</SelectItem>
-                  {availableCategories.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Search & Filter Bar */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            <Input
+              placeholder="Buscar por nome, cidade ou especialidade..."
+              className="pl-10 h-12 bg-white shadow-sm border-slate-200 text-base"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
+          <Button variant="outline" className="h-12 px-6 gap-2 bg-white border-slate-200 hover:bg-slate-50">
+            <Filter className="h-4 w-4" /> Filtros Avançados
+          </Button>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => {
-          setActiveTab(v as TargetType);
-          setCategoriaFiltro("all");
-        }}>
-          <TabsList className="mb-6 bg-muted/50">
-            <TabsTrigger value="profissional" className="gap-2">
-              <User className="h-4 w-4" />
-              Profissionais
+        {/* Tabs & Content */}
+        <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-white p-1 border border-slate-200 h-12 shadow-sm rounded-lg w-full md:w-auto overflow-x-auto flex justify-start">
+            <TabsTrigger
+              value="todos"
+              className="h-9 px-6 data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 font-medium"
+            >
+              Todos
             </TabsTrigger>
-            <TabsTrigger value="fornecedor" className="gap-2">
-              <Truck className="h-4 w-4" />
-              Fornecedores
+            <TabsTrigger
+              value="profissionais"
+              className="h-9 px-6 gap-2 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700"
+            >
+              <User className="h-4 w-4" /> Profissionais
             </TabsTrigger>
-            <TabsTrigger value="empresa" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              Empresas
+            <TabsTrigger
+              value="empresas"
+              className="h-9 px-6 gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <Building2 className="h-4 w-4" /> Empresas
+            </TabsTrigger>
+            <TabsTrigger
+              value="fornecedores"
+              className="h-9 px-6 gap-2 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700"
+            >
+              <Truck className="h-4 w-4" /> Fornecedores
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={activeTab}>
+          <TabsContent value={activeTab} className="mt-0">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="h-64 rounded-xl" />
-                ))}
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-10 w-10 animate-spin text-primary/50" />
               </div>
-            ) : processedItems.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                  {getTabIcon(activeTab)}
-                </div>
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  Nenhum resultado encontrado
-                </h3>
-                <p className="text-muted-foreground">
-                  Tente ajustar os filtros ou a busca
-                </p>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+                <p className="text-slate-500 text-lg">Nenhum resultado encontrado para sua busca.</p>
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setActiveTab("todos");
+                  }}
+                >
+                  Limpar filtros
+                </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {processedItems.map((item) => (
-                  <MarketplaceCard
-                    key={item.id}
-                    item={item}
-                    onClick={() => handleCardClick(item)}
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredItems.map((item) => (
+                  <MarketplaceCard key={item.id} item={item} onClick={() => handleCardClick(item)} />
                 ))}
               </div>
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
 
-      {/* Detail Modal */}
+      {/* Modal de Detalhes */}
       <MarketplaceDetailModal
         item={selectedItem}
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedItem(null);
-        }}
-        onReviewSubmitted={handleReviewSubmitted}
+        onClose={() => setIsModalOpen(false)}
+        onReviewSubmitted={fetchMarketplaceData} // Recarrega para atualizar reviews se necessário
       />
     </div>
   );
-};
-
-export default Marketplace;
+}
