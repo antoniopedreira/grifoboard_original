@@ -17,6 +17,7 @@ import {
   Briefcase,
   Award,
   Image as ImageIcon,
+  Phone,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cadastrosService } from "@/services/cadastrosService";
@@ -35,15 +36,20 @@ const OPCOES_TIPOS = [
 ];
 
 const OPCOES_CATEGORIAS = [
-  "Material Básico (Cimento, Areia, Brita)",
-  "Aço e Estrutura Metálica",
-  "Elétrica e Iluminação",
-  "Hidráulica e Esgoto",
-  "Pisos e Revestimentos",
-  "Tintas e Impermeabilizantes",
-  "Portas, Janelas e Vidros",
-  "Madeiras e Telhados",
-  "Ferramentas e EPIs",
+  "Estrutura",
+  "Alvenaria",
+  "Impermeabilização",
+  "Acabamento",
+  "Hidráulica",
+  "Elétrica",
+  "Pintura",
+  "Drywall",
+  "Marcenaria",
+  "Gesso",
+  "Serralheria",
+  "Demolição",
+  "Locação de equipamentos",
+  "Entrega / logística",
   "Outro",
 ];
 
@@ -87,6 +93,17 @@ const ESTADOS_BR = [
   "SE",
   "TO",
 ];
+
+// --- Máscara de CNPJ ---
+const formatCNPJ = (value: string) => {
+  return value
+    .replace(/\D/g, "")
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2")
+    .substring(0, 18);
+};
 
 // --- Componente de Upload ---
 const UploadField = ({
@@ -224,10 +241,13 @@ export default function Fornecedores() {
   // Arquivos
   const [filesLogo, setFilesLogo] = useState<File[]>([]);
   const [filesPortfolio, setFilesPortfolio] = useState<File[]>([]);
-  const [filesFotosTrabalhos, setFilesFotosTrabalhos] = useState<File[]>([]); // NOVA
+  const [filesFotosTrabalhos, setFilesFotosTrabalhos] = useState<File[]>([]);
   const [filesCertificacoes, setFilesCertificacoes] = useState<File[]>([]);
 
   const handleChange = (field: string, value: string) => {
+    if (field === "cnpj_cpf") {
+      value = formatCNPJ(value);
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -252,9 +272,7 @@ export default function Fornecedores() {
       const fileExt = file.name.split(".").pop();
       const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      const { data, error } = await supabase.storage
-        .from("formularios-fornecedores") // Usa bucket específico
-        .upload(fileName, file);
+      const { data, error } = await supabase.storage.from("formularios-fornecedores").upload(fileName, file);
 
       if (!error && data) {
         const { data: urlData } = supabase.storage.from("formularios-fornecedores").getPublicUrl(data.path);
@@ -265,12 +283,8 @@ export default function Fornecedores() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.nome_empresa || !formData.cnpj_cpf || !formData.telefone) {
-      toast({
-        title: "Dados incompletos",
-        description: "Verifique os dados da empresa e contato.",
-        variant: "destructive",
-      });
+    if (!formData.nome_empresa || !formData.cnpj_cpf) {
+      toast({ title: "Dados incompletos", description: "Verifique os dados da empresa.", variant: "destructive" });
       setStep(1);
       return;
     }
@@ -281,9 +295,14 @@ export default function Fornecedores() {
       return;
     }
 
+    if (!formData.nome_responsavel || !formData.telefone || !formData.email) {
+      toast({ title: "Contato incompleto", description: "Preencha os dados do responsável.", variant: "destructive" });
+      setStep(3);
+      return;
+    }
+
     setLoading(true);
     try {
-      // Upload paralelo
       const [logoUrls, portfolioUrls, fotosUrls, certUrls] = await Promise.all([
         uploadFiles(filesLogo, "logos"),
         uploadFiles(filesPortfolio, "portfolios"),
@@ -297,7 +316,7 @@ export default function Fornecedores() {
 
         logo_path: logoUrls[0] || null,
         portfolio_path: JSON.stringify(portfolioUrls),
-        fotos_trabalhos_path: JSON.stringify(fotosUrls), // NOVA COLUNA
+        fotos_trabalhos_path: JSON.stringify(fotosUrls),
         certificacoes_path: JSON.stringify(certUrls),
       };
 
@@ -306,7 +325,7 @@ export default function Fornecedores() {
       window.scrollTo(0, 0);
     } catch (error) {
       console.error(error);
-      toast({ title: "Erro", description: "Falha ao enviar cadastro.", variant: "destructive" });
+      toast({ title: "Erro", description: "Falha ao enviar cadastro. Tente novamente.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -380,6 +399,7 @@ export default function Fornecedores() {
                 required
                 placeholder="00.000.000/0000-00"
                 className="bg-slate-50 h-12"
+                maxLength={18}
               />
             </div>
 
@@ -409,29 +429,6 @@ export default function Fornecedores() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Telefone / WhatsApp *</Label>
-                <Input
-                  value={formData.telefone}
-                  onChange={(e) => handleChange("telefone", e.target.value)}
-                  required
-                  placeholder="(00) 99999-9999"
-                  className="bg-slate-50 h-12"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>E-mail *</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  required
-                  className="bg-slate-50 h-12"
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
               <Label>Site ou Instagram</Label>
               <Input
@@ -456,7 +453,7 @@ export default function Fornecedores() {
           </div>
         )}
 
-        {/* ETAPA 2: O QUE FORNECE */}
+        {/* ETAPA 2: PERFIL COMERCIAL (O QUE FORNECE + DIFERENCIAIS) */}
         {step === 2 && (
           <div className="space-y-6 animate-in slide-in-from-right duration-500">
             <div className="space-y-3">
@@ -497,6 +494,14 @@ export default function Fornecedores() {
                   </div>
                 ))}
               </div>
+              {formData.categorias_atendidas.includes("Outro") && (
+                <Input
+                  placeholder="Qual outra categoria?"
+                  value={formData.categorias_outro}
+                  onChange={(e) => handleChange("categorias_outro", e.target.value)}
+                  className="mt-2 h-12"
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -526,18 +531,15 @@ export default function Fornecedores() {
                   <SelectContent>
                     <SelectItem value="1 obra">1 Obra</SelectItem>
                     <SelectItem value="2-3 obras">2 a 3 Obras</SelectItem>
-                    <SelectItem value="Grande Escala">Grande Escala (Varejo)</SelectItem>
+                    <SelectItem value="4-5 obras">4 a 5 Obras</SelectItem>
+                    <SelectItem value="6+ obras">6+ Obras</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* ETAPA 3: DIFERENCIAIS E ARQUIVOS */}
-        {step === 3 && (
-          <div className="space-y-6 animate-in slide-in-from-right duration-500">
-            <div className="space-y-3">
+            {/* DIFERENCIAIS MOVIDOS PARA CÁ (ETAPA 2) */}
+            <div className="space-y-3 border-t pt-4">
               <Label>Diferenciais (Até 3)</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-md border border-slate-100">
                 {OPCOES_DIFERENCIAIS.map((dif) => (
@@ -555,10 +557,14 @@ export default function Fornecedores() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
 
-            {/* SEÇÃO DE ARQUIVOS DIVIDIDA */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
-              {/* 1. Catálogo PDF */}
+        {/* ETAPA 3: ARQUIVOS E CONTATO */}
+        {step === 3 && (
+          <div className="space-y-6 animate-in slide-in-from-right duration-500">
+            {/* SEÇÃO DE ARQUIVOS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="bg-slate-100 p-2 rounded-lg">
@@ -577,7 +583,6 @@ export default function Fornecedores() {
                 />
               </div>
 
-              {/* 2. Fotos de Produtos */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="bg-slate-100 p-2 rounded-lg">
@@ -615,15 +620,45 @@ export default function Fornecedores() {
               />
             </div>
 
-            <div className="space-y-2 pt-4">
-              <Label>Responsável pelo Contato</Label>
-              <Input
-                value={formData.nome_responsavel}
-                onChange={(e) => handleChange("nome_responsavel", e.target.value)}
-                required
-                placeholder="Nome do vendedor/gerente"
-                className="h-12"
-              />
+            {/* CONTATO COMPLETO MOVIDO PARA CÁ */}
+            <div className="space-y-4 pt-6 border-t">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-primary" /> Responsável pelo Contato
+              </h3>
+
+              <div className="space-y-2">
+                <Label>Nome Completo *</Label>
+                <Input
+                  value={formData.nome_responsavel}
+                  onChange={(e) => handleChange("nome_responsavel", e.target.value)}
+                  required
+                  placeholder="Nome do vendedor/gerente"
+                  className="h-12"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Telefone / WhatsApp *</Label>
+                  <Input
+                    value={formData.telefone}
+                    onChange={(e) => handleChange("telefone", e.target.value)}
+                    required
+                    placeholder="(00) 99999-9999"
+                    className="h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>E-mail *</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    required
+                    className="h-12"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}
