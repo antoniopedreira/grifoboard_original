@@ -1,8 +1,8 @@
-import { MapPin, Star, Building2, User, Truck, Phone } from "lucide-react";
+import { MapPin, Star, Building2, User, Truck, Phone, Mail } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPhoneNumber } from "@/lib/utils/formatPhone";
-import { supabase } from "@/integrations/supabase/client"; //
+import { supabase } from "@/integrations/supabase/client";
 
 type TargetType = "empresa" | "profissional" | "fornecedor";
 
@@ -45,15 +45,27 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
     }
   };
 
+  // Info específico por tipo
   const getExtraInfo = () => {
     if (item.type === "profissional") {
-      return item.data.funcao_principal || null;
+      const funcao = item.data.funcao_principal;
+      const outro = item.data.funcao_principal_outro;
+      return funcao === "Outro" && outro ? outro : funcao;
     }
     if (item.type === "fornecedor") {
-      return item.data.tempo_atuacao ? `${item.data.tempo_atuacao} no mercado` : null;
+      // Tipos de atuação
+      let tipos: string[] = [];
+      if (Array.isArray(item.data.tipos_atuacao)) {
+        tipos = item.data.tipos_atuacao;
+      }
+      if (item.data.tipo_atuacao_outro) {
+        tipos = tipos.filter(t => t !== "Outro");
+        tipos.push(item.data.tipo_atuacao_outro);
+      }
+      return tipos.length > 0 ? tipos.slice(0, 2).join(", ") + (tipos.length > 2 ? "..." : "") : null;
     }
     if (item.type === "empresa") {
-      return item.data.tamanho_empresa ? `${item.data.tamanho_empresa} funcionários` : null;
+      return item.data.tamanho_empresa ? `${item.data.tamanho_empresa}` : null;
     }
     return null;
   };
@@ -65,15 +77,38 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
     return formatPhoneNumber(item.data.telefone);
   };
 
-  // Lógica para recuperar a URL da imagem
+  const getEmail = () => {
+    if (item.type === "empresa") {
+      return item.data.email_contato;
+    }
+    return item.data.email;
+  };
+
+  // Categorias com "outro"
+  const getCategories = () => {
+    let cats: string[] = item.categories || [];
+    
+    if (item.type === "fornecedor" && item.data.categorias_outro) {
+      cats = cats.filter(c => c !== "Outro");
+      cats.push(item.data.categorias_outro);
+    }
+    if (item.type === "profissional" && item.data.especialidades_outro) {
+      cats = cats.filter(c => c !== "Outro");
+      cats.push(item.data.especialidades_outro);
+    }
+    if (item.type === "empresa" && item.data.tipos_obras_outro) {
+      cats = cats.filter(c => c !== "Outro");
+      cats.push(item.data.tipos_obras_outro);
+    }
+    
+    return cats;
+  };
+
   const getLogoUrl = () => {
     const path = item.data.logo_path;
     if (!path) return null;
-
-    // Se for um link completo (https...), retorna ele. Se não, monta a URL do Supabase.
     if (path.startsWith("http")) return path;
 
-    // Usa o bucket correto baseado no tipo
     const bucketName = item.type === "empresa" 
       ? "formularios-empresas" 
       : item.type === "profissional" 
@@ -86,7 +121,9 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
 
   const extraInfo = getExtraInfo();
   const phone = getPhone();
-  const logoUrl = getLogoUrl(); // Recupera a URL
+  const email = getEmail();
+  const logoUrl = getLogoUrl();
+  const categories = getCategories();
 
   return (
     <Card
@@ -104,7 +141,6 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
         }`}
       >
         <div className="absolute top-3 right-3">
-          {/* SE TIVER LOGO, MOSTRA A FOTO. SE NÃO, O ÍCONE */}
           {logoUrl ? (
             <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm overflow-hidden bg-white">
               <img
@@ -112,9 +148,7 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
                 alt={item.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none"; // Esconde se der erro
-                  (e.target as HTMLImageElement).parentElement!.innerHTML =
-                    `<div class="w-full h-full flex items-center justify-center ${getTypeColor()}">${item.type === "empresa" ? "<svg...>" : ""}</div>`; // Fallback visual simples
+                  (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
             </div>
@@ -140,37 +174,45 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
         </h3>
 
         {/* Location */}
-        <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+        <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
           <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
           <span className="line-clamp-1">{item.location}</span>
         </div>
 
         {/* Phone */}
         {phone && (
-          <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+          <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
             <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-            <span>{phone}</span>
+            <span className="line-clamp-1">{phone}</span>
           </div>
         )}
 
-        {/* Extra info */}
+        {/* Email */}
+        {email && (
+          <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+            <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="line-clamp-1 text-xs">{email}</span>
+          </div>
+        )}
+
+        {/* Extra info (Tipos de Atuação / Função / Tamanho) */}
         {extraInfo && (
-          <p className="text-xs text-muted-foreground mb-3 font-medium px-2 py-1 bg-muted/50 rounded-md inline-block">
+          <p className="text-xs text-muted-foreground mb-2 font-medium px-2 py-1 bg-muted/50 rounded-md inline-block line-clamp-1">
             {extraInfo}
           </p>
         )}
 
         {/* Categories */}
-        {item.categories && item.categories.length > 0 && (
+        {categories && categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {item.categories.slice(0, 2).map((cat, idx) => (
+            {categories.slice(0, 2).map((cat, idx) => (
               <Badge key={idx} variant="secondary" className="text-[10px] font-normal px-1.5 h-5">
                 {cat}
               </Badge>
             ))}
-            {item.categories.length > 2 && (
+            {categories.length > 2 && (
               <Badge variant="outline" className="text-[10px] font-normal px-1.5 h-5">
-                +{item.categories.length - 2}
+                +{categories.length - 2}
               </Badge>
             )}
           </div>
