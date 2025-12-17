@@ -76,6 +76,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingReview, setExistingReview] = useState<Review | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLogoLightboxOpen, setIsLogoLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (item && isOpen) {
@@ -258,9 +259,17 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
         <div className="relative -mt-20 mx-6 mb-2">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
             {/* Avatar / Logo */}
-            <div className="rounded-2xl p-1 bg-white shadow-xl">
+            <div 
+              className={`rounded-2xl p-1 bg-white shadow-xl ${logoUrl ? 'cursor-pointer group' : ''}`}
+              onClick={() => logoUrl && setIsLogoLightboxOpen(true)}
+            >
               {logoUrl ? (
-                <img src={logoUrl} alt={item.name} className="w-32 h-32 rounded-xl object-cover bg-slate-100" />
+                <div className="relative">
+                  <img src={logoUrl} alt={item.name} className="w-32 h-32 rounded-xl object-cover bg-slate-100 transition-transform group-hover:scale-105" />
+                  <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6" />
+                  </div>
+                </div>
               ) : (
                 <div
                   className={`w-32 h-32 rounded-xl bg-gradient-to-br ${getTypeColor()} flex items-center justify-center text-white`}
@@ -269,6 +278,19 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
                 </div>
               )}
             </div>
+
+            {/* Logo Lightbox */}
+            {isLogoLightboxOpen && logoUrl && (
+              <div
+                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+                onClick={() => setIsLogoLightboxOpen(false)}
+              >
+                <button className="absolute top-4 right-4 text-white hover:text-white/80 transition-colors">
+                  <X className="h-8 w-8" />
+                </button>
+                <img src={logoUrl} alt={item.name} className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl" />
+              </div>
+            )}
 
             <div className="flex-1 pb-2">
               <Badge variant="secondary" className="mb-2">
