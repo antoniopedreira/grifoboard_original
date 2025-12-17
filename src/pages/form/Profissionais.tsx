@@ -305,7 +305,7 @@ export default function Profissionais() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Nascimento</Label>
+                <Label>Nascimento *</Label>
                 <Input
                   type="date"
                   value={formData.data_nascimento}
@@ -326,7 +326,7 @@ export default function Profissionais() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>Email *</Label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -337,7 +337,7 @@ export default function Profissionais() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Cidade</Label>
+                <Label>Cidade *</Label>
                 <Input
                   value={formData.cidade}
                   onChange={(e) => handleChange("cidade", e.target.value)}
@@ -345,7 +345,7 @@ export default function Profissionais() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Estado</Label>
+                <Label>Estado *</Label>
                 <Input
                   value={formData.estado}
                   onChange={(e) => handleChange("estado", e.target.value)}
@@ -390,7 +390,7 @@ export default function Profissionais() {
                   value={formData.tempo_experiencia}
                 >
                   <SelectTrigger className="bg-slate-50">
-                    <SelectValue placeholder="Selecione conforme sua experiência" />
+                    <SelectValue placeholder="Anos" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Iniciante">Iniciante</SelectItem>
@@ -411,9 +411,10 @@ export default function Profissionais() {
                     <SelectValue placeholder="Prefere..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CLT">CLT (Fixo)</SelectItem>
-                    <SelectItem value="PJ">PJ (Nota Fiscal)</SelectItem>
-                    <SelectItem value="Diaria">Diária / Empreita</SelectItem>
+                    <SelectItem value="CLT">CLT</SelectItem>
+                    <SelectItem value="PJ">PJ</SelectItem>
+                    <SelectItem value="Diaria">PF / Diária</SelectItem>
+                    <SelectItem value="Diaria">Freelancer (Por Obra)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
