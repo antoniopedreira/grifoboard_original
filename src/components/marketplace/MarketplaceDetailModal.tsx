@@ -232,7 +232,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden border-0 rounded-2xl shadow-2xl bg-white">
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden border-0 rounded-2xl shadow-2xl bg-white flex flex-col">
         {/* Header with gradient */}
         <div className={`relative bg-gradient-to-r ${getTypeColor()} p-6 pb-24`}>
           <button
@@ -306,7 +306,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4">
+        <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4 min-h-0 overflow-hidden">
           <TabsList className="w-full justify-start gap-2 bg-transparent p-0 h-auto border-b border-slate-100 pb-1 mb-4 overflow-x-auto">
             <TabsTrigger
               value="info"
@@ -334,7 +334,7 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
             </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 -mx-6 px-6 pb-6">
+          <ScrollArea className="flex-1 -mx-6 px-6 pb-6 h-full overflow-y-auto">
             <TabsContent value="info" className="mt-0 space-y-0">
               <DetailInfo item={item} />
             </TabsContent>
@@ -677,6 +677,62 @@ const DocumentsSection = ({ item }: { item: MarketplaceItem }) => {
 const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
   const { data } = item;
 
+  // Formatador de valores legíveis
+  const formatValue = (value: string | undefined): string => {
+    if (!value) return "";
+    
+    const mappings: Record<string, string> = {
+      // Ticket médio / valores
+      "ate-200k": "Até R$ 200.000",
+      "200k-800k": "R$ 200.000 a R$ 800.000",
+      "800k-2m": "R$ 800.000 a R$ 2.000.000",
+      "2m-5m": "R$ 2.000.000 a R$ 5.000.000",
+      "acima-5m": "Acima de R$ 5.000.000",
+      "ate-5000": "Até R$ 5.000",
+      "5000-20000": "R$ 5.000 a R$ 20.000",
+      "20000-50000": "R$ 20.000 a R$ 50.000",
+      "acima-50000": "Acima de R$ 50.000",
+      
+      // Tempo de atuação / experiência
+      "menos-1-ano": "Menos de 1 ano",
+      "1-3-anos": "1 a 3 anos",
+      "3-5-anos": "3 a 5 anos",
+      "5-mais-anos": "Mais de 5 anos",
+      "5-10-anos": "5 a 10 anos",
+      "mais-10-anos": "Mais de 10 anos",
+      
+      // Capacidade / Obras
+      "1-2-obras": "1 a 2 obras",
+      "3-5-obras": "3 a 5 obras",
+      "6-mais-obras": "Mais de 6 obras",
+      "0-2": "0 a 2 obras",
+      "3-5": "3 a 5 obras",
+      "6-10": "6 a 10 obras",
+      "11-20": "11 a 20 obras",
+      "21+": "Mais de 21 obras",
+      
+      // Tamanho empresa
+      "micro-1-9": "Micro (1-9 funcionários)",
+      "pequena-10-49": "Pequena (10-49 funcionários)",
+      "media-50-99": "Média (50-99 funcionários)",
+      "grande-100+": "Grande (100+ funcionários)",
+      
+      // Disponibilidade
+      "imediata": "Imediata",
+      "15-dias": "Em 15 dias",
+      "30-dias": "Em 30 dias",
+      "somente-contrato": "Somente com contrato",
+      
+      // Modalidade trabalho
+      "clt": "CLT",
+      "pj": "PJ",
+      "autonomo-diaria": "Autônomo/Diária",
+      "freelance-projeto": "Freelance por projeto",
+    };
+    
+    return mappings[value.toLowerCase()] || value.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   // Helper para exibir arrays com "outro"
   const formatArrayWithOutro = (arr: string[] | undefined, outro: string | undefined) => {
     if (!arr || arr.length === 0) return null;
@@ -717,19 +773,19 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
             {data.tempo_atuacao && (
               <div>
                 <p className="text-xs text-muted-foreground">Tempo de Atuação</p>
-                <p>{data.tempo_atuacao}</p>
+                <p>{formatValue(data.tempo_atuacao)}</p>
               </div>
             )}
             {data.ticket_medio && (
               <div>
                 <p className="text-xs text-muted-foreground">Ticket Médio</p>
-                <p>{data.ticket_medio}</p>
+                <p>{formatValue(data.ticket_medio)}</p>
               </div>
             )}
             {data.capacidade_atendimento && (
               <div>
                 <p className="text-xs text-muted-foreground">Capacidade de Atendimento</p>
-                <p>{data.capacidade_atendimento}</p>
+                <p>{formatValue(data.capacidade_atendimento)}</p>
               </div>
             )}
           </div>
@@ -835,19 +891,19 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
             {data.tempo_experiencia && (
               <div>
                 <p className="text-xs text-muted-foreground">Tempo de Experiência</p>
-                <p>{data.tempo_experiencia}</p>
+                <p>{formatValue(data.tempo_experiencia)}</p>
               </div>
             )}
             {data.disponibilidade_atual && (
               <div>
                 <p className="text-xs text-muted-foreground">Disponibilidade</p>
-                <p>{data.disponibilidade_atual}</p>
+                <p>{formatValue(data.disponibilidade_atual)}</p>
               </div>
             )}
             {data.modalidade_trabalho && (
               <div>
                 <p className="text-xs text-muted-foreground">Modalidade de Trabalho</p>
-                <p>{data.modalidade_trabalho}</p>
+                <p>{formatValue(data.modalidade_trabalho)}</p>
               </div>
             )}
             {data.pretensao_valor && (
@@ -859,7 +915,7 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
             {data.equipamentos_proprios && (
               <div>
                 <p className="text-xs text-muted-foreground">Equipamentos Próprios</p>
-                <p>{data.equipamentos_proprios}</p>
+                <p>{formatValue(data.equipamentos_proprios)}</p>
               </div>
             )}
           </div>
@@ -955,19 +1011,19 @@ const DetailInfo = ({ item }: { item: MarketplaceItem }) => {
             {data.tamanho_empresa && (
               <div>
                 <p className="text-xs text-muted-foreground">Tamanho</p>
-                <p>{data.tamanho_empresa}</p>
+                <p>{formatValue(data.tamanho_empresa)}</p>
               </div>
             )}
             {data.obras_andamento && (
               <div>
                 <p className="text-xs text-muted-foreground">Obras em Andamento</p>
-                <p>{data.obras_andamento}</p>
+                <p>{formatValue(data.obras_andamento)}</p>
               </div>
             )}
             {data.ticket_medio && (
               <div>
                 <p className="text-xs text-muted-foreground">Ticket Médio</p>
-                <p>{data.ticket_medio}</p>
+                <p>{formatValue(data.ticket_medio)}</p>
               </div>
             )}
           </div>
