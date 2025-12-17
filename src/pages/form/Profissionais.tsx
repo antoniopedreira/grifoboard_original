@@ -40,7 +40,7 @@ const OPCOES_DIFERENCIAIS = [
 ];
 
 const OPCOES_ESPECIALIDADES = [
-  "Acabamentos (Pisos/Revestimentos)",
+  "Acabamentos",
   "Alvenaria / Estrutura",
   "Carpintaria / Marcenaria",
   "Elétrica Residencial",

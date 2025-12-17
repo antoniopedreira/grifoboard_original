@@ -342,6 +342,7 @@ export type Database = {
           funcao_principal: string
           funcao_principal_outro: string | null
           id: string
+          logo_path: string | null
           modalidade_trabalho: string
           nome_completo: string
           obras_relevantes: string | null
@@ -370,6 +371,7 @@ export type Database = {
           funcao_principal: string
           funcao_principal_outro?: string | null
           id?: string
+          logo_path?: string | null
           modalidade_trabalho: string
           nome_completo: string
           obras_relevantes?: string | null
@@ -398,6 +400,7 @@ export type Database = {
           funcao_principal?: string
           funcao_principal_outro?: string | null
           id?: string
+          logo_path?: string | null
           modalidade_trabalho?: string
           nome_completo?: string
           obras_relevantes?: string | null
