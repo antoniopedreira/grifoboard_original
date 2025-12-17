@@ -1,529 +1,564 @@
-import { useState } from "react";
-import FormTemplate from "./FormTemplate";
-import { Button } from "@/components/ui/button";
+import { useState, useRef } from "react";
+import { PublicFormLayout } from "@/components/PublicFormLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
-import FormSectionHeader from "@/components/task-form/FormSectionHeader";
-import { SuccessModal } from "@/components/SuccessModal";
-import { FileUploadButton } from "@/components/FileUploadButton";
-const ESTADOS_BRASILEIROS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
-const FUNCOES_PRINCIPAIS = ["Engenheiro", "Técnico de construção", "Mestre de obras", "Pedreiro", "Carpinteiro", "Eletricista", "Encanador", "Pintor", "Gesseiro", "Serralheiro", "Servente", "Arquiteto", "Outro"];
-const ESPECIALIDADES = ["Estrutura", "Alvenaria", "Acabamento", "Hidráulica", "Elétrica", "Drywall", "Pintura", "Revestimentos", "Impermeabilização", "Demolição", "Outra"];
-const TEMPO_EXPERIENCIA = ["Menos de 1 ano", "1–3 anos", "3–5 anos", "Mais de 5 anos"];
-const DISPONIBILIDADE_ATUAL = ["Imediata", "Em 15 dias", "Em 30 dias", "Apenas por contrato pontual"];
-const MODALIDADE_TRABALHO = ["CLT", "PJ", "Pessoa física / diária", "Freelancer por obra"];
-const REGIOES_BRASIL = ["Região Norte", "Região Nordeste", "Região Centro-Oeste", "Região Sudeste", "Região Sul"];
-const DIFERENCIAIS = ["Experiência com obras de médio/grande porte", "Especialização técnica", "Curso profissionalizante", "Certificação NR", "Carteira de motorista", "Veículo próprio", "Outro"];
-const EQUIPAMENTOS_PROPRIOS = ["Sim", "Não", "Parcialmente"];
-const FormProfissionais = () => {
-  const [loading, setLoading] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [uploadingFiles, setUploadingFiles] = useState(false);
-  const [curriculoFile, setCurriculoFile] = useState<File | null>(null);
-  const [fotosFiles, setFotosFiles] = useState<FileList | null>(null);
-  const [certificacoesFiles, setCertificacoesFiles] = useState<FileList | null>(null);
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Users,
+  Loader2,
+  CheckCircle2,
+  UploadCloud,
+  Image as ImageIcon,
+  FileText,
+  X,
+  ChevronRight,
+  ChevronLeft,
+  GraduationCap,
+  Briefcase,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { cadastrosService } from "@/services/cadastrosService";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
-  const [formData, setFormData] = useState({
-    nomeCompleto: "",
-    cpf: "",
-    dataNascimento: "",
-    cidade: "",
-    estado: "",
-    funcaoPrincipal: "",
-    funcaoPrincipalOutro: "",
-    especialidades: [] as string[],
-    especialidadesOutro: "",
-    tempoExperiencia: "",
-    obrasRelevantes: "",
-    disponibilidadeAtual: "",
-    modalidadeTrabalho: "",
-    regioesAtendidas: [] as string[],
-    cidadesFrequentes: "",
-    pretensaoValor: "",
-    equipamentosProprios: "",
-    diferenciais: [] as string[],
-    diferenciaisOutro: "",
-    telefone: "",
-    email: ""
-  });
-  const handleCheckboxChange = (field: "especialidades" | "regioesAtendidas" | "diferenciais", value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].includes(value) ? prev[field].filter(item => item !== value) : [...prev[field], value]
-    }));
-  };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setUploadingFiles(true);
+// --- Componente Reutilizável de Upload ---
+const UploadField = ({
+  label,
+  sublabel,
+  accept,
+  icon: Icon,
+  files,
+  onFilesChange,
+  multiple = false,
+}: {
+  label: string;
+  sublabel: string;
+  accept: string;
+  icon: any;
+  files: File[];
+  onFilesChange: (files: File[]) => void;
+  multiple?: boolean;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
 
-    try {
-      let curriculoPath: string | null = null;
-      let fotosPath: string | null = null;
-      let certificacoesPath: string | null = null;
-
-      // Upload curriculo if provided
-      if (curriculoFile) {
-        const fileExt = curriculoFile.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('formularios-profissionais')
-          .upload(`curriculos/${fileName}`, curriculoFile);
-
-        if (uploadError) throw uploadError;
-        curriculoPath = `curriculos/${fileName}`;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      if (multiple) {
+        onFilesChange([...files, ...newFiles]);
+      } else {
+        onFilesChange(newFiles); // Substitui se for single
       }
-
-      // Upload fotos files if provided
-      if (fotosFiles && fotosFiles.length > 0) {
-        const uploadedPaths: string[] = [];
-        for (let i = 0; i < fotosFiles.length; i++) {
-          const file = fotosFiles[i];
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('formularios-profissionais')
-            .upload(`fotos/${fileName}`, file);
-
-          if (uploadError) throw uploadError;
-          uploadedPaths.push(`fotos/${fileName}`);
-        }
-        fotosPath = uploadedPaths.join(',');
-      }
-
-      // Upload certificacoes files if provided
-      if (certificacoesFiles && certificacoesFiles.length > 0) {
-        const uploadedPaths: string[] = [];
-        for (let i = 0; i < certificacoesFiles.length; i++) {
-          const file = certificacoesFiles[i];
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('formularios-profissionais')
-            .upload(`certificacoes/${fileName}`, file);
-
-          if (uploadError) throw uploadError;
-          uploadedPaths.push(`certificacoes/${fileName}`);
-        }
-        certificacoesPath = uploadedPaths.join(',');
-      }
-
-      setUploadingFiles(false);
-
-      const {
-        error
-      } = await supabase.from("formulario_profissionais").insert({
-        nome_completo: formData.nomeCompleto,
-        cpf: formData.cpf,
-        data_nascimento: formData.dataNascimento,
-        cidade: formData.cidade,
-        estado: formData.estado,
-        funcao_principal: formData.funcaoPrincipal,
-        funcao_principal_outro: formData.funcaoPrincipalOutro,
-        especialidades: formData.especialidades,
-        especialidades_outro: formData.especialidadesOutro,
-        tempo_experiencia: formData.tempoExperiencia,
-        obras_relevantes: formData.obrasRelevantes,
-        disponibilidade_atual: formData.disponibilidadeAtual,
-        modalidade_trabalho: formData.modalidadeTrabalho,
-        regioes_atendidas: formData.regioesAtendidas,
-        cidades_frequentes: formData.cidadesFrequentes,
-        pretensao_valor: formData.pretensaoValor,
-        equipamentos_proprios: formData.equipamentosProprios,
-        diferenciais: formData.diferenciais,
-        diferenciais_outro: formData.diferenciaisOutro,
-        telefone: formData.telefone,
-        email: formData.email,
-        curriculo_path: curriculoPath,
-        fotos_trabalhos_path: fotosPath,
-        certificacoes_path: certificacoesPath,
-      });
-      if (error) throw error;
-
-      setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Erro ao enviar formulário:", error);
-      toast.error("Erro ao enviar formulário. Tente novamente.");
-    } finally {
-      setLoading(false);
-      setUploadingFiles(false);
     }
   };
 
-  const handleCloseModal = () => {
-    setShowSuccessModal(false);
-    
-    // Reset form
-    setFormData({
-      nomeCompleto: "",
-      cpf: "",
-      dataNascimento: "",
-      cidade: "",
-      estado: "",
-      funcaoPrincipal: "",
-      funcaoPrincipalOutro: "",
-      especialidades: [],
-      especialidadesOutro: "",
-      tempoExperiencia: "",
-      obrasRelevantes: "",
-      disponibilidadeAtual: "",
-      modalidadeTrabalho: "",
-      regioesAtendidas: [],
-      cidadesFrequentes: "",
-      pretensaoValor: "",
-      equipamentosProprios: "",
-      diferenciais: [],
-      diferenciaisOutro: "",
-      telefone: "",
-      email: ""
-    });
-    setCurriculoFile(null);
-    setFotosFiles(null);
-    setCertificacoesFiles(null);
-    
-    // Reset file inputs
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => {
-      (input as HTMLInputElement).value = '';
-    });
+  const removeFile = (index: number) => {
+    onFilesChange(files.filter((_, i) => i !== index));
   };
 
   return (
-    <>
-      <SuccessModal 
-        open={showSuccessModal}
-        onClose={handleCloseModal}
-        title="Cadastro realizado com sucesso!"
-        message="Obrigado por se cadastrar no GRIFOBOARD MARKETPLACE. Em breve entraremos em contato."
-      />
-      
-      <FormTemplate title="GRIFOBOARD MARKETPLACE" subtitle="Formulário de cadastro para profissionais terceirizados">
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <h2 className="text-2xl font-semibold text-foreground">
-          Profissionais Terceirizados
-        </h2>
-        
+    <div className="space-y-2">
+      <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-primary" /> {label}
+      </Label>
 
-        {/* 1. Informações Básicas */}
-        <div className="space-y-4">
-          <FormSectionHeader label="1. Informações Básicas" />
-          
-          <div>
-            <Label htmlFor="nomeCompleto">Nome completo *</Label>
-            <Input id="nomeCompleto" required value={formData.nomeCompleto} onChange={e => setFormData({
-            ...formData,
-            nomeCompleto: e.target.value
-          })} />
-          </div>
+      {/* Área de Clique */}
+      <div
+        onClick={() => inputRef.current?.click()}
+        className="border-2 border-dashed border-slate-300 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 hover:border-primary/50 transition-all group bg-white min-h-[100px]"
+      >
+        <div className="text-slate-400 group-hover:text-primary transition-colors mb-1">
+          <UploadCloud className="h-6 w-6 mx-auto" />
+        </div>
+        <p className="text-sm font-medium text-slate-600">Clique para adicionar</p>
+        <p className="text-[10px] text-slate-400">{sublabel}</p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
 
-          <div>
-            <Label htmlFor="cpf">CPF *</Label>
-            <Input id="cpf" required value={formData.cpf} onChange={e => setFormData({
-            ...formData,
-            cpf: e.target.value
-          })} />
-          </div>
-
-          <div>
-            <Label htmlFor="dataNascimento">Data de nascimento *</Label>
-            <Input id="dataNascimento" type="date" required value={formData.dataNascimento} onChange={e => setFormData({
-            ...formData,
-            dataNascimento: e.target.value
-          })} />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="cidade">Cidade *</Label>
-              <Input id="cidade" required value={formData.cidade} onChange={e => setFormData({
-              ...formData,
-              cidade: e.target.value
-            })} />
+      {/* Lista de Arquivos */}
+      {files.length > 0 && (
+        <div className="grid grid-cols-1 gap-2 mt-2">
+          {files.map((file, idx) => (
+            <div
+              key={idx}
+              className="relative flex items-center gap-3 p-2 bg-white border border-slate-200 rounded-md shadow-sm"
+            >
+              {file.type.startsWith("image/") ? (
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="preview"
+                  className="h-8 w-8 object-cover rounded bg-slate-100"
+                />
+              ) : (
+                <div className="h-8 w-8 flex items-center justify-center bg-slate-100 rounded">
+                  <FileText className="h-4 w-4 text-slate-500" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-slate-700 truncate">{file.name}</p>
+                <p className="text-[10px] text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeFile(idx);
+                }}
+                className="p-1 hover:bg-red-50 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </div>
-
-            <div>
-              <Label htmlFor="estado">Estado *</Label>
-              <select id="estado" required value={formData.estado} onChange={e => setFormData({
-              ...formData,
-              estado: e.target.value
-            })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="">Selecione...</option>
-                {ESTADOS_BRASILEIROS.map(estado => <option key={estado} value={estado}>{estado}</option>)}
-              </select>
-            </div>
-          </div>
+          ))}
         </div>
-
-        {/* 2. Área de Atuação */}
-        <div className="space-y-4">
-          <FormSectionHeader label="2. Área de Atuação" />
-          
-          <div>
-            <Label htmlFor="funcaoPrincipal">Função principal *</Label>
-            <select id="funcaoPrincipal" required value={formData.funcaoPrincipal} onChange={e => setFormData({
-            ...formData,
-            funcaoPrincipal: e.target.value
-          })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option value="">Selecione...</option>
-              {FUNCOES_PRINCIPAIS.map(funcao => <option key={funcao} value={funcao}>{funcao}</option>)}
-            </select>
-          </div>
-
-          {formData.funcaoPrincipal === "Outro" && <div>
-              <Label htmlFor="funcaoPrincipalOutro">Especifique a função</Label>
-              <Input id="funcaoPrincipalOutro" value={formData.funcaoPrincipalOutro} onChange={e => setFormData({
-            ...formData,
-            funcaoPrincipalOutro: e.target.value
-          })} />
-            </div>}
-
-          <div>
-            <Label>Especialidades (múltipla escolha) *</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {ESPECIALIDADES.map(especialidade => <div key={especialidade} className="flex items-center space-x-2">
-                  <Checkbox id={`esp-${especialidade}`} checked={formData.especialidades.includes(especialidade)} onCheckedChange={() => handleCheckboxChange("especialidades", especialidade)} />
-                  <label htmlFor={`esp-${especialidade}`} className="text-sm cursor-pointer">
-                    {especialidade}
-                  </label>
-                </div>)}
-            </div>
-          </div>
-
-          {formData.especialidades.includes("Outra") && <div>
-              <Label htmlFor="especialidadesOutro">Especifique a especialidade</Label>
-              <Input id="especialidadesOutro" value={formData.especialidadesOutro} onChange={e => setFormData({
-            ...formData,
-            especialidadesOutro: e.target.value
-          })} />
-            </div>}
-        </div>
-
-        {/* 3. Experiência */}
-        <div className="space-y-4">
-          <FormSectionHeader label="3. Experiência" />
-          
-          <div>
-            <Label htmlFor="tempoExperiencia">Tempo de experiência na área *</Label>
-            <select id="tempoExperiencia" required value={formData.tempoExperiencia} onChange={e => setFormData({
-            ...formData,
-            tempoExperiencia: e.target.value
-          })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option value="">Selecione...</option>
-              {TEMPO_EXPERIENCIA.map(tempo => <option key={tempo} value={tempo}>{tempo}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <Label htmlFor="obrasRelevantes">Obras mais relevantes que já participou</Label>
-            <Textarea id="obrasRelevantes" placeholder="Descreva brevemente as obras mais relevantes..." value={formData.obrasRelevantes} onChange={e => setFormData({
-            ...formData,
-            obrasRelevantes: e.target.value
-          })} rows={4} />
-          </div>
-        </div>
-
-        {/* 4. Disponibilidade */}
-        <div className="space-y-4">
-          <FormSectionHeader label="4. Disponibilidade" />
-          
-          <div>
-            <Label htmlFor="disponibilidadeAtual">Disponibilidade atual *</Label>
-            <select id="disponibilidadeAtual" required value={formData.disponibilidadeAtual} onChange={e => setFormData({
-            ...formData,
-            disponibilidadeAtual: e.target.value
-          })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option value="">Selecione...</option>
-              {DISPONIBILIDADE_ATUAL.map(disp => <option key={disp} value={disp}>{disp}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <Label htmlFor="modalidadeTrabalho">Modalidade de trabalho *</Label>
-            <select id="modalidadeTrabalho" required value={formData.modalidadeTrabalho} onChange={e => setFormData({
-            ...formData,
-            modalidadeTrabalho: e.target.value
-          })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option value="">Selecione...</option>
-              {MODALIDADE_TRABALHO.map(modalidade => <option key={modalidade} value={modalidade}>{modalidade}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <Label>Regiões Atendidas *</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {REGIOES_BRASIL.map(regiao => <div key={regiao} className="flex items-center space-x-2">
-                  <Checkbox id={`reg-${regiao}`} checked={formData.regioesAtendidas.includes(regiao)} onCheckedChange={() => handleCheckboxChange("regioesAtendidas", regiao)} />
-                  <label htmlFor={`reg-${regiao}`} className="text-sm cursor-pointer">
-                    {regiao}
-                  </label>
-                </div>)}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="cidadesFrequentes">Cidades atendidas com maior frequência</Label>
-            <Input id="cidadesFrequentes" placeholder="Ex: São Paulo, Rio de Janeiro, Belo Horizonte..." value={formData.cidadesFrequentes} onChange={e => setFormData({
-            ...formData,
-            cidadesFrequentes: e.target.value
-          })} />
-          </div>
-        </div>
-
-        {/* 5. Condições e Faixa de Preço */}
-        <div className="space-y-4">
-          <FormSectionHeader label="5. Condições e Faixa de Preço" />
-          
-          <div>
-            <Label htmlFor="pretensaoValor">Pretensão salarial ou valor por diária / m² / contrato *</Label>
-            <Input id="pretensaoValor" required placeholder="Ex: R$ 5.000/mês ou R$ 200/dia" value={formData.pretensaoValor} onChange={e => setFormData({
-            ...formData,
-            pretensaoValor: e.target.value
-          })} />
-          </div>
-
-          <div>
-            <Label htmlFor="equipamentosProprios">Possui equipamentos próprios? *</Label>
-            <select id="equipamentosProprios" required value={formData.equipamentosProprios} onChange={e => setFormData({
-            ...formData,
-            equipamentosProprios: e.target.value
-          })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option value="">Selecione...</option>
-              {EQUIPAMENTOS_PROPRIOS.map(equip => <option key={equip} value={equip}>{equip}</option>)}
-            </select>
-          </div>
-        </div>
-
-        {/* 6. Diferenciais */}
-        <div className="space-y-4">
-          <FormSectionHeader label="6. Diferenciais" />
-          
-          <div>
-            <Label>Seus diferenciais *</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {DIFERENCIAIS.map(diferencial => <div key={diferencial} className="flex items-center space-x-2">
-                  <Checkbox id={`dif-${diferencial}`} checked={formData.diferenciais.includes(diferencial)} onCheckedChange={() => handleCheckboxChange("diferenciais", diferencial)} />
-                  <label htmlFor={`dif-${diferencial}`} className="text-sm cursor-pointer">
-                    {diferencial}
-                  </label>
-                </div>)}
-            </div>
-          </div>
-
-          {formData.diferenciais.includes("Outro") && <div>
-              <Label htmlFor="diferenciaisOutro">Especifique outros diferenciais</Label>
-              <Input id="diferenciaisOutro" value={formData.diferenciaisOutro} onChange={e => setFormData({
-            ...formData,
-            diferenciaisOutro: e.target.value
-          })} />
-            </div>}
-        </div>
-
-        {/* 7. Documentos e Portfólio */}
-        <div className="space-y-4">
-          <FormSectionHeader label="7. Documentos e Portfólio" />
-          
-          <div>
-            <Label htmlFor="curriculo">Currículo (opcional)</Label>
-            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, DOCX (máx. 5MB)</p>
-            <FileUploadButton
-              id="curriculo"
-              accept=".pdf,.docx"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  if (file.size > 5 * 1024 * 1024) {
-                    toast.error("Arquivo muito grande. Tamanho máximo: 5MB");
-                    e.target.value = '';
-                    return;
-                  }
-                  setCurriculoFile(file);
-                }
-              }}
-              selectedFiles={curriculoFile?.name || null}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="fotos">Fotos de trabalhos realizados (opcional)</Label>
-            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG (máx. 5MB por foto)</p>
-            <FileUploadButton
-              id="fotos"
-              accept=".jpg,.jpeg,.png"
-              multiple
-              onChange={(e) => {
-                const files = e.target.files;
-                if (files) {
-                  for (let i = 0; i < files.length; i++) {
-                    if (files[i].size > 5 * 1024 * 1024) {
-                      toast.error(`Arquivo ${files[i].name} muito grande. Tamanho máximo: 5MB`);
-                      e.target.value = '';
-                      return;
-                    }
-                  }
-                  setFotosFiles(files);
-                }
-              }}
-              selectedFiles={fotosFiles ? `${fotosFiles.length} arquivo(s)` : null}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="certificacoes">Certificações / cursos (opcional)</Label>
-            <p className="text-xs text-muted-foreground mb-2">Formatos aceitos: PDF, JPG, PNG (máx. 5MB por arquivo)</p>
-            <FileUploadButton
-              id="certificacoes"
-              accept=".pdf,.jpg,.jpeg,.png"
-              multiple
-              onChange={(e) => {
-                const files = e.target.files;
-                if (files) {
-                  for (let i = 0; i < files.length; i++) {
-                    if (files[i].size > 5 * 1024 * 1024) {
-                      toast.error(`Arquivo ${files[i].name} muito grande. Tamanho máximo: 5MB`);
-                      e.target.value = '';
-                      return;
-                    }
-                  }
-                  setCertificacoesFiles(files);
-                }
-              }}
-              selectedFiles={certificacoesFiles ? `${certificacoesFiles.length} arquivo(s)` : null}
-            />
-          </div>
-        </div>
-
-        {/* 8. Contato */}
-        <div className="space-y-4">
-          <FormSectionHeader label="8. Contato" />
-          
-          <div>
-            <Label htmlFor="telefone">Telefone / WhatsApp *</Label>
-            <Input id="telefone" required placeholder="(00) 00000-0000" value={formData.telefone} onChange={e => setFormData({
-            ...formData,
-            telefone: e.target.value
-          })} />
-          </div>
-
-          <div>
-            <Label htmlFor="email">E-mail (opcional)</Label>
-            <Input id="email" type="email" placeholder="seu@email.com" value={formData.email} onChange={e => setFormData({
-            ...formData,
-            email: e.target.value
-          })} />
-          </div>
-        </div>
-
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? "Enviando..." : "Enviar Cadastro"}
-        </Button>
-      </form>
-    </FormTemplate>
-    </>
+      )}
+    </div>
   );
 };
 
-export default FormProfissionais;
+export default function Profissionais() {
+  const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // Estado dos Dados
+  const [formData, setFormData] = useState({
+    nome_completo: "",
+    cpf: "",
+    data_nascimento: "",
+    telefone: "",
+    email: "",
+    cidade: "",
+    estado: "",
+    funcao_principal: "",
+    tempo_experiencia: "",
+    obras_relevantes: "",
+    disponibilidade_atual: "",
+    modalidade_trabalho: "",
+    pretensao_valor: "",
+    equipamentos_proprios: "Não",
+  });
+
+  // Estado dos Arquivos Separados
+  const [filesLogo, setFilesLogo] = useState<File[]>([]);
+  const [filesFotos, setFilesFotos] = useState<File[]>([]);
+  const [filesCurriculo, setFilesCurriculo] = useState<File[]>([]);
+  const [filesCertificados, setFilesCertificados] = useState<File[]>([]);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Função para fazer Upload de um Array de arquivos
+  const uploadFiles = async (files: File[], folder: string) => {
+    const urls: string[] = [];
+    for (const file of files) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from("public-uploads") // Certifique-se que este bucket existe e é público
+        .upload(fileName, file);
+
+      if (error) {
+        console.error("Erro upload:", error);
+        continue;
+      }
+
+      if (data) {
+        const { data: urlData } = supabase.storage.from("public-uploads").getPublicUrl(data.path);
+        urls.push(urlData.publicUrl);
+      }
+    }
+    return urls;
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.nome_completo || !formData.telefone || !formData.funcao_principal) {
+      toast({ title: "Campos obrigatórios", description: "Verifique seus dados pessoais.", variant: "destructive" });
+      setStep(1);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1. Uploads Paralelos
+      const [logoUrls, fotosUrls, curriculoUrls, certificadosUrls] = await Promise.all([
+        uploadFiles(filesLogo, "logos"),
+        uploadFiles(filesFotos, "trabalhos"),
+        uploadFiles(filesCurriculo, "curriculos"),
+        uploadFiles(filesCertificados, "certificados"),
+      ]);
+
+      // 2. Prepara Payload
+      const payload = {
+        ...formData,
+        // Arrays obrigatórios do banco
+        regioes_atendidas: [formData.cidade],
+        especialidades: [formData.funcao_principal],
+        diferenciais: ["Cadastro Online"],
+
+        // Mapeamento dos Arquivos para as Colunas do Banco
+        logo_path: logoUrls[0] || null, // Apenas 1 logo
+        fotos_trabalhos_path: JSON.stringify(fotosUrls),
+        curriculo_path: JSON.stringify(curriculoUrls),
+        certificacoes_path: JSON.stringify(certificadosUrls),
+
+        // Fallback para data
+        data_nascimento: formData.data_nascimento || "2000-01-01",
+      };
+
+      await cadastrosService.createProfissional(payload);
+      setSuccess(true);
+      window.scrollTo(0, 0);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Erro ao enviar",
+        description: "Houve um problema técnico. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <PublicFormLayout
+        title="Cadastro Recebido!"
+        description="Seu perfil profissional foi criado com sucesso."
+        icon={<CheckCircle2 className="h-8 w-8 text-green-600" />}
+      >
+        <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
+          <p className="text-slate-600">
+            Nossa equipe de engenharia analisará seu portfólio. Mantenha seu WhatsApp atualizado.
+          </p>
+          <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+            Novo Cadastro
+          </Button>
+        </div>
+      </PublicFormLayout>
+    );
+  }
+
+  return (
+    <PublicFormLayout
+      title="Banco de Talentos"
+      description="Junte-se à elite da construção civil."
+      icon={<Users className="h-8 w-8" />}
+    >
+      {/* Steps Indicator */}
+      <div className="flex items-center justify-center mb-8 gap-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center">
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                step === i
+                  ? "bg-primary text-white scale-110 shadow-md"
+                  : step > i
+                    ? "bg-green-500 text-white"
+                    : "bg-slate-100 text-slate-400",
+              )}
+            >
+              {step > i ? <CheckCircle2 className="h-5 w-5" /> : i}
+            </div>
+            {i < 3 && <div className={cn("w-8 h-1 mx-1 rounded-full", step > i ? "bg-green-500" : "bg-slate-100")} />}
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-6">
+        {/* ETAPA 1: DADOS PESSOAIS */}
+        {step === 1 && (
+          <div className="space-y-5 animate-in slide-in-from-right duration-500">
+            <div className="space-y-2">
+              <Label>Nome Completo *</Label>
+              <Input
+                value={formData.nome_completo}
+                onChange={(e) => handleChange("nome_completo", e.target.value)}
+                required
+                placeholder="Como prefere ser chamado"
+                className="bg-slate-50"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>CPF *</Label>
+                <Input
+                  value={formData.cpf}
+                  onChange={(e) => handleChange("cpf", e.target.value)}
+                  placeholder="000.000.000-00"
+                  className="bg-slate-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nascimento</Label>
+                <Input
+                  type="date"
+                  value={formData.data_nascimento}
+                  onChange={(e) => handleChange("data_nascimento", e.target.value)}
+                  className="bg-slate-50"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>WhatsApp *</Label>
+                <Input
+                  value={formData.telefone}
+                  onChange={(e) => handleChange("telefone", e.target.value)}
+                  required
+                  placeholder="(DDD) 99999-9999"
+                  className="bg-slate-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  className="bg-slate-50"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Cidade</Label>
+                <Input
+                  value={formData.cidade}
+                  onChange={(e) => handleChange("cidade", e.target.value)}
+                  className="bg-slate-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Estado</Label>
+                <Input
+                  value={formData.estado}
+                  onChange={(e) => handleChange("estado", e.target.value)}
+                  placeholder="UF"
+                  maxLength={2}
+                  className="bg-slate-50"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 2: PERFIL */}
+        {step === 2 && (
+          <div className="space-y-5 animate-in slide-in-from-right duration-500">
+            <div className="space-y-2">
+              <Label>Função Principal *</Label>
+              <Select onValueChange={(val) => handleChange("funcao_principal", val)} value={formData.funcao_principal}>
+                <SelectTrigger className="bg-slate-50">
+                  <SelectValue placeholder="Selecione sua especialidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Engenheiro Civil">Engenheiro Civil</SelectItem>
+                  <SelectItem value="Arquiteto">Arquiteto</SelectItem>
+                  <SelectItem value="Mestre de Obras">Mestre de Obras</SelectItem>
+                  <SelectItem value="Eletricista">Eletricista</SelectItem>
+                  <SelectItem value="Encanador">Encanador</SelectItem>
+                  <SelectItem value="Pedreiro">Pedreiro</SelectItem>
+                  <SelectItem value="Pintor">Pintor</SelectItem>
+                  <SelectItem value="Gesseiro">Gesseiro</SelectItem>
+                  <SelectItem value="Serralheiro">Serralheiro</SelectItem>
+                  <SelectItem value="Ajudante">Ajudante</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tempo de Experiência</Label>
+                <Select
+                  onValueChange={(val) => handleChange("tempo_experiencia", val)}
+                  value={formData.tempo_experiencia}
+                >
+                  <SelectTrigger className="bg-slate-50">
+                    <SelectValue placeholder="Anos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Iniciante">Iniciante</SelectItem>
+                    <SelectItem value="1-3 anos">1-3 anos</SelectItem>
+                    <SelectItem value="3-5 anos">3-5 anos</SelectItem>
+                    <SelectItem value="Mais de 5 anos">Mais de 5 anos</SelectItem>
+                    <SelectItem value="Mais de 10 anos">Mais de 10 anos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Modalidade</Label>
+                <Select
+                  onValueChange={(val) => handleChange("modalidade_trabalho", val)}
+                  value={formData.modalidade_trabalho}
+                >
+                  <SelectTrigger className="bg-slate-50">
+                    <SelectValue placeholder="Prefere..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CLT">CLT (Fixo)</SelectItem>
+                    <SelectItem value="PJ">PJ (Nota Fiscal)</SelectItem>
+                    <SelectItem value="Diaria">Diária / Empreita</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Possui Equipamentos Próprios?</Label>
+              <RadioGroup
+                value={formData.equipamentos_proprios}
+                onValueChange={(val) => handleChange("equipamentos_proprios", val)}
+                className="flex gap-4 p-2 bg-slate-50 rounded-md border border-slate-100"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Sim" id="sim" />
+                  <Label htmlFor="sim" className="cursor-pointer">
+                    Sim, tenho ferramentas
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Não" id="nao" />
+                  <Label htmlFor="nao" className="cursor-pointer">
+                    Não
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Disponibilidade</Label>
+                <Input
+                  placeholder="Ex: Imediata"
+                  value={formData.disponibilidade_atual}
+                  onChange={(e) => handleChange("disponibilidade_atual", e.target.value)}
+                  className="bg-slate-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pretensão (R$)</Label>
+                <Input
+                  placeholder="Valor dia/mês"
+                  value={formData.pretensao_valor}
+                  onChange={(e) => handleChange("pretensao_valor", e.target.value)}
+                  className="bg-slate-50"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 3: ARQUIVOS (Separados e Organizados) */}
+        {step === 3 && (
+          <div className="space-y-6 animate-in slide-in-from-right duration-500">
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm text-blue-800 mb-2">
+              <strong>Dica:</strong> Perfis completos aparecem primeiro nas buscas dos engenheiros.
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 1. LOGO / FOTO */}
+              <UploadField
+                label="Foto de Perfil ou Logo"
+                sublabel="JPG/PNG. Use uma foto clara do rosto."
+                accept="image/*"
+                icon={Users}
+                files={filesLogo}
+                onFilesChange={setFilesLogo}
+                multiple={false}
+              />
+
+              {/* 2. CURRÍCULO */}
+              <UploadField
+                label="Currículo / Apresentação"
+                sublabel="PDF ou Imagem do seu CV."
+                accept=".pdf,image/*"
+                icon={Briefcase}
+                files={filesCurriculo}
+                onFilesChange={setFilesCurriculo}
+                multiple={true}
+              />
+            </div>
+
+            {/* 3. FOTOS TRABALHO */}
+            <UploadField
+              label="Fotos dos Trabalhos Realizados"
+              sublabel="Obras que você já fez. Antes e Depois valorizam muito!"
+              accept="image/*"
+              icon={ImageIcon}
+              files={filesFotos}
+              onFilesChange={setFilesFotos}
+              multiple={true}
+            />
+
+            {/* 4. CERTIFICAÇÕES */}
+            <UploadField
+              label="Certificações e NRs"
+              sublabel="Diploma, NR10, NR35, Certificados Técnicos..."
+              accept=".pdf,image/*"
+              icon={GraduationCap}
+              files={filesCertificados}
+              onFilesChange={setFilesCertificados}
+              multiple={true}
+            />
+
+            <div className="space-y-2 mt-4">
+              <Label>Resumo Profissional / Obras Relevantes</Label>
+              <Textarea
+                placeholder="Conte sobre as principais obras que participou ou detalhes que não estão nos documentos..."
+                value={formData.obras_relevantes}
+                onChange={(e) => handleChange("obras_relevantes", e.target.value)}
+                className="bg-slate-50 min-h-[100px]"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* CONTROLES DE NAVEGAÇÃO */}
+        <div className="flex justify-between gap-4 pt-4 border-t border-slate-100 mt-8">
+          {step > 1 ? (
+            <Button type="button" variant="ghost" onClick={() => setStep((prev) => prev - 1)} disabled={loading}>
+              <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
+            </Button>
+          ) : (
+            <div /> // Espaçador
+          )}
+
+          {step < 3 ? (
+            <Button
+              type="button"
+              onClick={() => setStep((prev) => prev + 1)}
+              className="bg-slate-800 hover:bg-slate-900"
+            >
+              Próximo <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              className="bg-green-600 hover:bg-green-700 min-w-[140px] h-11 text-base shadow-lg"
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Finalizar Cadastro"}
+            </Button>
+          )}
+        </div>
+      </div>
+    </PublicFormLayout>
+  );
+}
