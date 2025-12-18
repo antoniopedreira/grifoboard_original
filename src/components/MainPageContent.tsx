@@ -9,6 +9,7 @@ import { useTaskManager } from "@/hooks/useTaskManager";
 import MainHeader from "@/components/MainHeader";
 import PCPSection from "@/components/PCPSection";
 import TasksSection from "@/components/TasksSection";
+import ProjectCountdown from "@/components/dashboard/ProjectCountdown";
 import { Loader2, LayoutList, PieChart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -149,15 +150,20 @@ const MainPageContent = () => {
           className="space-y-6 outline-none data-[state=inactive]:hidden"
           forceMount
         >
-          <div className="w-full">
-            <PCPSection
-              pcpData={pcpData}
-              weeklyPCPData={weeklyPCPData}
-              tasks={tasks}
-              selectedCause={selectedCause}
-              onCauseSelect={handleCauseSelect}
-              onClearFilter={() => setSelectedCause(null)}
-            />
+          <div className="w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-3">
+              <PCPSection
+                pcpData={pcpData}
+                weeklyPCPData={weeklyPCPData}
+                tasks={tasks}
+                selectedCause={selectedCause}
+                onCauseSelect={handleCauseSelect}
+                onClearFilter={() => setSelectedCause(null)}
+              />
+            </div>
+            <div className="lg:col-span-1 animate-fade-in">
+              <ProjectCountdown />
+            </div>
           </div>
 
           {/* Mostrar loading apenas na primeira carga (sem tarefas) */}
