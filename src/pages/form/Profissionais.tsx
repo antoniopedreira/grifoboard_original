@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { PublicFormLayout } from "@/components/PublicFormLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   GraduationCap,
   Briefcase,
+  AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cadastrosService } from "@/services/cadastrosService";
@@ -165,6 +166,10 @@ export default function Profissionais() {
   // 2. Novos Estados para o Modal
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  
+  // Estado para validação de email
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   // Estado dos Dados
   const [formData, setFormData] = useState({
@@ -198,6 +203,46 @@ export default function Profissionais() {
   const [filesFotos, setFilesFotos] = useState<File[]>([]);
   const [filesCurriculo, setFilesCurriculo] = useState<File[]>([]);
   const [filesCertificados, setFilesCertificados] = useState<File[]>([]);
+
+  // Verificar se email já existe (com debounce)
+  const checkEmailExists = useCallback(async (email: string) => {
+    if (!email || !email.includes("@")) {
+      setEmailError(null);
+      return;
+    }
+    
+    setCheckingEmail(true);
+    try {
+      const { data: existingUser } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("email", email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (existingUser) {
+        setEmailError("Este email já está cadastrado. Faça login em /auth");
+      } else {
+        setEmailError(null);
+      }
+    } catch (err) {
+      console.error("Erro ao verificar email:", err);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }, []);
+
+  // Debounce para verificação de email
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.email) {
+        checkEmailExists(formData.email);
+      } else {
+        setEmailError(null);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.email, checkEmailExists]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -240,6 +285,17 @@ export default function Profissionais() {
       toast({
         title: "Campos obrigatórios",
         description: "Verifique seus dados pessoais e função.",
+        variant: "destructive",
+      });
+      setStep(1);
+      return;
+    }
+
+    // Validação de email duplicado
+    if (emailError) {
+      toast({
+        title: "Email inválido",
+        description: emailError,
         variant: "destructive",
       });
       setStep(1);
@@ -385,12 +441,26 @@ export default function Profissionais() {
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  className="bg-slate-50 h-12"
-                />
+                <div className="relative">
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    className={cn(
+                      "bg-slate-50 h-12",
+                      emailError && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                    )}
+                  />
+                  {checkingEmail && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+                  )}
+                </div>
+                {emailError && (
+                  <p className="text-sm text-red-500 flex items-center gap-1 mt-1">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {emailError}
+                  </p>
+                )}
               </div>
             </div>
 
