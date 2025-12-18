@@ -204,7 +204,7 @@ export default function Profissionais() {
   const [filesCurriculo, setFilesCurriculo] = useState<File[]>([]);
   const [filesCertificados, setFilesCertificados] = useState<File[]>([]);
 
-  // Verificar se email já existe (com debounce)
+  // Verificar se email já existe em todas as tabelas do sistema
   const checkEmailExists = useCallback(async (email: string) => {
     if (!email || !email.includes("@")) {
       setEmailError(null);
@@ -213,14 +213,11 @@ export default function Profissionais() {
     
     setCheckingEmail(true);
     try {
-      const { data: existingUser } = await supabase
-        .from("usuarios")
-        .select("id")
-        .eq("email", email.toLowerCase().trim())
-        .maybeSingle();
+      const { checkEmailExistsGlobal } = await import("@/services/emailValidationService");
+      const result = await checkEmailExistsGlobal(email);
 
-      if (existingUser) {
-        setEmailError("Este email já está cadastrado. Faça login em /auth");
+      if (result.exists) {
+        setEmailError(`Este email já está cadastrado como ${result.source}`);
       } else {
         setEmailError(null);
       }

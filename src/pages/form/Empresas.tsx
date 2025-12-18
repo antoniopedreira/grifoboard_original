@@ -54,7 +54,7 @@ const Empresas = () => {
     desafiosOutro: "",
   });
 
-  // Verificar se email já existe
+  // Verificar se email já existe em todas as tabelas do sistema
   const checkEmailExists = useCallback(async (email: string) => {
     if (!email || !email.includes("@")) {
       setEmailError(null);
@@ -63,14 +63,11 @@ const Empresas = () => {
     
     setCheckingEmail(true);
     try {
-      const { data: existingUser } = await supabase
-        .from("usuarios")
-        .select("id")
-        .eq("email", email.toLowerCase().trim())
-        .maybeSingle();
+      const { checkEmailExistsGlobal } = await import("@/services/emailValidationService");
+      const result = await checkEmailExistsGlobal(email);
 
-      if (existingUser) {
-        setEmailError("Este email já está cadastrado. Faça login em /auth");
+      if (result.exists) {
+        setEmailError(`Este email já está cadastrado como ${result.source}`);
       } else {
         setEmailError(null);
       }
