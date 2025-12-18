@@ -131,9 +131,9 @@ const ProjectCountdown = () => {
 
       <CardContent className="relative p-6 h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-md ${
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center shadow-md ${
               isOverdue 
                 ? "bg-gradient-to-br from-red-500 to-red-600" 
                 : isUrgent 
@@ -144,14 +144,14 @@ const ProjectCountdown = () => {
             }`}>
               <Timer className="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-sm font-semibold text-foreground">Previsão da Obra</h3>
-              <p className="text-xs text-muted-foreground">{startDate} - {endDate}</p>
+              <p className="text-xs text-muted-foreground whitespace-nowrap">{startDate} - {endDate}</p>
             </div>
           </div>
           
           {/* Status Badge */}
-          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${getBadgeStyles()} ${isUrgent && !isOverdue && !isCompleted ? "animate-pulse" : ""}`}>
+          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap flex-shrink-0 ${getBadgeStyles()} ${isUrgent && !isOverdue && !isCompleted ? "animate-pulse" : ""}`}>
             {getStatusIcon()}
             {getStatusText()}
           </span>
