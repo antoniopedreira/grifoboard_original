@@ -1,9 +1,10 @@
-import { MapPin, Star, Building2, User, Truck, Phone, Mail } from "lucide-react";
+import { MapPin, Star, Building2, User, Truck, Phone, Mail, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPhoneNumber } from "@/lib/utils/formatPhone";
 import { supabase } from "@/integrations/supabase/client";
 import seloGrifoImg from "@/assets/selo-grifo.png";
+import { motion } from "framer-motion";
 
 type TargetType = "empresa" | "profissional" | "fornecedor";
 
@@ -129,19 +130,58 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
 
   return (
     <Card
-      className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden border-border/50 relative"
+      className={`group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden border-border/50 relative ${
+        hasSelo ? "ring-2 ring-[#A47528]/30 shadow-[0_0_20px_-5px_rgba(164,117,40,0.3)]" : ""
+      }`}
       onClick={onClick}
     >
-      {/* Selo Grifo Badge */}
+      {/* Selo Grifo Badge - Enhanced UI */}
       {hasSelo && (
-        <div className="absolute top-2 left-2 z-10">
-          <img 
-            src={seloGrifoImg} 
-            alt="Selo Grifo de Aprovação" 
-            className="w-12 h-12 drop-shadow-lg"
-            title="Selo Grifo de Aprovação"
-          />
-        </div>
+        <motion.div 
+          className="absolute top-0 left-0 z-20"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        >
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#A47528] to-amber-400 blur-xl opacity-40 rounded-full scale-150" />
+          
+          {/* Badge container */}
+          <div className="relative p-1.5">
+            {/* Animated ring */}
+            <motion.div 
+              className="absolute inset-0 rounded-full border-2 border-[#A47528]/50"
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 0, 0.5]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            
+            {/* Main badge */}
+            <div className="relative bg-gradient-to-br from-[#A47528] via-amber-500 to-[#A47528] p-0.5 rounded-full shadow-lg">
+              <div className="bg-white rounded-full p-1">
+                <img 
+                  src={seloGrifoImg} 
+                  alt="Selo Grifo de Aprovação" 
+                  className="w-10 h-10 drop-shadow-sm"
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Tooltip on hover */}
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
+            <div className="bg-gradient-to-r from-[#112131] to-[#1a3045] text-white text-[10px] font-medium px-2 py-1 rounded-md whitespace-nowrap shadow-lg flex items-center gap-1">
+              <Award className="h-3 w-3 text-[#A47528]" />
+              Selo de Aprovação Grifo
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* Header with gradient */}
