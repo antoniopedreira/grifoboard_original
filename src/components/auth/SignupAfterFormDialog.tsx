@@ -29,7 +29,20 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
 
     setLoading(true);
     try {
-      // 1. Criar Usuário no Auth
+      // 1. Verificar se o email já existe na tabela usuarios
+      const { data: existingUser } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("email", emailDefault)
+        .maybeSingle();
+
+      if (existingUser) {
+        toast.error("Este email já está cadastrado. Faça login em /auth");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Criar Usuário no Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: emailDefault,
         password: password,
@@ -41,10 +54,18 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Verifica se é erro de email duplicado
+        if (authError.message.includes("already registered") || 
+            authError.message.includes("User already registered")) {
+          toast.error("Este email já está cadastrado. Faça login em /auth");
+          return;
+        }
+        throw authError;
+      }
       if (!authData.user) throw new Error("Erro ao criar usuário");
 
-      // 2. Atualizar entrada na tabela usuarios com role 'parceiro'
+      // 3. Atualizar entrada na tabela usuarios com role 'parceiro'
       // (O trigger handle_new_user já cria o registro, então fazemos update)
       const { error: usuarioError } = await supabase
         .from("usuarios")
@@ -55,7 +76,7 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
         console.error("Erro ao atualizar role do usuario:", usuarioError);
       }
 
-      // 3. Vincular o registro criado ao novo user_id
+      // 4. Vincular o registro criado ao novo user_id
       let updateError = null;
 
       if (entityType === "profissional") {
@@ -82,7 +103,11 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
       onClose();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Erro ao criar conta.");
+      if (error.message?.includes("already registered")) {
+        toast.error("Este email já está cadastrado. Faça login em /auth");
+      } else {
+        toast.error(error.message || "Erro ao criar conta.");
+      }
     } finally {
       setLoading(false);
     }
