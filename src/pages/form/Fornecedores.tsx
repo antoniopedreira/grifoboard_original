@@ -262,7 +262,7 @@ export default function Fornecedores() {
       const result = await checkEmailExistsGlobal(email);
 
       if (result.exists) {
-        setEmailError(`Este email já está cadastrado como ${result.source}`);
+        setEmailError("Esse email já está cadastrado no sistema.");
       } else {
         setEmailError(null);
       }
