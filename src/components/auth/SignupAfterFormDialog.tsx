@@ -44,7 +44,21 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
       if (authError) throw authError;
       if (!authData.user) throw new Error("Erro ao criar usuário");
 
-      // 2. Vincular o registro criado ao novo user_id (CORREÇÃO DO ERRO DE TS AQUI)
+      // 2. Criar entrada na tabela usuarios com role 'parceiro'
+      const { error: usuarioError } = await supabase
+        .from("usuarios")
+        .insert({
+          id: authData.user.id,
+          email: emailDefault,
+          role: "parceiro" as any,
+        });
+
+      if (usuarioError) {
+        console.error("Erro ao criar usuario:", usuarioError);
+        // Continua mesmo com erro pois o trigger pode já ter criado
+      }
+
+      // 3. Vincular o registro criado ao novo user_id
       let updateError = null;
 
       if (entityType === "profissional") {
