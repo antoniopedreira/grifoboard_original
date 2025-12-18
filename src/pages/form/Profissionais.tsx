@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cadastrosService } from "@/services/cadastrosService";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { SignupAfterFormDialog } from "@/components/auth/SignupAfterFormDialog";
+import { SignupAfterFormDialog } from "@/components/auth/SignupAfterFormDialog"; // 1. Importei o Modal
 
 // --- Constantes ---
 const OPCOES_REGIOES = ["Região Norte", "Região Nordeste", "Região Centro-Oeste", "Região Sudeste", "Região Sul"];
@@ -162,7 +162,7 @@ export default function Profissionais() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // --- NOVOS ESTADOS PARA O MODAL ---
+  // 2. Novos Estados para o Modal
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
 
@@ -267,28 +267,21 @@ export default function Profissionais() {
           ...formData.especialidades,
           formData.funcao_principal === "Outros" ? formData.funcao_principal_outro : formData.funcao_principal,
         ],
-        // Arquivos
         logo_path: logoUrls[0] || null,
         fotos_trabalhos_path: JSON.stringify(fotosUrls),
         curriculo_path: JSON.stringify(curriculoUrls),
         certificacoes_path: JSON.stringify(certificadosUrls),
-
         data_nascimento: formData.data_nascimento || "2000-01-01",
       };
 
-      // --- MUDANÇA PRINCIPAL AQUI: Captura o ID e Abre o Modal ---
-      const { data, error } = await supabase
-        .from("formulario_profissionais")
-        .insert(payload)
-        .select("id") // Importante: selecionar o ID
-        .single();
+      // 3. ALTERAÇÃO AQUI: Insert retornando ID
+      const { data, error } = await supabase.from("formulario_profissionais").insert(payload).select("id").single();
 
       if (error) throw error;
 
+      // 4. Salvar ID e abrir Modal (sem mostrar tela de sucesso antiga)
       setCreatedId(data.id);
       setShowSignupModal(true);
-
-      // NÃO chame setSuccess(true) para não mudar a tela antes do modal
       window.scrollTo(0, 0);
     } catch (error) {
       console.error(error);
@@ -734,7 +727,7 @@ export default function Profissionais() {
         </div>
       </div>
 
-      {/* --- MODAL DE CRIAÇÃO DE USUÁRIO (NOVO) --- */}
+      {/* 5. ADIÇÃO DO COMPONENTE DO MODAL */}
       <SignupAfterFormDialog
         isOpen={showSignupModal}
         onClose={() => setShowSignupModal(false)}
