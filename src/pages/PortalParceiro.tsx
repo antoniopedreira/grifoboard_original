@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, User, Building2, Truck, Loader2, Edit3, Image as ImageIcon, LayoutTemplate, UploadCloud } from "lucide-react";
+import { LogOut, User, Loader2, Image as ImageIcon, LayoutTemplate, UploadCloud, FileText, Trash2, Plus, Camera, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 // Helper component for displaying info fields
 const InfoField = ({ label, value }: { label: string; value: string | null | undefined }) => {
@@ -20,10 +21,136 @@ const InfoField = ({ label, value }: { label: string; value: string | null | und
   );
 };
 
+// File upload section component
+interface FileUploadSectionProps {
+  title: string;
+  description: string;
+  fieldName: string;
+  currentPath: string | null;
+  bucket: string;
+  onUpload: (fieldName: string, file: File) => Promise<void>;
+  onDelete: (fieldName: string) => Promise<void>;
+  isImage?: boolean;
+  isMultiple?: boolean;
+  uploading: boolean;
+}
+
+const FileUploadSection = ({
+  title,
+  description,
+  fieldName,
+  currentPath,
+  bucket,
+  onUpload,
+  onDelete,
+  isImage = true,
+  isMultiple = false,
+  uploading,
+}: FileUploadSectionProps) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [fileUrls, setFileUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (currentPath) {
+      const paths = currentPath.split(",").filter(Boolean);
+      const urls = paths.map((p) => {
+        if (p.startsWith("http")) return p;
+        const { data } = supabase.storage.from(bucket).getPublicUrl(p.trim());
+        return data.publicUrl;
+      });
+      setFileUrls(urls);
+    } else {
+      setFileUrls([]);
+    }
+  }, [currentPath, bucket]);
+
+  const handleClick = () => inputRef.current?.click();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    for (let i = 0; i < files.length; i++) {
+      await onUpload(fieldName, files[i]);
+    }
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-sm font-semibold text-slate-700">{title}</h4>
+          <p className="text-xs text-slate-400">{description}</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleClick}
+          disabled={uploading}
+          className="text-xs"
+        >
+          {uploading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+          Adicionar
+        </Button>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        accept={isImage ? "image/*" : ".pdf,.doc,.docx,image/*"}
+        multiple={isMultiple}
+        onChange={handleFileChange}
+      />
+      {fileUrls.length > 0 ? (
+        <div className={`grid ${isImage ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4" : "grid-cols-1"} gap-3`}>
+          {fileUrls.map((url, idx) => (
+            <div key={idx} className="relative group">
+              {isImage ? (
+                <div className="aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                  <img src={url} alt={`${title} ${idx + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                >
+                  <FileText className="h-5 w-5 text-slate-400" />
+                  <span className="text-sm text-slate-600 truncate">Documento {idx + 1}</span>
+                </a>
+              )}
+              <button
+                onClick={() => onDelete(fieldName)}
+                className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          onClick={handleClick}
+          className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 cursor-pointer hover:bg-slate-50 transition-colors"
+        >
+          {isImage ? (
+            <Camera className="h-6 w-6 text-slate-300 mb-2" />
+          ) : (
+            <FileText className="h-6 w-6 text-slate-300 mb-2" />
+          )}
+          <p className="text-xs text-slate-400 text-center">Clique para adicionar</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function PortalParceiro() {
   const { userSession, signOut } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [partnerData, setPartnerData] = useState<any>(null);
   const [partnerType, setPartnerType] = useState<"profissional" | "empresa" | "fornecedor" | null>(null);
 
@@ -75,16 +202,80 @@ export default function PortalParceiro() {
     navigate("/auth");
   };
 
+  const getBucket = () => {
+    if (partnerType === "empresa") return "formularios-empresas";
+    if (partnerType === "fornecedor") return "formularios-fornecedores";
+    return "formularios-profissionais";
+  };
+
+  const getTableName = () => {
+    if (partnerType === "empresa") return "formulario_empresas";
+    if (partnerType === "fornecedor") return "formulario_fornecedores";
+    return "formulario_profissionais";
+  };
+
+  const handleFileUpload = async (fieldName: string, file: File) => {
+    if (!partnerData?.id) return;
+    setUploading(true);
+    
+    try {
+      const bucket = getBucket();
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${partnerData.id}/${fieldName}_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, file);
+      if (uploadError) throw uploadError;
+
+      // Get current value and append new file (for multiple files support)
+      const currentValue = partnerData[fieldName];
+      const newValue = currentValue ? `${currentValue},${fileName}` : fileName;
+
+      const tableName = getTableName();
+      const { error: updateError } = await supabase
+        .from(tableName)
+        .update({ [fieldName]: newValue })
+        .eq("id", partnerData.id);
+
+      if (updateError) throw updateError;
+
+      setPartnerData({ ...partnerData, [fieldName]: newValue });
+      toast.success("Arquivo enviado com sucesso!");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error("Erro ao enviar arquivo: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileDelete = async (fieldName: string) => {
+    if (!partnerData?.id) return;
+    setUploading(true);
+
+    try {
+      const tableName = getTableName();
+      const { error: updateError } = await supabase
+        .from(tableName)
+        .update({ [fieldName]: null })
+        .eq("id", partnerData.id);
+
+      if (updateError) throw updateError;
+
+      setPartnerData({ ...partnerData, [fieldName]: null });
+      toast.success("Arquivo removido com sucesso!");
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast.error("Erro ao remover arquivo: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // Função auxiliar para obter URL da imagem
   const getLogoUrl = (path: string | null) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    const bucket =
-      partnerType === "empresa"
-        ? "formularios-empresas"
-        : partnerType === "fornecedor"
-          ? "formularios-fornecedores"
-          : "formularios-profissionais";
+    const bucket = getBucket();
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
   };
@@ -213,7 +404,7 @@ export default function PortalParceiro() {
               value="midia"
               className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/5 data-[state=active]:text-primary font-medium transition-all"
             >
-              <ImageIcon className="h-4 w-4 mr-2" /> Fotos e Portfólio
+              <ImageIcon className="h-4 w-4 mr-2" /> Fotos e Documentos
             </TabsTrigger>
             <TabsTrigger
               value="preview"
@@ -325,31 +516,214 @@ export default function PortalParceiro() {
             </Card>
           </TabsContent>
 
-          {/* TAB 2: MIDIA */}
-          <TabsContent value="midia" className="focus-visible:outline-none">
+          {/* TAB 2: FOTOS E DOCUMENTOS */}
+          <TabsContent value="midia" className="focus-visible:outline-none space-y-6">
+            {/* Foto de Perfil / Logo - Destacada */}
             <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-              <div className="h-1.5 w-full bg-gradient-to-r from-blue-500/80 to-blue-500/20" />
+              <div className="h-1.5 w-full bg-gradient-to-r from-primary/80 to-primary/20" />
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <ImageIcon className="h-5 w-5 text-blue-500" /> Galeria de Fotos
+                  <Camera className="h-5 w-5 text-primary" /> Foto de Perfil
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Adicione fotos de alta qualidade para atrair mais clientes.
+                  Sua foto principal que aparece no Marketplace.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pb-8">
-                {/* Placeholder Visual */}
-                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50 group hover:bg-slate-50 transition-colors cursor-pointer">
-                  <div className="bg-white p-4 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <UploadCloud className="h-8 w-8 text-slate-300 group-hover:text-blue-500 transition-colors" />
+              <CardContent className="pb-6">
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    <Avatar className="h-32 w-32 border-4 border-primary/20 shadow-lg">
+                      <AvatarImage src={getLogoUrl(partnerData.logo_path) || ""} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
+                        {partnerName?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1.5 shadow-lg">
+                      <Camera className="h-4 w-4 text-white" />
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-700">Gerenciador de Uploads</h3>
-                  <p className="text-slate-400 text-sm max-w-sm text-center mt-2">
-                    Arraste fotos ou clique para adicionar novas imagens ao seu portfólio.
-                  </p>
+                  <div className="flex-1">
+                    <FileUploadSection
+                      title="Alterar Foto"
+                      description="JPG, PNG até 5MB"
+                      fieldName="logo_path"
+                      currentPath={null}
+                      bucket={getBucket()}
+                      onUpload={handleFileUpload}
+                      onDelete={handleFileDelete}
+                      isImage={true}
+                      uploading={uploading}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Seções específicas por tipo de parceiro */}
+            {partnerType === "profissional" && (
+              <>
+                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-blue-500/80 to-blue-500/20" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <ImageIcon className="h-5 w-5 text-blue-500" /> Fotos de Trabalhos
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Mostre seus melhores trabalhos para atrair clientes.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pb-6">
+                    <FileUploadSection
+                      title="Galeria de Trabalhos"
+                      description="Adicione fotos dos seus projetos"
+                      fieldName="fotos_trabalhos_path"
+                      currentPath={partnerData.fotos_trabalhos_path}
+                      bucket={getBucket()}
+                      onUpload={handleFileUpload}
+                      onDelete={handleFileDelete}
+                      isImage={true}
+                      isMultiple={true}
+                      uploading={uploading}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/80 to-emerald-500/20" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <FileText className="h-5 w-5 text-emerald-500" /> Documentos
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Adicione currículo e certificações para validar sua experiência.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pb-6 space-y-6">
+                    <FileUploadSection
+                      title="Currículo"
+                      description="PDF ou documento com seu currículo"
+                      fieldName="curriculo_path"
+                      currentPath={partnerData.curriculo_path}
+                      bucket={getBucket()}
+                      onUpload={handleFileUpload}
+                      onDelete={handleFileDelete}
+                      isImage={false}
+                      uploading={uploading}
+                    />
+                    <div className="border-t border-slate-100 pt-6">
+                      <FileUploadSection
+                        title="Certificações"
+                        description="Certificados e cursos realizados"
+                        fieldName="certificacoes_path"
+                        currentPath={partnerData.certificacoes_path}
+                        bucket={getBucket()}
+                        onUpload={handleFileUpload}
+                        onDelete={handleFileDelete}
+                        isImage={false}
+                        isMultiple={true}
+                        uploading={uploading}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {partnerType === "fornecedor" && (
+              <>
+                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-blue-500/80 to-blue-500/20" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <ImageIcon className="h-5 w-5 text-blue-500" /> Portfólio e Fotos
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Mostre seus produtos e trabalhos realizados.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pb-6 space-y-6">
+                    <FileUploadSection
+                      title="Portfólio"
+                      description="Apresentação da empresa ou catálogo"
+                      fieldName="portfolio_path"
+                      currentPath={partnerData.portfolio_path}
+                      bucket={getBucket()}
+                      onUpload={handleFileUpload}
+                      onDelete={handleFileDelete}
+                      isImage={false}
+                      uploading={uploading}
+                    />
+                    <div className="border-t border-slate-100 pt-6">
+                      <FileUploadSection
+                        title="Fotos de Trabalhos"
+                        description="Fotos de produtos ou serviços realizados"
+                        fieldName="fotos_trabalhos_path"
+                        currentPath={partnerData.fotos_trabalhos_path}
+                        bucket={getBucket()}
+                        onUpload={handleFileUpload}
+                        onDelete={handleFileDelete}
+                        isImage={true}
+                        isMultiple={true}
+                        uploading={uploading}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/80 to-emerald-500/20" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <FileText className="h-5 w-5 text-emerald-500" /> Certificações
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Adicione certificados e alvarás da empresa.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pb-6">
+                    <FileUploadSection
+                      title="Certificações e Alvarás"
+                      description="Documentos que validam a empresa"
+                      fieldName="certificacoes_path"
+                      currentPath={partnerData.certificacoes_path}
+                      bucket={getBucket()}
+                      onUpload={handleFileUpload}
+                      onDelete={handleFileDelete}
+                      isImage={false}
+                      isMultiple={true}
+                      uploading={uploading}
+                    />
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {partnerType === "empresa" && (
+              <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+                <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/80 to-emerald-500/20" />
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <FileText className="h-5 w-5 text-emerald-500" /> Apresentação Institucional
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Adicione a apresentação da sua empresa.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pb-6">
+                  <FileUploadSection
+                    title="Apresentação PDF"
+                    description="Documento institucional da empresa"
+                    fieldName="apresentacao_path"
+                    currentPath={partnerData.apresentacao_path}
+                    bucket={getBucket()}
+                    onUpload={handleFileUpload}
+                    onDelete={handleFileDelete}
+                    isImage={false}
+                    uploading={uploading}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* TAB 3: PREVIEW (Opcional, mas visualmente bom ter) */}
