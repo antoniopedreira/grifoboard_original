@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { PublicFormLayout } from "@/components/PublicFormLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import {
   Award,
   Image as ImageIcon,
   Phone,
+  AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cadastrosService } from "@/services/cadastrosService";
@@ -210,6 +211,10 @@ export default function Fornecedores() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  
+  // Estado para validação de email
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const [formData, setFormData] = useState({
     // Dados da Empresa
@@ -243,6 +248,46 @@ export default function Fornecedores() {
   const [filesPortfolio, setFilesPortfolio] = useState<File[]>([]);
   const [filesFotosTrabalhos, setFilesFotosTrabalhos] = useState<File[]>([]);
   const [filesCertificacoes, setFilesCertificacoes] = useState<File[]>([]);
+
+  // Verificar se email já existe
+  const checkEmailExists = useCallback(async (email: string) => {
+    if (!email || !email.includes("@")) {
+      setEmailError(null);
+      return;
+    }
+    
+    setCheckingEmail(true);
+    try {
+      const { data: existingUser } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("email", email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (existingUser) {
+        setEmailError("Este email já está cadastrado. Faça login em /auth");
+      } else {
+        setEmailError(null);
+      }
+    } catch (err) {
+      console.error("Erro ao verificar email:", err);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }, []);
+
+  // Debounce para verificação de email
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.email) {
+        checkEmailExists(formData.email);
+      } else {
+        setEmailError(null);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.email, checkEmailExists]);
 
   const handleChange = (field: string, value: string) => {
     if (field === "cnpj_cpf") {
@@ -297,6 +342,13 @@ export default function Fornecedores() {
 
     if (!formData.nome_responsavel || !formData.telefone || !formData.email) {
       toast({ title: "Contato incompleto", description: "Preencha os dados do responsável.", variant: "destructive" });
+      setStep(3);
+      return;
+    }
+
+    // Validação de email duplicado
+    if (emailError) {
+      toast({ title: "Email inválido", description: emailError, variant: "destructive" });
       setStep(3);
       return;
     }
@@ -650,13 +702,27 @@ export default function Fornecedores() {
                 </div>
                 <div className="space-y-2">
                   <Label>E-mail *</Label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    required
-                    className="h-12"
-                  />
+                  <div className="relative">
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                      required
+                      className={cn(
+                        "h-12",
+                        emailError && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                      )}
+                    />
+                    {checkingEmail && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+                    )}
+                  </div>
+                  {emailError && (
+                    <p className="text-sm text-red-500 flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {emailError}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
