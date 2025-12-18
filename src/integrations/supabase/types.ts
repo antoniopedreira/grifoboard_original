@@ -934,6 +934,10 @@ export type Database = {
       }
     }
     Functions: {
+      check_email_exists_global: {
+        Args: { email_to_check: string }
+        Returns: string
+      }
       current_empresa_id: { Args: never; Returns: string }
       get_empresas_stats: {
         Args: never
