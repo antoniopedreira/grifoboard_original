@@ -138,20 +138,20 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
       {/* Selo Grifo Badge - Enhanced UI with dark blue theme */}
       {hasSelo && (
         <motion.div 
-          className="absolute top-2 left-2 z-20"
+          className="absolute top-1 left-1 z-20"
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
         >
           {/* Glow effect - dark blue */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1a3045] to-[#2d4a63] blur-lg opacity-60 rounded-full scale-125" />
+          <div className="absolute inset-2 bg-gradient-to-br from-[#1a3045] to-[#2d4a63] blur-md opacity-50 rounded-full" />
           
           {/* Animated ring - dark blue */}
           <motion.div 
-            className="absolute inset-0 rounded-full border-2 border-[#1a3045]/50"
+            className="absolute inset-0 rounded-full border-2 border-[#1a3045]/40"
             animate={{ 
-              scale: [1, 1.3, 1],
-              opacity: [0.5, 0, 0.5]
+              scale: [1, 1.2, 1],
+              opacity: [0.4, 0, 0.4]
             }}
             transition={{ 
               duration: 2,
@@ -160,11 +160,11 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
             }}
           />
           
-          {/* Main badge */}
+          {/* Main badge - larger and more visible */}
           <img 
             src={seloGrifoImg} 
             alt="Selo Grifo de Aprovação" 
-            className="relative w-14 h-14 drop-shadow-lg"
+            className="relative w-16 h-16 drop-shadow-xl object-contain"
           />
           
           {/* Tooltip on hover */}
