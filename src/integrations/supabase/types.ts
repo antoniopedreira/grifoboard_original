@@ -952,6 +952,10 @@ export type Database = {
       }
       is_company_admin: { Args: never; Returns: boolean }
       is_master_admin: { Args: never; Returns: boolean }
+      link_user_to_form: {
+        Args: { p_entity_id: string; p_entity_type: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "admin" | "member" | "master_admin" | "parceiro"

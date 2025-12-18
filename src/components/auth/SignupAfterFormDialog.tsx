@@ -76,27 +76,17 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
         console.error("Erro ao atualizar role do usuario:", usuarioError);
       }
 
-      // 4. Vincular o registro criado ao novo user_id
-      let updateError = null;
+      // 4. Vincular o registro criado ao novo user_id usando RPC (bypass RLS)
+      const { error: linkError } = await supabase.rpc('link_user_to_form', {
+        p_user_id: authData.user.id,
+        p_entity_id: entityId,
+        p_entity_type: entityType
+      });
 
-      if (entityType === "profissional") {
-        const res = await supabase
-          .from("formulario_profissionais")
-          .update({ user_id: authData.user.id })
-          .eq("id", entityId);
-        updateError = res.error;
-      } else if (entityType === "empresa") {
-        const res = await supabase.from("formulario_empresas").update({ user_id: authData.user.id }).eq("id", entityId);
-        updateError = res.error;
-      } else if (entityType === "fornecedor") {
-        const res = await supabase
-          .from("formulario_fornecedores")
-          .update({ user_id: authData.user.id })
-          .eq("id", entityId);
-        updateError = res.error;
+      if (linkError) {
+        console.error("Erro ao vincular formulário:", linkError);
+        throw linkError;
       }
-
-      if (updateError) throw updateError;
 
       toast.success("Conta criada com sucesso! Acesso liberado.");
       navigate("/portal-parceiro");
