@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, useTransition } from "react";
 import { Task, WeeklyPCPData } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -14,11 +14,18 @@ export const useTaskManager = (weekStartDate: Date) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [weeklyPCPData, setWeeklyPCPData] = useState<WeeklyPCPData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  
+  // Cache filtered tasks by week to avoid recalculation
+  const filteredCacheRef = useRef<Map<string, Task[]>>(new Map());
 
   const { filterTasksByWeek, filteredTasks, setFilteredTasks } = useTaskFilters(tasks, weekStartDate);
   const { loadTasks } = useTaskData(session, toast, setTasks, setIsLoading);
 
-  // Memoized PCP calculation to avoid recalculating on every render
+  // Memoized week key for cache lookups
+  const weekKey = useMemo(() => formatDateToISO(weekStartDate), [weekStartDate]);
+
+  // Memoized PCP calculation - only recalculate when filteredTasks actually change
   const pcpData = useMemo(() => {
     return calculatePCP(filteredTasks || []);
   }, [filteredTasks]);
@@ -60,6 +67,8 @@ export const useTaskManager = (weekStartDate: Date) => {
   // Load tasks when obraAtiva changes
   useEffect(() => {
     if (session.obraAtiva) {
+      // Clear cache when obra changes
+      filteredCacheRef.current.clear();
       loadTasks(weekStartDate, calculatePCPData, filterTasksByWeek, setFilteredTasks);
     } else {
       setTasks([]);
@@ -67,19 +76,42 @@ export const useTaskManager = (weekStartDate: Date) => {
     }
   }, [session.obraAtiva]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filter tasks and update weeklyPCPData when weekStartDate or tasks change
+  // Optimized filter with cache - wrap in transition for smoother UX
   useEffect(() => {
-    if (tasks && tasks.length > 0) {
-      const filtered = filterTasksByWeek(tasks, weekStartDate);
-      setFilteredTasks(filtered);
-      updateWeeklyPCPData(calculatePCP(filtered).overall.percentage);
+    if (!tasks || tasks.length === 0) return;
+    
+    // Check cache first
+    const cached = filteredCacheRef.current.get(weekKey);
+    if (cached) {
+      setFilteredTasks(cached);
+      updateWeeklyPCPData(calculatePCP(cached).overall.percentage);
+      return;
     }
-  }, [weekStartDate, tasks, filterTasksByWeek, setFilteredTasks, updateWeeklyPCPData]);
+    
+    // Use startTransition to mark this as non-urgent update
+    startTransition(() => {
+      const filtered = filterTasksByWeek(tasks, weekStartDate);
+      
+      // Cache the result
+      filteredCacheRef.current.set(weekKey, filtered);
+      
+      // Batch updates by calculating before setting
+      const pcp = calculatePCP(filtered);
+      
+      setFilteredTasks(filtered);
+      updateWeeklyPCPData(pcp.overall.percentage);
+    });
+  }, [weekStartDate, tasks, weekKey, filterTasksByWeek, setFilteredTasks, updateWeeklyPCPData]);
+
+  // Clear cache when tasks change (invalidate cache)
+  useEffect(() => {
+    filteredCacheRef.current.clear();
+  }, [tasks]);
 
   return {
     tasks: filteredTasks || [],
     allTasks: tasks || [],
-    isLoading,
+    isLoading: isLoading || isPending,
     pcpData,
     weeklyPCPData,
     loadTasks: (callback?: () => void) =>
