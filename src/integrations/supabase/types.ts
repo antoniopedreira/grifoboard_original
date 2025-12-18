@@ -184,6 +184,7 @@ export type Database = {
           obras_andamento: string
           planejamento_curto_prazo: string
           principais_desafios: string[]
+          selo_grifo: boolean | null
           site: string | null
           tamanho_empresa: string
           ticket_medio: string
@@ -210,6 +211,7 @@ export type Database = {
           obras_andamento: string
           planejamento_curto_prazo: string
           principais_desafios: string[]
+          selo_grifo?: boolean | null
           site?: string | null
           tamanho_empresa: string
           ticket_medio: string
@@ -236,6 +238,7 @@ export type Database = {
           obras_andamento?: string
           planejamento_curto_prazo?: string
           principais_desafios?: string[]
+          selo_grifo?: boolean | null
           site?: string | null
           tamanho_empresa?: string
           ticket_medio?: string
@@ -267,6 +270,7 @@ export type Database = {
           nome_responsavel: string
           portfolio_path: string | null
           regioes_atendidas: string[]
+          selo_grifo: boolean | null
           site: string | null
           telefone: string
           tempo_atuacao: string
@@ -295,6 +299,7 @@ export type Database = {
           nome_responsavel: string
           portfolio_path?: string | null
           regioes_atendidas: string[]
+          selo_grifo?: boolean | null
           site?: string | null
           telefone: string
           tempo_atuacao: string
@@ -323,6 +328,7 @@ export type Database = {
           nome_responsavel?: string
           portfolio_path?: string | null
           regioes_atendidas?: string[]
+          selo_grifo?: boolean | null
           site?: string | null
           telefone?: string
           tempo_atuacao?: string
@@ -360,6 +366,7 @@ export type Database = {
           obras_relevantes: string | null
           pretensao_valor: string
           regioes_atendidas: string[]
+          selo_grifo: boolean | null
           telefone: string
           tempo_experiencia: string
           user_id: string | null
@@ -390,6 +397,7 @@ export type Database = {
           obras_relevantes?: string | null
           pretensao_valor: string
           regioes_atendidas: string[]
+          selo_grifo?: boolean | null
           telefone: string
           tempo_experiencia: string
           user_id?: string | null
@@ -420,6 +428,7 @@ export type Database = {
           obras_relevantes?: string | null
           pretensao_valor?: string
           regioes_atendidas?: string[]
+          selo_grifo?: boolean | null
           telefone?: string
           tempo_experiencia?: string
           user_id?: string | null

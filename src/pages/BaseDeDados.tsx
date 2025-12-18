@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Filter, Trash2 } from 'lucide-react';
+import { Filter, Trash2, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FormSubmissionModal } from '@/components/FormSubmissionModal';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -31,6 +32,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FormSubmission {
   id: string;
@@ -38,6 +45,7 @@ interface FormSubmission {
   nome: string;
   created_at: string;
   data: any;
+  selo_grifo: boolean;
 }
 
 const BaseDeDados = () => {
@@ -78,13 +86,14 @@ const BaseDeDados = () => {
         .order('created_at', { ascending: false });
 
       if (!errorProf && profissionais) {
-        profissionais.forEach((item) => {
+        profissionais.forEach((item: any) => {
           allSubmissions.push({
             id: item.id,
             tipo: 'profissionais',
             nome: item.nome_completo,
             created_at: item.created_at || '',
             data: item,
+            selo_grifo: item.selo_grifo || false,
           });
         });
       }
@@ -96,13 +105,14 @@ const BaseDeDados = () => {
         .order('created_at', { ascending: false });
 
       if (!errorEmp && empresas) {
-        empresas.forEach((item) => {
+        empresas.forEach((item: any) => {
           allSubmissions.push({
             id: item.id,
             tipo: 'empresas',
             nome: item.nome_empresa,
             created_at: item.created_at || '',
             data: item,
+            selo_grifo: item.selo_grifo || false,
           });
         });
       }
@@ -114,13 +124,14 @@ const BaseDeDados = () => {
         .order('created_at', { ascending: false });
 
       if (!errorForn && fornecedores) {
-        fornecedores.forEach((item) => {
+        fornecedores.forEach((item: any) => {
           allSubmissions.push({
             id: item.id,
             tipo: 'fornecedores',
             nome: item.nome_empresa,
             created_at: item.created_at || '',
             data: item,
+            selo_grifo: item.selo_grifo || false,
           });
         });
       }
@@ -230,6 +241,36 @@ const BaseDeDados = () => {
     } finally {
       setDeleteDialogOpen(false);
       setItemToDelete(null);
+    }
+  };
+
+  const handleToggleSelo = async (submission: FormSubmission, newValue: boolean) => {
+    try {
+      const tableName = `formulario_${submission.tipo}` as 'formulario_profissionais' | 'formulario_empresas' | 'formulario_fornecedores';
+      
+      const { error } = await supabase
+        .from(tableName)
+        .update({ selo_grifo: newValue })
+        .eq('id', submission.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setSubmissions(prev => prev.map(s => 
+        s.id === submission.id ? { ...s, selo_grifo: newValue } : s
+      ));
+
+      toast({
+        title: newValue ? 'Selo Grifo ativado' : 'Selo Grifo removido',
+        description: `${submission.nome} ${newValue ? 'agora possui' : 'não possui mais'} o Selo Grifo.`,
+      });
+    } catch (error) {
+      console.error('Error toggling selo:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar selo.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -495,60 +536,85 @@ const BaseDeDados = () => {
               Nenhum cadastro encontrado
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Data de Cadastro</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSubmissions.map((submission) => (
-                  <TableRow key={submission.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell>
-                      <Badge variant={getTipoBadgeVariant(submission.tipo)}>
-                        {getTipoLabel(submission.tipo)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell 
-                      className="font-medium"
-                      onClick={() => {
-                        setSelectedSubmission(submission);
-                        setIsModalOpen(true);
-                      }}
-                    >
-                      {submission.nome}
-                    </TableCell>
-                    <TableCell
-                      onClick={() => {
-                        setSelectedSubmission(submission);
-                        setIsModalOpen(true);
-                      }}
-                    >
-                      {format(new Date(submission.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setItemToDelete(submission);
-                          setDeleteDialogOpen(true);
-                        }}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            <TooltipProvider>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Data de Cadastro</TableHead>
+                    <TableHead className="text-center">Selo Grifo</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredSubmissions.map((submission) => (
+                    <TableRow key={submission.id} className="cursor-pointer hover:bg-muted/50">
+                      <TableCell>
+                        <Badge variant={getTipoBadgeVariant(submission.tipo)}>
+                          {getTipoLabel(submission.tipo)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell 
+                        className="font-medium"
+                        onClick={() => {
+                          setSelectedSubmission(submission);
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        {submission.nome}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => {
+                          setSelectedSubmission(submission);
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        {format(new Date(submission.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-center gap-2">
+                              <Switch
+                                checked={submission.selo_grifo}
+                                onCheckedChange={(checked) => handleToggleSelo(submission, checked)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              {submission.selo_grifo && (
+                                <Award className="h-4 w-4 text-secondary" />
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {submission.selo_grifo 
+                              ? 'Clique para remover o Selo Grifo' 
+                              : 'Clique para adicionar o Selo Grifo'
+                            }
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setItemToDelete(submission);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>
