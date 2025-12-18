@@ -17,7 +17,7 @@ import {
   Shield,
   Award
 } from "lucide-react";
-import seloGrifoImg from "@/assets/selo-grifo.png";
+import seloGrifoImg from "@/assets/selo-grifo-strike.png";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
 import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -303,38 +303,38 @@ export default function Marketplace() {
               </p>
             </div>
 
-            {/* Selo Grifo Filter */}
+            {/* Selo Grifo Filter - Dark blue theme */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setFilterSeloGrifo(!filterSeloGrifo)}
                 className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-300 ${
                   filterSeloGrifo
-                    ? "bg-gradient-to-r from-[#A47528]/10 to-amber-500/10 border-[#A47528] shadow-[0_0_20px_-5px_rgba(164,117,40,0.4)]"
-                    : "bg-white border-slate-200 hover:border-[#A47528]/50 hover:shadow-md"
+                    ? "bg-gradient-to-r from-[#1a3045]/10 to-[#2d4a63]/10 border-[#1a3045] shadow-[0_0_20px_-5px_rgba(26,48,69,0.5)]"
+                    : "bg-white border-slate-200 hover:border-[#1a3045]/50 hover:shadow-md"
                 }`}
               >
-                {/* Glow effect when active */}
+                {/* Glow effect when active - dark blue */}
                 {filterSeloGrifo && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#A47528]/20 to-amber-500/20 blur-xl rounded-xl -z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#1a3045]/20 to-[#2d4a63]/20 blur-xl rounded-xl -z-10" />
                 )}
                 
-                <div className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+                <div className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 overflow-hidden ${
                   filterSeloGrifo 
-                    ? "bg-gradient-to-br from-[#A47528] to-amber-500 shadow-lg" 
-                    : "bg-slate-100 group-hover:bg-[#A47528]/20"
+                    ? "bg-gradient-to-br from-[#1a3045] to-[#2d4a63] shadow-lg" 
+                    : "bg-slate-100 group-hover:bg-[#1a3045]/10"
                 }`}>
                   <img 
                     src={seloGrifoImg} 
                     alt="Selo Grifo" 
-                    className={`w-6 h-6 transition-all duration-300 ${
-                      filterSeloGrifo ? "drop-shadow-md scale-110" : "opacity-70 group-hover:opacity-100"
+                    className={`w-9 h-9 object-contain transition-all duration-300 ${
+                      filterSeloGrifo ? "drop-shadow-md scale-110" : "opacity-80 group-hover:opacity-100"
                     }`}
                   />
                 </div>
                 
                 <div className="flex flex-col items-start">
                   <span className={`text-sm font-semibold transition-colors ${
-                    filterSeloGrifo ? "text-[#A47528]" : "text-slate-700"
+                    filterSeloGrifo ? "text-[#1a3045]" : "text-slate-700"
                   }`}>
                     Selo de Aprovação Grifo
                   </span>
@@ -344,7 +344,7 @@ export default function Marketplace() {
                 </div>
 
                 {filterSeloGrifo && (
-                  <div className="ml-2 flex items-center justify-center w-5 h-5 rounded-full bg-[#A47528] text-white">
+                  <div className="ml-2 flex items-center justify-center w-5 h-5 rounded-full bg-[#1a3045] text-white">
                     <Award className="h-3 w-3" />
                   </div>
                 )}
