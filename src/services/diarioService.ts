@@ -63,6 +63,9 @@ export const diarioService = {
 
   // Cria ou Atualiza (Upsert inteligente)
   async upsertDiario(diario: DiarioObraUpsert) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Usuário não autenticado');
+
     const payload: any = {
       obra_id: diario.obra_id,
       data: diario.data_diario,
@@ -71,9 +74,8 @@ export const diarioService = {
       equipamentos: diario.equipamentos,
       atividades: diario.atividades,
       observacoes: diario.observacoes,
-      // Mapeia ocorrencias para observacoes se o campo nao existir no banco, ou cria campo novo
-      // Assumindo que observacoes é o campo genérico se ocorrencias não existir no schema
       ocorrencias: diario.ocorrencias,
+      created_by: user.id,
     };
 
     // Se tiver ID, atualiza
