@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 interface SignupAfterFormProps {
   isOpen: boolean;
   onClose: () => void;
-  entityId: string; // ID do registro criado (profissional, empresa ou fornecedor)
+  entityId: string;
   entityType: "profissional" | "empresa" | "fornecedor";
   emailDefault: string;
 }
@@ -35,35 +35,40 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
         password: password,
         options: {
           data: {
-            role: "parceiro", // Define um papel para diferenciar de admin
-            entity_type: entityType
-          }
-        }
+            role: "parceiro",
+            entity_type: entityType,
+          },
+        },
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("Erro ao criar usuário");
 
-      // 2. Vincular o registro criado ao novo user_id
-      const tableMap = {
-        "profissional": "formulario_profissionais",
-        "empresa": "formulario_empresas",
-        "fornecedor": "formulario_fornecedores"
-      };
+      // 2. Vincular o registro criado ao novo user_id (CORREÇÃO DO ERRO DE TS AQUI)
+      let updateError = null;
 
-      const { error: updateError } = await supabase
-        .from(tableMap[entityType])
-        .update({ user_id: authData.user.id })
-        .eq("id", entityId);
+      if (entityType === "profissional") {
+        const res = await supabase
+          .from("formulario_profissionais")
+          .update({ user_id: authData.user.id })
+          .eq("id", entityId);
+        updateError = res.error;
+      } else if (entityType === "empresa") {
+        const res = await supabase.from("formulario_empresas").update({ user_id: authData.user.id }).eq("id", entityId);
+        updateError = res.error;
+      } else if (entityType === "fornecedor") {
+        const res = await supabase
+          .from("formulario_fornecedores")
+          .update({ user_id: authData.user.id })
+          .eq("id", entityId);
+        updateError = res.error;
+      }
 
       if (updateError) throw updateError;
 
       toast.success("Conta criada com sucesso! Acesso liberado.");
-      
-      // 3. Redirecionar para o Portal do Parceiro
       navigate("/portal-parceiro");
       onClose();
-
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Erro ao criar conta.");
@@ -78,10 +83,11 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
         <DialogHeader>
           <DialogTitle>Gerencie seu Perfil</DialogTitle>
           <DialogDescription>
-            Crie uma senha para acessar seu painel exclusivo. Você poderá editar suas informações e adicionar mais fotos ao marketplace a qualquer momento.
+            Crie uma senha para acessar seu painel exclusivo. Você poderá editar suas informações e adicionar mais fotos
+            ao marketplace a qualquer momento.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Email cadastrado</Label>
@@ -89,14 +95,14 @@ export function SignupAfterFormDialog({ isOpen, onClose, entityId, entityType, e
           </div>
           <div className="space-y-2">
             <Label>Crie uma Senha</Label>
-            <Input 
-              type="password" 
-              placeholder="Mínimo 6 caracteres" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
+            <Input
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          
+
           <Button onClick={handleSignup} className="w-full" disabled={loading}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Criar Acesso e Entrar"}
           </Button>
