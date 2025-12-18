@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, User, Loader2, Image as ImageIcon, LayoutTemplate, FileText, Plus, Camera, X, Edit3, Save, XCircle } from "lucide-react";
+import { LogOut, User, Loader2, Image as ImageIcon, LayoutTemplate, FileText, Plus, Camera, X, Edit3, Save, XCircle, MapPin, Star, Building2, Truck, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -875,14 +875,131 @@ export default function PortalParceiro() {
             )}
           </TabsContent>
 
-          {/* TAB 3: PREVIEW (Opcional, mas visualmente bom ter) */}
+          {/* TAB 3: PREVIEW - Card do Marketplace */}
           <TabsContent value="preview" className="focus-visible:outline-none">
-            <div className="flex justify-center py-12">
-              <div className="text-center">
-                <LayoutTemplate className="h-16 w-16 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-slate-400">Visualização em Breve</h3>
-                <p className="text-slate-400 mt-2">Veja como seu card aparecerá para os clientes.</p>
+            <div className="flex flex-col items-center py-8 space-y-6">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold text-slate-700">Prévia do seu Cartão</h3>
+                <p className="text-sm text-slate-400">Assim seu perfil aparecerá para os clientes no Marketplace.</p>
               </div>
+              
+              {/* Card Preview - exactly like MarketplaceCard */}
+              <div className="w-full max-w-sm">
+                <Card className="group overflow-hidden border-border/50 shadow-lg">
+                  {/* Header with gradient */}
+                  <div
+                    className={`h-24 relative ${
+                      partnerType === "empresa"
+                        ? "bg-gradient-to-br from-blue-500/20 to-blue-600/10"
+                        : partnerType === "profissional"
+                          ? "bg-gradient-to-br from-emerald-500/20 to-emerald-600/10"
+                          : "bg-gradient-to-br from-amber-500/20 to-amber-600/10"
+                    }`}
+                  >
+                    <div className="absolute top-3 right-3">
+                      {getLogoUrl(partnerData.logo_path) ? (
+                        <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm overflow-hidden bg-white">
+                          <img
+                            src={getLogoUrl(partnerData.logo_path)!}
+                            alt={partnerName}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`p-2 rounded-full ${
+                          partnerType === "empresa" ? "bg-blue-500/10 text-blue-600" :
+                          partnerType === "profissional" ? "bg-emerald-500/10 text-emerald-600" :
+                          "bg-amber-500/10 text-amber-600"
+                        }`}>
+                          {partnerType === "empresa" ? <Building2 className="h-5 w-5" /> :
+                           partnerType === "profissional" ? <User className="h-5 w-5" /> :
+                           <Truck className="h-5 w-5" />}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* New badge */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm">
+                      <Star className="h-3 w-3 opacity-50" />
+                      <span className="text-xs opacity-70">Novo no Grifo</span>
+                    </div>
+                  </div>
+
+                  <CardContent className="p-4">
+                    {/* Name */}
+                    <h3 className="font-semibold text-foreground line-clamp-1 mb-1">
+                      {partnerName}
+                    </h3>
+
+                    {/* Location */}
+                    <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="line-clamp-1">{partnerData.cidade} - {partnerData.estado}</span>
+                    </div>
+
+                    {/* Phone */}
+                    {(partnerData.telefone || partnerData.whatsapp_contato) && (
+                      <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
+                        <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="line-clamp-1">{partnerData.telefone || partnerData.whatsapp_contato}</span>
+                      </div>
+                    )}
+
+                    {/* Email */}
+                    {(partnerData.email || partnerData.email_contato) && (
+                      <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+                        <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="line-clamp-1 text-xs">{partnerData.email || partnerData.email_contato}</span>
+                      </div>
+                    )}
+
+                    {/* Extra info */}
+                    {partnerType === "profissional" && partnerData.funcao_principal && (
+                      <p className="text-xs text-muted-foreground mb-2 font-medium px-2 py-1 bg-muted/50 rounded-md inline-block line-clamp-1">
+                        {partnerData.funcao_principal === "Outro" && partnerData.funcao_principal_outro 
+                          ? partnerData.funcao_principal_outro 
+                          : partnerData.funcao_principal}
+                      </p>
+                    )}
+                    {partnerType === "fornecedor" && partnerData.tipos_atuacao?.length > 0 && (
+                      <p className="text-xs text-muted-foreground mb-2 font-medium px-2 py-1 bg-muted/50 rounded-md inline-block line-clamp-1">
+                        {partnerData.tipos_atuacao.slice(0, 2).join(", ")}
+                      </p>
+                    )}
+                    {partnerType === "empresa" && partnerData.tamanho_empresa && (
+                      <p className="text-xs text-muted-foreground mb-2 font-medium px-2 py-1 bg-muted/50 rounded-md inline-block line-clamp-1">
+                        {partnerData.tamanho_empresa}
+                      </p>
+                    )}
+
+                    {/* Categories */}
+                    {(() => {
+                      const cats = partnerType === "profissional" ? partnerData.especialidades :
+                                   partnerType === "fornecedor" ? partnerData.categorias_atendidas :
+                                   partnerData.tipos_obras;
+                      return cats && cats.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {cats.slice(0, 2).map((cat: string, idx: number) => (
+                            <Badge key={idx} variant="secondary" className="text-[10px] font-normal px-1.5 h-5">
+                              {cat}
+                            </Badge>
+                          ))}
+                          {cats.length > 2 && (
+                            <Badge variant="outline" className="text-[10px] font-normal px-1.5 h-5">
+                              +{cats.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <p className="text-xs text-slate-400 text-center max-w-md">
+                Este é um preview de como seu cartão aparece na listagem do Marketplace. 
+                Atualize seus dados e fotos para melhorar sua apresentação.
+              </p>
             </div>
           </TabsContent>
         </Tabs>
