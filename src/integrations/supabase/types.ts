@@ -106,6 +106,7 @@ export type Database = {
           mao_de_obra: string | null
           obra_id: string
           observacoes: string | null
+          ocorrencias: string | null
           updated_at: string
         }
         Insert: {
@@ -119,6 +120,7 @@ export type Database = {
           mao_de_obra?: string | null
           obra_id: string
           observacoes?: string | null
+          ocorrencias?: string | null
           updated_at?: string
         }
         Update: {
@@ -132,6 +134,7 @@ export type Database = {
           mao_de_obra?: string | null
           obra_id?: string
           observacoes?: string | null
+          ocorrencias?: string | null
           updated_at?: string
         }
         Relationships: [
