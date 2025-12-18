@@ -73,8 +73,7 @@ export const diarioService = {
       mao_de_obra: diario.mao_de_obra,
       equipamentos: diario.equipamentos,
       atividades: diario.atividades,
-      observacoes: diario.observacoes,
-      ocorrencias: diario.ocorrencias,
+      observacoes: diario.ocorrencias || diario.observacoes, // Merge ocorrencias into observacoes
       created_by: user.id,
     };
 
