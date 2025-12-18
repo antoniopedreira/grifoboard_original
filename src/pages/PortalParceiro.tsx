@@ -4,13 +4,55 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, User, Loader2, Image as ImageIcon, LayoutTemplate, UploadCloud, FileText, Trash2, Plus, Camera, X } from "lucide-react";
+import { LogOut, User, Loader2, Image as ImageIcon, LayoutTemplate, FileText, Plus, Camera, X, Edit3, Save, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
-// Helper component for displaying info fields
+// Helper component for displaying/editing info fields
+interface EditableFieldProps {
+  label: string;
+  value: string | null | undefined;
+  fieldName: string;
+  isEditing: boolean;
+  onChange: (fieldName: string, value: string) => void;
+  type?: "text" | "textarea" | "email" | "tel";
+}
+
+const EditableField = ({ label, value, fieldName, isEditing, onChange, type = "text" }: EditableFieldProps) => {
+  if (!isEditing && !value) return null;
+  
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{label}</Label>
+      {isEditing ? (
+        type === "textarea" ? (
+          <Textarea
+            value={value || ""}
+            onChange={(e) => onChange(fieldName, e.target.value)}
+            className="text-sm"
+            rows={3}
+          />
+        ) : (
+          <Input
+            type={type}
+            value={value || ""}
+            onChange={(e) => onChange(fieldName, e.target.value)}
+            className="text-sm"
+          />
+        )
+      ) : (
+        <p className="text-sm text-slate-700 font-medium">{value}</p>
+      )}
+    </div>
+  );
+};
+
+// Simple read-only info field
 const InfoField = ({ label, value }: { label: string; value: string | null | undefined }) => {
   if (!value) return null;
   return (
@@ -151,7 +193,10 @@ export default function PortalParceiro() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [partnerData, setPartnerData] = useState<any>(null);
+  const [editedData, setEditedData] = useState<any>(null);
   const [partnerType, setPartnerType] = useState<"profissional" | "empresa" | "fornecedor" | null>(null);
 
   useEffect(() => {
@@ -268,6 +313,46 @@ export default function PortalParceiro() {
       toast.error("Erro ao remover arquivo: " + error.message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  // Edit mode functions
+  const startEditing = () => {
+    setEditedData({ ...partnerData });
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditedData(null);
+    setIsEditing(false);
+  };
+
+  const handleFieldChange = (fieldName: string, value: string) => {
+    setEditedData((prev: any) => ({ ...prev, [fieldName]: value }));
+  };
+
+  const saveChanges = async () => {
+    if (!editedData || !partnerData?.id) return;
+    setSaving(true);
+
+    try {
+      const tableName = getTableName();
+      const { error } = await supabase
+        .from(tableName)
+        .update(editedData)
+        .eq("id", partnerData.id);
+
+      if (error) throw error;
+
+      setPartnerData(editedData);
+      setIsEditing(false);
+      setEditedData(null);
+      toast.success("Dados atualizados com sucesso!");
+    } catch (error: any) {
+      console.error("Save error:", error);
+      toast.error("Erro ao salvar: " + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -425,91 +510,144 @@ export default function PortalParceiro() {
                       <User className="h-5 w-5 text-primary" /> Informações do Perfil
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      Seus dados cadastrais no marketplace.
+                      {isEditing ? "Edite seus dados cadastrais." : "Seus dados cadastrais no marketplace."}
                     </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    {isEditing ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={cancelEditing}
+                          disabled={saving}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" /> Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={saveChanges}
+                          disabled={saving}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                          Salvar
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={startEditing}
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" /> Editar
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pb-8">
                 {partnerType === "profissional" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InfoField label="Nome Completo" value={partnerData.nome_completo} />
-                    <InfoField label="CPF" value={partnerData.cpf} />
-                    <InfoField label="Data de Nascimento" value={partnerData.data_nascimento} />
-                    <InfoField label="Telefone" value={partnerData.telefone} />
-                    <InfoField label="Email" value={partnerData.email} />
-                    <InfoField label="Cidade/Estado" value={`${partnerData.cidade} - ${partnerData.estado}`} />
-                    <InfoField label="Função Principal" value={partnerData.funcao_principal} />
-                    <InfoField label="Tempo de Experiência" value={partnerData.tempo_experiencia} />
-                    <InfoField label="Disponibilidade" value={partnerData.disponibilidade_atual} />
-                    <InfoField label="Modalidade de Trabalho" value={partnerData.modalidade_trabalho} />
-                    <InfoField label="Pretensão Salarial" value={partnerData.pretensao_valor} />
-                    <InfoField label="Equipamentos Próprios" value={partnerData.equipamentos_proprios} />
+                    <EditableField label="Nome Completo" value={isEditing ? editedData?.nome_completo : partnerData.nome_completo} fieldName="nome_completo" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="CPF" value={isEditing ? editedData?.cpf : partnerData.cpf} fieldName="cpf" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Data de Nascimento" value={isEditing ? editedData?.data_nascimento : partnerData.data_nascimento} fieldName="data_nascimento" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Telefone" value={isEditing ? editedData?.telefone : partnerData.telefone} fieldName="telefone" isEditing={isEditing} onChange={handleFieldChange} type="tel" />
+                    <EditableField label="Email" value={isEditing ? editedData?.email : partnerData.email} fieldName="email" isEditing={isEditing} onChange={handleFieldChange} type="email" />
+                    <EditableField label="Cidade" value={isEditing ? editedData?.cidade : partnerData.cidade} fieldName="cidade" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Estado" value={isEditing ? editedData?.estado : partnerData.estado} fieldName="estado" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Função Principal" value={isEditing ? editedData?.funcao_principal : partnerData.funcao_principal} fieldName="funcao_principal" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Tempo de Experiência" value={isEditing ? editedData?.tempo_experiencia : partnerData.tempo_experiencia} fieldName="tempo_experiencia" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Disponibilidade" value={isEditing ? editedData?.disponibilidade_atual : partnerData.disponibilidade_atual} fieldName="disponibilidade_atual" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Modalidade de Trabalho" value={isEditing ? editedData?.modalidade_trabalho : partnerData.modalidade_trabalho} fieldName="modalidade_trabalho" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Pretensão Salarial" value={isEditing ? editedData?.pretensao_valor : partnerData.pretensao_valor} fieldName="pretensao_valor" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Equipamentos Próprios" value={isEditing ? editedData?.equipamentos_proprios : partnerData.equipamentos_proprios} fieldName="equipamentos_proprios" isEditing={isEditing} onChange={handleFieldChange} />
                     <div className="md:col-span-2">
-                      <InfoField label="Especialidades" value={partnerData.especialidades?.join(", ")} />
+                      <EditableField label="Cidades Frequentes" value={isEditing ? editedData?.cidades_frequentes : partnerData.cidades_frequentes} fieldName="cidades_frequentes" isEditing={isEditing} onChange={handleFieldChange} />
                     </div>
                     <div className="md:col-span-2">
-                      <InfoField label="Regiões Atendidas" value={partnerData.regioes_atendidas?.join(", ")} />
+                      <EditableField label="Obras Relevantes" value={isEditing ? editedData?.obras_relevantes : partnerData.obras_relevantes} fieldName="obras_relevantes" isEditing={isEditing} onChange={handleFieldChange} type="textarea" />
                     </div>
-                    <div className="md:col-span-2">
-                      <InfoField label="Diferenciais" value={partnerData.diferenciais?.join(", ")} />
-                    </div>
-                    {partnerData.obras_relevantes && (
-                      <div className="md:col-span-2">
-                        <InfoField label="Obras Relevantes" value={partnerData.obras_relevantes} />
-                      </div>
+                    {!isEditing && (
+                      <>
+                        <div className="md:col-span-2">
+                          <InfoField label="Especialidades" value={partnerData.especialidades?.join(", ")} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <InfoField label="Regiões Atendidas" value={partnerData.regioes_atendidas?.join(", ")} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <InfoField label="Diferenciais" value={partnerData.diferenciais?.join(", ")} />
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
                 {partnerType === "empresa" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InfoField label="Nome da Empresa" value={partnerData.nome_empresa} />
-                    <InfoField label="CNPJ" value={partnerData.cnpj} />
-                    <InfoField label="Cidade/Estado" value={`${partnerData.cidade} - ${partnerData.estado}`} />
-                    <InfoField label="Ano de Fundação" value={partnerData.ano_fundacao} />
-                    <InfoField label="Tamanho da Empresa" value={partnerData.tamanho_empresa} />
-                    <InfoField label="Obras em Andamento" value={partnerData.obras_andamento} />
-                    <InfoField label="Ticket Médio" value={partnerData.ticket_medio} />
-                    <InfoField label="Site" value={partnerData.site} />
-                    <InfoField label="Contato" value={partnerData.nome_contato} />
-                    <InfoField label="Cargo" value={partnerData.cargo_contato} />
-                    <InfoField label="WhatsApp" value={partnerData.whatsapp_contato} />
-                    <InfoField label="Email" value={partnerData.email_contato} />
+                    <EditableField label="Nome da Empresa" value={isEditing ? editedData?.nome_empresa : partnerData.nome_empresa} fieldName="nome_empresa" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="CNPJ" value={isEditing ? editedData?.cnpj : partnerData.cnpj} fieldName="cnpj" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Cidade" value={isEditing ? editedData?.cidade : partnerData.cidade} fieldName="cidade" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Estado" value={isEditing ? editedData?.estado : partnerData.estado} fieldName="estado" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Ano de Fundação" value={isEditing ? editedData?.ano_fundacao : partnerData.ano_fundacao} fieldName="ano_fundacao" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Tamanho da Empresa" value={isEditing ? editedData?.tamanho_empresa : partnerData.tamanho_empresa} fieldName="tamanho_empresa" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Obras em Andamento" value={isEditing ? editedData?.obras_andamento : partnerData.obras_andamento} fieldName="obras_andamento" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Ticket Médio" value={isEditing ? editedData?.ticket_medio : partnerData.ticket_medio} fieldName="ticket_medio" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Site" value={isEditing ? editedData?.site : partnerData.site} fieldName="site" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Nome do Contato" value={isEditing ? editedData?.nome_contato : partnerData.nome_contato} fieldName="nome_contato" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Cargo" value={isEditing ? editedData?.cargo_contato : partnerData.cargo_contato} fieldName="cargo_contato" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="WhatsApp" value={isEditing ? editedData?.whatsapp_contato : partnerData.whatsapp_contato} fieldName="whatsapp_contato" isEditing={isEditing} onChange={handleFieldChange} type="tel" />
+                    <EditableField label="Email" value={isEditing ? editedData?.email_contato : partnerData.email_contato} fieldName="email_contato" isEditing={isEditing} onChange={handleFieldChange} type="email" />
                     <div className="md:col-span-2">
-                      <InfoField label="Tipos de Obras" value={partnerData.tipos_obras?.join(", ")} />
+                      <EditableField label="Ferramentas de Gestão" value={isEditing ? editedData?.ferramentas_gestao : partnerData.ferramentas_gestao} fieldName="ferramentas_gestao" isEditing={isEditing} onChange={handleFieldChange} />
                     </div>
                     <div className="md:col-span-2">
-                      <InfoField label="Principais Desafios" value={partnerData.principais_desafios?.join(", ")} />
+                      <EditableField label="Planejamento Curto Prazo" value={isEditing ? editedData?.planejamento_curto_prazo : partnerData.planejamento_curto_prazo} fieldName="planejamento_curto_prazo" isEditing={isEditing} onChange={handleFieldChange} />
                     </div>
-                    <div className="md:col-span-2">
-                      <InfoField label="Planejamento Curto Prazo" value={partnerData.planejamento_curto_prazo} />
-                    </div>
+                    {!isEditing && (
+                      <>
+                        <div className="md:col-span-2">
+                          <InfoField label="Tipos de Obras" value={partnerData.tipos_obras?.join(", ")} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <InfoField label="Principais Desafios" value={partnerData.principais_desafios?.join(", ")} />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
                 {partnerType === "fornecedor" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InfoField label="Nome da Empresa" value={partnerData.nome_empresa} />
-                    <InfoField label="CNPJ/CPF" value={partnerData.cnpj_cpf} />
-                    <InfoField label="Cidade/Estado" value={`${partnerData.cidade} - ${partnerData.estado}`} />
-                    <InfoField label="Tempo de Atuação" value={partnerData.tempo_atuacao} />
-                    <InfoField label="Ticket Médio" value={partnerData.ticket_medio} />
-                    <InfoField label="Capacidade de Atendimento" value={partnerData.capacidade_atendimento} />
-                    <InfoField label="Responsável" value={partnerData.nome_responsavel} />
-                    <InfoField label="Telefone" value={partnerData.telefone} />
-                    <InfoField label="Email" value={partnerData.email} />
-                    <InfoField label="Site" value={partnerData.site} />
+                    <EditableField label="Nome da Empresa" value={isEditing ? editedData?.nome_empresa : partnerData.nome_empresa} fieldName="nome_empresa" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="CNPJ/CPF" value={isEditing ? editedData?.cnpj_cpf : partnerData.cnpj_cpf} fieldName="cnpj_cpf" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Cidade" value={isEditing ? editedData?.cidade : partnerData.cidade} fieldName="cidade" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Estado" value={isEditing ? editedData?.estado : partnerData.estado} fieldName="estado" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Tempo de Atuação" value={isEditing ? editedData?.tempo_atuacao : partnerData.tempo_atuacao} fieldName="tempo_atuacao" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Ticket Médio" value={isEditing ? editedData?.ticket_medio : partnerData.ticket_medio} fieldName="ticket_medio" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Capacidade de Atendimento" value={isEditing ? editedData?.capacidade_atendimento : partnerData.capacidade_atendimento} fieldName="capacidade_atendimento" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Responsável" value={isEditing ? editedData?.nome_responsavel : partnerData.nome_responsavel} fieldName="nome_responsavel" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Telefone" value={isEditing ? editedData?.telefone : partnerData.telefone} fieldName="telefone" isEditing={isEditing} onChange={handleFieldChange} type="tel" />
+                    <EditableField label="Email" value={isEditing ? editedData?.email : partnerData.email} fieldName="email" isEditing={isEditing} onChange={handleFieldChange} type="email" />
+                    <EditableField label="Site" value={isEditing ? editedData?.site : partnerData.site} fieldName="site" isEditing={isEditing} onChange={handleFieldChange} />
                     <div className="md:col-span-2">
-                      <InfoField label="Tipos de Atuação" value={partnerData.tipos_atuacao?.join(", ")} />
+                      <EditableField label="Cidades Frequentes" value={isEditing ? editedData?.cidades_frequentes : partnerData.cidades_frequentes} fieldName="cidades_frequentes" isEditing={isEditing} onChange={handleFieldChange} />
                     </div>
-                    <div className="md:col-span-2">
-                      <InfoField label="Categorias Atendidas" value={partnerData.categorias_atendidas?.join(", ")} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <InfoField label="Regiões Atendidas" value={partnerData.regioes_atendidas?.join(", ")} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <InfoField label="Diferenciais" value={partnerData.diferenciais?.join(", ")} />
-                    </div>
+                    {!isEditing && (
+                      <>
+                        <div className="md:col-span-2">
+                          <InfoField label="Tipos de Atuação" value={partnerData.tipos_atuacao?.join(", ")} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <InfoField label="Categorias Atendidas" value={partnerData.categorias_atendidas?.join(", ")} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <InfoField label="Regiões Atendidas" value={partnerData.regioes_atendidas?.join(", ")} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <InfoField label="Diferenciais" value={partnerData.diferenciais?.join(", ")} />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </CardContent>
