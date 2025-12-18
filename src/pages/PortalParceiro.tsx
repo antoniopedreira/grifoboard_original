@@ -275,7 +275,7 @@ export default function PortalParceiro() {
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/auth");
+    // signOut already handles redirect to /auth
   };
 
   const getBucket = () => {
