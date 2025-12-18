@@ -458,8 +458,8 @@ export default function PortalParceiro() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 bg-white/10 py-1.5 px-3 rounded-full border border-white/10">
-              <Avatar className="h-8 w-8 border-2 border-secondary shadow-sm">
-                <AvatarImage src={logoUrl || ""} />
+              <Avatar key={logoUrl || 'no-logo'} className="h-8 w-8 border-2 border-secondary shadow-sm">
+                <AvatarImage src={logoUrl || ""} alt="Foto de perfil" />
                 <AvatarFallback className="bg-secondary text-white font-bold">
                   {partnerName?.charAt(0).toUpperCase()}
                 </AvatarFallback>
