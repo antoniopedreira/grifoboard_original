@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, User, Loader2, Image as ImageIcon, LayoutTemplate, FileText, Plus, Camera, X, Edit3, Save, XCircle, MapPin, Star, Building2, Truck, Phone, Mail } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { LogOut, User, Loader2, Image as ImageIcon, LayoutTemplate, FileText, Plus, Camera, X, Edit3, Save, XCircle, MapPin, Star, Building2, Truck, Phone, Mail, ArrowLeft, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { formatPhoneNumber } from "@/lib/utils/formatPhone";
 
 // Helper component for displaying/editing info fields
 interface EditableFieldProps {
@@ -207,6 +209,10 @@ export default function PortalParceiro() {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [partnerData, setPartnerData] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [editedData, setEditedData] = useState<any>(null);
   const [partnerType, setPartnerType] = useState<"profissional" | "empresa" | "fornecedor" | null>(null);
 
@@ -880,12 +886,12 @@ export default function PortalParceiro() {
             <div className="flex flex-col items-center py-8 space-y-6">
               <div className="text-center mb-4">
                 <h3 className="text-lg font-semibold text-slate-700">Prévia do seu Cartão</h3>
-                <p className="text-sm text-slate-400">Assim seu perfil aparecerá para os clientes no Marketplace.</p>
+                <p className="text-sm text-slate-400">Clique no cartão para ver como aparecerá no Marketplace.</p>
               </div>
               
               {/* Card Preview - exactly like MarketplaceCard */}
-              <div className="w-full max-w-sm">
-                <Card className="group overflow-hidden border-border/50 shadow-lg">
+              <div className="w-full max-w-sm cursor-pointer" onClick={() => setIsPreviewModalOpen(true)}>
+                <Card className="group overflow-hidden border-border/50 shadow-lg hover:shadow-xl transition-shadow">
                   {/* Header with gradient */}
                   <div
                     className={`h-24 relative ${
@@ -997,10 +1003,395 @@ export default function PortalParceiro() {
               </div>
 
               <p className="text-xs text-slate-400 text-center max-w-md">
-                Este é um preview de como seu cartão aparece na listagem do Marketplace. 
-                Atualize seus dados e fotos para melhorar sua apresentação.
+                Clique no cartão acima para ver uma prévia completa de como seu perfil aparece no Marketplace.
               </p>
             </div>
+
+            {/* Preview Detail Modal */}
+            <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
+              <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden border-0 rounded-2xl shadow-2xl bg-white flex flex-col">
+                {/* Header with gradient */}
+                <div className={`relative bg-gradient-to-r ${
+                  partnerType === "empresa" ? "from-blue-500 to-blue-600" :
+                  partnerType === "profissional" ? "from-emerald-500 to-emerald-600" :
+                  "from-amber-500 to-amber-600"
+                } p-6 pb-24`}>
+                  <button
+                    onClick={() => setIsPreviewModalOpen(false)}
+                    className="absolute top-4 left-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setIsPreviewModalOpen(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <div className="absolute top-4 right-16 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5">
+                    <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
+                    <span className="text-white font-semibold">0.0</span>
+                    <span className="text-white/70 text-sm">(0)</span>
+                  </div>
+                </div>
+
+                {/* Profile Info Overlapping */}
+                <div className="relative -mt-20 mx-6 mb-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
+                    {/* Avatar / Logo */}
+                    <div className="rounded-2xl p-1 bg-white shadow-xl">
+                      {getLogoUrl(partnerData.logo_path) ? (
+                        <img src={getLogoUrl(partnerData.logo_path)!} alt={partnerName} className="w-32 h-32 rounded-xl object-cover bg-slate-100" />
+                      ) : (
+                        <div className={`w-32 h-32 rounded-xl bg-gradient-to-br ${
+                          partnerType === "empresa" ? "from-blue-500 to-blue-600" :
+                          partnerType === "profissional" ? "from-emerald-500 to-emerald-600" :
+                          "from-amber-500 to-amber-600"
+                        } flex items-center justify-center text-white`}>
+                          {partnerType === "empresa" ? <Building2 className="h-10 w-10" /> :
+                           partnerType === "profissional" ? <User className="h-10 w-10" /> :
+                           <Truck className="h-10 w-10" />}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 pb-2">
+                      <Badge variant="secondary" className="mb-2">
+                        {partnerType === "empresa" ? "Empresa" : partnerType === "profissional" ? "Profissional" : "Fornecedor"}
+                      </Badge>
+                      <h2 className="text-3xl font-bold text-slate-900 truncate max-w-lg">{partnerName}</h2>
+                      <div className="flex items-center gap-2 mt-1 text-slate-500">
+                        <MapPin className="h-4 w-4 flex-shrink-0" />
+                        <span className="text-sm font-medium">{partnerData.cidade}, {partnerData.estado}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4 min-h-0 overflow-hidden">
+                  <TabsList className="w-full justify-start gap-2 bg-transparent p-0 h-auto border-b border-slate-100 pb-1 mb-4 overflow-x-auto flex-shrink-0">
+                    <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-2 bg-transparent shadow-none">
+                      Informações
+                    </TabsTrigger>
+                    <TabsTrigger value="fotos" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-2 bg-transparent shadow-none">
+                      Fotos
+                    </TabsTrigger>
+                    <TabsTrigger value="docs" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-2 bg-transparent shadow-none">
+                      Documentos
+                    </TabsTrigger>
+                    <TabsTrigger value="reviews" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-2 bg-transparent shadow-none">
+                      Avaliações (0)
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <div className="flex-1 min-h-0 overflow-auto -mx-6 px-6 pb-6">
+                    {/* Info Tab */}
+                    <TabsContent value="info" className="mt-0 space-y-6">
+                      {/* Contatos */}
+                      <div className="bg-muted/30 rounded-2xl p-5 border">
+                        <h4 className="font-semibold mb-4 flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-primary" /> Contatos
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <InfoField label="Telefone" value={formatPhoneNumber(partnerData.telefone || partnerData.whatsapp_contato)} />
+                          <InfoField label="Email" value={partnerData.email || partnerData.email_contato} />
+                        </div>
+                      </div>
+
+                      {/* Dados Pessoais / Empresa */}
+                      <div className="bg-muted/30 rounded-2xl p-5 border">
+                        <h4 className="font-semibold mb-4 flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" /> 
+                          {partnerType === "profissional" ? "Dados Pessoais" : "Dados da Empresa"}
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {partnerType === "profissional" && (
+                            <>
+                              <InfoField label="Nome" value={partnerData.nome_completo} />
+                              <InfoField label="CPF" value={partnerData.cpf} />
+                              <InfoField label="Data de Nascimento" value={partnerData.data_nascimento} />
+                              <InfoField label="Localização" value={`${partnerData.cidade}, ${partnerData.estado}`} />
+                              <InfoField label="Função Principal" value={partnerData.funcao_principal} />
+                              <InfoField label="Tempo de Experiência" value={partnerData.tempo_experiencia} />
+                              <InfoField label="Disponibilidade" value={partnerData.disponibilidade_atual} />
+                              <InfoField label="Modalidade" value={partnerData.modalidade_trabalho} />
+                              <InfoField label="Pretensão Salarial" value={partnerData.pretensao_valor} />
+                              <InfoField label="Equipamentos Próprios" value={partnerData.equipamentos_proprios} />
+                            </>
+                          )}
+                          {partnerType === "empresa" && (
+                            <>
+                              <InfoField label="Nome da Empresa" value={partnerData.nome_empresa} />
+                              <InfoField label="CNPJ" value={partnerData.cnpj} />
+                              <InfoField label="Localização" value={`${partnerData.cidade}, ${partnerData.estado}`} />
+                              <InfoField label="Ano de Fundação" value={partnerData.ano_fundacao} />
+                              <InfoField label="Tamanho" value={partnerData.tamanho_empresa} />
+                              <InfoField label="Obras em Andamento" value={partnerData.obras_andamento} />
+                              <InfoField label="Ticket Médio" value={partnerData.ticket_medio} />
+                              <InfoField label="Site" value={partnerData.site} />
+                              <InfoField label="Contato" value={partnerData.nome_contato} />
+                              <InfoField label="Cargo" value={partnerData.cargo_contato} />
+                            </>
+                          )}
+                          {partnerType === "fornecedor" && (
+                            <>
+                              <InfoField label="Nome da Empresa" value={partnerData.nome_empresa} />
+                              <InfoField label="CNPJ/CPF" value={partnerData.cnpj_cpf} />
+                              <InfoField label="Localização" value={`${partnerData.cidade}, ${partnerData.estado}`} />
+                              <InfoField label="Tempo de Atuação" value={partnerData.tempo_atuacao} />
+                              <InfoField label="Ticket Médio" value={partnerData.ticket_medio} />
+                              <InfoField label="Capacidade" value={partnerData.capacidade_atendimento} />
+                              <InfoField label="Responsável" value={partnerData.nome_responsavel} />
+                              <InfoField label="Site" value={partnerData.site} />
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Especialidades / Categorias */}
+                      {partnerType === "profissional" && partnerData.especialidades?.length > 0 && (
+                        <div className="bg-muted/30 rounded-2xl p-5 border">
+                          <h4 className="font-semibold mb-4">Especialidades</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {partnerData.especialidades.map((esp: string, idx: number) => (
+                              <Badge key={idx} variant="secondary">{esp}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {partnerType === "fornecedor" && partnerData.categorias_atendidas?.length > 0 && (
+                        <div className="bg-muted/30 rounded-2xl p-5 border">
+                          <h4 className="font-semibold mb-4">Categorias Atendidas</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {partnerData.categorias_atendidas.map((cat: string, idx: number) => (
+                              <Badge key={idx} variant="secondary">{cat}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {partnerType === "empresa" && partnerData.tipos_obras?.length > 0 && (
+                        <div className="bg-muted/30 rounded-2xl p-5 border">
+                          <h4 className="font-semibold mb-4">Tipos de Obras</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {partnerData.tipos_obras.map((tipo: string, idx: number) => (
+                              <Badge key={idx} variant="secondary">{tipo}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Regiões Atendidas */}
+                      {(partnerType === "profissional" || partnerType === "fornecedor") && partnerData.regioes_atendidas?.length > 0 && (
+                        <div className="bg-muted/30 rounded-2xl p-5 border">
+                          <h4 className="font-semibold mb-4">Regiões Atendidas</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {partnerData.regioes_atendidas.map((reg: string, idx: number) => (
+                              <Badge key={idx} variant="outline">{reg}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Diferenciais */}
+                      {(partnerType === "profissional" || partnerType === "fornecedor") && partnerData.diferenciais?.length > 0 && (
+                        <div className="bg-muted/30 rounded-2xl p-5 border">
+                          <h4 className="font-semibold mb-4">Diferenciais</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {partnerData.diferenciais.map((dif: string, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="bg-primary/10 text-primary">{dif}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    {/* Fotos Tab */}
+                    <TabsContent value="fotos" className="mt-0">
+                      {(() => {
+                        const photoFields = partnerType === "profissional" ? ["fotos_trabalhos_path"] :
+                                           partnerType === "fornecedor" ? ["portfolio_path", "fotos_trabalhos_path"] : [];
+                        
+                        const getPhotos = () => {
+                          const photos: string[] = [];
+                          photoFields.forEach(field => {
+                            const value = partnerData[field];
+                            if (value && typeof value === 'string' && value.trim() !== '' && value !== '[]') {
+                              const paths = value.split(",").filter((p: string) => {
+                                const trimmed = p.trim();
+                                return trimmed && trimmed.length > 2 && !trimmed.startsWith('[');
+                              });
+                              paths.forEach((p: string) => {
+                                const trimmed = p.trim();
+                                if (trimmed.startsWith("http")) {
+                                  photos.push(trimmed);
+                                } else {
+                                  const { data } = supabase.storage.from(getBucket()).getPublicUrl(trimmed);
+                                  photos.push(data.publicUrl);
+                                }
+                              });
+                            }
+                          });
+                          return photos;
+                        };
+                        
+                        const photos = getPhotos();
+                        
+                        if (photos.length === 0) {
+                          return (
+                            <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-2xl">
+                              <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                              <p className="text-sm">Nenhuma foto cadastrada</p>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {photos.map((url, idx) => (
+                              <div 
+                                key={idx} 
+                                className="aspect-square rounded-xl overflow-hidden border cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => {
+                                  setLightboxImages(photos);
+                                  setLightboxIndex(idx);
+                                  setLightboxOpen(true);
+                                }}
+                              >
+                                <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </TabsContent>
+
+                    {/* Docs Tab */}
+                    <TabsContent value="docs" className="mt-0">
+                      {(() => {
+                        const docFields = partnerType === "profissional" ? ["curriculo_path", "certificacoes_path"] :
+                                         partnerType === "fornecedor" ? ["portfolio_path", "certificacoes_path"] :
+                                         ["apresentacao_path"];
+                        
+                        const getDocs = () => {
+                          const docs: { name: string; url: string }[] = [];
+                          docFields.forEach(field => {
+                            const value = partnerData[field];
+                            if (value && typeof value === 'string' && value.trim() !== '' && value !== '[]') {
+                              const paths = value.split(",").filter((p: string) => {
+                                const trimmed = p.trim();
+                                return trimmed && trimmed.length > 2 && !trimmed.startsWith('[');
+                              });
+                              paths.forEach((p: string, idx: number) => {
+                                const trimmed = p.trim();
+                                const ext = trimmed.toLowerCase().split(".").pop();
+                                if (!["jpg", "jpeg", "png", "gif", "webp"].includes(ext || "")) {
+                                  let url = trimmed;
+                                  if (!trimmed.startsWith("http")) {
+                                    const { data } = supabase.storage.from(getBucket()).getPublicUrl(trimmed);
+                                    url = data.publicUrl;
+                                  }
+                                  const label = field === "curriculo_path" ? "Currículo" :
+                                               field === "certificacoes_path" ? `Certificação ${idx + 1}` :
+                                               field === "apresentacao_path" ? "Apresentação Institucional" :
+                                               `Documento ${idx + 1}`;
+                                  docs.push({ name: label, url });
+                                }
+                              });
+                            }
+                          });
+                          return docs;
+                        };
+                        
+                        const docs = getDocs();
+                        
+                        if (docs.length === 0) {
+                          return (
+                            <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-2xl">
+                              <FileText className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                              <p className="text-sm">Nenhum documento cadastrado</p>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div className="space-y-3">
+                            {docs.map((doc, idx) => (
+                              <a
+                                key={idx}
+                                href={doc.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-4 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
+                              >
+                                <FileText className="h-5 w-5 text-primary" />
+                                <span className="flex-1 font-medium text-sm">{doc.name}</span>
+                                <Download className="h-4 w-4 text-muted-foreground" />
+                              </a>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </TabsContent>
+
+                    {/* Reviews Tab */}
+                    <TabsContent value="reviews" className="mt-0">
+                      <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-2xl">
+                        <Star className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                        <p className="text-sm">Nenhuma avaliação ainda</p>
+                        <p className="text-xs mt-2 text-muted-foreground/60">
+                          As avaliações aparecem aqui quando clientes avaliam seu perfil no Marketplace.
+                        </p>
+                      </div>
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              </DialogContent>
+            </Dialog>
+
+            {/* Lightbox for photos */}
+            {lightboxOpen && (
+              <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center" onClick={() => setLightboxOpen(false)}>
+                <button 
+                  className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-full"
+                  onClick={() => setLightboxOpen(false)}
+                >
+                  <X className="h-6 w-6" />
+                </button>
+                
+                {lightboxIndex > 0 && (
+                  <button
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/10 rounded-full"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(i => i - 1); }}
+                  >
+                    <ChevronLeft className="h-8 w-8" />
+                  </button>
+                )}
+                
+                {lightboxIndex < lightboxImages.length - 1 && (
+                  <button
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/10 rounded-full"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(i => i + 1); }}
+                  >
+                    <ChevronRight className="h-8 w-8" />
+                  </button>
+                )}
+                
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">
+                  {lightboxIndex + 1} / {lightboxImages.length}
+                </div>
+                
+                <img
+                  src={lightboxImages[lightboxIndex]}
+                  alt="Foto ampliada"
+                  className="max-h-[85vh] max-w-[90vw] object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
