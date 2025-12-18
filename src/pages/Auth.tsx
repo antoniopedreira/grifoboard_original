@@ -12,14 +12,14 @@ const Auth = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (userSession?.user) {
-      const lastRoute = sessionStorage.getItem("lastRoute");
-      const destination =
-        lastRoute && lastRoute !== "/auth" && lastRoute !== "/reset-password" ? lastRoute : "/dashboard";
-
-      navigate(destination, { replace: true });
+    // Se já está logado e não está em processo de logout, apenas renderiza null
+    // O redirecionamento baseado em role é feito pelo LoginForm após login
+    // Isso evita conflitos de redirect com roles diferentes
+    if (userSession?.user && localStorage.getItem("logging_out") !== "true") {
+      // Não redireciona automaticamente - deixa o LoginForm controlar baseado na role
+      return;
     }
-  }, [userSession, navigate]);
+  }, [userSession]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const x = (e.clientX / window.innerWidth) * 2 - 1;

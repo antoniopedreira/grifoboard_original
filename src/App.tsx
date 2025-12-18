@@ -106,14 +106,23 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const RouteRestorer = () => {
-  const navigate = useNavigate();
+  const { userSession } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname !== "/auth" && location.pathname !== "/reset-password") {
+    // Não salva se logout em progresso
+    if (localStorage.getItem("logging_out") === "true") return;
+    
+    // Não salva se não tem usuário logado
+    if (!userSession?.user) return;
+    
+    // Lista de rotas que não devem ser salvas
+    const excludedRoutes = ["/auth", "/reset-password", "/portal-parceiro", "/master-admin"];
+    
+    if (!excludedRoutes.includes(location.pathname)) {
       sessionStorage.setItem("lastRoute", location.pathname);
     }
-  }, [location.pathname]);
+  }, [location.pathname, userSession]);
 
   return null;
 };

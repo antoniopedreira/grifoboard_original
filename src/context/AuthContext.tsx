@@ -289,18 +289,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
 
+      // Marca que está fazendo logout ANTES de qualquer outra operação
+      // Isso previne que RouteRestorer salve rotas durante o logout
+      localStorage.setItem("logging_out", "true");
+
       // Clear local session state first
       const currentUserId = userSession.user?.id;
       setUserSession({ user: null, obraAtiva: null });
       setSessionId(null);
 
+      // Clear ALL sessionStorage para evitar redirecionamentos incorretos
+      sessionStorage.clear();
+
       // Clear session-specific data
       ["current_session_id", "last_activity"].forEach((key) => {
         localStorage.removeItem(key);
       });
-
-      // Clear sessionStorage to prevent redirect back to previous route
-      sessionStorage.removeItem("lastRoute");
 
       // Clear user-specific data
       if (currentUserId) {
@@ -322,14 +326,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Você foi desconectado com sucesso.",
       });
 
-      // Force redirect to auth page
+      // Force redirect to auth page (logging_out será limpo no próximo login)
       window.location.href = "/auth";
     } catch (error: any) {
       // Even if logout fails on server, clear local state and redirect
       setUserSession({ user: null, obraAtiva: null });
       setSessionId(null);
+      
+      // Mantém logging_out flag
+      const loggingOut = localStorage.getItem("logging_out");
       localStorage.clear();
       sessionStorage.clear();
+      if (loggingOut) localStorage.setItem("logging_out", "true");
 
       toast({
         title: "Desconectado",

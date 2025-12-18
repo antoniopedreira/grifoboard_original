@@ -36,6 +36,10 @@ const LoginForm = () => {
     
     setIsLoading(true);
     
+    // Limpa dados de sessão anterior antes do login para evitar conflitos de rota
+    sessionStorage.removeItem("lastRoute");
+    localStorage.removeItem("logging_out");
+    
     try {
       // Faz o login
       await signIn(email, password);

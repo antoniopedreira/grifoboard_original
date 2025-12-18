@@ -19,6 +19,12 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkUserRole = async () => {
+      // Se logout está em progresso, não faz verificações
+      if (localStorage.getItem("logging_out") === "true") {
+        setChecking(false);
+        return;
+      }
+
       // Rotas públicas não precisam de verificação
       if (publicRoutes.some(route => location.pathname.startsWith(route))) {
         setChecking(false);
