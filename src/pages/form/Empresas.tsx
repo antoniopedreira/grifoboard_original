@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import FormTemplate from "./FormTemplate";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { SuccessModal } from "@/components/SuccessModal";
 import { toast } from "sonner";
 import { FileUploadButton } from "@/components/FileUploadButton";
+import { Loader2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Empresas = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,6 +18,10 @@ const Empresas = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [apresentacaoFile, setApresentacaoFile] = useState<File | null>(null);
+  
+  // Estado para validação de email
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const [formData, setFormData] = useState({
     // 1. Informações da Empresa
@@ -48,6 +54,46 @@ const Empresas = () => {
     desafiosOutro: "",
   });
 
+  // Verificar se email já existe
+  const checkEmailExists = useCallback(async (email: string) => {
+    if (!email || !email.includes("@")) {
+      setEmailError(null);
+      return;
+    }
+    
+    setCheckingEmail(true);
+    try {
+      const { data: existingUser } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("email", email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (existingUser) {
+        setEmailError("Este email já está cadastrado. Faça login em /auth");
+      } else {
+        setEmailError(null);
+      }
+    } catch (err) {
+      console.error("Erro ao verificar email:", err);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }, []);
+
+  // Debounce para verificação de email
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.emailContato) {
+        checkEmailExists(formData.emailContato);
+      } else {
+        setEmailError(null);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.emailContato, checkEmailExists]);
+
   const handleCheckboxChange = (field: 'tiposObras' | 'principaisDesafios', value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -58,6 +104,12 @@ const Empresas = () => {
   };
 
   const handleSubmit = async () => {
+    // Validação de email duplicado
+    if (emailError) {
+      toast.error(emailError);
+      return;
+    }
+    
     setIsSubmitting(true);
     setUploadingFiles(true);
     
@@ -338,13 +390,25 @@ const Empresas = () => {
 
             <div>
               <Label htmlFor="emailContato">E-mail *</Label>
-              <Input
-                id="emailContato"
-                type="email"
-                value={formData.emailContato}
-                onChange={(e) => setFormData({ ...formData, emailContato: e.target.value })}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="emailContato"
+                  type="email"
+                  value={formData.emailContato}
+                  onChange={(e) => setFormData({ ...formData, emailContato: e.target.value })}
+                  required
+                  className={cn(emailError && "border-red-500 focus:border-red-500")}
+                />
+                {checkingEmail && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+                )}
+              </div>
+              {emailError && (
+                <p className="text-sm text-red-500 flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {emailError}
+                </p>
+              )}
             </div>
           </div>
 
