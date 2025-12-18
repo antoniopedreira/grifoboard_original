@@ -14,6 +14,7 @@ import Formularios from "@/pages/Formularios";
 import BaseDeDados from "@/pages/BaseDeDados";
 import Playbook from "@/pages/Playbook";
 import Marketplace from "@/pages/Marketplace";
+import PortalParceiro from "@/pages/PortalParceiro";
 import FormProfissionais from "@/pages/form/Profissionais";
 import FormEmpresas from "@/pages/form/Empresas";
 import FormFornecedores from "@/pages/form/Fornecedores";
@@ -61,10 +62,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isAuthPage = location.pathname === "/auth" || location.pathname === "/reset-password";
   const isFormPage = location.pathname.startsWith("/form/");
+  const isPortalParceiro = location.pathname === "/portal-parceiro";
   const isMasterAdminPage = masterAdminRoutes.includes(location.pathname);
 
   // Layout do App (Dashboard, Obras, etc)
-  const isAppPage = !isAuthPage && !isFormPage;
+  const isAppPage = !isAuthPage && !isFormPage && !isPortalParceiro;
 
   // Layout Público / Autenticação (Login, Cadastro, Forms Públicos)
   if (!isAppPage) {
@@ -147,6 +149,7 @@ function App() {
                       <Route path="/base-de-dados" element={<BaseDeDados />} />
                       <Route path="/playbook" element={<Playbook />} />
                       <Route path="/marketplace" element={<Marketplace />} />
+                      <Route path="/portal-parceiro" element={<PortalParceiro />} />
                       <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                       <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                       <Route path="/diarioobra" element={<DiarioObra />} />
