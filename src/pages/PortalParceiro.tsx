@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, User, Building2, Truck, Loader2 } from "lucide-react";
+import { LogOut, User, Building2, Truck, Loader2, Edit3, Image as ImageIcon, LayoutTemplate } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// Importar seus formulários existentes aqui para reutilizá-los ou criar versões de edição
-// Para simplificar, vou simular a estrutura de edição
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 export default function PortalParceiro() {
   const { userSession, signOut } = useAuth();
@@ -64,83 +64,226 @@ export default function PortalParceiro() {
     navigate("/auth");
   };
 
-  if (loading) {
-    return <div className="h-screen w-full flex items-center justify-center"><Loader2 className="h-10 w-10 animate-spin" /></div>;
-  }
+  // Função auxiliar para obter URL da imagem
+  const getLogoUrl = (path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    const bucket =
+      partnerType === "empresa"
+        ? "formularios-empresas"
+        : partnerType === "fornecedor"
+          ? "formularios-fornecedores"
+          : "formularios-profissionais";
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  };
 
-  if (!partnerData) {
+  if (loading) {
     return (
-      <div className="p-8 text-center">
-        <h1 className="text-2xl font-bold">Perfil não encontrado</h1>
-        <p>Não encontramos um cadastro vinculado a este usuário.</p>
-        <Button onClick={handleLogout} className="mt-4">Sair</Button>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-slate-500 font-medium animate-pulse">Carregando seu perfil...</p>
       </div>
     );
   }
 
+  if (!partnerData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="max-w-md w-full shadow-lg border-0">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto bg-red-100 p-3 rounded-full w-fit mb-4">
+              <User className="h-8 w-8 text-red-600" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-slate-800">Perfil não encontrado</CardTitle>
+            <CardDescription>Não localizamos um cadastro de parceiro vinculado ao seu usuário.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center pt-4">
+            <Button onClick={handleLogout} variant="destructive" className="w-full">
+              Sair e tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const partnerName = partnerData.nome_completo || partnerData.nome_empresa;
+  const logoUrl = getLogoUrl(partnerData.logo_path);
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header Simples */}
-      <header className="bg-white border-b px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <img src="/lovable-uploads/grifo-logo-header.png" alt="Grifo" className="h-8" />
-          <span className="text-sm font-medium px-2 py-1 bg-slate-100 rounded-md text-slate-600">
-            Área do Parceiro
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-600 hidden sm:inline">
-            Olá, <strong>{partnerData.nome_completo || partnerData.nome_empresa}</strong>
-          </span>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Sair
-          </Button>
+    <div className="min-h-screen bg-slate-50/50 font-sans">
+      {/* --- HEADER --- */}
+      <header className="bg-white border-b sticky top-0 z-50 shadow-sm backdrop-blur-sm bg-white/90">
+        <div className="container mx-auto px-4 h-16 flex justify-between items-center max-w-6xl">
+          <div className="flex items-center gap-3">
+            <img
+              src="/lovable-uploads/grifo-logo-header.png"
+              alt="Grifo"
+              className="h-8 transition-transform hover:scale-105"
+            />
+            <div className="hidden md:flex h-6 w-[1px] bg-slate-200 mx-1"></div>
+            <span className="text-sm font-semibold text-slate-600 tracking-tight hidden md:inline-block">
+              Portal do Parceiro
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 bg-slate-100/50 py-1.5 px-3 rounded-full border border-slate-100">
+              <Avatar className="h-8 w-8 border border-white shadow-sm">
+                <AvatarImage src={logoUrl || ""} />
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  {partnerName?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden sm:block text-xs text-right mr-1">
+                <p className="font-semibold text-slate-700 truncate max-w-[120px]">{partnerName}</p>
+                <p className="text-slate-400 font-medium capitalize">{partnerType}</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto p-6 max-w-5xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">Meu Perfil Profissional</h1>
-          <p className="text-slate-500">Gerencie como você aparece no Marketplace da Grifo.</p>
+      {/* --- MAIN CONTENT --- */}
+      <main className="container mx-auto p-4 md:p-8 max-w-6xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Welcome Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200/60 pb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Badge
+                variant="outline"
+                className="bg-white text-primary border-primary/20 px-2 py-0.5 uppercase text-[10px] tracking-wider font-bold"
+              >
+                Painel de Controle
+              </Badge>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+              Olá,{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
+                {partnerName?.split(" ")[0]}
+              </span>
+            </h1>
+            <p className="text-slate-500 mt-2 max-w-xl text-lg">
+              Gerencie suas informações e mantenha seu perfil atualizado para se destacar no marketplace.
+            </p>
+          </div>
+          <div className="hidden md:block">
+            {/* Espaço para métricas futuras ou status */}
+            <div className="text-right">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status do Perfil</span>
+              <div className="flex items-center justify-end gap-2 mt-1">
+                <span className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-sm font-medium text-slate-700">Ativo no Marketplace</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <Tabs defaultValue="dados">
-          <TabsList className="mb-6">
-            <TabsTrigger value="dados">Dados Cadastrais</TabsTrigger>
-            <TabsTrigger value="midia">Fotos e Portfólio</TabsTrigger>
-            <TabsTrigger value="preview">Visualizar Cartão</TabsTrigger>
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="dados" className="space-y-6">
+          <TabsList className="bg-white p-1 border border-slate-200 shadow-sm rounded-xl w-full md:w-auto h-auto flex-wrap justify-start gap-1">
+            <TabsTrigger
+              value="dados"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/5 data-[state=active]:text-primary font-medium transition-all"
+            >
+              <User className="h-4 w-4 mr-2" /> Dados Cadastrais
+            </TabsTrigger>
+            <TabsTrigger
+              value="midia"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/5 data-[state=active]:text-primary font-medium transition-all"
+            >
+              <ImageIcon className="h-4 w-4 mr-2" /> Fotos e Portfólio
+            </TabsTrigger>
+            <TabsTrigger
+              value="preview"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/5 data-[state=active]:text-primary font-medium transition-all"
+            >
+              <LayoutTemplate className="h-4 w-4 mr-2" /> Visualizar Cartão
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dados">
-            <Card>
+          {/* TAB 1: DADOS */}
+          <TabsContent value="dados" className="focus-visible:outline-none">
+            <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+              <div className="h-1.5 w-full bg-gradient-to-r from-primary/80 to-primary/20" />
               <CardHeader>
-                <CardTitle>Editar Informações</CardTitle>
-                <CardDescription>Mantenha seus contatos e especialidades atualizados.</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Edit3 className="h-5 w-5 text-primary" /> Editar Informações
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Atualize seus dados de contato, especialidades e descrição.
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                {/* AQUI VOCÊ PODE REUTILIZAR SEUS FORMULÁRIOS (PROFISSIONAIS, ETC) 
-                    PASSANDO 'partnerData' COMO 'initialData' E MUDANDO O MODO PARA 'EDIT' */}
-                <div className="p-8 border-2 border-dashed rounded-xl text-center text-slate-400">
-                  Formulário de Edição de {partnerType?.toUpperCase()} será carregado aqui.
-                  <br/>
-                  (Reutilize os componentes de Form que criamos, adicionando a propriedade 'initialData')
+              <CardContent className="pb-8">
+                {/* Placeholder Visual */}
+                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50 group hover:bg-slate-50 transition-colors cursor-pointer">
+                  <div className="bg-white p-4 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <User className="h-8 w-8 text-slate-300 group-hover:text-primary transition-colors" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-700">Formulário de Edição</h3>
+                  <p className="text-slate-400 text-sm max-w-sm text-center mt-2">
+                    O componente de edição para{" "}
+                    <span className="font-medium text-primary uppercase">{partnerType}</span> será carregado aqui com os
+                    dados pré-preenchidos.
+                  </p>
+                  <Button variant="outline" className="mt-6 border-primary/20 text-primary hover:bg-primary/5">
+                    Carregar Formulário
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="midia">
-            <Card>
+          {/* TAB 2: MIDIA */}
+          <TabsContent value="midia" className="focus-visible:outline-none">
+            <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+              <div className="h-1.5 w-full bg-gradient-to-r from-blue-500/80 to-blue-500/20" />
               <CardHeader>
-                <CardTitle>Gerenciar Mídia</CardTitle>
-                <CardDescription>Adicione novas fotos de obras recentes.</CardDescription>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <ImageIcon className="h-5 w-5 text-blue-500" /> Galeria de Fotos
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Adicione fotos de alta qualidade para atrair mais clientes.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                 <div className="p-8 border-2 border-dashed rounded-xl text-center text-slate-400">
-                  Componente de Upload de Fotos (PhotosSection) será carregado aqui.
+              <CardContent className="pb-8">
+                {/* Placeholder Visual */}
+                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50 group hover:bg-slate-50 transition-colors cursor-pointer">
+                  <div className="bg-white p-4 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <UploadCloud className="h-8 w-8 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-700">Gerenciador de Uploads</h3>
+                  <p className="text-slate-400 text-sm max-w-sm text-center mt-2">
+                    Arraste fotos ou clique para adicionar novas imagens ao seu portfólio.
+                  </p>
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* TAB 3: PREVIEW (Opcional, mas visualmente bom ter) */}
+          <TabsContent value="preview" className="focus-visible:outline-none">
+            <div className="flex justify-center py-12">
+              <div className="text-center">
+                <LayoutTemplate className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-slate-400">Visualização em Breve</h3>
+                <p className="text-slate-400 mt-2">Veja como seu card aparecerá para os clientes.</p>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
