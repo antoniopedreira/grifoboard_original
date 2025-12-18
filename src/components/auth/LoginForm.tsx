@@ -10,11 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { masterAdminService } from '@/services/masterAdminService';
 
-interface LoginFormProps {
-  onForgotPassword?: () => void;
-}
-
-const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
+const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -118,8 +114,8 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
         </div>
       </div>
       
-      {/* Remember me & Forgot password */}
-      <div className="flex items-center justify-between">
+      {/* Remember me */}
+      <div className="flex items-center">
         <div className="flex items-center space-x-3">
           <Checkbox 
             id="remember-me" 
@@ -135,16 +131,6 @@ const LoginForm = ({ onForgotPassword }: LoginFormProps = {}) => {
             Manter-me conectado
           </Label>
         </div>
-        <button 
-          type="button"
-          onClick={onForgotPassword}
-          className="text-sm font-medium hover:underline transition-all duration-200"
-          style={{ color: '#1E2836' }}
-          onMouseEnter={(e) => e.currentTarget.style.color = '#C7A347'}
-          onMouseLeave={(e) => e.currentTarget.style.color = '#1E2836'}
-        >
-          Esqueci minha senha
-        </button>
       </div>
       
       {/* Login button */}
