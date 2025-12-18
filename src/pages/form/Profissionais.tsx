@@ -563,7 +563,6 @@ export default function Profissionais() {
                   <SelectContent>
                     <SelectItem value="CLT">CLT</SelectItem>
                     <SelectItem value="PJ">PJ</SelectItem>
-                    <SelectItem value="PF">PF</SelectItem>
                     <SelectItem value="Diaria">Diária</SelectItem>
                   </SelectContent>
                 </Select>
