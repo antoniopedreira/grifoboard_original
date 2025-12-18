@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPhoneNumber } from "@/lib/utils/formatPhone";
 import { supabase } from "@/integrations/supabase/client";
+import seloGrifoImg from "@/assets/selo-grifo.png";
 
 type TargetType = "empresa" | "profissional" | "fornecedor";
 
@@ -119,6 +120,7 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
     return data.publicUrl;
   };
 
+  const hasSelo = item.data.selo_grifo === true;
   const extraInfo = getExtraInfo();
   const phone = getPhone();
   const email = getEmail();
@@ -127,9 +129,21 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
 
   return (
     <Card
-      className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden border-border/50"
+      className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden border-border/50 relative"
       onClick={onClick}
     >
+      {/* Selo Grifo Badge */}
+      {hasSelo && (
+        <div className="absolute top-2 left-2 z-10">
+          <img 
+            src={seloGrifoImg} 
+            alt="Selo Grifo de Aprovação" 
+            className="w-12 h-12 drop-shadow-lg"
+            title="Selo Grifo de Aprovação"
+          />
+        </div>
+      )}
+
       {/* Header with gradient */}
       <div
         className={`h-24 relative ${
