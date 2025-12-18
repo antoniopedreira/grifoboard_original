@@ -28,7 +28,18 @@ import {
   BookOpen,
   History,
   Pencil,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { PhotoUploader } from "@/components/diario/PhotoUploader";
 import { PhotoGallery } from "@/components/diario/PhotoGallery";
@@ -44,6 +55,8 @@ const DiarioObra = () => {
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isEditMode, setIsEditMode] = useState(true); // true = editing, false = view only
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pendingPhotos, setPendingPhotos] = useState<{ files: File[]; legenda: string }[]>([]);
 
   // Estados de Dados
@@ -191,6 +204,49 @@ const DiarioObra = () => {
 
   const handleEnterEditMode = () => {
     setIsEditMode(true);
+  };
+
+  const handleDelete = async () => {
+    if (!diarioId) return;
+    
+    setIsDeleting(true);
+    try {
+      await diarioService.delete(diarioId);
+      
+      // Reset form and state
+      setDiarioId(null);
+      setIsEditMode(true);
+      setPendingPhotos([]);
+      setFormData({
+        clima_manha: "",
+        clima_tarde: "",
+        clima_noite: "",
+        mao_de_obra: "",
+        equipamentos: "",
+        atividades: "",
+        ocorrencias: "",
+        observacoes: "",
+      });
+      
+      loadDiarioHistory();
+      loadPhotos();
+      
+      toast({
+        title: "Diário excluído",
+        description: "O registro foi removido com sucesso.",
+        className: "bg-green-50 border-green-200",
+      });
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o diário.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
   };
 
   const handleAddPendingPhotos = async (files: File[], legenda?: string) => {
@@ -392,14 +448,25 @@ const DiarioObra = () => {
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {!isEditMode && diarioId ? (
-              <Button
-                onClick={handleEnterEditMode}
-                variant="outline"
-                className="w-full sm:w-auto gap-2 border-primary text-primary hover:bg-primary/10"
-              >
-                <Pencil className="h-4 w-4" />
-                Editar Diário
-              </Button>
+              <>
+                <Button
+                  onClick={handleEnterEditMode}
+                  variant="outline"
+                  className="gap-2 border-primary text-primary hover:bg-primary/10"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Button>
+                <Button
+                  onClick={() => setShowDeleteDialog(true)}
+                  variant="outline"
+                  className="gap-2 border-destructive text-destructive hover:bg-destructive/10"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Excluir
+                </Button>
+              </>
             ) : (
               <Button
                 onClick={handleSave}
@@ -593,6 +660,30 @@ const DiarioObra = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Diário de Obra</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este diário? Esta ação não pode ser desfeita.
+              As fotos associadas a este dia também serão removidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
