@@ -28,9 +28,12 @@ import {
   ZoomIn,
   ChevronLeft,
   ChevronRight,
+  Award,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import seloGrifoImg from "@/assets/selo-grifo-strike.png";
+import { motion } from "framer-motion";
 
 type TargetType = "empresa" | "profissional" | "fornecedor";
 
@@ -255,26 +258,68 @@ export const MarketplaceDetailModal = ({ item, isOpen, onClose, onReviewSubmitte
           </div>
         </div>
 
-        {/* Profile Info Overlapping */}
         <div className="relative -mt-20 mx-6 mb-2">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
-            {/* Avatar / Logo */}
-            <div className="rounded-2xl p-1 bg-white shadow-xl">
-              {logoUrl ? (
-                <img src={logoUrl} alt={item.name} className="w-32 h-32 rounded-xl object-cover bg-slate-100" />
-              ) : (
-                <div
-                  className={`w-32 h-32 rounded-xl bg-gradient-to-br ${getTypeColor()} flex items-center justify-center text-white`}
+            {/* Avatar / Logo with Selo */}
+            <div className="relative">
+              <div className="rounded-2xl p-1 bg-white shadow-xl">
+                {logoUrl ? (
+                  <img src={logoUrl} alt={item.name} className="w-32 h-32 rounded-xl object-cover bg-slate-100" />
+                ) : (
+                  <div
+                    className={`w-32 h-32 rounded-xl bg-gradient-to-br ${getTypeColor()} flex items-center justify-center text-white`}
+                  >
+                    {getTypeIcon()}
+                  </div>
+                )}
+              </div>
+              
+              {/* Selo Grifo Badge */}
+              {item.data.selo_grifo === true && (
+                <motion.div 
+                  className="absolute -top-3 -left-3 z-10"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
                 >
-                  {getTypeIcon()}
-                </div>
+                  {/* Glow effect */}
+                  <div className="absolute inset-2 bg-gradient-to-br from-[#1a3045] to-[#2d4a63] blur-md opacity-50 rounded-full" />
+                  
+                  {/* Animated ring */}
+                  <motion.div 
+                    className="absolute inset-0 rounded-full border-2 border-[#1a3045]/40"
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      opacity: [0.4, 0, 0.4]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                  
+                  <img 
+                    src={seloGrifoImg} 
+                    alt="Selo Grifo de Aprovação" 
+                    className="relative w-16 h-16 drop-shadow-xl object-contain"
+                  />
+                </motion.div>
               )}
             </div>
 
             <div className="flex-1 pb-2">
-              <Badge variant="secondary" className="mb-2">
-                {getTypeLabel()}
-              </Badge>
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <Badge variant="secondary">
+                  {getTypeLabel()}
+                </Badge>
+                {item.data.selo_grifo === true && (
+                  <Badge className="bg-gradient-to-r from-[#1a3045] to-[#2d4a63] text-white border-0 gap-1">
+                    <Award className="h-3 w-3" />
+                    Selo de Aprovação
+                  </Badge>
+                )}
+              </div>
               <h2 className="text-3xl font-bold text-slate-900 truncate max-w-lg">{item.name}</h2>
               <div className="flex items-center gap-2 mt-1 text-slate-500">
                 <MapPin className="h-4 w-4 flex-shrink-0" />
