@@ -318,16 +318,16 @@ export default function Marketplace() {
                   <div className="absolute inset-0 bg-gradient-to-r from-[#1a3045]/20 to-[#2d4a63]/20 blur-xl rounded-xl -z-10" />
                 )}
                 
-                <div className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 overflow-hidden ${
+                <div className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 overflow-hidden ${
                   filterSeloGrifo 
-                    ? "bg-gradient-to-br from-[#1a3045] to-[#2d4a63] shadow-lg" 
+                    ? "bg-gradient-to-br from-[#1a3045]/20 to-[#2d4a63]/20 shadow-lg" 
                     : "bg-slate-100 group-hover:bg-[#1a3045]/10"
                 }`}>
                   <img 
                     src={seloGrifoImg} 
                     alt="Selo Grifo" 
-                    className={`w-9 h-9 object-contain transition-all duration-300 ${
-                      filterSeloGrifo ? "drop-shadow-md scale-110" : "opacity-80 group-hover:opacity-100"
+                    className={`w-11 h-11 object-contain transition-all duration-300 ${
+                      filterSeloGrifo ? "drop-shadow-md scale-105" : "opacity-80 group-hover:opacity-100"
                     }`}
                   />
                 </div>
