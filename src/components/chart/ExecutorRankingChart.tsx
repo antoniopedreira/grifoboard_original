@@ -47,7 +47,7 @@ const ExecutorRankingChart: React.FC<ExecutorRankingChartProps> = ({ className }
       try {
         const { data, error } = await supabase
           .from('tarefas')
-          .select('executante, seg, ter, qua, qui, sex, sab, dom')
+          .select('executante, percentual_executado')
           .eq('obra_id', obraId);
 
         if (error || !isMounted) {
@@ -65,16 +65,13 @@ const ExecutorRankingChart: React.FC<ExecutorRankingChartProps> = ({ className }
               executorStats[executor] = { total: 0, completed: 0 };
             }
 
-            const days = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const;
-            days.forEach(day => {
-              const dayValue = task[day];
-              if (dayValue === 'P' || dayValue === 'Planejada') {
-                executorStats[executor].total++;
-              } else if (dayValue === 'C' || dayValue === 'Executada') {
-                executorStats[executor].total++;
-                executorStats[executor].completed++;
-              }
-            });
+            // Conta 1 tarefa por registro
+            executorStats[executor].total++;
+            
+            // Tarefa completa quando percentual_executado === 1
+            if (task.percentual_executado === 1) {
+              executorStats[executor].completed++;
+            }
           });
 
           const processedData: ExecutorData[] = Object.entries(executorStats)
