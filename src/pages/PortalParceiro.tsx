@@ -9,6 +9,17 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
+// Helper component for displaying info fields
+const InfoField = ({ label, value }: { label: string; value: string | null | undefined }) => {
+  if (!value) return null;
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{label}</p>
+      <p className="text-sm text-slate-700 font-medium">{value}</p>
+    </div>
+  );
+};
+
 export default function PortalParceiro() {
   const { userSession, signOut } = useAuth();
   const navigate = useNavigate();
@@ -220,30 +231,96 @@ export default function PortalParceiro() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2 text-xl">
-                      <Edit3 className="h-5 w-5 text-primary" /> Editar Informações
+                      <User className="h-5 w-5 text-primary" /> Informações do Perfil
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      Atualize seus dados de contato, especialidades e descrição.
+                      Seus dados cadastrais no marketplace.
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pb-8">
-                {/* Placeholder Visual */}
-                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50 group hover:bg-slate-50 transition-colors cursor-pointer">
-                  <div className="bg-white p-4 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <User className="h-8 w-8 text-slate-300 group-hover:text-primary transition-colors" />
+                {partnerType === "profissional" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InfoField label="Nome Completo" value={partnerData.nome_completo} />
+                    <InfoField label="CPF" value={partnerData.cpf} />
+                    <InfoField label="Data de Nascimento" value={partnerData.data_nascimento} />
+                    <InfoField label="Telefone" value={partnerData.telefone} />
+                    <InfoField label="Email" value={partnerData.email} />
+                    <InfoField label="Cidade/Estado" value={`${partnerData.cidade} - ${partnerData.estado}`} />
+                    <InfoField label="Função Principal" value={partnerData.funcao_principal} />
+                    <InfoField label="Tempo de Experiência" value={partnerData.tempo_experiencia} />
+                    <InfoField label="Disponibilidade" value={partnerData.disponibilidade_atual} />
+                    <InfoField label="Modalidade de Trabalho" value={partnerData.modalidade_trabalho} />
+                    <InfoField label="Pretensão Salarial" value={partnerData.pretensao_valor} />
+                    <InfoField label="Equipamentos Próprios" value={partnerData.equipamentos_proprios} />
+                    <div className="md:col-span-2">
+                      <InfoField label="Especialidades" value={partnerData.especialidades?.join(", ")} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <InfoField label="Regiões Atendidas" value={partnerData.regioes_atendidas?.join(", ")} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <InfoField label="Diferenciais" value={partnerData.diferenciais?.join(", ")} />
+                    </div>
+                    {partnerData.obras_relevantes && (
+                      <div className="md:col-span-2">
+                        <InfoField label="Obras Relevantes" value={partnerData.obras_relevantes} />
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-700">Formulário de Edição</h3>
-                  <p className="text-slate-400 text-sm max-w-sm text-center mt-2">
-                    O componente de edição para{" "}
-                    <span className="font-medium text-primary uppercase">{partnerType}</span> será carregado aqui com os
-                    dados pré-preenchidos.
-                  </p>
-                  <Button variant="outline" className="mt-6 border-primary/20 text-primary hover:bg-primary/5">
-                    Carregar Formulário
-                  </Button>
-                </div>
+                )}
+                {partnerType === "empresa" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InfoField label="Nome da Empresa" value={partnerData.nome_empresa} />
+                    <InfoField label="CNPJ" value={partnerData.cnpj} />
+                    <InfoField label="Cidade/Estado" value={`${partnerData.cidade} - ${partnerData.estado}`} />
+                    <InfoField label="Ano de Fundação" value={partnerData.ano_fundacao} />
+                    <InfoField label="Tamanho da Empresa" value={partnerData.tamanho_empresa} />
+                    <InfoField label="Obras em Andamento" value={partnerData.obras_andamento} />
+                    <InfoField label="Ticket Médio" value={partnerData.ticket_medio} />
+                    <InfoField label="Site" value={partnerData.site} />
+                    <InfoField label="Contato" value={partnerData.nome_contato} />
+                    <InfoField label="Cargo" value={partnerData.cargo_contato} />
+                    <InfoField label="WhatsApp" value={partnerData.whatsapp_contato} />
+                    <InfoField label="Email" value={partnerData.email_contato} />
+                    <div className="md:col-span-2">
+                      <InfoField label="Tipos de Obras" value={partnerData.tipos_obras?.join(", ")} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <InfoField label="Principais Desafios" value={partnerData.principais_desafios?.join(", ")} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <InfoField label="Planejamento Curto Prazo" value={partnerData.planejamento_curto_prazo} />
+                    </div>
+                  </div>
+                )}
+                {partnerType === "fornecedor" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InfoField label="Nome da Empresa" value={partnerData.nome_empresa} />
+                    <InfoField label="CNPJ/CPF" value={partnerData.cnpj_cpf} />
+                    <InfoField label="Cidade/Estado" value={`${partnerData.cidade} - ${partnerData.estado}`} />
+                    <InfoField label="Tempo de Atuação" value={partnerData.tempo_atuacao} />
+                    <InfoField label="Ticket Médio" value={partnerData.ticket_medio} />
+                    <InfoField label="Capacidade de Atendimento" value={partnerData.capacidade_atendimento} />
+                    <InfoField label="Responsável" value={partnerData.nome_responsavel} />
+                    <InfoField label="Telefone" value={partnerData.telefone} />
+                    <InfoField label="Email" value={partnerData.email} />
+                    <InfoField label="Site" value={partnerData.site} />
+                    <div className="md:col-span-2">
+                      <InfoField label="Tipos de Atuação" value={partnerData.tipos_atuacao?.join(", ")} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <InfoField label="Categorias Atendidas" value={partnerData.categorias_atendidas?.join(", ")} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <InfoField label="Regiões Atendidas" value={partnerData.regioes_atendidas?.join(", ")} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <InfoField label="Diferenciais" value={partnerData.diferenciais?.join(", ")} />
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
