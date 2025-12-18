@@ -17,8 +17,8 @@ export default function PortalParceiro() {
   const [partnerType, setPartnerType] = useState<"profissional" | "empresa" | "fornecedor" | null>(null);
 
   useEffect(() => {
-    if (!userSession) {
-      navigate("/login");
+    if (!userSession?.user) {
+      navigate("/auth");
       return;
     }
     fetchPartnerData();
@@ -61,7 +61,7 @@ export default function PortalParceiro() {
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/login");
+    navigate("/auth");
   };
 
   if (loading) {
