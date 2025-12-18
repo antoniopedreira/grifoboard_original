@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { masterAdminService } from '@/services/masterAdminService';
+import { supabase } from '@/integrations/supabase/client';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -39,12 +40,24 @@ const LoginForm = () => {
       // Faz o login
       await signIn(email, password);
       
-      // Depois do login, verifica a role e redireciona UMA vez
+      // Depois do login, verifica a role e redireciona
       let targetPath = '/obras';
       try {
+        // Verifica se é master admin
         const isMasterAdmin = await masterAdminService.isMasterAdmin();
         if (isMasterAdmin) {
           targetPath = '/master-admin';
+        } else {
+          // Verifica se é parceiro
+          const { data: userData } = await supabase
+            .from("usuarios")
+            .select("role")
+            .eq("id", (await supabase.auth.getUser()).data.user?.id)
+            .single();
+          
+          if (userData?.role === "parceiro") {
+            targetPath = '/portal-parceiro';
+          }
         }
       } catch (roleError) {
         console.error('Erro ao verificar role do usuário:', roleError);
