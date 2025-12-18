@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import Index from "@/pages/Index";
@@ -136,28 +137,30 @@ function App() {
             path="/*"
             element={
               <AuthProvider>
-                <RegistryProvider>
-                  <RouteRestorer />
-                  <AppLayout>
-                    <Routes>
-                      <Route path="/" element={<Navigate to="/obras" replace />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/reset-password" element={<ResetPassword />} />
-                      <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
-                      <Route path="/master-admin" element={<MasterAdmin />} />
-                      <Route path="/formularios" element={<Formularios />} />
-                      <Route path="/base-de-dados" element={<BaseDeDados />} />
-                      <Route path="/playbook" element={<Playbook />} />
-                      <Route path="/marketplace" element={<Marketplace />} />
-                      <Route path="/portal-parceiro" element={<PortalParceiro />} />
-                      <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
-                      <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
-                      <Route path="/diarioobra" element={<DiarioObra />} />
-                      <Route path="/checklist" element={<Index onObraSelect={handleObraSelect} />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AppLayout>
-                </RegistryProvider>
+                <RouteGuard>
+                  <RegistryProvider>
+                    <RouteRestorer />
+                    <AppLayout>
+                      <Routes>
+                        <Route path="/" element={<Navigate to="/obras" replace />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/obras" element={<Obras onObraSelect={handleObraSelect} />} />
+                        <Route path="/master-admin" element={<MasterAdmin />} />
+                        <Route path="/formularios" element={<Formularios />} />
+                        <Route path="/base-de-dados" element={<BaseDeDados />} />
+                        <Route path="/playbook" element={<Playbook />} />
+                        <Route path="/marketplace" element={<Marketplace />} />
+                        <Route path="/portal-parceiro" element={<PortalParceiro />} />
+                        <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
+                        <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
+                        <Route path="/diarioobra" element={<DiarioObra />} />
+                        <Route path="/checklist" element={<Index onObraSelect={handleObraSelect} />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </RegistryProvider>
+                </RouteGuard>
               </AuthProvider>
             }
           />
