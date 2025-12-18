@@ -138,41 +138,34 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
       {/* Selo Grifo Badge - Enhanced UI */}
       {hasSelo && (
         <motion.div 
-          className="absolute top-0 left-0 z-20"
+          className="absolute top-2 left-2 z-20"
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
         >
           {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#A47528] to-amber-400 blur-xl opacity-40 rounded-full scale-150" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#A47528] to-amber-400 blur-lg opacity-50 rounded-full scale-125" />
           
-          {/* Badge container */}
-          <div className="relative p-1.5">
-            {/* Animated ring */}
-            <motion.div 
-              className="absolute inset-0 rounded-full border-2 border-[#A47528]/50"
-              animate={{ 
-                scale: [1, 1.2, 1],
-                opacity: [0.5, 0, 0.5]
-              }}
-              transition={{ 
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-            
-            {/* Main badge */}
-            <div className="relative bg-gradient-to-br from-[#A47528] via-amber-500 to-[#A47528] p-0.5 rounded-full shadow-lg">
-              <div className="bg-white rounded-full p-1">
-                <img 
-                  src={seloGrifoImg} 
-                  alt="Selo Grifo de Aprovação" 
-                  className="w-10 h-10 drop-shadow-sm"
-                />
-              </div>
-            </div>
-          </div>
+          {/* Animated ring */}
+          <motion.div 
+            className="absolute inset-0 rounded-full border-2 border-[#A47528]/40"
+            animate={{ 
+              scale: [1, 1.3, 1],
+              opacity: [0.4, 0, 0.4]
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          
+          {/* Main badge - no white background */}
+          <img 
+            src={seloGrifoImg} 
+            alt="Selo Grifo de Aprovação" 
+            className="relative w-12 h-12 drop-shadow-lg"
+          />
           
           {/* Tooltip on hover */}
           <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
