@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPhoneNumber } from "@/lib/utils/formatPhone";
 import { supabase } from "@/integrations/supabase/client";
-import seloGrifoImg from "@/assets/selo-grifo.png";
+import seloGrifoImg from "@/assets/selo-grifo-strike.png";
 import { motion } from "framer-motion";
 
 type TargetType = "empresa" | "profissional" | "fornecedor";
@@ -131,11 +131,11 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
   return (
     <Card
       className={`group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden border-border/50 relative ${
-        hasSelo ? "ring-2 ring-[#A47528]/30 shadow-[0_0_20px_-5px_rgba(164,117,40,0.3)]" : ""
+        hasSelo ? "ring-2 ring-[#1a3045]/40 shadow-[0_0_20px_-5px_rgba(26,48,69,0.4)]" : ""
       }`}
       onClick={onClick}
     >
-      {/* Selo Grifo Badge - Enhanced UI */}
+      {/* Selo Grifo Badge - Enhanced UI with dark blue theme */}
       {hasSelo && (
         <motion.div 
           className="absolute top-2 left-2 z-20"
@@ -143,15 +143,15 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
         >
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#A47528] to-amber-400 blur-lg opacity-50 rounded-full scale-125" />
+          {/* Glow effect - dark blue */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a3045] to-[#2d4a63] blur-lg opacity-60 rounded-full scale-125" />
           
-          {/* Animated ring */}
+          {/* Animated ring - dark blue */}
           <motion.div 
-            className="absolute inset-0 rounded-full border-2 border-[#A47528]/40"
+            className="absolute inset-0 rounded-full border-2 border-[#1a3045]/50"
             animate={{ 
               scale: [1, 1.3, 1],
-              opacity: [0.4, 0, 0.4]
+              opacity: [0.5, 0, 0.5]
             }}
             transition={{ 
               duration: 2,
@@ -160,17 +160,17 @@ export const MarketplaceCard = ({ item, onClick }: MarketplaceCardProps) => {
             }}
           />
           
-          {/* Main badge - no white background */}
+          {/* Main badge */}
           <img 
             src={seloGrifoImg} 
             alt="Selo Grifo de Aprovação" 
-            className="relative w-12 h-12 drop-shadow-lg"
+            className="relative w-14 h-14 drop-shadow-lg"
           />
           
           {/* Tooltip on hover */}
           <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
             <div className="bg-gradient-to-r from-[#112131] to-[#1a3045] text-white text-[10px] font-medium px-2 py-1 rounded-md whitespace-nowrap shadow-lg flex items-center gap-1">
-              <Award className="h-3 w-3 text-[#A47528]" />
+              <Award className="h-3 w-3 text-[#4a90b8]" />
               Selo de Aprovação Grifo
             </div>
           </div>
