@@ -85,7 +85,7 @@ interface FileUploadSectionProps {
   currentPath: string | null;
   bucket: string;
   onUpload: (fieldName: string, file: File) => Promise<void>;
-  onDelete: (fieldName: string) => Promise<void>;
+  onDeleteFile: (fieldName: string, fileIndex: number, filePath: string) => Promise<void>;
   isImage?: boolean;
   isMultiple?: boolean;
   uploading: boolean;
@@ -98,13 +98,13 @@ const FileUploadSection = ({
   currentPath,
   bucket,
   onUpload,
-  onDelete,
+  onDeleteFile,
   isImage = true,
   isMultiple = false,
   uploading,
 }: FileUploadSectionProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [fileUrls, setFileUrls] = useState<string[]>([]);
+  const [fileData, setFileData] = useState<{ path: string; url: string }[]>([]);
 
   useEffect(() => {
     // Only process if currentPath is a valid non-empty string
@@ -116,18 +116,18 @@ const FileUploadSection = ({
       });
       
       if (paths.length > 0) {
-        const urls = paths.map((p) => {
+        const data = paths.map((p) => {
           const trimmed = p.trim();
-          if (trimmed.startsWith("http")) return trimmed;
+          if (trimmed.startsWith("http")) return { path: trimmed, url: trimmed };
           const { data } = supabase.storage.from(bucket).getPublicUrl(trimmed);
-          return data.publicUrl;
+          return { path: trimmed, url: data.publicUrl };
         });
-        setFileUrls(urls);
+        setFileData(data);
       } else {
-        setFileUrls([]);
+        setFileData([]);
       }
     } else {
-      setFileUrls([]);
+      setFileData([]);
     }
   }, [currentPath, bucket]);
 
@@ -146,8 +146,8 @@ const FileUploadSection = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-semibold text-slate-700">{title}</h4>
-          <p className="text-xs text-slate-400">{description}</p>
+          <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
         <Button
           variant="outline"
@@ -168,28 +168,30 @@ const FileUploadSection = ({
         multiple={isMultiple}
         onChange={handleFileChange}
       />
-      {fileUrls.length > 0 ? (
+      {fileData.length > 0 ? (
         <div className={`grid ${isImage ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4" : "grid-cols-1"} gap-3`}>
-          {fileUrls.map((url, idx) => (
+          {fileData.map((file, idx) => (
             <div key={idx} className="relative group">
               {isImage ? (
-                <div className="aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
-                  <img src={url} alt={`${title} ${idx + 1}`} className="w-full h-full object-cover" />
+                <div className="aspect-square rounded-lg overflow-hidden border border-border bg-muted">
+                  <img src={file.url} alt={`${title} ${idx + 1}`} className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <a
-                  href={url}
+                  href={file.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                  className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted hover:bg-muted/80 transition-colors"
                 >
-                  <FileText className="h-5 w-5 text-slate-400" />
-                  <span className="text-sm text-slate-600 truncate">Documento {idx + 1}</span>
+                  <FileText className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-foreground truncate">Documento {idx + 1}</span>
                 </a>
               )}
               <button
-                onClick={() => onDelete(fieldName)}
-                className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => onDeleteFile(fieldName, idx, file.path)}
+                disabled={uploading}
+                className="absolute top-1 right-1 p-1.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-50"
+                title="Remover arquivo"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -199,14 +201,14 @@ const FileUploadSection = ({
       ) : (
         <div
           onClick={handleClick}
-          className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 cursor-pointer hover:bg-slate-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
         >
           {isImage ? (
-            <Camera className="h-6 w-6 text-slate-300 mb-2" />
+            <Camera className="h-6 w-6 text-muted-foreground mb-2" />
           ) : (
-            <FileText className="h-6 w-6 text-slate-300 mb-2" />
+            <FileText className="h-6 w-6 text-muted-foreground mb-2" />
           )}
-          <p className="text-xs text-slate-400 text-center">Clique para adicionar</p>
+          <p className="text-xs text-muted-foreground text-center">Clique para adicionar</p>
         </div>
       )}
     </div>
@@ -322,20 +324,30 @@ export default function PortalParceiro() {
     }
   };
 
-  const handleFileDelete = async (fieldName: string) => {
+  const handleFileDelete = async (fieldName: string, fileIndex: number, filePath: string) => {
     if (!partnerData?.id) return;
     setUploading(true);
 
     try {
+      const currentValue = partnerData[fieldName];
+      let newValue: string | null = null;
+      
+      if (currentValue && typeof currentValue === 'string') {
+        const paths = currentValue.split(",").map(p => p.trim()).filter(p => p && p.length > 2);
+        // Remove the specific file at the index
+        paths.splice(fileIndex, 1);
+        newValue = paths.length > 0 ? paths.join(",") : null;
+      }
+
       const tableName = getTableName();
       const { error: updateError } = await supabase
         .from(tableName)
-        .update({ [fieldName]: null })
+        .update({ [fieldName]: newValue })
         .eq("id", partnerData.id);
 
       if (updateError) throw updateError;
 
-      setPartnerData({ ...partnerData, [fieldName]: null });
+      setPartnerData({ ...partnerData, [fieldName]: newValue });
       toast.success("Arquivo removido com sucesso!");
     } catch (error: any) {
       console.error("Delete error:", error);
@@ -696,26 +708,36 @@ export default function PortalParceiro() {
               </CardHeader>
               <CardContent className="pb-6">
                 <div className="flex items-center gap-6">
-                  <div className="relative">
+                  <div className="relative group">
                     <Avatar className="h-32 w-32 border-4 border-secondary/30 shadow-lg">
                       <AvatarImage src={getLogoUrl(partnerData.logo_path) || ""} />
                       <AvatarFallback className="bg-secondary/10 text-secondary text-3xl font-bold">
                         {partnerName?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
+                    {partnerData.logo_path && (
+                      <button
+                        onClick={() => handleFileDelete("logo_path", 0, partnerData.logo_path)}
+                        disabled={uploading}
+                        className="absolute top-0 right-0 p-1.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-50"
+                        title="Remover foto"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
                     <div className="absolute -bottom-1 -right-1 bg-secondary rounded-full p-1.5 shadow-lg">
                       <Camera className="h-4 w-4 text-white" />
                     </div>
                   </div>
                   <div className="flex-1">
                     <FileUploadSection
-                      title="Alterar Foto"
+                      title={partnerData.logo_path ? "Substituir Foto" : "Adicionar Foto"}
                       description="JPG, PNG até 5MB"
                       fieldName="logo_path"
                       currentPath={null}
                       bucket={getBucket()}
                       onUpload={handleFileUpload}
-                      onDelete={handleFileDelete}
+                      onDeleteFile={handleFileDelete}
                       isImage={true}
                       uploading={uploading}
                     />
@@ -745,7 +767,7 @@ export default function PortalParceiro() {
                       currentPath={partnerData.fotos_trabalhos_path}
                       bucket={getBucket()}
                       onUpload={handleFileUpload}
-                      onDelete={handleFileDelete}
+                      onDeleteFile={handleFileDelete}
                       isImage={true}
                       isMultiple={true}
                       uploading={uploading}
@@ -771,7 +793,7 @@ export default function PortalParceiro() {
                       currentPath={partnerData.curriculo_path}
                       bucket={getBucket()}
                       onUpload={handleFileUpload}
-                      onDelete={handleFileDelete}
+                      onDeleteFile={handleFileDelete}
                       isImage={false}
                       uploading={uploading}
                     />
@@ -783,7 +805,7 @@ export default function PortalParceiro() {
                         currentPath={partnerData.certificacoes_path}
                         bucket={getBucket()}
                         onUpload={handleFileUpload}
-                        onDelete={handleFileDelete}
+                        onDeleteFile={handleFileDelete}
                         isImage={false}
                         isMultiple={true}
                         uploading={uploading}
@@ -814,7 +836,7 @@ export default function PortalParceiro() {
                       currentPath={partnerData.portfolio_path}
                       bucket={getBucket()}
                       onUpload={handleFileUpload}
-                      onDelete={handleFileDelete}
+                      onDeleteFile={handleFileDelete}
                       isImage={false}
                       uploading={uploading}
                     />
@@ -826,7 +848,7 @@ export default function PortalParceiro() {
                         currentPath={partnerData.fotos_trabalhos_path}
                         bucket={getBucket()}
                         onUpload={handleFileUpload}
-                        onDelete={handleFileDelete}
+                        onDeleteFile={handleFileDelete}
                         isImage={true}
                         isMultiple={true}
                         uploading={uploading}
@@ -853,7 +875,7 @@ export default function PortalParceiro() {
                       currentPath={partnerData.certificacoes_path}
                       bucket={getBucket()}
                       onUpload={handleFileUpload}
-                      onDelete={handleFileDelete}
+                      onDeleteFile={handleFileDelete}
                       isImage={false}
                       isMultiple={true}
                       uploading={uploading}
@@ -882,7 +904,7 @@ export default function PortalParceiro() {
                     currentPath={partnerData.apresentacao_path}
                     bucket={getBucket()}
                     onUpload={handleFileUpload}
-                    onDelete={handleFileDelete}
+                    onDeleteFile={handleFileDelete}
                     isImage={false}
                     uploading={uploading}
                   />
