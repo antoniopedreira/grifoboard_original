@@ -1,19 +1,21 @@
+import React, { memo, useMemo } from "react";
 import { PCPData } from "@/types";
 import { BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PCPOverallCardProps {
   data: PCPData;
-  className?: string; // Prop adicionada para corrigir erro TS
+  className?: string;
 }
 
-const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data, className }) => {
-  const percentage = data ? Math.round(data.percentage) : 0;
+const PCPOverallCard: React.FC<PCPOverallCardProps> = memo(({ data, className }) => {
+  const percentage = useMemo(() => (data ? Math.round(data.percentage) : 0), [data?.percentage]);
+  const dashArray = useMemo(() => `${percentage * 2.83} 283`, [percentage]);
 
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-white border border-slate-200/50 shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-fade-in",
+        "relative overflow-hidden rounded-2xl bg-white border border-slate-200/50 shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-xl transition-all duration-300 hover:scale-[1.02]",
         className,
       )}
     >
@@ -45,8 +47,8 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data, className }) => {
                 stroke="currentColor"
                 strokeWidth="8"
                 strokeLinecap="round"
-                strokeDasharray={`${percentage * 2.83} 283`}
-                className="text-secondary transition-all duration-700 ease-out"
+                strokeDasharray={dashArray}
+                className="text-secondary transition-all duration-500 ease-out"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
@@ -69,6 +71,8 @@ const PCPOverallCard: React.FC<PCPOverallCardProps> = ({ data, className }) => {
       </div>
     </div>
   );
-};
+});
+
+PCPOverallCard.displayName = "PCPOverallCard";
 
 export default PCPOverallCard;
