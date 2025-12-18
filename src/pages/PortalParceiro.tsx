@@ -14,6 +14,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { formatPhoneNumber } from "@/lib/utils/formatPhone";
+import { format, parseISO } from "date-fns";
+
+// Helper to format dates as DD/MM/AAAA
+const formatDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  try {
+    const date = parseISO(dateStr);
+    return format(date, "dd/MM/yyyy");
+  } catch {
+    return dateStr;
+  }
+};
 
 // Helper component for displaying/editing info fields
 interface EditableFieldProps {
@@ -568,7 +580,7 @@ export default function PortalParceiro() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <EditableField label="Nome Completo" value={isEditing ? editedData?.nome_completo : partnerData.nome_completo} fieldName="nome_completo" isEditing={isEditing} onChange={handleFieldChange} />
                     <EditableField label="CPF" value={isEditing ? editedData?.cpf : partnerData.cpf} fieldName="cpf" isEditing={isEditing} onChange={handleFieldChange} />
-                    <EditableField label="Data de Nascimento" value={isEditing ? editedData?.data_nascimento : partnerData.data_nascimento} fieldName="data_nascimento" isEditing={isEditing} onChange={handleFieldChange} />
+                    <EditableField label="Data de Nascimento" value={isEditing ? editedData?.data_nascimento : formatDate(partnerData.data_nascimento)} fieldName="data_nascimento" isEditing={isEditing} onChange={handleFieldChange} />
                     <EditableField label="Telefone" value={isEditing ? editedData?.telefone : partnerData.telefone} fieldName="telefone" isEditing={isEditing} onChange={handleFieldChange} type="tel" />
                     <EditableField label="Email" value={isEditing ? editedData?.email : partnerData.email} fieldName="email" isEditing={isEditing} onChange={handleFieldChange} type="email" />
                     <EditableField label="Cidade" value={isEditing ? editedData?.cidade : partnerData.cidade} fieldName="cidade" isEditing={isEditing} onChange={handleFieldChange} />
@@ -1111,7 +1123,7 @@ export default function PortalParceiro() {
                             <>
                               <InfoField label="Nome" value={partnerData.nome_completo} />
                               <InfoField label="CPF" value={partnerData.cpf} />
-                              <InfoField label="Data de Nascimento" value={partnerData.data_nascimento} />
+                              <InfoField label="Data de Nascimento" value={formatDate(partnerData.data_nascimento)} />
                               <InfoField label="Localização" value={`${partnerData.cidade}, ${partnerData.estado}`} />
                               <InfoField label="Função Principal" value={partnerData.funcao_principal} />
                               <InfoField label="Tempo de Experiência" value={partnerData.tempo_experiencia} />
