@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, memo, useCallback } from "react";
 import { Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,39 +21,40 @@ interface CauseData {
   tasks: Task[];
 }
 
-const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, tasks, className }) => {
-  const [causesData, setCausesData] = useState<CauseData[]>([]);
+const causeGroups = {
+  projeto: ["Projeto", "Desenho/Detalhamento", "Especificação"],
+  planejamento: ["Planejamento/Sequenciamento", "Programação"],
+  suprimentos: ["Suprimentos/Compras", "Material", "Fornecedor"],
+  logistica: ["Logística/Entrega", "Transporte", "Armazenamento"],
+  equipamento: ["Equipamento", "Ferramenta", "Manutenção"],
+  recursos: ["Mão de Obra", "Disponibilidade de Equipe"],
+  qualidade: ["Qualidade", "Retrabalho", "Inspeção"],
+  externa: ["Interferência Externa", "Cliente", "Órgão Público"],
+  clima: ["Clima", "Chuva", "Tempo"],
+  outros: ["Outros", "Diversos"],
+};
+
+const criticalCauses = [
+  "Projeto",
+  "Planejamento/Sequenciamento",
+  "Suprimentos/Compras",
+  "Logística/Entrega",
+  "Equipamento",
+];
+
+const getCauseGroup = (causa: string): string => {
+  for (const [group, causes] of Object.entries(causeGroups)) {
+    if (causes.some((c) => causa.includes(c))) return group;
+  }
+  return "outros";
+};
+
+const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = memo(({ tasks, className }) => {
   const [selectedCause, setSelectedCause] = useState<CauseData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // ... (CauseGroups e lógica mantidos iguais para brevidade) ...
-  const causeGroups = {
-    projeto: ["Projeto", "Desenho/Detalhamento", "Especificação"],
-    planejamento: ["Planejamento/Sequenciamento", "Programação"],
-    suprimentos: ["Suprimentos/Compras", "Material", "Fornecedor"],
-    logistica: ["Logística/Entrega", "Transporte", "Armazenamento"],
-    equipamento: ["Equipamento", "Ferramenta", "Manutenção"],
-    recursos: ["Mão de Obra", "Disponibilidade de Equipe"],
-    qualidade: ["Qualidade", "Retrabalho", "Inspeção"],
-    externa: ["Interferência Externa", "Cliente", "Órgão Público"],
-    clima: ["Clima", "Chuva", "Tempo"],
-    outros: ["Outros", "Diversos"],
-  };
-  const criticalCauses = [
-    "Projeto",
-    "Planejamento/Sequenciamento",
-    "Suprimentos/Compras",
-    "Logística/Entrega",
-    "Equipamento",
-  ];
-  const getCauseGroup = (causa: string): string => {
-    for (const [group, causes] of Object.entries(causeGroups)) {
-      if (causes.some((c) => causa.includes(c))) return group;
-    }
-    return "outros";
-  };
-
-  useEffect(() => {
+  // Memoized calculation of causes data
+  const causesData = useMemo(() => {
     const safeTasks = tasks || [];
     const currentWeekCauses = safeTasks
       .filter((task) => task.causeIfNotDone)
@@ -72,7 +73,8 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
       );
 
     const totalCauses = Object.values(currentWeekCauses).reduce((sum, c) => sum + c.count, 0);
-    const processedData: CauseData[] = Object.entries(currentWeekCauses)
+    
+    return Object.entries(currentWeekCauses)
       .map(([causa, data]) => {
         const grupo = getCauseGroup(causa);
         const isCritica = criticalCauses.some((c) => causa.includes(c)) && grupo !== "clima";
@@ -87,14 +89,12 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
         };
       })
       .sort((a, b) => b.quantidade - a.quantidade);
+  }, [tasks]);
 
-    setCausesData(processedData);
-  }, [weekStartDate, tasks]);
-
-  const handleCauseClick = (cause: CauseData) => {
+  const handleCauseClick = useCallback((cause: CauseData) => {
     setSelectedCause(cause);
     setIsDialogOpen(true);
-  };
+  }, []);
 
   return (
     <div className={cn("h-full p-6 rounded-2xl", className)}>
@@ -182,6 +182,8 @@ const WeeklyCausesChart: React.FC<WeeklyCausesChartProps> = ({ weekStartDate, ta
       </Dialog>
     </div>
   );
-};
+});
 
-export default React.memo(WeeklyCausesChart);
+WeeklyCausesChart.displayName = "WeeklyCausesChart";
+
+export default WeeklyCausesChart;
