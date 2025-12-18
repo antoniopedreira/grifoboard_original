@@ -186,6 +186,7 @@ export type Database = {
           ticket_medio: string
           tipos_obras: string[]
           tipos_obras_outro: string | null
+          user_id: string | null
           whatsapp_contato: string
         }
         Insert: {
@@ -211,6 +212,7 @@ export type Database = {
           ticket_medio: string
           tipos_obras: string[]
           tipos_obras_outro?: string | null
+          user_id?: string | null
           whatsapp_contato: string
         }
         Update: {
@@ -236,6 +238,7 @@ export type Database = {
           ticket_medio?: string
           tipos_obras?: string[]
           tipos_obras_outro?: string | null
+          user_id?: string | null
           whatsapp_contato?: string
         }
         Relationships: []
@@ -267,6 +270,7 @@ export type Database = {
           ticket_medio: string
           tipo_atuacao_outro: string | null
           tipos_atuacao: string[]
+          user_id: string | null
         }
         Insert: {
           capacidade_atendimento: string
@@ -294,6 +298,7 @@ export type Database = {
           ticket_medio: string
           tipo_atuacao_outro?: string | null
           tipos_atuacao: string[]
+          user_id?: string | null
         }
         Update: {
           capacidade_atendimento?: string
@@ -321,6 +326,7 @@ export type Database = {
           ticket_medio?: string
           tipo_atuacao_outro?: string | null
           tipos_atuacao?: string[]
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -353,6 +359,7 @@ export type Database = {
           regioes_atendidas: string[]
           telefone: string
           tempo_experiencia: string
+          user_id: string | null
         }
         Insert: {
           certificacoes_path?: string | null
@@ -382,6 +389,7 @@ export type Database = {
           regioes_atendidas: string[]
           telefone: string
           tempo_experiencia: string
+          user_id?: string | null
         }
         Update: {
           certificacoes_path?: string | null
@@ -411,6 +419,7 @@ export type Database = {
           regioes_atendidas?: string[]
           telefone?: string
           tempo_experiencia?: string
+          user_id?: string | null
         }
         Relationships: []
       }

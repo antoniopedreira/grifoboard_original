@@ -1,65 +1,71 @@
 import React, { useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Clock, Calendar, TrendingUp } from "lucide-react";
-import { differenceInDays, differenceInCalendarDays, format, isPast, isFuture } from "date-fns";
+import { Clock, Calendar, Timer, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Card, CardContent } from "@/components/ui/card";
+
 const ProjectCountdown = () => {
-  const {
-    userSession
-  } = useAuth();
+  const { userSession } = useAuth();
+
   const projectInfo = useMemo(() => {
     const obra = userSession?.obraAtiva;
     if (!obra?.data_inicio) return null;
+
     const startDate = new Date(obra.data_inicio);
     const endDate = obra.data_termino ? new Date(obra.data_termino) : null;
     const today = new Date();
+
     if (!endDate) {
       return {
         hasEndDate: false,
-        startDate: format(startDate, "dd/MM/yyyy", {
-          locale: ptBR
-        })
+        startDate: format(startDate, "dd/MM/yyyy", { locale: ptBR }),
       };
     }
+
     const totalDays = differenceInCalendarDays(endDate, startDate);
     const elapsedDays = differenceInCalendarDays(today, startDate);
     const remainingDays = differenceInCalendarDays(endDate, today);
-    const percentageElapsed = totalDays > 0 ? Math.min(100, Math.max(0, elapsedDays / totalDays * 100)) : 0;
-    const isOverdue = isPast(endDate) && remainingDays < 0;
-    const isCompleted = obra.status === 'concluida';
+    const percentageElapsed = totalDays > 0 ? Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100)) : 0;
+    const isOverdue = remainingDays < 0;
+    const isCompleted = obra.status === "concluida";
+    const isUrgent = remainingDays <= 30 && remainingDays > 0;
+
     return {
       hasEndDate: true,
-      startDate: format(startDate, "dd/MM/yyyy", {
-        locale: ptBR
-      }),
-      endDate: format(endDate, "dd/MM/yyyy", {
-        locale: ptBR
-      }),
+      startDate: format(startDate, "dd/MM/yyyy", { locale: ptBR }),
+      endDate: format(endDate, "dd/MM/yyyy", { locale: ptBR }),
       totalDays,
-      elapsedDays,
+      elapsedDays: Math.max(0, elapsedDays),
       remainingDays: Math.abs(remainingDays),
       percentageElapsed: Math.round(percentageElapsed),
       isOverdue,
-      isCompleted
+      isCompleted,
+      isUrgent,
     };
   }, [userSession?.obraAtiva]);
+
   if (!projectInfo) return null;
+
   if (!projectInfo.hasEndDate) {
-    return <div className="minimal-card p-6 min-h-[140px]">
-        <div className="flex items-center mb-4">
-          <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-muted-foreground" />
+    return (
+      <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-border/50 shadow-lg overflow-hidden h-full">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground">Cronograma</h3>
+              <p className="text-xs text-muted-foreground">Início: {projectInfo.startDate}</p>
+            </div>
           </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-foreground">Cronograma da Obra</h3>
-            <p className="text-xs text-muted-foreground">Início: {projectInfo.startDate}</p>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Data de término não definida
-        </p>
-      </div>;
+          <p className="text-sm text-muted-foreground">Data de término não definida</p>
+        </CardContent>
+      </Card>
+    );
   }
+
   const {
     startDate,
     endDate,
@@ -68,66 +74,145 @@ const ProjectCountdown = () => {
     remainingDays,
     percentageElapsed,
     isOverdue,
-    isCompleted
+    isCompleted,
+    isUrgent,
   } = projectInfo;
-  const getStatusColor = () => {
-    if (isCompleted) return "text-success";
-    if (isOverdue) return "text-destructive";
-    if (remainingDays <= 30) return "text-warning";
+
+  const getGradientColors = () => {
+    if (isCompleted) return "from-emerald-500/10 via-emerald-500/5 to-transparent";
+    if (isOverdue) return "from-red-500/10 via-red-500/5 to-transparent";
+    if (isUrgent) return "from-amber-500/10 via-amber-500/5 to-transparent";
+    return "from-primary/10 via-primary/5 to-transparent";
+  };
+
+  const getAccentColor = () => {
+    if (isCompleted) return "text-emerald-600";
+    if (isOverdue) return "text-red-600";
+    if (isUrgent) return "text-amber-600";
     return "text-primary";
   };
+
+  const getProgressColor = () => {
+    if (isCompleted) return "bg-emerald-500";
+    if (isOverdue) return "bg-red-500";
+    if (percentageElapsed > 80) return "bg-amber-500";
+    return "bg-primary";
+  };
+
+  const getBadgeStyles = () => {
+    if (isCompleted) return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    if (isOverdue) return "bg-red-100 text-red-700 border-red-200";
+    if (isUrgent) return "bg-amber-100 text-amber-700 border-amber-200";
+    return "bg-primary/10 text-primary border-primary/20";
+  };
+
   const getStatusText = () => {
     if (isCompleted) return "Concluída";
     if (isOverdue) return "Atrasada";
-    if (remainingDays <= 30) return "Atenção";
+    if (isUrgent) return "Atenção";
     return "No Prazo";
   };
-  return <div className="minimal-card p-6 min-h-[140px]">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Clock className="w-5 h-5 text-primary" />
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-foreground">Previsão da Obra </h3>
-            <p className="text-xs text-muted-foreground">{startDate} - {endDate}</p>
-          </div>
-        </div>
-        <span className={`text-xs font-medium px-2 py-1 rounded ${getStatusColor()} bg-opacity-10`}>
-          {getStatusText()}
-        </span>
-      </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-foreground">
-              {isOverdue ? <span className="text-destructive font-medium">
-                  {remainingDays} {remainingDays === 1 ? "dia" : "dias"} de atraso
-                </span> : <>
-                  <span className={`font-semibold ${getStatusColor()}`}>{remainingDays}</span>
-                  <span className="text-muted-foreground"> {remainingDays === 1 ? "dia" : "dias"} restantes</span>
-                </>}
-            </span>
+  const getStatusIcon = () => {
+    if (isCompleted) return <CheckCircle2 className="w-3.5 h-3.5" />;
+    if (isOverdue) return <AlertTriangle className="w-3.5 h-3.5" />;
+    if (isUrgent) return <AlertTriangle className="w-3.5 h-3.5" />;
+    return <Clock className="w-3.5 h-3.5" />;
+  };
+
+  return (
+    <Card className="relative bg-white border-border/50 shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden h-full group">
+      {/* Animated gradient background */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${getGradientColors()} opacity-60 group-hover:opacity-100 transition-opacity duration-500`} />
+      
+      {/* Decorative circles */}
+      <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-2xl" />
+      <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-xl" />
+
+      <CardContent className="relative p-6 h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-md ${
+              isOverdue 
+                ? "bg-gradient-to-br from-red-500 to-red-600" 
+                : isUrgent 
+                  ? "bg-gradient-to-br from-amber-500 to-amber-600"
+                  : isCompleted
+                    ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
+                    : "bg-gradient-to-br from-primary to-primary/80"
+            }`}>
+              <Timer className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Previsão da Obra</h3>
+              <p className="text-xs text-muted-foreground">{startDate} - {endDate}</p>
+            </div>
           </div>
+          
+          {/* Status Badge */}
+          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${getBadgeStyles()} ${isUrgent && !isOverdue && !isCompleted ? "animate-pulse" : ""}`}>
+            {getStatusIcon()}
+            {getStatusText()}
+          </span>
         </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Progresso do Tempo</span>
-            <span className="font-medium">{percentageElapsed}%</span>
+        {/* Main countdown */}
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="text-center mb-4">
+            {isOverdue ? (
+              <div className="space-y-1">
+                <div className={`text-4xl font-bold ${getAccentColor()} tabular-nums animate-pulse`}>
+                  {remainingDays}
+                </div>
+                <p className="text-sm text-red-600 font-medium">
+                  {remainingDays === 1 ? "dia de atraso" : "dias de atraso"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className={`text-4xl font-bold ${getAccentColor()} tabular-nums ${isUrgent ? "animate-pulse" : ""}`}>
+                  {remainingDays}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {remainingDays === 1 ? "dia restante" : "dias restantes"}
+                </p>
+              </div>
+            )}
           </div>
-          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-            <div className={`h-full rounded-full transition-all ${isCompleted ? "bg-success" : isOverdue ? "bg-destructive" : percentageElapsed > 80 ? "bg-warning" : "bg-primary"}`} style={{
-            width: `${Math.min(100, percentageElapsed)}%`
-          }} />
+
+          {/* Progress section */}
+          <div className="space-y-3 mt-auto">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-medium">Progresso do Tempo</span>
+              <span className={`font-bold ${getAccentColor()}`}>{percentageElapsed}%</span>
+            </div>
+            
+            {/* Progress bar with animation */}
+            <div className="relative h-2.5 bg-muted/60 rounded-full overflow-hidden">
+              <div 
+                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out ${getProgressColor()}`}
+                style={{ width: `${Math.min(100, percentageElapsed)}%` }}
+              />
+              {/* Animated shine effect */}
+              <div 
+                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_2s_infinite]"
+                style={{ width: `${Math.min(100, percentageElapsed)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{elapsedDays} de {totalDays} dias</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                decorridos
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground pt-1">
-            {elapsedDays} de {totalDays} dias decorridos
-          </p>
         </div>
-      </div>
-    </div>;
+      </CardContent>
+    </Card>
+  );
 };
+
 export default React.memo(ProjectCountdown);
