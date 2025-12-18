@@ -42,7 +42,7 @@ const EditableField = ({ label, value, fieldName, isEditing, onChange, type = "t
   
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{label}</Label>
+      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</Label>
       {isEditing ? (
         type === "textarea" ? (
           <Textarea
@@ -60,7 +60,7 @@ const EditableField = ({ label, value, fieldName, isEditing, onChange, type = "t
           />
         )
       ) : (
-        <p className="text-sm text-slate-700 font-medium">{value}</p>
+        <p className="text-sm text-foreground font-medium">{value}</p>
       )}
     </div>
   );
@@ -71,8 +71,8 @@ const InfoField = ({ label, value }: { label: string; value: string | null | und
   if (!value) return null;
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{label}</p>
-      <p className="text-sm text-slate-700 font-medium">{value}</p>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className="text-sm text-foreground font-medium">{value}</p>
     </div>
   );
 };
@@ -396,22 +396,22 @@ export default function PortalParceiro() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-slate-500 font-medium animate-pulse">Carregando seu perfil...</p>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-secondary" />
+        <p className="text-muted-foreground font-medium animate-pulse">Carregando seu perfil...</p>
       </div>
     );
   }
 
   if (!partnerData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <Card className="max-w-md w-full shadow-lg border-0">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full shadow-lg border border-border">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto bg-red-100 p-3 rounded-full w-fit mb-4">
-              <User className="h-8 w-8 text-red-600" />
+            <div className="mx-auto bg-destructive/10 p-3 rounded-full w-fit mb-4">
+              <User className="h-8 w-8 text-destructive" />
             </div>
-            <CardTitle className="text-2xl font-bold text-slate-800">Perfil não encontrado</CardTitle>
+            <CardTitle className="text-2xl font-bold text-primary">Perfil não encontrado</CardTitle>
             <CardDescription>Não localizamos um cadastro de parceiro vinculado ao seu usuário.</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center pt-4">
@@ -428,9 +428,9 @@ export default function PortalParceiro() {
   const logoUrl = getLogoUrl(partnerData.logo_path);
 
   return (
-    <div className="min-h-screen bg-slate-50/50 font-sans">
+    <div className="min-h-screen bg-background font-sans">
       {/* --- HEADER --- */}
-      <header className="bg-white border-b sticky top-0 z-50 shadow-sm backdrop-blur-sm bg-white/90">
+      <header className="bg-primary border-b border-white/10 sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-4 h-16 flex justify-between items-center max-w-6xl">
           <div className="flex items-center gap-3">
             <img
@@ -438,30 +438,30 @@ export default function PortalParceiro() {
               alt="Grifo"
               className="h-8 transition-transform hover:scale-105"
             />
-            <div className="hidden md:flex h-6 w-[1px] bg-slate-200 mx-1"></div>
-            <span className="text-sm font-semibold text-slate-600 tracking-tight hidden md:inline-block">
+            <div className="hidden md:flex h-6 w-[1px] bg-white/20 mx-1"></div>
+            <span className="text-sm font-semibold text-white/80 tracking-tight hidden md:inline-block">
               Portal do Parceiro
             </span>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-slate-100/50 py-1.5 px-3 rounded-full border border-slate-100">
-              <Avatar className="h-8 w-8 border border-white shadow-sm">
+            <div className="flex items-center gap-3 bg-white/10 py-1.5 px-3 rounded-full border border-white/10">
+              <Avatar className="h-8 w-8 border-2 border-secondary shadow-sm">
                 <AvatarImage src={logoUrl || ""} />
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                <AvatarFallback className="bg-secondary text-white font-bold">
                   {partnerName?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden sm:block text-xs text-right mr-1">
-                <p className="font-semibold text-slate-700 truncate max-w-[120px]">{partnerName}</p>
-                <p className="text-slate-400 font-medium capitalize">{partnerType}</p>
+                <p className="font-semibold text-white truncate max-w-[120px]">{partnerName}</p>
+                <p className="text-white/50 font-medium capitalize">{partnerType}</p>
               </div>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleLogout}
-              className="text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              className="text-white/70 hover:text-red-400 hover:bg-red-500/20 transition-colors"
               title="Sair"
             >
               <LogOut className="h-5 w-5" />
@@ -473,33 +473,30 @@ export default function PortalParceiro() {
       {/* --- MAIN CONTENT --- */}
       <main className="container mx-auto p-4 md:p-8 max-w-6xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200/60 pb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-border pb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Badge
-                variant="outline"
-                className="bg-white text-primary border-primary/20 px-2 py-0.5 uppercase text-[10px] tracking-wider font-bold"
-              >
-                Painel de Controle
+              <Badge className="bg-secondary/10 text-secondary border-secondary/20 px-2.5 py-0.5 uppercase text-[10px] tracking-wider font-bold">
+                Portal do Parceiro
               </Badge>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-primary tracking-tight">
               Olá,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
+              <span className="text-secondary">
                 {partnerName?.split(" ")[0]}
               </span>
             </h1>
-            <p className="text-slate-500 mt-2 max-w-xl text-lg">
+            <p className="text-muted-foreground mt-2 max-w-xl text-lg">
               Gerencie suas informações e mantenha seu perfil atualizado para se destacar no marketplace.
             </p>
           </div>
           <div className="hidden md:block">
-            {/* Espaço para métricas futuras ou status */}
+            {/* Status do Perfil */}
             <div className="text-right">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status do Perfil</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status do Perfil</span>
               <div className="flex items-center justify-end gap-2 mt-1">
-                <span className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-sm font-medium text-slate-700">Ativo no Marketplace</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-sm font-medium text-primary">Ativo no Marketplace</span>
               </div>
             </div>
           </div>
@@ -507,22 +504,22 @@ export default function PortalParceiro() {
 
         {/* Tabs Navigation */}
         <Tabs defaultValue="dados" className="space-y-6">
-          <TabsList className="bg-white p-1 border border-slate-200 shadow-sm rounded-xl w-full md:w-auto h-auto flex-wrap justify-start gap-1">
+          <TabsList className="bg-card p-1.5 border border-border shadow-sm rounded-xl w-full md:w-auto h-auto flex-wrap justify-start gap-1">
             <TabsTrigger
               value="dados"
-              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/5 data-[state=active]:text-primary font-medium transition-all"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-white font-medium transition-all"
             >
               <User className="h-4 w-4 mr-2" /> Dados Cadastrais
             </TabsTrigger>
             <TabsTrigger
               value="midia"
-              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/5 data-[state=active]:text-primary font-medium transition-all"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-white font-medium transition-all"
             >
               <ImageIcon className="h-4 w-4 mr-2" /> Fotos e Documentos
             </TabsTrigger>
             <TabsTrigger
               value="preview"
-              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/5 data-[state=active]:text-primary font-medium transition-all"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-white font-medium transition-all"
             >
               <LayoutTemplate className="h-4 w-4 mr-2" /> Visualizar Cartão
             </TabsTrigger>
@@ -530,13 +527,13 @@ export default function PortalParceiro() {
 
           {/* TAB 1: DADOS */}
           <TabsContent value="dados" className="focus-visible:outline-none">
-            <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-              <div className="h-1.5 w-full bg-gradient-to-r from-primary/80 to-primary/20" />
+            <Card className="border border-border shadow-lg bg-card overflow-hidden">
+              <div className="h-1.5 w-full bg-gradient-to-r from-secondary to-secondary/30" />
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <User className="h-5 w-5 text-primary" /> Informações do Perfil
+                    <CardTitle className="flex items-center gap-2 text-xl text-primary">
+                      <User className="h-5 w-5 text-secondary" /> Informações do Perfil
                     </CardTitle>
                     <CardDescription className="mt-1">
                       {isEditing ? "Edite seus dados cadastrais." : "Seus dados cadastrais no marketplace."}
@@ -557,7 +554,7 @@ export default function PortalParceiro() {
                           size="sm"
                           onClick={saveChanges}
                           disabled={saving}
-                          className="bg-primary hover:bg-primary/90"
+                          className="bg-secondary hover:bg-secondary/90 text-white"
                         >
                           {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
                           Salvar
@@ -568,6 +565,7 @@ export default function PortalParceiro() {
                         variant="outline"
                         size="sm"
                         onClick={startEditing}
+                        className="border-secondary/30 text-secondary hover:bg-secondary/10"
                       >
                         <Edit3 className="h-4 w-4 mr-1" /> Editar
                       </Button>
@@ -686,11 +684,11 @@ export default function PortalParceiro() {
           {/* TAB 2: FOTOS E DOCUMENTOS */}
           <TabsContent value="midia" className="focus-visible:outline-none space-y-6">
             {/* Foto de Perfil / Logo - Destacada */}
-            <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-              <div className="h-1.5 w-full bg-gradient-to-r from-primary/80 to-primary/20" />
+            <Card className="border border-border shadow-lg bg-card overflow-hidden">
+              <div className="h-1.5 w-full bg-gradient-to-r from-secondary to-secondary/30" />
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Camera className="h-5 w-5 text-primary" /> Foto de Perfil
+                <CardTitle className="flex items-center gap-2 text-xl text-primary">
+                  <Camera className="h-5 w-5 text-secondary" /> Foto de Perfil
                 </CardTitle>
                 <CardDescription className="mt-1">
                   Sua foto principal que aparece no Marketplace.
@@ -699,13 +697,13 @@ export default function PortalParceiro() {
               <CardContent className="pb-6">
                 <div className="flex items-center gap-6">
                   <div className="relative">
-                    <Avatar className="h-32 w-32 border-4 border-primary/20 shadow-lg">
+                    <Avatar className="h-32 w-32 border-4 border-secondary/30 shadow-lg">
                       <AvatarImage src={getLogoUrl(partnerData.logo_path) || ""} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
+                      <AvatarFallback className="bg-secondary/10 text-secondary text-3xl font-bold">
                         {partnerName?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1.5 shadow-lg">
+                    <div className="absolute -bottom-1 -right-1 bg-secondary rounded-full p-1.5 shadow-lg">
                       <Camera className="h-4 w-4 text-white" />
                     </div>
                   </div>
@@ -729,11 +727,11 @@ export default function PortalParceiro() {
             {/* Seções específicas por tipo de parceiro */}
             {partnerType === "profissional" && (
               <>
-                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-                  <div className="h-1.5 w-full bg-gradient-to-r from-blue-500/80 to-blue-500/20" />
+                <Card className="border border-border shadow-lg bg-card overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-primary to-primary/30" />
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <ImageIcon className="h-5 w-5 text-blue-500" /> Fotos de Trabalhos
+                    <CardTitle className="flex items-center gap-2 text-xl text-primary">
+                      <ImageIcon className="h-5 w-5 text-secondary" /> Fotos de Trabalhos
                     </CardTitle>
                     <CardDescription className="mt-1">
                       Mostre seus melhores trabalhos para atrair clientes.
@@ -755,11 +753,11 @@ export default function PortalParceiro() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-                  <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/80 to-emerald-500/20" />
+                <Card className="border border-border shadow-lg bg-card overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-secondary to-secondary/30" />
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <FileText className="h-5 w-5 text-emerald-500" /> Documentos
+                    <CardTitle className="flex items-center gap-2 text-xl text-primary">
+                      <FileText className="h-5 w-5 text-secondary" /> Documentos
                     </CardTitle>
                     <CardDescription className="mt-1">
                       Adicione currículo e certificações para validar sua experiência.
@@ -777,7 +775,7 @@ export default function PortalParceiro() {
                       isImage={false}
                       uploading={uploading}
                     />
-                    <div className="border-t border-slate-100 pt-6">
+                    <div className="border-t border-border pt-6">
                       <FileUploadSection
                         title="Certificações"
                         description="Certificados e cursos realizados"
@@ -798,11 +796,11 @@ export default function PortalParceiro() {
 
             {partnerType === "fornecedor" && (
               <>
-                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-                  <div className="h-1.5 w-full bg-gradient-to-r from-blue-500/80 to-blue-500/20" />
+                <Card className="border border-border shadow-lg bg-card overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-primary to-primary/30" />
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <ImageIcon className="h-5 w-5 text-blue-500" /> Portfólio e Fotos
+                    <CardTitle className="flex items-center gap-2 text-xl text-primary">
+                      <ImageIcon className="h-5 w-5 text-secondary" /> Portfólio e Fotos
                     </CardTitle>
                     <CardDescription className="mt-1">
                       Mostre seus produtos e trabalhos realizados.
@@ -820,7 +818,7 @@ export default function PortalParceiro() {
                       isImage={false}
                       uploading={uploading}
                     />
-                    <div className="border-t border-slate-100 pt-6">
+                    <div className="border-t border-border pt-6">
                       <FileUploadSection
                         title="Fotos de Trabalhos"
                         description="Fotos de produtos ou serviços realizados"
@@ -837,11 +835,11 @@ export default function PortalParceiro() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-                  <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/80 to-emerald-500/20" />
+                <Card className="border border-border shadow-lg bg-card overflow-hidden">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-secondary to-secondary/30" />
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <FileText className="h-5 w-5 text-emerald-500" /> Certificações
+                    <CardTitle className="flex items-center gap-2 text-xl text-primary">
+                      <FileText className="h-5 w-5 text-secondary" /> Certificações
                     </CardTitle>
                     <CardDescription className="mt-1">
                       Adicione certificados e alvarás da empresa.
@@ -866,11 +864,11 @@ export default function PortalParceiro() {
             )}
 
             {partnerType === "empresa" && (
-              <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-                <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/80 to-emerald-500/20" />
+              <Card className="border border-border shadow-lg bg-card overflow-hidden">
+                <div className="h-1.5 w-full bg-gradient-to-r from-secondary to-secondary/30" />
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <FileText className="h-5 w-5 text-emerald-500" /> Apresentação Institucional
+                  <CardTitle className="flex items-center gap-2 text-xl text-primary">
+                    <FileText className="h-5 w-5 text-secondary" /> Apresentação Institucional
                   </CardTitle>
                   <CardDescription className="mt-1">
                     Adicione a apresentação da sua empresa.
@@ -1083,7 +1081,7 @@ export default function PortalParceiro() {
 
                 {/* Tabs */}
                 <Tabs defaultValue="info" className="flex-1 flex flex-col px-6 mt-4 min-h-0 overflow-hidden">
-                  <TabsList className="w-full justify-start gap-2 bg-transparent p-0 h-auto border-b border-slate-100 pb-1 mb-4 overflow-x-auto flex-shrink-0">
+                  <TabsList className="w-full justify-start gap-2 bg-transparent p-0 h-auto border-b border-border pb-1 mb-4 overflow-x-auto flex-shrink-0">
                     <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-2 bg-transparent shadow-none">
                       Informações
                     </TabsTrigger>
