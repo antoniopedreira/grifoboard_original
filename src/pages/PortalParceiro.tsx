@@ -93,14 +93,25 @@ const FileUploadSection = ({
   const [fileUrls, setFileUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    if (currentPath) {
-      const paths = currentPath.split(",").filter(Boolean);
-      const urls = paths.map((p) => {
-        if (p.startsWith("http")) return p;
-        const { data } = supabase.storage.from(bucket).getPublicUrl(p.trim());
-        return data.publicUrl;
+    // Only process if currentPath is a valid non-empty string
+    if (currentPath && typeof currentPath === 'string' && currentPath.trim() !== '' && currentPath !== '[]' && currentPath !== 'null') {
+      const paths = currentPath.split(",").filter((p) => {
+        const trimmed = p.trim();
+        // Filter out empty strings, brackets, and invalid paths
+        return trimmed && trimmed.length > 2 && !trimmed.startsWith('[') && !trimmed.startsWith(']');
       });
-      setFileUrls(urls);
+      
+      if (paths.length > 0) {
+        const urls = paths.map((p) => {
+          const trimmed = p.trim();
+          if (trimmed.startsWith("http")) return trimmed;
+          const { data } = supabase.storage.from(bucket).getPublicUrl(trimmed);
+          return data.publicUrl;
+        });
+        setFileUrls(urls);
+      } else {
+        setFileUrls([]);
+      }
     } else {
       setFileUrls([]);
     }
