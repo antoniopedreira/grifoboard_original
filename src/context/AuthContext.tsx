@@ -299,6 +299,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem(key);
       });
 
+      // Clear sessionStorage to prevent redirect back to previous route
+      sessionStorage.removeItem("lastRoute");
+
       // Clear user-specific data
       if (currentUserId) {
         localStorage.removeItem(`obraAtiva_${currentUserId}`);
@@ -326,6 +329,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserSession({ user: null, obraAtiva: null });
       setSessionId(null);
       localStorage.clear();
+      sessionStorage.clear();
 
       toast({
         title: "Desconectado",
