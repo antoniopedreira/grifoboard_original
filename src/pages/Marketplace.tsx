@@ -14,8 +14,10 @@ import {
   Sparkles,
   Users,
   TrendingUp,
-  Shield
+  Shield,
+  Award
 } from "lucide-react";
+import seloGrifoImg from "@/assets/selo-grifo.png";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
 import { MarketplaceDetailModal } from "@/components/marketplace/MarketplaceDetailModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +42,7 @@ export default function Marketplace() {
   const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("todos");
+  const [filterSeloGrifo, setFilterSeloGrifo] = useState(false);
 
   useEffect(() => {
     fetchMarketplaceData();
@@ -156,13 +159,16 @@ export default function Marketplace() {
       (activeTab === "empresas" && item.type === "empresa") ||
       (activeTab === "fornecedores" && item.type === "fornecedor");
 
-    return matchesSearch && matchesTab;
+    const matchesSelo = !filterSeloGrifo || item.data.selo_grifo === true;
+
+    return matchesSearch && matchesTab && matchesSelo;
   });
 
   const stats = {
     profissionais: items.filter(i => i.type === "profissional").length,
     empresas: items.filter(i => i.type === "empresa").length,
     fornecedores: items.filter(i => i.type === "fornecedor").length,
+    seloGrifo: items.filter(i => i.data.selo_grifo === true).length,
   };
 
   return (
@@ -257,43 +263,93 @@ export default function Marketplace() {
       <main className="container mx-auto px-4 py-10 max-w-7xl">
         {/* Tabs */}
         <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <TabsList className="bg-white p-1.5 border border-slate-200 shadow-sm rounded-xl h-auto flex-wrap">
-              <TabsTrigger
-                value="todos"
-                className="h-10 px-5 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
-              >
-                Todos
-                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 data-[state=active]:bg-white/20 data-[state=active]:text-white">
-                  {items.length}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger
-                value="profissionais"
-                className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
-              >
-                <User className="h-4 w-4" />
-                Profissionais
-              </TabsTrigger>
-              <TabsTrigger
-                value="empresas"
-                className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
-              >
-                <Building2 className="h-4 w-4" />
-                Empresas
-              </TabsTrigger>
-              <TabsTrigger
-                value="fornecedores"
-                className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
-              >
-                <Truck className="h-4 w-4" />
-                Fornecedores
-              </TabsTrigger>
-            </TabsList>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <TabsList className="bg-white p-1.5 border border-slate-200 shadow-sm rounded-xl h-auto flex-wrap">
+                <TabsTrigger
+                  value="todos"
+                  className="h-10 px-5 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+                >
+                  Todos
+                  <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 data-[state=active]:bg-white/20 data-[state=active]:text-white">
+                    {items.length}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profissionais"
+                  className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+                >
+                  <User className="h-4 w-4" />
+                  Profissionais
+                </TabsTrigger>
+                <TabsTrigger
+                  value="empresas"
+                  className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+                >
+                  <Building2 className="h-4 w-4" />
+                  Empresas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="fornecedores"
+                  className="h-10 px-5 rounded-lg gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all"
+                >
+                  <Truck className="h-4 w-4" />
+                  Fornecedores
+                </TabsTrigger>
+              </TabsList>
 
-            <p className="text-sm text-slate-500">
-              {filteredItems.length} {filteredItems.length === 1 ? "resultado" : "resultados"} encontrados
-            </p>
+              <p className="text-sm text-slate-500">
+                {filteredItems.length} {filteredItems.length === 1 ? "resultado" : "resultados"} encontrados
+              </p>
+            </div>
+
+            {/* Selo Grifo Filter */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setFilterSeloGrifo(!filterSeloGrifo)}
+                className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-300 ${
+                  filterSeloGrifo
+                    ? "bg-gradient-to-r from-[#A47528]/10 to-amber-500/10 border-[#A47528] shadow-[0_0_20px_-5px_rgba(164,117,40,0.4)]"
+                    : "bg-white border-slate-200 hover:border-[#A47528]/50 hover:shadow-md"
+                }`}
+              >
+                {/* Glow effect when active */}
+                {filterSeloGrifo && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#A47528]/20 to-amber-500/20 blur-xl rounded-xl -z-10" />
+                )}
+                
+                <div className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+                  filterSeloGrifo 
+                    ? "bg-gradient-to-br from-[#A47528] to-amber-500 shadow-lg" 
+                    : "bg-slate-100 group-hover:bg-[#A47528]/20"
+                }`}>
+                  <img 
+                    src={seloGrifoImg} 
+                    alt="Selo Grifo" 
+                    className={`w-6 h-6 transition-all duration-300 ${
+                      filterSeloGrifo ? "drop-shadow-md scale-110" : "opacity-70 group-hover:opacity-100"
+                    }`}
+                  />
+                </div>
+                
+                <div className="flex flex-col items-start">
+                  <span className={`text-sm font-semibold transition-colors ${
+                    filterSeloGrifo ? "text-[#A47528]" : "text-slate-700"
+                  }`}>
+                    Selo de Aprovação Grifo
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    {stats.seloGrifo} parceiros certificados
+                  </span>
+                </div>
+
+                {filterSeloGrifo && (
+                  <div className="ml-2 flex items-center justify-center w-5 h-5 rounded-full bg-[#A47528] text-white">
+                    <Award className="h-3 w-3" />
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
 
           <TabsContent value={activeTab} className="mt-0">
@@ -316,6 +372,7 @@ export default function Marketplace() {
                   onClick={() => {
                     setSearchTerm("");
                     setActiveTab("todos");
+                    setFilterSeloGrifo(false);
                   }}
                   className="rounded-full px-6"
                 >
