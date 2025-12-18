@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cadastrosService } from "@/services/cadastrosService";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { SignupAfterFormDialog } from "@/components/auth/SignupAfterFormDialog"; // Import do Modal
+import { SignupAfterFormDialog } from "@/components/auth/SignupAfterFormDialog";
 
 // --- Constantes ---
 const OPCOES_REGIOES = ["Região Norte", "Região Nordeste", "Região Centro-Oeste", "Região Sudeste", "Região Sul"];
@@ -160,9 +160,9 @@ export default function Profissionais() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  // Removido estado 'success' para não mostrar tela de sucesso antiga
+  const [success, setSuccess] = useState(false);
 
-  // Novos estados para fluxo de cadastro
+  // --- NOVOS ESTADOS PARA O MODAL ---
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
 
@@ -235,6 +235,7 @@ export default function Profissionais() {
   };
 
   const handleSubmit = async () => {
+    // Validações
     if (!formData.nome_completo || !formData.telefone || !formData.funcao_principal) {
       toast({
         title: "Campos obrigatórios",
@@ -266,21 +267,28 @@ export default function Profissionais() {
           ...formData.especialidades,
           formData.funcao_principal === "Outros" ? formData.funcao_principal_outro : formData.funcao_principal,
         ],
+        // Arquivos
         logo_path: logoUrls[0] || null,
         fotos_trabalhos_path: JSON.stringify(fotosUrls),
         curriculo_path: JSON.stringify(curriculoUrls),
         certificacoes_path: JSON.stringify(certificadosUrls),
+
         data_nascimento: formData.data_nascimento || "2000-01-01",
       };
 
-      // Inserção direta para pegar o ID retornado
-      const { data, error } = await supabase.from("formulario_profissionais").insert(payload).select("id").single();
+      // --- MUDANÇA PRINCIPAL AQUI: Captura o ID e Abre o Modal ---
+      const { data, error } = await supabase
+        .from("formulario_profissionais")
+        .insert(payload)
+        .select("id") // Importante: selecionar o ID
+        .single();
 
       if (error) throw error;
 
-      // Sucesso: Abre o modal de cadastro de usuário
       setCreatedId(data.id);
       setShowSignupModal(true);
+
+      // NÃO chame setSuccess(true) para não mudar a tela antes do modal
       window.scrollTo(0, 0);
     } catch (error) {
       console.error(error);
@@ -290,6 +298,25 @@ export default function Profissionais() {
     }
   };
 
+  if (success) {
+    return (
+      <PublicFormLayout
+        title="Cadastro Recebido!"
+        description="Seu perfil profissional foi criado com sucesso."
+        icon={<CheckCircle2 className="h-8 w-8 text-green-600" />}
+      >
+        <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
+          <p className="text-slate-600">
+            Nossa equipe de engenharia analisará seu portfólio. Mantenha seu WhatsApp atualizado.
+          </p>
+          <Button onClick={() => window.location.reload()} variant="outline" className="w-full h-12 text-base">
+            Novo Cadastro
+          </Button>
+        </div>
+      </PublicFormLayout>
+    );
+  }
+
   return (
     <PublicFormLayout
       title="Banco de Talentos"
@@ -297,7 +324,6 @@ export default function Profissionais() {
       icon={<Users className="h-8 w-8" />}
     >
       <div className="flex items-center justify-center mb-8 gap-2">
-        {/* ... Indicador de Etapas (mantido igual) ... */}
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center">
             <div
@@ -331,7 +357,7 @@ export default function Profissionais() {
                 className="bg-slate-50 h-12"
               />
             </div>
-            {/* ... Resto dos campos da Etapa 1 mantidos iguais ... */}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>CPF *</Label>
@@ -352,6 +378,7 @@ export default function Profissionais() {
                 />
               </div>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>WhatsApp *</Label>
@@ -373,6 +400,7 @@ export default function Profissionais() {
                 />
               </div>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Cidade (Base)</Label>
@@ -393,7 +421,7 @@ export default function Profissionais() {
                 />
               </div>
             </div>
-            {/* ... Checkboxes de Região e Input de Cidades Frequentes mantidos ... */}
+
             <div className="space-y-3 pt-2">
               <Label>Regiões onde aceita trabalhar</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-md border border-slate-100">
@@ -414,6 +442,7 @@ export default function Profissionais() {
                 ))}
               </div>
             </div>
+
             <div className="space-y-2">
               <Label>Cidades Frequentes (Onde mais trabalha)</Label>
               <Input
@@ -429,7 +458,6 @@ export default function Profissionais() {
         {/* ETAPA 2: PERFIL */}
         {step === 2 && (
           <div className="space-y-5 animate-in slide-in-from-right duration-500">
-            {/* ... Campos da Etapa 2 mantidos (Selects, Checkboxes Especialidades, Diferenciais, etc) ... */}
             <div className="space-y-2">
               <Label>Função Principal *</Label>
               <Select onValueChange={(val) => handleChange("funcao_principal", val)} value={formData.funcao_principal}>
@@ -451,19 +479,21 @@ export default function Profissionais() {
                 </SelectContent>
               </Select>
             </div>
+
             {formData.funcao_principal === "Outros" && (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
                 <Label>Especifique sua função *</Label>
                 <Input
                   value={formData.funcao_principal_outro}
                   onChange={(e) => handleChange("funcao_principal_outro", e.target.value)}
+                  placeholder="Ex: Azulejista, Carpinteiro..."
                   className="bg-slate-50 border-primary/50 h-12"
                 />
               </div>
             )}
-            {/* ... Outros campos e checkboxes ... */}
+
             <div className="space-y-3 pt-2 border-t mt-4">
-              <Label>Outras Especialidades</Label>
+              <Label>Outras Especialidades (O que você domina?)</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-md border border-slate-100">
                 {OPCOES_ESPECIALIDADES.map((item) => (
                   <div key={item} className="flex items-center space-x-3 p-1">
@@ -488,6 +518,7 @@ export default function Profissionais() {
                 />
               )}
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
               <div className="space-y-2">
                 <Label>Tempo de Experiência</Label>
@@ -525,6 +556,7 @@ export default function Profissionais() {
                 </Select>
               </div>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Modalidade</Label>
@@ -552,6 +584,7 @@ export default function Profissionais() {
                 />
               </div>
             </div>
+
             <div className="space-y-2">
               <Label>Possui Equipamentos Próprios?</Label>
               <RadioGroup
@@ -573,6 +606,7 @@ export default function Profissionais() {
                 </div>
               </RadioGroup>
             </div>
+
             <div className="space-y-3 pt-2">
               <Label>Diferenciais (Selecione todos que se aplicam)</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-md border border-slate-100">
@@ -605,10 +639,10 @@ export default function Profissionais() {
         {/* ETAPA 3: ARQUIVOS */}
         {step === 3 && (
           <div className="space-y-6 animate-in slide-in-from-right duration-500">
-            {/* ... Uploads mantidos iguais ... */}
             <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm text-blue-800 mb-2">
               <strong>Dica:</strong> Perfis completos aparecem primeiro nas buscas dos engenheiros.
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <UploadField
                 label="Foto de Perfil ou Logo"
@@ -619,6 +653,7 @@ export default function Profissionais() {
                 onFilesChange={setFilesLogo}
                 multiple={false}
               />
+
               <UploadField
                 label="Currículo / Apresentação"
                 sublabel="PDF ou Imagem do seu CV."
@@ -629,6 +664,7 @@ export default function Profissionais() {
                 multiple={true}
               />
             </div>
+
             <UploadField
               label="Fotos dos Trabalhos Realizados"
               sublabel="Obras que você já fez. Antes e Depois valorizam muito!"
@@ -638,6 +674,7 @@ export default function Profissionais() {
               onFilesChange={setFilesFotos}
               multiple={true}
             />
+
             <UploadField
               label="Certificações e NRs"
               sublabel="Diploma, NR10, NR35, Certificados Técnicos..."
@@ -647,6 +684,7 @@ export default function Profissionais() {
               onFilesChange={setFilesCertificados}
               multiple={true}
             />
+
             <div className="space-y-2 mt-4">
               <Label>Resumo Profissional / Obras Relevantes</Label>
               <Textarea
@@ -674,6 +712,7 @@ export default function Profissionais() {
           ) : (
             <div />
           )}
+
           {step < 3 ? (
             <Button
               type="button"
@@ -695,7 +734,7 @@ export default function Profissionais() {
         </div>
       </div>
 
-      {/* MODAL DE CRIAÇÃO DE USUÁRIO */}
+      {/* --- MODAL DE CRIAÇÃO DE USUÁRIO (NOVO) --- */}
       <SignupAfterFormDialog
         isOpen={showSignupModal}
         onClose={() => setShowSignupModal(false)}
