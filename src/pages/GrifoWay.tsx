@@ -294,7 +294,7 @@ const GrifoWay = () => {
 
                             <Avatar className="h-10 w-10 border border-slate-200">
                               <AvatarFallback className="bg-slate-100 text-slate-600 font-bold text-xs">
-                                {user.nome.substring(0, 2).toUpperCase()}
+                                {getInitials(user.nome)}
                               </AvatarFallback>
                             </Avatar>
 
