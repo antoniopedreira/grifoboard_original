@@ -35,7 +35,7 @@ const menuItems: MenuItem[] = [
   { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
   { path: "/playbook", label: "Playbook", icon: BookOpen },
   { path: "/marketplace", label: "Marketplace", icon: Store },
-  { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold, inDevelopment: true },
+  { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold },
 ];
 
 const CustomSidebar = () => {
