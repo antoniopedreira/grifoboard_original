@@ -16,17 +16,26 @@ import {
   ChevronsUpDown,
   ChevronLeft,
   ChevronRight,
-  Compass,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import grifoIconGold from "@/assets/grifo-icon-gold.png";
 
-const menuItems = [
+interface MenuItem {
+  path: string;
+  label: string;
+  icon?: LucideIcon;
+  customIcon?: string;
+  inDevelopment?: boolean;
+}
+
+const menuItems: MenuItem[] = [
   { path: "/tarefas", label: "PCP", icon: LayoutDashboard },
   { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
   { path: "/playbook", label: "Playbook", icon: BookOpen },
   { path: "/marketplace", label: "Marketplace", icon: Store },
-  { path: "/grifoway", label: "GrifoWay", icon: Compass, inDevelopment: true },
+  { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold, inDevelopment: true },
 ];
 
 const CustomSidebar = () => {
@@ -152,13 +161,25 @@ const CustomSidebar = () => {
                   (item as any).inDevelopment && "opacity-70"
                 )}
               >
-                <item.icon
-                  className={cn(
-                    "transition-colors flex-shrink-0",
-                    isCollapsed ? "h-5 w-5" : "h-5 w-5",
-                    isActive ? "text-white" : "text-secondary group-hover:text-white",
-                  )}
-                />
+                {item.customIcon ? (
+                  <img
+                    src={item.customIcon}
+                    alt={item.label}
+                    className={cn(
+                      "h-5 w-5 transition-all duration-200 flex-shrink-0",
+                      isActive 
+                        ? "brightness-0 invert" 
+                        : "group-hover:brightness-0 group-hover:invert"
+                    )}
+                  />
+                ) : item.icon ? (
+                  <item.icon
+                    className={cn(
+                      "transition-colors flex-shrink-0 h-5 w-5",
+                      isActive ? "text-white" : "text-secondary group-hover:text-white",
+                    )}
+                  />
+                ) : null}
 
                 {!isCollapsed && (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
