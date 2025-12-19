@@ -75,6 +75,16 @@ const XPProgressBar = ({ current, level }: { current: number; level: number }) =
   );
 };
 
+// Função para obter iniciais do nome
+const getInitials = (name?: string | null) => {
+  if (!name) return "U";
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
 // --- PÁGINA PRINCIPAL ---
 
 const GrifoWay = () => {
@@ -187,9 +197,9 @@ const GrifoWay = () => {
                   <CardContent className="pt-12 px-6 pb-6 relative text-center">
                     <div className="relative inline-block mb-4">
                       <Avatar className="h-24 w-24 border-4 border-white shadow-md mx-auto">
-                        <AvatarImage src="" />
+                        <AvatarImage src={userSession?.user?.user_metadata?.avatar_url} />
                         <AvatarFallback className="bg-[#112131] text-white text-2xl font-bold">
-                          {userSession?.user?.email?.charAt(0).toUpperCase() || "U"}
+                          {getInitials(userSession?.user?.user_metadata?.full_name || userSession?.user?.email)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
@@ -198,7 +208,7 @@ const GrifoWay = () => {
                     </div>
 
                     <h2 className="text-xl font-bold text-slate-900 mb-1 mt-2">
-                      {userSession?.user?.user_metadata?.full_name || "Colaborador Grifo"}
+                      {userSession?.user?.user_metadata?.full_name || userSession?.user?.email?.split("@")[0] || "Colaborador Grifo"}
                     </h2>
 
                     <div className="mt-4">

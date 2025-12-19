@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import grifoIconGold from "@/assets/grifo-icon-gold.png";
+import UserSettingsModal from "./UserSettingsModal";
 
 interface MenuItem {
   path: string;
@@ -47,6 +48,7 @@ const CustomSidebar = () => {
     const saved = localStorage.getItem("sidebarCollapsed");
     return saved ? JSON.parse(saved) : false;
   });
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("sidebarCollapsed", JSON.stringify(isCollapsed));
@@ -61,15 +63,14 @@ const CustomSidebar = () => {
 
   const getInitials = (name?: string | null) => {
     if (!name) return "GR";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
+    const parts = name.trim().split(" ").filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].substring(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const userName = userSession?.user?.user_metadata?.full_name || "Usuário Grifo";
+  const userName = userSession?.user?.user_metadata?.full_name || userSession?.user?.email?.split("@")[0] || "Usuário";
   const userEmail = userSession?.user?.email || "";
   const userAvatar = userSession?.user?.user_metadata?.avatar_url;
   const activeObraName = userSession?.obraAtiva?.nome_obra || "Selecionar";
@@ -283,6 +284,7 @@ const CustomSidebar = () => {
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <button
+                  onClick={() => setSettingsOpen(true)}
                   className={cn(
                     "flex items-center justify-center rounded-md hover:bg-white/10 text-white/70 transition-colors group",
                     isCollapsed ? "p-2 w-full hover:text-secondary" : "p-2 text-xs",
@@ -316,6 +318,8 @@ const CustomSidebar = () => {
             </Tooltip>
           </div>
         </div>
+
+        <UserSettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       </motion.aside>
     </TooltipProvider>
   );
