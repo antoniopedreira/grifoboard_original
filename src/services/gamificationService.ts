@@ -53,17 +53,19 @@ export const gamificationService = {
     const userIds = profiles.map(p => p.id);
     const { data: users, error: userError } = await supabase
       .from('usuarios')
-      .select('id, nome, role')
+      .select('id, nome, email, role')
       .in('id', userIds);
 
     if (userError) throw userError;
 
     const ranking = profiles.map((profile, index) => {
       const userDetails = users?.find(u => u.id === profile.id);
+      // Usa nome se existir, senão parte do email antes do @
+      const displayName = userDetails?.nome || userDetails?.email?.split('@')[0] || 'Usuário';
       return {
         ...profile,
-        nome: userDetails?.nome || 'Usuário Grifo',
-        role: userDetails?.role || 'Membro',
+        nome: displayName,
+        role: userDetails?.role || 'member',
         position: index + 1
       };
     });
