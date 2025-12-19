@@ -3,6 +3,8 @@ import { useCallback } from "react";
 import { Task } from "@/types";
 import { Tarefa } from "@/types/supabase";
 import { tarefasService } from "@/services/tarefaService";
+import { gamificationService } from "@/services/gamificationService";
+import { useAuth } from "@/context/AuthContext";
 import { convertTarefaToTask, convertTaskStatusToTarefa, formatDateToISO } from "@/utils/taskUtils";
 import { getErrorMessage } from "@/lib/utils/errorHandler";
 
@@ -37,9 +39,10 @@ export const useTaskActions = ({
   setFilteredTasks,
   session
 }: TaskActionsProps) => {
+  const { userSession } = useAuth();
   
   // Função para atualizar uma tarefa
-  const handleTaskUpdate = useCallback(async (updatedTask: Task) => {
+  const handleTaskUpdate = useCallback(async (updatedTask: Task, previousTask?: Task) => {
     try {
       // Converter Task para Tarefa
       const tarefaToUpdate = convertTaskStatusToTarefa(updatedTask);
@@ -57,6 +60,17 @@ export const useTaskActions = ({
       setFilteredTasks(updatedFilteredTasks);
       calculatePCPData(updatedFilteredTasks);
       
+      // === GAMIFICAÇÃO: +30 XP quando tarefa é marcada como concluída ===
+      if (updatedTask.isFullyCompleted && userSession?.user?.id) {
+        console.log("🎮 Disparando XP: Tarefa concluída", updatedTask.id);
+        await gamificationService.awardXP(
+          userSession.user.id,
+          'TAREFA_CONCLUIDA',
+          30,
+          updatedTask.id
+        );
+      }
+      
       toast({
         title: "Tarefa atualizada",
         description: "As alterações foram salvas com sucesso.",
@@ -72,7 +86,7 @@ export const useTaskActions = ({
       });
       throw error;
     }
-  }, [tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate, setTasks, setFilteredTasks]);
+  }, [tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate, setTasks, setFilteredTasks, userSession?.user?.id]);
   
   // Função para excluir uma tarefa
   const handleTaskDelete = useCallback(async (taskId: string) => {
