@@ -123,8 +123,10 @@ const ProjectCountdown = () => {
   return (
     <Card className="relative bg-white border-border/50 shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden h-full group">
       {/* Animated gradient background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${getGradientColors()} opacity-60 group-hover:opacity-100 transition-opacity duration-500`} />
-      
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${getGradientColors()} opacity-60 group-hover:opacity-100 transition-opacity duration-500`}
+      />
+
       {/* Decorative circles */}
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-2xl" />
       <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-xl" />
@@ -133,25 +135,32 @@ const ProjectCountdown = () => {
         {/* Header */}
         <div className="flex items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center shadow-md ${
-              isOverdue 
-                ? "bg-gradient-to-br from-red-500 to-red-600" 
-                : isUrgent 
-                  ? "bg-gradient-to-br from-amber-500 to-amber-600"
-                  : isCompleted
-                    ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
-                    : "bg-gradient-to-br from-primary to-primary/80"
-            }`}>
+            <div
+              className={`w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center shadow-md ${
+                isOverdue
+                  ? "bg-gradient-to-br from-red-500 to-red-600"
+                  : isUrgent
+                    ? "bg-gradient-to-br from-amber-500 to-amber-600"
+                    : isCompleted
+                      ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
+                      : "bg-gradient-to-br from-primary to-primary/80"
+              }`}
+            >
               <Timer className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-semibold text-foreground">Previsão da Obra</h3>
-              <p className="text-xs text-muted-foreground whitespace-nowrap">{startDate} - {endDate}</p>
+              {/* CORREÇÃO AQUI: Alterado de text-xs para text-[10px] */}
+              <p className="text-[10px] text-muted-foreground whitespace-nowrap">
+                {startDate} - {endDate}
+              </p>
             </div>
           </div>
-          
+
           {/* Status Badge */}
-          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap flex-shrink-0 ${getBadgeStyles()} ${isUrgent && !isOverdue && !isCompleted ? "animate-pulse" : ""}`}>
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap flex-shrink-0 ${getBadgeStyles()} ${isUrgent && !isOverdue && !isCompleted ? "animate-pulse" : ""}`}
+          >
             {getStatusIcon()}
             {getStatusText()}
           </span>
@@ -171,7 +180,9 @@ const ProjectCountdown = () => {
               </div>
             ) : (
               <div className="space-y-1">
-                <div className={`text-4xl font-bold ${getAccentColor()} tabular-nums ${isUrgent ? "animate-pulse" : ""}`}>
+                <div
+                  className={`text-4xl font-bold ${getAccentColor()} tabular-nums ${isUrgent ? "animate-pulse" : ""}`}
+                >
                   {remainingDays}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -187,22 +198,24 @@ const ProjectCountdown = () => {
               <span className="text-muted-foreground font-medium">Progresso do Tempo</span>
               <span className={`font-bold ${getAccentColor()}`}>{percentageElapsed}%</span>
             </div>
-            
+
             {/* Progress bar with animation */}
             <div className="relative h-2.5 bg-muted/60 rounded-full overflow-hidden">
-              <div 
+              <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out ${getProgressColor()}`}
                 style={{ width: `${Math.min(100, percentageElapsed)}%` }}
               />
               {/* Animated shine effect */}
-              <div 
+              <div
                 className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_2s_infinite]"
                 style={{ width: `${Math.min(100, percentageElapsed)}%` }}
               />
             </div>
 
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{elapsedDays} de {totalDays} dias</span>
+              <span>
+                {elapsedDays} de {totalDays} dias
+              </span>
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 decorridos
