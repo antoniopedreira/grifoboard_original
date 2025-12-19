@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { diarioService, type DiarioObra as DiarioObraRecord } from "@/services/diarioService";
 import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService";
+import { gamificationService } from "@/services/gamificationService";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -151,6 +152,8 @@ const DiarioObra = () => {
     if (!obraId) return;
 
     setIsSaving(true);
+    const isNewDiario = !diarioId; // Marca se é novo ANTES de salvar
+    
     try {
       const climaJson = JSON.stringify({
         manha: formData.clima_manha,
@@ -182,13 +185,23 @@ const DiarioObra = () => {
         loadPhotos();
       }
 
+      // === GAMIFICAÇÃO: Dar XP apenas para NOVO diário ===
+      if (isNewDiario && userSession?.user?.id) {
+        await gamificationService.awardXP(
+          userSession.user.id,
+          'DIARIO_CRIADO',
+          50,
+          savedDiario.id
+        );
+      }
+
       setIsEditMode(false); // Switch to view mode after saving
       loadDiarioHistory(); // Refresh history
 
       toast({
-        title: "Diário Salvo",
-        description: "As informações foram atualizadas com sucesso.",
-        className: "bg-green-50 border-green-200",
+        title: isNewDiario ? "Diário Registrado! 📖" : "Diário Atualizado",
+        description: isNewDiario ? "Novo registro criado com sucesso." : "As informações foram atualizadas.",
+        className: isNewDiario ? "bg-[#C7A347] text-white border-none" : "bg-green-50 border-green-200",
       });
     } catch (error) {
       console.error("Erro ao salvar:", error);

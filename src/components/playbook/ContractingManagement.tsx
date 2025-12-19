@@ -10,7 +10,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { playbookService } from "@/services/playbookService";
+import { gamificationService } from "@/services/gamificationService";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +49,7 @@ type FieldType = "responsavel" | "data" | "valor" | "status" | "obs";
 
 export function ContractingManagement({ items, onUpdate }: ContractingManagementProps) {
   const { toast } = useToast();
+  const { userSession } = useAuth();
   const [editingItem, setEditingItem] = useState<EnrichedContractingItem | null>(null);
   const [editingField, setEditingField] = useState<FieldType | null>(null);
   const [fieldValue, setFieldValue] = useState<string>("");
@@ -105,6 +108,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
     
     try {
       const updates: Record<string, unknown> = {};
+      const previousStatus = editingItem.status_contratacao;
       
       switch (editingField) {
         case "responsavel":
@@ -125,6 +129,22 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
       }
       
       await playbookService.updateItem(String(editingItem.id), updates);
+      
+      // === GAMIFICAÇÃO: Dar XP quando status muda para "Negociada" ===
+      if (
+        editingField === "status" && 
+        fieldValue === "Negociada" && 
+        previousStatus !== "Negociada" &&
+        userSession?.user?.id
+      ) {
+        await gamificationService.awardXP(
+          userSession.user.id,
+          'CONTRATACAO_FAST',
+          100,
+          String(editingItem.id)
+        );
+      }
+      
       toast({ description: "Salvo!" });
       closeModal();
       onUpdate();

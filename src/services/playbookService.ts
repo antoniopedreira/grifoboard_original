@@ -64,14 +64,14 @@ export const playbookService = {
 
   // 2. Buscar Dados
   async getPlaybook(obraId: string) {
-    // Buscar Config
+    // Buscar Config usando maybeSingle para evitar erro 406
     const { data: config, error: configError } = await supabase
       .from("playbook_config")
       .select("*")
       .eq("obra_id", obraId)
-      .single();
+      .maybeSingle();
 
-    if (configError && configError.code !== "PGRST116") {
+    if (configError) {
       console.error("Erro ao buscar config:", configError);
     }
 
@@ -84,7 +84,7 @@ export const playbookService = {
 
     if (itemsError) throw itemsError;
 
-    return { config, items };
+    return { config: config || null, items: items || [] };
   },
 
   // 3. Atualizar Item Individual (Fase 2 - Gestão de Contratação)

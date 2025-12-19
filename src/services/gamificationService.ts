@@ -8,6 +8,15 @@ export interface GamificationProfile {
   current_streak: number;
 }
 
+export interface GamificationLog {
+  id: string;
+  user_id: string;
+  action_type: string;
+  xp_amount: number;
+  reference_id: string | null;
+  created_at: string;
+}
+
 export interface RankingItem extends GamificationProfile {
   nome: string;
   role: string;
@@ -21,9 +30,9 @@ export const gamificationService = {
       .from('gamification_profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') { // Ignora erro se não existir perfil ainda
+    if (error) {
       console.error('Erro ao buscar perfil:', error);
       return null;
     }
@@ -32,7 +41,6 @@ export const gamificationService = {
 
   // 2. Busca o Ranking Global (Top 10)
   async getRanking() {
-    // Busca os perfis ordenados por XP
     const { data: profiles, error: profileError } = await supabase
       .from('gamification_profiles')
       .select('*')
@@ -40,8 +48,8 @@ export const gamificationService = {
       .limit(10);
 
     if (profileError) throw profileError;
+    if (!profiles || profiles.length === 0) return [];
 
-    // Busca os nomes na tabela de usuários pública
     const userIds = profiles.map(p => p.id);
     const { data: users, error: userError } = await supabase
       .from('usuarios')
@@ -50,7 +58,6 @@ export const gamificationService = {
 
     if (userError) throw userError;
 
-    // Junta os dados (Perfil de Jogo + Nome do Usuário)
     const ranking = profiles.map((profile, index) => {
       const userDetails = users?.find(u => u.id === profile.id);
       return {
@@ -64,7 +71,23 @@ export const gamificationService = {
     return ranking as RankingItem[];
   },
 
-  // 3. Dar XP (Usado no Diário, PCP, etc)
+  // 3. Busca o histórico de XP do usuário
+  async getLogs(userId: string, limit = 20) {
+    const { data, error } = await supabase
+      .from('gamification_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Erro ao buscar logs:', error);
+      return [];
+    }
+    return data as GamificationLog[];
+  },
+
+  // 4. Dar XP (Usado no Diário, PCP, etc)
   async awardXP(userId: string, action: string, amount: number, referenceId?: string) {
     try {
       // Verifica log para evitar duplicidade no mesmo dia/item
@@ -74,7 +97,7 @@ export const gamificationService = {
           .select('id')
           .eq('user_id', userId)
           .eq('reference_id', referenceId)
-          .single();
+          .maybeSingle();
         if (existing) return; 
       }
 
@@ -91,7 +114,7 @@ export const gamificationService = {
         .from('gamification_profiles')
         .select('xp_total')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       const currentXP = profile?.xp_total || 0;
       const newXP = currentXP + amount;
