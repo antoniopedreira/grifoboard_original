@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard, // Vamos manter o ícone, mas usar para o PCP
+  LayoutDashboard,
   BookOpen,
   Store,
   FileText,
@@ -16,17 +16,17 @@ import {
   ChevronsUpDown,
   ChevronLeft,
   ChevronRight,
-  PieChart, // Novo ícone para representar PCP analítico se preferir
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-// MUDANÇA AQUI: Removemos o Dashboard isolado e renomeamos Tarefas para PCP
 const menuItems = [
-  // O antigo dashboard saiu. Agora PCP é a "home" de produção.
   { path: "/tarefas", label: "PCP", icon: LayoutDashboard },
   { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
   { path: "/playbook", label: "Playbook", icon: BookOpen },
   { path: "/marketplace", label: "Marketplace", icon: Store },
+  { path: "/grifoway", label: "GrifoWay", icon: Compass, inDevelopment: true },
 ];
 
 const CustomSidebar = () => {
@@ -149,6 +149,7 @@ const CustomSidebar = () => {
                   isActive
                     ? "bg-secondary text-white shadow-lg font-medium"
                     : "hover:bg-white/10 hover:text-white text-primary-foreground/80",
+                  (item as any).inDevelopment && "opacity-70"
                 )}
               >
                 <item.icon
@@ -160,14 +161,24 @@ const CustomSidebar = () => {
                 />
 
                 {!isCollapsed && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="truncate text-sm font-medium"
-                  >
-                    {item.label}
-                  </motion.span>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="truncate text-sm font-medium"
+                    >
+                      {item.label}
+                    </motion.span>
+                    {(item as any).inDevelopment && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-[9px] px-1.5 py-0 h-4 border-secondary/50 text-secondary bg-secondary/10 whitespace-nowrap"
+                      >
+                        Em breve
+                      </Badge>
+                    )}
+                  </div>
                 )}
 
                 {isActive && (
@@ -189,7 +200,12 @@ const CustomSidebar = () => {
                 <Tooltip key={item.path} delayDuration={0}>
                   <TooltipTrigger asChild>{LinkContent}</TooltipTrigger>
                   <TooltipContent side="right" className="bg-primary border-white/10 text-white font-medium z-50">
-                    {item.label}
+                    <div className="flex items-center gap-2">
+                      {item.label}
+                      {(item as any).inDevelopment && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-secondary/30 text-secondary">Em breve</span>
+                      )}
+                    </div>
                   </TooltipContent>
                 </Tooltip>
               );

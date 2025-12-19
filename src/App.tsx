@@ -16,6 +16,7 @@ import BaseDeDados from "@/pages/BaseDeDados";
 import Playbook from "@/pages/Playbook";
 import Marketplace from "@/pages/Marketplace";
 import PortalParceiro from "@/pages/PortalParceiro";
+import GrifoWay from "@/pages/GrifoWay";
 import FormProfissionais from "@/pages/form/Profissionais";
 import FormEmpresas from "@/pages/form/Empresas";
 import FormFornecedores from "@/pages/form/Fornecedores";
@@ -160,6 +161,7 @@ function App() {
                         <Route path="/base-de-dados" element={<BaseDeDados />} />
                         <Route path="/playbook" element={<Playbook />} />
                         <Route path="/marketplace" element={<Marketplace />} />
+                        <Route path="/grifoway" element={<GrifoWay />} />
                         <Route path="/portal-parceiro" element={<PortalParceiro />} />
                         <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                         <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
