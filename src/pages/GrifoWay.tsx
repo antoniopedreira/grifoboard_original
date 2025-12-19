@@ -239,8 +239,7 @@ const GrifoWay = () => {
                 <Card className="border-none shadow-xl h-full flex flex-col">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <Crown className="h-5 w-5 text-[#C7A347]" />
+                      <CardTitle className="flex items-center gap-2">Ranking<Crown className="h-5 w-5 text-[#C7A347]" />
                         Ranking FAST 2.0
                       </CardTitle>
                     </div>
