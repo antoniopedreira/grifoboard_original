@@ -98,21 +98,29 @@ export const gamificationService = {
           .eq('user_id', userId)
           .eq('reference_id', referenceId)
           .maybeSingle();
-        if (existing) return; 
+        if (existing) {
+          console.log('XP já concedido para esta ação:', referenceId);
+          return; 
+        }
       }
 
-      // Registra o log
-      await supabase.from('gamification_logs').insert({
+      // Registra o log primeiro
+      const { error: logError } = await supabase.from('gamification_logs').insert({
         user_id: userId,
         action_type: action,
         xp_amount: amount,
-        reference_id: referenceId
+        reference_id: referenceId || null
       });
 
-      // Atualiza o perfil
+      if (logError) {
+        console.error('Erro ao inserir log:', logError);
+        throw logError;
+      }
+
+      // Busca o perfil atual
       const { data: profile } = await supabase
         .from('gamification_profiles')
-        .select('xp_total')
+        .select('xp_total, level_current')
         .eq('id', userId)
         .maybeSingle();
 
@@ -122,13 +130,23 @@ export const gamificationService = {
       // Regra de Nível: Novo nível a cada 1000 XP
       const newLevel = Math.floor(newXP / 1000) + 1;
 
+      // Formata a data corretamente (apenas YYYY-MM-DD)
+      const today = new Date().toISOString().split('T')[0];
+
       // Upsert garante que cria se não existir
-      await supabase.from('gamification_profiles').upsert({
+      const { error: upsertError } = await supabase.from('gamification_profiles').upsert({
         id: userId,
         xp_total: newXP,
         level_current: newLevel,
-        last_activity_date: new Date().toISOString()
-      });
+        last_activity_date: today
+      }, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error('Erro ao upsert perfil:', upsertError);
+        throw upsertError;
+      }
+
+      console.log(`✅ XP concedido: +${amount} para usuário ${userId}. Total: ${newXP}`);
 
       toast({
         title: `+${amount} XP Conquistado! 🦅`,
