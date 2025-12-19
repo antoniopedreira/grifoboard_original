@@ -166,7 +166,7 @@ const CustomSidebar = () => {
                     src={item.customIcon}
                     alt={item.label}
                     className={cn(
-                      "h-5 w-5 transition-all duration-200 flex-shrink-0",
+                      "h-6 w-6 transition-all duration-200 flex-shrink-0",
                       isActive 
                         ? "brightness-0 invert" 
                         : "group-hover:brightness-0 group-hover:invert"
