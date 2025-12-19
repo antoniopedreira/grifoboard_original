@@ -4,8 +4,8 @@ import { Tarefa } from "@/types/supabase";
 import { tarefasService } from "@/services/tarefaService";
 import { convertTarefaToTask, convertTaskStatusToTarefa, formatDateToISO } from "@/utils/taskUtils";
 import { getErrorMessage } from "@/lib/utils/errorHandler";
-import { gamificationService } from "@/services/gamificationService"; // <--- NOVO
-import { useAuth } from "@/context/AuthContext"; // <--- NOVO
+import { gamificationService } from "@/services/gamificationService";
+import { useAuth } from "@/context/AuthContext";
 
 type ToastType = {
   title: string;
@@ -38,28 +38,40 @@ export const useTaskActions = ({
   setFilteredTasks,
   session,
 }: TaskActionsProps) => {
-  const { userSession } = useAuth(); // <--- Pegar o utilizador atual
+  const { userSession } = useAuth();
 
   // Função para atualizar uma tarefa
   const handleTaskUpdate = useCallback(
     async (updatedTask: Task) => {
       try {
+        console.log("🔄 Iniciando atualização da tarefa:", updatedTask.id);
+
         // Converter Task para Tarefa
         const tarefaToUpdate = convertTaskStatusToTarefa(updatedTask);
 
         await tarefasService.atualizarTarefa(updatedTask.id, tarefaToUpdate);
+        console.log("✅ Tarefa salva no banco com sucesso.");
 
-        // --- GAMIFICATION: DAR XP SE CONCLUIU ---
-        if (updatedTask.isFullyCompleted && userSession?.user?.id) {
-          // Chama o serviço sem esperar (fire and forget) para não travar a UI
-          gamificationService.awardXP(
-            userSession.user.id,
-            "TAREFA_CONCLUIDA",
-            30, // Valor do XP
-            updatedTask.id, // ID da tarefa garante que não ganha XP duplo se clicar várias vezes
-          );
+        // --- DEBUG GAMIFICATION ---
+        console.log("🎮 Verificando Gamificação...");
+        console.log("   - Task isFullyCompleted:", updatedTask.isFullyCompleted);
+        console.log("   - User ID:", userSession?.user?.id);
+
+        if (updatedTask.isFullyCompleted) {
+          if (userSession?.user?.id) {
+            console.log("🚀 DISPARANDO XP: +30 XP para o usuário", userSession.user.id);
+
+            // Chama o serviço
+            gamificationService
+              .awardXP(userSession.user.id, "TAREFA_CONCLUIDA", 30, updatedTask.id)
+              .then(() => console.log("⭐️ GamificationService terminou a execução (Promise resolved)"));
+          } else {
+            console.warn("⚠️ Usuário não logado ou sem ID na sessão. XP não atribuído.");
+          }
+        } else {
+          console.log("ℹ️ Tarefa não está 100% concluída, sem XP desta vez.");
         }
-        // ----------------------------------------
+        // --------------------------
 
         // Atualizar a tarefa localmente
         const updatedTasks = tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task));
@@ -77,6 +89,7 @@ export const useTaskActions = ({
 
         return updatedTask;
       } catch (error: unknown) {
+        console.error("❌ Erro no handleTaskUpdate:", error);
         const errorMessage = getErrorMessage(error);
         toast({
           title: "Erro ao atualizar tarefa",
@@ -137,7 +150,6 @@ export const useTaskActions = ({
         }
 
         // Initialize the new Tarefa object with required fields
-        // Gerar item automaticamente se não fornecido
         const itemValue = newTaskData.item || `${newTaskData.sector}-${Date.now()}`;
 
         const novaTarefa: Omit<Tarefa, "id" | "created_at"> = {
@@ -149,7 +161,6 @@ export const useTaskActions = ({
           executante: newTaskData.team,
           responsavel: newTaskData.responsible,
           encarregado: newTaskData.executor,
-          // Store the date in ISO format (YYYY-MM-DD)
           semana: formatDateToISO(newTaskData.weekStartDate),
           percentual_executado: 0,
           causa_nao_execucao: newTaskData.causeIfNotDone,
@@ -162,7 +173,6 @@ export const useTaskActions = ({
           dom: null,
         };
 
-        // Set day status based on plannedDays
         const dayMapping: Record<string, string> = {
           mon: "seg",
           tue: "ter",
@@ -173,24 +183,17 @@ export const useTaskActions = ({
           sun: "dom",
         };
 
-        // Set planned days
         newTaskData.plannedDays.forEach((day) => {
           const dbField = dayMapping[day];
-          // Type assertion to handle dynamic field assignments
           (novaTarefa as Record<string, unknown>)[dbField] = "Planejada";
         });
 
-        // Criar tarefa no Supabase
         const createdTarefa = await tarefasService.criarTarefa(novaTarefa);
-
-        // Converter a tarefa para Task antes de adicionar à lista local
         const novaTask = convertTarefaToTask(createdTarefa);
 
-        // Adicionar a nova tarefa à lista local
         const updatedTasks = [novaTask, ...tasks];
         setTasks(updatedTasks);
 
-        // Update filtered tasks and PCP data
         const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
         setFilteredTasks(updatedFilteredTasks);
         calculatePCPData(updatedFilteredTasks);
@@ -214,7 +217,7 @@ export const useTaskActions = ({
     [session.obraAtiva, tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate, setTasks, setFilteredTasks],
   );
 
-  // New function to duplicate a task
+  // Função para duplicar tarefa
   const handleTaskDuplicate = useCallback(
     async (taskToDuplicate: Task) => {
       try {
@@ -222,7 +225,6 @@ export const useTaskActions = ({
           throw new Error("Nenhuma obra ativa selecionada");
         }
 
-        // Create new task data based on the existing task but without the id
         const newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted"> = {
           sector: taskToDuplicate.sector,
           item: taskToDuplicate.item,
@@ -231,12 +233,11 @@ export const useTaskActions = ({
           team: taskToDuplicate.team,
           responsible: taskToDuplicate.responsible,
           executor: taskToDuplicate.executor,
-          plannedDays: [...taskToDuplicate.plannedDays], // Copy planned days
-          weekStartDate: taskToDuplicate.weekStartDate, // Keep same week
+          plannedDays: [...taskToDuplicate.plannedDays],
+          weekStartDate: taskToDuplicate.weekStartDate,
           causeIfNotDone: taskToDuplicate.causeIfNotDone,
         };
 
-        // Use the existing create function to make a new task
         const createdTask = await handleTaskCreate(newTaskData);
 
         toast({
@@ -258,7 +259,7 @@ export const useTaskActions = ({
     [session.obraAtiva, handleTaskCreate, toast],
   );
 
-  // New function to copy a task to next week
+  // Função para copiar para a próxima semana
   const handleCopyToNextWeek = useCallback(
     async (taskToDuplicate: Task) => {
       try {
@@ -266,7 +267,6 @@ export const useTaskActions = ({
           throw new Error("Nenhuma obra ativa selecionada");
         }
 
-        // Calculate next week's Monday
         const currentWeekStart = taskToDuplicate.weekStartDate || new Date();
         const nextWeekStart = new Date(
           currentWeekStart.getFullYear(),
@@ -274,7 +274,6 @@ export const useTaskActions = ({
           currentWeekStart.getDate() + 7,
         );
 
-        // Create new task data based on the existing task but with next week's date
         const newTaskData: Omit<Task, "id" | "dailyStatus" | "isFullyCompleted"> = {
           sector: taskToDuplicate.sector,
           item: taskToDuplicate.item,
@@ -283,12 +282,11 @@ export const useTaskActions = ({
           team: taskToDuplicate.team,
           responsible: taskToDuplicate.responsible,
           executor: taskToDuplicate.executor,
-          plannedDays: [...taskToDuplicate.plannedDays], // Copy planned days
-          weekStartDate: nextWeekStart, // Set to next week's Monday
+          plannedDays: [...taskToDuplicate.plannedDays],
+          weekStartDate: nextWeekStart,
           causeIfNotDone: taskToDuplicate.causeIfNotDone,
         };
 
-        // Use the existing create function to make a new task
         const createdTask = await handleTaskCreate(newTaskData);
 
         toast({
