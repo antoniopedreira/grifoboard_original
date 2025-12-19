@@ -44,31 +44,29 @@ export const useTaskActions = ({
   const handleTaskUpdate = useCallback(
     async (updatedTask: Task) => {
       try {
-        // 1. Encontrar o estado ANTERIOR da tarefa (antes da atualização)
+        console.log("🔄 Iniciando atualização da tarefa (Card Action):", updatedTask.id);
+
+        // 1. IMPORTANTE: Buscar o estado ANTERIOR na lista de tarefas atual
         const previousTask = tasks.find((t) => t.id === updatedTask.id);
 
-        // Converter Task para Tarefa (formato Banco)
+        // Converter Task para Tarefa
         const tarefaToUpdate = convertTaskStatusToTarefa(updatedTask);
-        await tarefasService.atualizarTarefa(updatedTask.id, tarefaToUpdate);
 
-        // --- LÓGICA DE GAMIFICAÇÃO INTELIGENTE ---
+        await tarefasService.atualizarTarefa(updatedTask.id, tarefaToUpdate);
+        console.log("✅ Tarefa salva no banco com sucesso.");
+
+        // --- LÓGICA DE GAMIFICAÇÃO (CORRIGIDA) ---
         if (userSession?.user?.id && previousTask) {
           const wasCompleted = previousTask.isFullyCompleted;
           const isNowCompleted = updatedTask.isFullyCompleted;
 
-          // CENÁRIO A: Acabou de completar (Ganhou XP)
+          // CENÁRIO A: Ganha XP (Virou Concluída)
           if (!wasCompleted && isNowCompleted) {
             gamificationService.awardXP(userSession.user.id, "TAREFA_CONCLUIDA", 30, updatedTask.id);
           }
-          // CENÁRIO B: Estava completa e voltou atrás (Perde XP)
+          // CENÁRIO B: Perde XP (Deixou de ser Concluída)
           else if (wasCompleted && !isNowCompleted) {
-            console.log("Tarefa revertida: Removendo XP...");
-            gamificationService.removeXP(
-              userSession.user.id,
-              "TAREFA_CONCLUIDA", // Procura pelo log desta ação
-              30, // Remove 30 XP
-              updatedTask.id, // ID da tarefa
-            );
+            gamificationService.removeXP(userSession.user.id, "TAREFA_CONCLUIDA", 30, updatedTask.id);
           }
         }
         // ----------------------------------------
@@ -89,6 +87,7 @@ export const useTaskActions = ({
 
         return updatedTask;
       } catch (error: unknown) {
+        console.error("❌ Erro no handleTaskUpdate:", error);
         const errorMessage = getErrorMessage(error);
         toast({
           title: "Erro ao atualizar tarefa",
@@ -111,6 +110,7 @@ export const useTaskActions = ({
         const updatedTasks = tasks.filter((task) => task.id !== taskId);
         setTasks(updatedTasks);
 
+        // Update filtered tasks and PCP data
         const updatedFilteredTasks = filterTasksByWeek(updatedTasks, weekStartDate);
         setFilteredTasks(updatedFilteredTasks);
         calculatePCPData(updatedFilteredTasks);
@@ -142,10 +142,12 @@ export const useTaskActions = ({
           throw new Error("Nenhuma obra ativa selecionada");
         }
 
+        // Ensure we have a week start date
         if (!newTaskData.weekStartDate) {
           throw new Error("Data de início da semana (segunda-feira) é obrigatória");
         }
 
+        // Initialize the new Tarefa object with required fields
         const itemValue = newTaskData.item || `${newTaskData.sector}-${Date.now()}`;
 
         const novaTarefa: Omit<Tarefa, "id" | "created_at"> = {
@@ -213,7 +215,7 @@ export const useTaskActions = ({
     [session.obraAtiva, tasks, toast, calculatePCPData, filterTasksByWeek, weekStartDate, setTasks, setFilteredTasks],
   );
 
-  // Duplicar Tarefa
+  // Função para duplicar tarefa
   const handleTaskDuplicate = useCallback(
     async (taskToDuplicate: Task) => {
       try {
@@ -255,7 +257,7 @@ export const useTaskActions = ({
     [session.obraAtiva, handleTaskCreate, toast],
   );
 
-  // Copiar para próxima semana
+  // Função para copiar para a próxima semana
   const handleCopyToNextWeek = useCallback(
     async (taskToDuplicate: Task) => {
       try {
