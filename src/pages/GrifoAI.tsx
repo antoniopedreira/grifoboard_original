@@ -41,7 +41,6 @@ const GrifoAI = () => {
     const loadHistory = async () => {
       if (!userSession?.user?.id) return;
       try {
-        // CORREÇÃO: Adicionado 'as any' para evitar erro de tipo TS2769
         const { data, error } = await supabase
           .from("grifo_chat_messages" as any)
           .select("*")
@@ -51,10 +50,8 @@ const GrifoAI = () => {
         if (error) throw error;
 
         if (data && data.length > 0) {
-          // Converte o tipo do banco para o tipo local se necessário
           setMessages(data as unknown as Message[]);
         } else {
-          // Mensagem de boas-vindas padrão se não houver histórico
           setMessages([
             {
               role: "assistant",
@@ -92,7 +89,6 @@ const GrifoAI = () => {
 
     try {
       // 1. Salvar mensagem do usuário no Banco
-      // CORREÇÃO: Adicionado 'as any'
       await supabase.from("grifo_chat_messages" as any).insert({
         user_id: userSession.user.id,
         role: "user",
@@ -100,24 +96,31 @@ const GrifoAI = () => {
       });
 
       // 2. Chamar a IA (Edge Function)
-      // Nota: Se ainda não tiver a Edge Function, vai cair no erro tratado abaixo.
+      // CORREÇÃO CRÍTICA AQUI: Enviando chat_id e user_id
       const { data, error } = await supabase.functions.invoke("grifo-ai", {
-        body: { query: userMessageContent },
+        body: {
+          query: userMessageContent,
+          user_id: userSession.user.id,
+          chat_id: userSession.user.id, // Usamos user_id como session_id para o histórico no n8n
+        },
       });
 
       let aiResponse = "";
 
       if (error) {
         console.warn("Edge Function não configurada ou erro:", error);
-        // Fallback simulado para teste se a API falhar
-        aiResponse =
-          "Estou processando sua solicitação, mas o módulo de inteligência (Edge Function) ainda precisa ser configurado no backend. Por favor, verifique a conexão.";
+        aiResponse = "⚠️ Erro de conexão com o GrifoMind. Verifique se o n8n está ativo.";
       } else {
-        aiResponse = data?.answer || "Não encontrei essa informação.";
+        // Se a Edge Function retornar erro no JSON (ex: erro do n8n), tratamos aqui
+        if (data?.error) {
+          console.error("Erro retornado pela Edge Function:", data.error);
+          aiResponse = "Ocorreu um erro no processamento da sua pergunta. Tente novamente.";
+        } else {
+          aiResponse = data?.answer || "Não encontrei essa informação.";
+        }
       }
 
       // 3. Salvar resposta da IA no Banco
-      // CORREÇÃO: Adicionado 'as any'
       await supabase.from("grifo_chat_messages" as any).insert({
         user_id: userSession.user.id,
         role: "assistant",
@@ -141,7 +144,6 @@ const GrifoAI = () => {
   const handleClearHistory = async () => {
     if (!userSession?.user?.id) return;
     try {
-      // CORREÇÃO: Adicionado 'as any'
       const { error } = await supabase
         .from("grifo_chat_messages" as any)
         .delete()
@@ -256,7 +258,7 @@ const GrifoAI = () => {
                   </Avatar>
                   <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm flex items-center gap-2 text-slate-500 text-sm">
                     <Loader2 className="h-4 w-4 animate-spin text-[#C7A347]" />
-                    <span className="text-xs">Consultando o Grifo Way...</span>
+                    Processando...
                   </div>
                 </div>
               )}
