@@ -22,8 +22,8 @@ import {
   Settings,
   Save,
   Star,
-  Trophy,
-  Medal,
+  Trophy, // Ícone para o Ranking
+  Medal, // Ícone para o Ranking
   Shield,
   Activity,
   Crosshair,
@@ -41,6 +41,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Importando serviço de gamificação (ajuste o caminho se necessário)
+import { gamificationService } from "@/services/gamificationService";
 
 // --- TIPOS ---
 interface MetaAnual {
@@ -53,6 +55,7 @@ interface MetaAnual {
 interface Squad {
   id: string;
   nome: string;
+  avatar_url?: string; // Opcional, se tiver avatar
 }
 
 interface ObraFinanceira {
@@ -67,6 +70,7 @@ interface ObraFinanceira {
   status?: string;
 }
 
+// Tipo manual para o ranking para evitar erros de inferência
 interface RankingData {
   user_id: string;
   pontuacao_geral: number;
@@ -87,22 +91,24 @@ const GestaoMetas = () => {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isLancamentoModalOpen, setIsLancamentoModalOpen] = useState(false);
 
-  // Estados de Edição
+  // Estados de Edição (Metas Gerais)
   const [tempMeta, setTempMeta] = useState<MetaAnual>({
     ano: 2026,
     meta_faturamento: 0,
     meta_margem_liquida: 0,
   });
 
+  // ESTADO LOCAL PARA EDIÇÃO EM MASSA (Obras)
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
 
-  // --- QUERY PRINCIPAL ---
+  // --- QUERY PRINCIPAL (Data Fetching) ---
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["gestaoMetas", userSession?.user?.id, anoSelecionado],
     queryFn: async () => {
       if (!userSession?.user?.id) throw new Error("Usuário não logado");
 
+      // 1. Pegar Empresa ID
       const { data: userData } = await supabase
         .from("usuarios")
         .select("empresa_id")
@@ -111,6 +117,7 @@ const GestaoMetas = () => {
 
       if (!userData?.empresa_id) throw new Error("Empresa não encontrada");
 
+      // 2. Pegar Metas
       const { data: metaData } = await supabase
         .from("metas_anuais" as any)
         .select("*")
@@ -122,6 +129,8 @@ const GestaoMetas = () => {
         ? (metaData as unknown as MetaAnual)
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
+      // 3. Pegar Usuários da Empresa (Agora chamados de Squads na UI)
+      // REMOVIDO 'avatar_url' DA SELEÇÃO PARA CORRIGIR ERRO
       const { data: usuariosData } = await supabase
         .from("usuarios")
         .select("id, nome")
@@ -130,9 +139,10 @@ const GestaoMetas = () => {
 
       const squadsList: Squad[] = (usuariosData || []).map((u) => ({
         id: u.id,
-        nome: u.nome || "Agente Desconhecido",
+        nome: u.nome || "Usuário sem nome",
       }));
 
+      // 4. Pegar Obras do Ano
       const dataInicioAno = `${anoSelecionado}-01-01`;
       const dataFimAno = `${anoSelecionado}-12-31`;
 
@@ -157,31 +167,40 @@ const GestaoMetas = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- QUERY RANKING ---
+  // --- QUERY PARA RANKING GRIFOWAY ---
   const { data: rankings } = useQuery({
     queryKey: ["rankingsGrifoWay", dashboardData?.empresa_id],
     queryFn: async () => {
       try {
+        // Tenta buscar de uma view ou tabela de ranking se existir
+        // Caso contrário, retorna vazio ou adapta para buscar de gamification_profiles
+        // Usando 'any' para evitar erro de tipo se a tabela ainda não foi gerada nos types
         const { data, error } = await supabase
           .from("ranking_grifoway" as any)
           .select("user_id, pontuacao_geral, posicao_geral, posicao_empresa");
 
-        if (error) return [];
+        if (error) {
+          // Fallback: Se a view não existir, tenta buscar profiles normais (opcional)
+          return [];
+        }
+
         return (data as unknown as RankingData[]) || [];
       } catch (e) {
+        console.error("Erro ao buscar rankings", e);
         return [];
       }
     },
     enabled: !!dashboardData?.empresa_id,
   });
 
+  // Sincroniza estado temporário das metas
   useEffect(() => {
     if (dashboardData?.meta) {
       setTempMeta(dashboardData.meta);
     }
   }, [dashboardData]);
 
-  // --- LÓGICA DE EDIÇÃO ---
+  // --- LÓGICA DE EDIÇÃO LOCAL (Obras) ---
   const handleOpenLancamento = (open: boolean) => {
     if (open && dashboardData?.obras) {
       setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
@@ -272,7 +291,6 @@ const GestaoMetas = () => {
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
-
   const getNpsColor = (score: number) => {
     if (score >= 9) return "bg-emerald-900/30 text-emerald-400 border-emerald-800";
     if (score >= 7) return "bg-yellow-900/30 text-yellow-400 border-yellow-800";
@@ -294,7 +312,7 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Squads (Usuários)
+  // Ranking Squads (Usuários) com Dados GrifoWay
   const rankingSquads = squads
     .map((squad) => {
       const obrasDoSquad = obrasConsideradas.filter((o) => o.usuario_id === squad.id);
@@ -306,6 +324,7 @@ const GestaoMetas = () => {
           ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
           : null;
 
+      // Pegar dados do GrifoWay (Dados Reais ou Fallback Limpo)
       const rankingInfo = rankings?.find((r) => r.user_id === squad.id);
 
       return {
@@ -672,7 +691,7 @@ const GestaoMetas = () => {
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-500 text-xs uppercase tracking-wider">Margem</span>
                       <span
-                        className={`font-mono font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-400"}`}
+                        className={`font-mono font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-500"}`}
                       >
                         {squad.margem.toFixed(2)}%
                       </span>
