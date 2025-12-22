@@ -91,18 +91,20 @@ const GrifoWay = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [ranking, setRanking] = useState<RankingItem[]>([]);
+  const [rankingFilter, setRankingFilter] = useState<"geral" | "empresa">("geral");
+  const [userEmpresaId, setUserEmpresaId] = useState<string | null>(null);
 
-  // Carregar dados reais
+  // Carregar dados iniciais
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitialData = async () => {
       if (!userSession?.user?.id) return;
       try {
-        const [profData, rankData] = await Promise.all([
+        const [profData, rankData, empresaId] = await Promise.all([
           gamificationService.getProfile(userSession.user.id),
           gamificationService.getRanking(),
+          gamificationService.getUserEmpresaId(userSession.user.id),
         ]);
 
-        // Se não tiver perfil ainda, cria um local visualmente zerado
         setProfile(
           profData || {
             id: userSession.user.id,
@@ -112,14 +114,32 @@ const GrifoWay = () => {
           },
         );
         setRanking(rankData || []);
+        setUserEmpresaId(empresaId);
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    loadData();
+    loadInitialData();
   }, [userSession]);
+
+  // Atualizar ranking quando filtro mudar
+  useEffect(() => {
+    const updateRanking = async () => {
+      if (!userSession?.user?.id) return;
+      try {
+        const empresaIdToUse = rankingFilter === "empresa" ? userEmpresaId : null;
+        const rankData = await gamificationService.getRanking(empresaIdToUse);
+        setRanking(rankData || []);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    if (!loading) {
+      updateRanking();
+    }
+  }, [rankingFilter, userEmpresaId, userSession?.user?.id, loading]);
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -267,8 +287,39 @@ const GrifoWay = () => {
                         Ranking
                         <Crown className="h-5 w-5 text-[#C7A347]" />
                       </CardTitle>
+                      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                        <Button
+                          size="sm"
+                          variant={rankingFilter === "geral" ? "default" : "ghost"}
+                          className={cn(
+                            "h-8 px-3 text-xs",
+                            rankingFilter === "geral" && "bg-[#112131] text-white hover:bg-[#112131]/90"
+                          )}
+                          onClick={() => setRankingFilter("geral")}
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          Geral
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={rankingFilter === "empresa" ? "default" : "ghost"}
+                          className={cn(
+                            "h-8 px-3 text-xs",
+                            rankingFilter === "empresa" && "bg-[#112131] text-white hover:bg-[#112131]/90"
+                          )}
+                          onClick={() => setRankingFilter("empresa")}
+                          disabled={!userEmpresaId}
+                        >
+                          <Shield className="h-3 w-3 mr-1" />
+                          Empresa
+                        </Button>
+                      </div>
                     </div>
-                    <CardDescription>Top colaboradores por XP acumulado</CardDescription>
+                    <CardDescription>
+                      {rankingFilter === "geral" 
+                        ? "Top colaboradores por XP acumulado" 
+                        : "Ranking dos colaboradores da sua empresa"}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1 p-0">
                     {ranking.length === 0 ? (

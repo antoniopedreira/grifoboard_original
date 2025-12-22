@@ -26,32 +26,54 @@ export const gamificationService = {
     return data as GamificationProfile | null;
   },
 
-  // 2. Busca o Ranking Global (Top 20)
-  async getRanking() {
+  // 2. Busca o Ranking Global ou por Empresa (Top 20)
+  async getRanking(empresaId?: string | null) {
     try {
-      const { data: profiles, error: profileError } = await supabase
+      let userIds: string[] = [];
+      
+      // Se tiver empresa_id, busca apenas usuários dessa empresa
+      if (empresaId) {
+        const { data: empresaUsers, error: empresaError } = await supabase
+          .from("usuarios")
+          .select("id")
+          .eq("empresa_id", empresaId);
+        
+        if (empresaError) throw empresaError;
+        userIds = empresaUsers?.map(u => u.id) || [];
+        
+        if (userIds.length === 0) return [];
+      }
+
+      let query = supabase
         .from("gamification_profiles")
         .select("*")
         .order("xp_total", { ascending: false })
         .limit(20);
+      
+      if (empresaId && userIds.length > 0) {
+        query = query.in("id", userIds);
+      }
+
+      const { data: profiles, error: profileError } = await query;
 
       if (profileError) throw profileError;
       if (!profiles || profiles.length === 0) return [];
 
-      const userIds = profiles.map((p) => p.id);
+      const profileIds = profiles.map((p) => p.id);
 
       const { data: users, error: userError } = await supabase
         .from("ranking_users_view")
         .select("id, nome")
-        .in("id", userIds);
+        .in("id", profileIds);
 
       if (userError) throw userError;
 
       const ranking: RankingItem[] = profiles.map((profile, index) => {
         const userDetails = users?.find((u) => u.id === profile.id);
+        const displayName = userDetails?.nome || 'Usuário';
         return {
           ...profile,
-          nome: userDetails?.nome || "Usuário Grifo",
+          nome: displayName,
           role: "Membro FAST",
           position: index + 1,
         };
@@ -64,7 +86,22 @@ export const gamificationService = {
     }
   },
 
-  // 3. Dar XP (Positivo)
+  // 3. Busca empresa_id do usuário atual
+  async getUserEmpresaId(userId: string) {
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("empresa_id")
+      .eq("id", userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Erro ao buscar empresa do usuário:", error);
+      return null;
+    }
+    return data?.empresa_id || null;
+  },
+
+  // 4. Dar XP (Positivo)
   async awardXP(userId: string, action: string, amount: number, referenceId?: string) {
     try {
       // Se tiver ID de referência, verifica se já existe para evitar duplicidade
@@ -74,7 +111,7 @@ export const gamificationService = {
           .select("id")
           .eq("user_id", userId)
           .eq("reference_id", referenceId)
-          .eq("action_type", action) // Verifica a ação específica
+          .eq("action_type", action)
           .maybeSingle();
 
         if (existing) {
@@ -107,7 +144,7 @@ export const gamificationService = {
     }
   },
 
-  // 4. Remover XP (Quando desfaz uma ação)
+  // 5. Remover XP (Quando desfaz uma ação)
   async removeXP(userId: string, actionToCheck: string, amountToRemove: number, referenceId: string) {
     try {
       // 1. Encontra e APAGA o log anterior (para permitir ganhar de novo no futuro)
@@ -126,9 +163,7 @@ export const gamificationService = {
         return;
       }
 
-      // 2. Atualiza o perfil subtraindo os pontos (passar valor negativo)
-      // Nota: amountToRemove deve ser positivo aqui, nós invertemos dentro do updateProfileXP se quisermos,
-      // ou passamos negativo direto. Vamos passar negativo.
+      // 2. Atualiza o perfil subtraindo os pontos
       await this.updateProfileXP(userId, -Math.abs(amountToRemove));
 
       toast({
@@ -151,7 +186,7 @@ export const gamificationService = {
       .maybeSingle();
 
     const currentXP = profile?.xp_total || 0;
-    const newXP = Math.max(0, currentXP + amountToAdd); // Não deixa ficar negativo
+    const newXP = Math.max(0, currentXP + amountToAdd);
     const newLevel = Math.floor(newXP / 1000) + 1;
 
     await supabase.from("gamification_profiles").upsert({
