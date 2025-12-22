@@ -80,6 +80,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignora atualizações de estado se estivermos no processo de logout
+      if (localStorage.getItem("logging_out") === "true") return;
+
       try {
         if (session && session.user) {
           const newSessionId = generateSessionId();
@@ -121,6 +124,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (localStorage.getItem("logging_out") === "true") {
+        setIsLoading(false);
+        return;
+      }
+
       if (error) {
         if (error.message.includes("refresh_token_not_found") || error.message.includes("Invalid Refresh Token")) {
           localStorage.clear();
@@ -261,24 +269,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // --- FUNÇÃO CORRIGIDA ---
+  // --- SOLUÇÃO DEFINITIVA DO LOGOUT ---
   const signOut = async () => {
     try {
-      // REMOVIDO: setIsLoading(true); // Isso causava o "flash" branco do loader
-
-      // 1. Marca flag para impedir que RouteGuard/Restorer salvem a rota atual
+      // 1. Define flag CRÍTICA para parar RouteGuard e Listeners
       localStorage.setItem("logging_out", "true");
 
-      // 2. IMPORTANTE: Remove a rota salva para evitar o loop ao recarregar
-      sessionStorage.removeItem("lastRoute");
-      sessionStorage.clear(); // Limpa todo o session storage por garantia
+      // 2. NÃO ATIVE O LOADING! Isso causa a tela branca.
+      // setIsLoading(true); <--- REMOVIDO
 
-      // Limpa dados locais da sessão do LocalStorage
+      // 3. Limpa storage (Session e Local) para garantir que nada sobra
+      sessionStorage.clear(); // Remove lastRoute e outros lixos
+
       const currentUserId = userSession.user?.id;
-      // REMOVIDO: setUserSession(...) manual para evitar renderizar a tela atual com dados nulos antes do redirect
+      // NÃO limpe o userSession aqui. Deixe a UI congelada com os dados antigos
+      // setUserSession({ user: null, obraAtiva: null }); <--- REMOVIDO
 
-      setSessionId(null);
-
+      // Limpeza manual de chaves específicas
       ["current_session_id", "last_activity"].forEach((key) => {
         localStorage.removeItem(key);
       });
@@ -293,16 +300,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
 
-      // Logout no Supabase
+      // 4. Logout no Supabase (Backend)
       await supabase.auth.signOut({ scope: "global" });
     } catch (error: any) {
       console.error("Erro no logout:", error);
-      // Limpeza forçada em caso de erro
+      // Mesmo com erro, forçamos a flag para garantir a saída
       localStorage.setItem("logging_out", "true");
-      sessionStorage.clear();
     } finally {
-      // 3. REDIRECIONAMENTO AGRESSIVO
-      // Usa replace() em vez de href para não deixar histórico e força ida para /auth
+      // 5. REDIRECIONAMENTO AGRESSIVO
+      // Usa replace para limpar histórico e força o refresh da página
+      // O refresh vai inicializar o AuthContext do zero, limpo e bonito.
       window.location.replace("/auth");
     }
   };
