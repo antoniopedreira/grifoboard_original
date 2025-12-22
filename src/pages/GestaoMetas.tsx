@@ -24,7 +24,6 @@ import {
   LayoutGrid,
   Settings,
   Save,
-  CalendarDays,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -78,7 +77,7 @@ const GestaoMetas = () => {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isLancamentoModalOpen, setIsLancamentoModalOpen] = useState(false);
 
-  // Estados de Edição (Temporários)
+  // Estados de Edição (Metas Gerais)
   const [tempMeta, setTempMeta] = useState<MetaAnual>({
     ano: 2026,
     meta_faturamento: 0,
@@ -86,7 +85,12 @@ const GestaoMetas = () => {
   });
   const [novoSquadNome, setNovoSquadNome] = useState("");
 
-  // --- QUERY PRINCIPAL (Data Fetching com Cache) ---
+  // ESTADO LOCAL PARA EDIÇÃO EM MASSA (Obras)
+  // Armazena as alterações locais antes de enviar pro banco
+  const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
+  const [isSavingObras, setIsSavingObras] = useState(false);
+
+  // --- QUERY PRINCIPAL (Data Fetching) ---
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["gestaoMetas", userSession?.user?.id, anoSelecionado],
     queryFn: async () => {
@@ -142,17 +146,94 @@ const GestaoMetas = () => {
       };
     },
     enabled: !!userSession?.user?.id,
-    staleTime: 1000 * 60 * 10, // Cache por 10 minutos (Evita recarregamento ao voltar para a página)
+    staleTime: 1000 * 60 * 10,
   });
 
-  // Atualizar o estado temporário do modal quando os dados chegarem
+  // Sincroniza estado temporário das metas
   useEffect(() => {
     if (dashboardData?.meta) {
       setTempMeta(dashboardData.meta);
     }
   }, [dashboardData]);
 
-  // --- MUTATIONS (Salvar Dados) ---
+  // --- LÓGICA DE EDIÇÃO LOCAL (Obras) ---
+
+  // Reseta os dados locais sempre que abrir o modal
+  const handleOpenLancamento = (open: boolean) => {
+    if (open && dashboardData?.obras) {
+      // Clona os dados para evitar mutação direta no cache
+      setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
+    }
+    setIsLancamentoModalOpen(open);
+  };
+
+  // Atualiza um campo específico localmente
+  const handleLocalChange = (id: any, field: keyof ObraFinanceira, value: any) => {
+    setLocalObras((prev) =>
+      prev.map((obra) => {
+        if (obra.id === id) {
+          return { ...obra, [field]: value };
+        }
+        return obra;
+      }),
+    );
+  };
+
+  // Salva tudo de uma vez (Concluir)
+  const handleSaveAll = async () => {
+    setIsSavingObras(true);
+    try {
+      const originalObras = dashboardData?.obras || [];
+      const updates = [];
+
+      // Compara localObras com originalObras para saber o que mudou
+      for (const localObra of localObras) {
+        const original = originalObras.find((o) => o.id === localObra.id);
+        if (!original) continue;
+
+        const hasChanged =
+          localObra.faturamento_realizado !== original.faturamento_realizado ||
+          localObra.lucro_realizado !== original.lucro_realizado ||
+          localObra.considerar_na_meta !== original.considerar_na_meta ||
+          localObra.squad_id !== original.squad_id ||
+          localObra.nps !== original.nps ||
+          localObra.data_inicio !== original.data_inicio;
+
+        if (hasChanged) {
+          updates.push(
+            supabase
+              .from("obras" as any)
+              .update({
+                faturamento_realizado: localObra.faturamento_realizado,
+                lucro_realizado: localObra.lucro_realizado,
+                considerar_na_meta: localObra.considerar_na_meta,
+                squad_id: localObra.squad_id,
+                nps: localObra.nps,
+                data_inicio: localObra.data_inicio,
+              })
+              .eq("id", localObra.id),
+          );
+        }
+      }
+
+      if (updates.length > 0) {
+        await Promise.all(updates);
+        await queryClient.invalidateQueries({ queryKey: ["gestaoMetas"] });
+        toast({ title: `${updates.length} registros atualizados!` });
+      } else {
+        toast({ title: "Nenhuma alteração detectada." });
+      }
+
+      setIsLancamentoModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao salvar alterações", variant: "destructive" });
+    } finally {
+      setIsSavingObras(false);
+    }
+  };
+
+  // --- MUTATIONS (Outros) ---
   const saveMetaMutation = useMutation({
     mutationFn: async (newMeta: MetaAnual) => {
       const payload = {
@@ -204,19 +285,6 @@ const GestaoMetas = () => {
     },
   });
 
-  const updateObraMutation = useMutation({
-    mutationFn: async ({ id, field, value }: { id: any; field: string; value: any }) => {
-      const { error } = await supabase
-        .from("obras" as any)
-        .update({ [field]: value })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gestaoMetas"] });
-    },
-  });
-
   // Helpers
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -226,7 +294,7 @@ const GestaoMetas = () => {
     return "bg-red-100 text-red-700 border-red-200";
   };
 
-  // --- CÁLCULOS KPI ---
+  // --- CÁLCULOS KPI (Usam dados do cache, não os locais em edição) ---
   const meta = dashboardData?.meta || { meta_faturamento: 0, meta_margem_liquida: 0 };
   const obras = dashboardData?.obras || [];
   const squads = dashboardData?.squads || [];
@@ -428,7 +496,7 @@ const GestaoMetas = () => {
 
           {/* Botão Lançar Resultados */}
           <Button
-            onClick={() => setIsLancamentoModalOpen(true)}
+            onClick={() => handleOpenLancamento(true)}
             className="h-10 bg-[#C7A347] hover:bg-[#b08d3b] text-white gap-2 shadow-md transition-all hover:scale-105"
           >
             <Edit3 className="h-4 w-4" /> Lançar Resultados
@@ -670,14 +738,14 @@ const GestaoMetas = () => {
         )}
       </div>
 
-      {/* --- MODAL DE LANÇAMENTO (TABELA COMPLETA) --- */}
-      <Dialog open={isLancamentoModalOpen} onOpenChange={setIsLancamentoModalOpen}>
+      {/* --- MODAL DE LANÇAMENTO (TABELA COMPLETA COM ESTADO LOCAL) --- */}
+      <Dialog open={isLancamentoModalOpen} onOpenChange={handleOpenLancamento}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-6 pb-2 border-b border-slate-100">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-xl">Lançamento de Resultados - {anoSelecionado}</DialogTitle>
-                <DialogDescription>Dados financeiros e qualidade (NPS).</DialogDescription>
+                <DialogDescription>Edite os dados e clique em "Concluir" para salvar.</DialogDescription>
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-400 uppercase">Total Selecionado</p>
@@ -690,7 +758,6 @@ const GestaoMetas = () => {
               <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow>
-                    {/* CORREÇÃO: Título alterado para "Ativa?" */}
                     <TableHead className="w-[50px] text-center">Ativa?</TableHead>
                     <TableHead className="min-w-[150px]">Obra</TableHead>
                     <TableHead className="w-[130px]">Início (Ano)</TableHead>
@@ -701,14 +768,12 @@ const GestaoMetas = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {obras.map((obra) => (
+                  {localObras.map((obra) => (
                     <TableRow key={obra.id} className={!obra.considerar_na_meta ? "opacity-50 bg-slate-50" : ""}>
                       <TableCell className="text-center">
                         <Switch
                           checked={obra.considerar_na_meta}
-                          onCheckedChange={(checked) =>
-                            updateObraMutation.mutate({ id: obra.id, field: "considerar_na_meta", value: checked })
-                          }
+                          onCheckedChange={(checked) => handleLocalChange(obra.id, "considerar_na_meta", checked)}
                         />
                       </TableCell>
                       <TableCell className="font-medium text-slate-700">
@@ -721,22 +786,14 @@ const GestaoMetas = () => {
                           type="date"
                           className="h-8 w-full text-xs bg-white"
                           value={obra.data_inicio || ""}
-                          onChange={(e) =>
-                            updateObraMutation.mutate({ id: obra.id, field: "data_inicio", value: e.target.value })
-                          }
+                          onChange={(e) => handleLocalChange(obra.id, "data_inicio", e.target.value)}
                         />
                       </TableCell>
 
                       <TableCell>
                         <Select
                           value={obra.squad_id || "none"}
-                          onValueChange={(val) =>
-                            updateObraMutation.mutate({
-                              id: obra.id,
-                              field: "squad_id",
-                              value: val === "none" ? null : val,
-                            })
-                          }
+                          onValueChange={(val) => handleLocalChange(obra.id, "squad_id", val === "none" ? null : val)}
                         >
                           <SelectTrigger className="h-8 text-xs bg-white w-full">
                             <SelectValue placeholder="Selecione..." />
@@ -754,37 +811,29 @@ const GestaoMetas = () => {
                         </Select>
                       </TableCell>
 
-                      {/* CORREÇÃO: Input de Faturamento com comportamento de placeholder zero */}
                       <TableCell>
                         <Input
                           type="number"
                           placeholder="0,00"
                           className="h-8 text-right bg-white font-mono text-xs"
                           value={obra.faturamento_realizado === 0 ? "" : obra.faturamento_realizado}
-                          onChange={(e) =>
-                            updateObraMutation.mutate({
-                              id: obra.id,
-                              field: "faturamento_realizado",
-                              value: e.target.value === "" ? 0 : parseFloat(e.target.value),
-                            })
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                            handleLocalChange(obra.id, "faturamento_realizado", val);
+                          }}
                         />
                       </TableCell>
 
-                      {/* CORREÇÃO: Input de Lucro com comportamento de placeholder zero */}
                       <TableCell>
                         <Input
                           type="number"
                           placeholder="0,00"
                           className="h-8 text-right bg-white font-mono text-xs"
                           value={obra.lucro_realizado === 0 ? "" : obra.lucro_realizado}
-                          onChange={(e) =>
-                            updateObraMutation.mutate({
-                              id: obra.id,
-                              field: "lucro_realizado",
-                              value: e.target.value === "" ? 0 : parseFloat(e.target.value),
-                            })
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                            handleLocalChange(obra.id, "lucro_realizado", val);
+                          }}
                         />
                       </TableCell>
 
@@ -799,7 +848,7 @@ const GestaoMetas = () => {
                           onChange={(e) => {
                             const val = e.target.value === "" ? null : parseFloat(e.target.value);
                             if (val !== null && (val < 0 || val > 10)) return;
-                            updateObraMutation.mutate({ id: obra.id, field: "nps", value: val });
+                            handleLocalChange(obra.id, "nps", val);
                           }}
                         />
                       </TableCell>
@@ -809,8 +858,16 @@ const GestaoMetas = () => {
               </Table>
             </div>
           </ScrollArea>
-          <DialogFooter className="p-4 border-t border-slate-100 bg-white">
-            <Button onClick={() => setIsLancamentoModalOpen(false)} className="bg-[#112131] w-full sm:w-auto">
+          <DialogFooter className="p-4 border-t border-slate-100 bg-white gap-2">
+            <Button variant="outline" onClick={() => setIsLancamentoModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveAll}
+              className="bg-[#112131] w-full sm:w-auto min-w-[120px]"
+              disabled={isSavingObras}
+            >
+              {isSavingObras ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Concluir
             </Button>
           </DialogFooter>
