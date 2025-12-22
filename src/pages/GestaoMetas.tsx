@@ -42,7 +42,7 @@ interface ObraFinanceira {
   faturamento_realizado: number;
   lucro_realizado: number;
   considerar_na_meta: boolean;
-  squad_id: string | null; // Agora usamos ID do squad
+  squad_id: string | null;
   status?: string;
 }
 
@@ -55,7 +55,7 @@ const GestaoMetas = () => {
   // Modais
   const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
   const [isLancamentoModalOpen, setIsLancamentoModalOpen] = useState(false);
-  const [isSquadsModalOpen, setIsSquadsModalOpen] = useState(false); // Modal de Gestão de Squads
+  const [isSquadsModalOpen, setIsSquadsModalOpen] = useState(false);
 
   // Dados
   const [meta, setMeta] = useState<MetaAnual>({
@@ -90,6 +90,7 @@ const GestaoMetas = () => {
             .maybeSingle();
 
           if (metaData) {
+            // CORREÇÃO: Forçando tipo com 'as unknown as MetaAnual'
             const m = metaData as unknown as MetaAnual;
             setMeta(m);
             setTempMeta(m);
@@ -99,14 +100,17 @@ const GestaoMetas = () => {
             setTempMeta(emptyMeta);
           }
 
-          // 2. Squads (NOVO)
+          // 2. Squads (CORREÇÃO DE TIPO)
           const { data: squadsData } = await supabase
             .from("squads" as any)
             .select("*")
             .eq("empresa_id", userData.empresa_id)
             .order("nome");
 
-          if (squadsData) setSquads(squadsData);
+          if (squadsData) {
+            // CORREÇÃO: Forçando tipo 'as unknown as Squad[]'
+            setSquads(squadsData as unknown as Squad[]);
+          }
 
           // 3. Obras
           const { data: obrasData } = await supabase
@@ -116,6 +120,7 @@ const GestaoMetas = () => {
             .order("nome_obra");
 
           if (obrasData) {
+            // CORREÇÃO: Forçando tipo
             setObras(obrasData as unknown as ObraFinanceira[]);
           }
         }
@@ -137,6 +142,7 @@ const GestaoMetas = () => {
         .select("empresa_id")
         .eq("id", userSession.user!.id)
         .single();
+
       const { data, error } = await supabase
         .from("squads" as any)
         .insert({ empresa_id: userData?.empresa_id, nome: novoSquadNome })
@@ -144,7 +150,11 @@ const GestaoMetas = () => {
         .single();
 
       if (error) throw error;
-      setSquads([...squads, data]);
+
+      // CORREÇÃO: Forçando tipo do novo squad inserido
+      const newSquad = data as unknown as Squad;
+      setSquads([...squads, newSquad]);
+
       setNovoSquadNome("");
       toast({ title: "Squad criado!" });
     } catch (e) {
@@ -166,7 +176,7 @@ const GestaoMetas = () => {
         .eq("id", id);
 
       setSquads(squads.filter((s) => s.id !== id));
-      // Atualiza estado local das obras para remover o ID deletado
+      // Atualiza estado local das obras
       setObras((prev) => prev.map((o) => (o.squad_id === id ? { ...o, squad_id: null } : o)));
       toast({ title: "Squad removido" });
     } catch (e) {
@@ -222,7 +232,7 @@ const GestaoMetas = () => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  // Agrupamento por Squad para o Dashboard
+  // Agrupamento por Squad
   const rankingSquads = squads
     .map((squad) => {
       const obrasDoSquad = obrasConsideradas.filter((o) => o.squad_id === squad.id);
