@@ -13,13 +13,7 @@ import { playbookService } from "@/services/playbookService";
 import { gamificationService } from "@/services/gamificationService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export interface ContractingItem {
   id: number | string;
@@ -76,7 +70,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
     e.stopPropagation();
     setEditingItem(item);
     setEditingField(field);
-    
+
     switch (field) {
       case "responsavel":
         setFieldValue(item.responsavel || "");
@@ -105,11 +99,11 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
   const handleSave = async () => {
     if (!editingItem || !editingField) return;
-    
+
     try {
       const updates: Record<string, unknown> = {};
       const previousStatus = editingItem.status_contratacao;
-      
+
       switch (editingField) {
         case "responsavel":
           updates.responsavel = fieldValue || null;
@@ -127,40 +121,77 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           updates.observacao = fieldValue || null;
           break;
       }
-      
+
       await playbookService.updateItem(String(editingItem.id), updates);
-      
-      // === GAMIFICAÇÃO: Dar XP quando status muda para "Negociada" ===
-      if (
-        editingField === "status" && 
-        fieldValue === "Negociada" && 
-        previousStatus !== "Negociada" &&
-        userSession?.user?.id
-      ) {
-        await gamificationService.awardXP(
-          userSession.user.id,
-          'CONTRATACAO_FAST',
-          100,
-          String(editingItem.id)
-        );
+
+      // === GAMIFICAÇÃO 🎮 ===
+      if (userSession?.user?.id) {
+        // 1. Dar XP quando status muda para "Negociada" ou "Contratado"
+        if (
+          editingField === "status" &&
+          (fieldValue === "Negociada" || fieldValue === "Contratado") &&
+          previousStatus !== "Negociada" &&
+          previousStatus !== "Contratado"
+        ) {
+          // A) XP pela Contratação (+100 XP)
+          await gamificationService.awardXP(userSession.user.id, "CONTRATACAO_FAST", 100, String(editingItem.id));
+
+          // B) XP pela Economia (+50 XP) 💰
+          // Precisamos dos valores atualizados. Se editamos o valor agora, usamos o novo.
+          // Se não, usamos o que já estava no item.
+          const valorContratadoFinal =
+            editingField === "valor" ? (fieldValue ? parseFloat(fieldValue) : 0) : editingItem.valor_contratado || 0;
+
+          const valorMeta = editingItem.precoTotalMeta || 0;
+
+          if (valorMeta > 0 && valorContratadoFinal > 0 && valorContratadoFinal < valorMeta) {
+            console.log("💰 Economia detectada! Disparando bônus...");
+            await gamificationService.awardXP(
+              userSession.user.id,
+              "ECONOMIA_PLAYBOOK",
+              50,
+              `${editingItem.id}_ECONOMY`, // ID Único para o bônus de economia
+            );
+          }
+        }
+
+        // 2. Se reverter o status (voltar para A Negociar), remover XP
+        else if (
+          editingField === "status" &&
+          (fieldValue === "A Negociar" || fieldValue === "Em Andamento") &&
+          (previousStatus === "Negociada" || previousStatus === "Contratado")
+        ) {
+          // Remove XP da contratação
+          await gamificationService.removeXP(userSession.user.id, "CONTRATACAO_FAST", 100, String(editingItem.id));
+
+          // Remove XP da economia (se tiver ganho)
+          await gamificationService.removeXP(userSession.user.id, "ECONOMIA_PLAYBOOK", 50, `${editingItem.id}_ECONOMY`);
+        }
       }
-      
+
       toast({ description: "Salvo!" });
       closeModal();
       onUpdate();
     } catch (error) {
+      console.error(error);
       toast({ title: "Erro", description: "Falha ao salvar.", variant: "destructive" });
     }
   };
 
   const getModalTitle = () => {
     switch (editingField) {
-      case "responsavel": return "Responsável";
-      case "data": return "Data Limite";
-      case "valor": return "Valor Contratado";
-      case "status": return "Status";
-      case "obs": return "Observação";
-      default: return "";
+      case "responsavel":
+        return "Responsável";
+      case "data":
+        return "Data Limite";
+      case "valor":
+        return "Valor Contratado";
+      case "status":
+        return "Status";
+      case "obs":
+        return "Observação";
+      default:
+        return "";
     }
   };
 
@@ -227,7 +258,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
   const calculateSummary = (filtered: EnrichedContractingItem[]) => {
     const statuses = ["Negociada", "Em Andamento", "A Negociar"];
-    
+
     const byStatus = statuses.map((status) => {
       const items = filtered.filter((i) => (i.status_contratacao || "A Negociar") === status);
       const totalMeta = items.reduce((sum, i) => sum + i.precoTotalMeta, 0);
@@ -248,10 +279,14 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Negociada": return "bg-green-500";
-      case "Em Andamento": return "bg-yellow-500";
-      case "A Negociar": return "bg-red-500";
-      default: return "bg-red-500";
+      case "Negociada":
+        return "bg-green-500";
+      case "Em Andamento":
+        return "bg-yellow-500";
+      case "A Negociar":
+        return "bg-red-500";
+      default:
+        return "bg-red-500";
     }
   };
 
@@ -278,7 +313,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
             {byStatus.map((row) => {
               const verbaDisponivel = row.totalMeta - row.totalContratado;
               const percentVerba = row.totalMeta > 0 ? (row.totalContratado / row.totalMeta) * 100 : 0;
-              
+
               return (
                 <TableRow key={row.status} className="hover:bg-slate-50">
                   <TableCell className="font-medium text-sm text-slate-700 flex items-center gap-2">
@@ -301,10 +336,12 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                     {formatCurrency(verbaDisponivel)}
                   </TableCell>
                   <TableCell className="text-center text-sm font-mono">
-                    <span className={cn(
-                      "font-medium",
-                      percentVerba <= 0 ? "text-green-600" : percentVerba < 100 ? "text-amber-600" : "text-red-500"
-                    )}>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        percentVerba <= 0 ? "text-green-600" : percentVerba < 100 ? "text-amber-600" : "text-red-500",
+                      )}
+                    >
                       {(100 - percentVerba).toFixed(2).replace(".", ",")}%
                     </span>
                   </TableCell>
@@ -313,29 +350,21 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
             })}
             {/* TOTAL Row */}
             <TableRow className="bg-[#A47528]/10 hover:bg-[#A47528]/15 border-t-2 border-[#A47528]/30">
-              <TableCell className="font-bold text-sm text-slate-900">
-                TOTAL
-              </TableCell>
+              <TableCell className="font-bold text-sm text-slate-900">TOTAL</TableCell>
               <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
                 {formatCurrency(totalMeta)}
               </TableCell>
-              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">
-                100,00%
-              </TableCell>
+              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">100,00%</TableCell>
               <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
                 {formatCurrency(totalContratado)}
               </TableCell>
-              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">
-                100,00%
-              </TableCell>
+              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">100,00%</TableCell>
               <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
                 {formatCurrency(totalMeta - totalContratado)}
               </TableCell>
               <TableCell className="text-center text-sm font-mono font-bold">
-                <span className={cn(
-                  totalContratado >= totalMeta ? "text-green-600" : "text-amber-600"
-                )}>
-                  {totalMeta > 0 ? ((1 - (totalContratado / totalMeta)) * 100).toFixed(2).replace(".", ",") : "100,00"}%
+                <span className={cn(totalContratado >= totalMeta ? "text-green-600" : "text-amber-600")}>
+                  {totalMeta > 0 ? ((1 - totalContratado / totalMeta) * 100).toFixed(2).replace(".", ",") : "100,00"}%
                 </span>
               </TableCell>
             </TableRow>
@@ -382,16 +411,14 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                     <TableCell className="font-bold text-[10px] text-slate-500 uppercase truncate">
                       {item.etapaPrincipal.toLowerCase()}
                     </TableCell>
-                    <TableCell className="font-medium text-sm text-slate-700">
-                      {capitalize(item.descricao)}
-                    </TableCell>
-                    <TableCell 
+                    <TableCell className="font-medium text-sm text-slate-700">{capitalize(item.descricao)}</TableCell>
+                    <TableCell
                       className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
                       onClick={(e) => openFieldModal(item, "responsavel", e)}
                     >
                       {item.responsavel || <span className="text-blue-400 text-[10px]">+ adicionar</span>}
                     </TableCell>
-                    <TableCell 
+                    <TableCell
                       className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
                       onClick={(e) => openFieldModal(item, "data", e)}
                     >
@@ -404,7 +431,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                     <TableCell className="text-right text-xs font-mono text-blue-700 font-medium">
                       {formatCurrency(item.precoTotalMeta)}
                     </TableCell>
-                    <TableCell 
+                    <TableCell
                       className="text-right text-xs font-mono cursor-pointer hover:bg-blue-50 rounded transition-colors"
                       onClick={(e) => openFieldModal(item, "valor", e)}
                     >
@@ -416,32 +443,29 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                         <span className="text-blue-400 text-[10px]">+ valor</span>
                       )}
                     </TableCell>
-                    <TableCell 
+                    <TableCell
                       className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
                       onClick={(e) => openFieldModal(item, "status", e)}
                     >
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "text-[10px] transition-all whitespace-nowrap",
-                        item.status_contratacao === "Negociada" && "bg-green-100 text-green-800 hover:bg-green-200",
-                        item.status_contratacao === "Em Andamento" && "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
-                        (!item.status_contratacao || item.status_contratacao === "A Negociar") && "bg-red-100 text-red-700 hover:bg-red-200"
-                      )}
-                    >
-                      {item.status_contratacao || "A Negociar"}
-                    </Badge>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-[10px] transition-all whitespace-nowrap",
+                          item.status_contratacao === "Negociada" && "bg-green-100 text-green-800 hover:bg-green-200",
+                          item.status_contratacao === "Em Andamento" &&
+                            "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+                          (!item.status_contratacao || item.status_contratacao === "A Negociar") &&
+                            "bg-red-100 text-red-700 hover:bg-red-200",
+                        )}
+                      >
+                        {item.status_contratacao || "A Negociar"}
+                      </Badge>
                     </TableCell>
-                    <TableCell 
+                    <TableCell
                       className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
                       onClick={(e) => openFieldModal(item, "obs", e)}
                     >
-                      <MessageSquare 
-                        className={cn(
-                          "h-4 w-4",
-                          item.observacao ? "text-amber-500" : "text-slate-300"
-                        )}
-                      />
+                      <MessageSquare className={cn("h-4 w-4", item.observacao ? "text-amber-500" : "text-slate-300")} />
                     </TableCell>
                   </TableRow>
                 );
@@ -461,16 +485,16 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{getModalTitle()}</DialogTitle>
-            {editingItem && (
-              <p className="text-xs text-slate-500 truncate">{capitalize(editingItem.descricao)}</p>
-            )}
+            {editingItem && <p className="text-xs text-slate-500 truncate">{capitalize(editingItem.descricao)}</p>}
           </DialogHeader>
-          <div className="py-4">
-            {renderFieldInput()}
-          </div>
+          <div className="py-4">{renderFieldInput()}</div>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={closeModal}>Cancelar</Button>
-            <Button size="sm" onClick={handleSave}>Salvar</Button>
+            <Button variant="outline" size="sm" onClick={closeModal}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleSave}>
+              Salvar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
