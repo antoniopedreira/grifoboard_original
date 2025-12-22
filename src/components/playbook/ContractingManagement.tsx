@@ -137,11 +137,8 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
           await gamificationService.awardXP(userSession.user.id, "CONTRATACAO_FAST", 100, String(editingItem.id));
 
           // B) XP pela Economia (+50 XP) 💰
-          // Precisamos dos valores atualizados. Se editamos o valor agora, usamos o novo.
-          // Se não, usamos o que já estava no item.
-          const valorContratadoFinal =
-            editingField === "valor" ? (fieldValue ? parseFloat(fieldValue) : 0) : editingItem.valor_contratado || 0;
-
+          // CORREÇÃO AQUI: Como estamos no bloco "status", usamos o valor que já existe no item
+          const valorContratadoFinal = editingItem.valor_contratado || 0;
           const valorMeta = editingItem.precoTotalMeta || 0;
 
           if (valorMeta > 0 && valorContratadoFinal > 0 && valorContratadoFinal < valorMeta) {
