@@ -44,10 +44,9 @@ export const gamificationService = {
         }
         
         userIds = empresaUsers?.map(u => u.id) || [];
-        console.log("Usuários da empresa encontrados:", userIds.length, userIds);
         
+        // Se não encontrou usuários na empresa, retorna lista vazia
         if (userIds.length === 0) {
-          console.log("Nenhum usuário encontrado para empresa:", empresaId);
           return [];
         }
       }

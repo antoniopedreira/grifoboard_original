@@ -124,10 +124,11 @@ const GrifoWay = () => {
     loadInitialData();
   }, [userSession]);
 
-  // Atualizar ranking quando filtro mudar
+  // Atualizar ranking quando filtro mudar (realtime)
   useEffect(() => {
+    if (loading || !userSession?.user?.id) return;
+    
     const updateRanking = async () => {
-      if (!userSession?.user?.id) return;
       try {
         const empresaIdToUse = rankingFilter === "empresa" ? userEmpresaId : null;
         const rankData = await gamificationService.getRanking(empresaIdToUse);
@@ -136,9 +137,8 @@ const GrifoWay = () => {
         console.error(error);
       }
     };
-    if (!loading) {
-      updateRanking();
-    }
+    
+    updateRanking();
   }, [rankingFilter, userEmpresaId, userSession?.user?.id, loading]);
   if (loading) {
     return (
@@ -308,7 +308,6 @@ const GrifoWay = () => {
                             rankingFilter === "empresa" && "bg-[#112131] text-white hover:bg-[#112131]/90"
                           )}
                           onClick={() => setRankingFilter("empresa")}
-                          disabled={!userEmpresaId}
                         >
                           <Shield className="h-3 w-3 mr-1" />
                           Empresa
