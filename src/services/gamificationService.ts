@@ -77,7 +77,7 @@ export const gamificationService = {
       const profileIds = profiles.map((p) => p.id);
 
       // Busca nomes para exibir no ranking
-      // CORREÇÃO: Usamos 'data: usersData' e fazemos o cast manual logo abaixo
+      // Usamos 'data: usersData' e fazemos o cast manual logo abaixo
       const { data: usersData, error: userError } = await supabase
         .from("ranking_users_view" as any)
         .select("id, nome")
@@ -88,12 +88,11 @@ export const gamificationService = {
         throw userError;
       }
 
-      // CAST EXPLÍCITO: Força o TypeScript a entender a estrutura, resolvendo o erro TS2339
+      // CAST EXPLÍCITO: Força o TypeScript a entender a estrutura
       const users = usersData as unknown as RankingUserView[] | null;
 
       const ranking: RankingItem[] = profiles.map((profile, index) => {
         const userDetails = users?.find((u) => u.id === profile.id);
-        // Agora 'userDetails' tem o tipo correto (RankingUserView), então .nome é válido
         const displayName = userDetails?.nome || "Usuário Grifo";
 
         return {
@@ -214,6 +213,7 @@ function formatActionName(action: string): string {
     TAREFA_CONCLUIDA: "Tarefa FAST Concluída",
     DIARIO_CRIADO: "Diário Enviado",
     CONTRATACAO_FAST: "Contratação Fechada",
+    ECONOMIA_PLAYBOOK: "Economia Gerada na Obra 💰", // <--- ADICIONADO AQUI
   };
   return map[action] || action.replace(/_/g, " ");
 }
