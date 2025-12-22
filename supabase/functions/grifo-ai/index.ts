@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const N8N_WEBHOOK_URL = "SUA_URL_DO_WEBHOOK_DO_N8N_AQUI"; 
+const N8N_WEBHOOK_URL = "https://grifoworkspace.app.n8n.cloud/webhook/grifomind"; 
 // Ex: https://n8n.seu-dominio.com/webhook/grifomind
 // DICA: No n8n, ative o workflow e use a URL de "Production".
 
