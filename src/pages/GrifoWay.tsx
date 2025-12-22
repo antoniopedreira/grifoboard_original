@@ -13,7 +13,8 @@ import {
   Medal,
   Users,
   Loader2,
-  ListTodo, // <-- Ícone adicionado para as tarefas
+  ListTodo,
+  Handshake, // <-- Ícone novo para o Playbook
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -357,7 +358,7 @@ const GrifoWay = () => {
                       </Badge>
                     </div>
 
-                    {/* Item 2: Tarefas PCP (NOVO) */}
+                    {/* Item 2: Tarefas PCP */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
@@ -370,13 +371,26 @@ const GrifoWay = () => {
                       </Badge>
                     </div>
 
-                    {/* Item 3: Checklist */}
+                    {/* Item 3: Playbook (NOVO) */}
+                    <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-slate-100 text-slate-500">
+                          <Handshake className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-medium">Fechar Contratação</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100">
+                        +100 XP
+                      </Badge>
+                    </div>
+
+                    {/* Item 4: Checklist */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
                           <CheckCircle2 className="h-4 w-4" />
                         </div>
-                        <span className="text-sm font-medium">Concluir Checklist</span>
+                        <span className="text-sm font-medium">Concluir Checklist FAST</span>
                       </div>
                       <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100">
                         +30 XP
@@ -505,7 +519,7 @@ const GrifoWay = () => {
                     <CardTitle className="text-sm uppercase tracking-wider text-slate-500">Índice</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 p-2">
-                    {["Introdução", "Pilares FAST", "Valores Culturais", "Comportamentos"].map((item, i) => (
+                    {["Introdução", "Pilares FAST 2.0", "Valores Culturais", "Comportamentos"].map((item, i) => (
                       <Button
                         key={item}
                         variant="ghost"
@@ -533,7 +547,7 @@ const GrifoWay = () => {
                       </h3>
                       <p className="text-slate-600 leading-relaxed">
                         O <strong>Grifo Way</strong> é o manual que define a forma Grifo de pensar, agir, executar e
-                        entregar. É o padrão cultural que sustenta o FAST.
+                        entregar. É o padrão cultural que sustenta o FAST 2.0.
                       </p>
                     </CardContent>
                   </Card>
@@ -542,7 +556,7 @@ const GrifoWay = () => {
                 <div id="section-1">
                   <h3 className="text-2xl font-bold text-[#112131] mb-6 flex items-center gap-2">
                     <Zap className="h-6 w-6 text-[#C7A347]" />
-                    1. Pilares & FAST
+                    1. Pilares & FAST 2.0
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-[#112131] text-white border-none">
@@ -555,7 +569,7 @@ const GrifoWay = () => {
                     </Card>
                     <Card className="bg-white border border-slate-200">
                       <CardContent className="pt-6">
-                        <h4 className="font-bold text-lg mb-2 text-[#112131]">FAST</h4>
+                        <h4 className="font-bold text-lg mb-2 text-[#112131]">FAST 2.0</h4>
                         <ul className="text-sm text-slate-600 space-y-2 list-disc list-inside">
                           <li>Planejamento extremamente claro</li>
                           <li>Checklist diário obrigatório</li>
