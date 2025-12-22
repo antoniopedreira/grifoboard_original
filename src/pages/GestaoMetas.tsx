@@ -18,9 +18,6 @@ import {
   TrendingUp,
   BarChart3,
   Users,
-  Plus,
-  Trash2,
-  Star,
   LayoutGrid,
   Settings,
   Save,
@@ -47,6 +44,7 @@ interface MetaAnual {
   meta_margem_liquida: number;
 }
 
+// Squad agora representa um Usuário do sistema
 interface Squad {
   id: string;
   nome: string;
@@ -83,10 +81,8 @@ const GestaoMetas = () => {
     meta_faturamento: 0,
     meta_margem_liquida: 0,
   });
-  const [novoSquadNome, setNovoSquadNome] = useState("");
 
   // ESTADO LOCAL PARA EDIÇÃO EM MASSA (Obras)
-  // Armazena as alterações locais antes de enviar pro banco
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
 
@@ -117,12 +113,19 @@ const GestaoMetas = () => {
         ? (metaData as unknown as MetaAnual)
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
-      // 3. Pegar Squads
-      const { data: squadsData } = await supabase
-        .from("squads" as any)
-        .select("*")
+      // 3. Pegar Usuários da Empresa (Antigos Squads)
+      // MUDANÇA: Agora buscamos na tabela 'usuarios' em vez de 'squads'
+      const { data: usuariosData } = await supabase
+        .from("usuarios")
+        .select("id, nome")
         .eq("empresa_id", userData.empresa_id)
         .order("nome");
+
+      // Adaptamos para o formato esperado (id, nome)
+      const squadsList: Squad[] = (usuariosData || []).map((u) => ({
+        id: u.id,
+        nome: u.nome || "Usuário sem nome",
+      }));
 
       // 4. Pegar Obras do Ano
       const dataInicioAno = `${anoSelecionado}-01-01`;
@@ -141,7 +144,7 @@ const GestaoMetas = () => {
       return {
         empresa_id: userData.empresa_id,
         meta,
-        squads: (squadsData || []) as unknown as Squad[],
+        squads: squadsList, // Agora são os usuários
         obras: (obrasData || []) as unknown as ObraFinanceira[],
       };
     },
@@ -158,16 +161,13 @@ const GestaoMetas = () => {
 
   // --- LÓGICA DE EDIÇÃO LOCAL (Obras) ---
 
-  // Reseta os dados locais sempre que abrir o modal
   const handleOpenLancamento = (open: boolean) => {
     if (open && dashboardData?.obras) {
-      // Clona os dados para evitar mutação direta no cache
       setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
     }
     setIsLancamentoModalOpen(open);
   };
 
-  // Atualiza um campo específico localmente
   const handleLocalChange = (id: any, field: keyof ObraFinanceira, value: any) => {
     setLocalObras((prev) =>
       prev.map((obra) => {
@@ -179,14 +179,12 @@ const GestaoMetas = () => {
     );
   };
 
-  // Salva tudo de uma vez (Concluir)
   const handleSaveAll = async () => {
     setIsSavingObras(true);
     try {
       const originalObras = dashboardData?.obras || [];
       const updates = [];
 
-      // Compara localObras com originalObras para saber o que mudou
       for (const localObra of localObras) {
         const original = originalObras.find((o) => o.id === localObra.id);
         if (!original) continue;
@@ -233,7 +231,7 @@ const GestaoMetas = () => {
     }
   };
 
-  // --- MUTATIONS (Outros) ---
+  // --- MUTATIONS ---
   const saveMetaMutation = useMutation({
     mutationFn: async (newMeta: MetaAnual) => {
       const payload = {
@@ -252,39 +250,6 @@ const GestaoMetas = () => {
     onError: () => toast({ title: "Erro ao salvar metas", variant: "destructive" }),
   });
 
-  const addSquadMutation = useMutation({
-    mutationFn: async () => {
-      if (!novoSquadNome.trim()) return;
-      const { error } = await supabase
-        .from("squads" as any)
-        .insert({ empresa_id: dashboardData?.empresa_id, nome: novoSquadNome });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gestaoMetas"] });
-      setNovoSquadNome("");
-      toast({ title: "Squad criado!" });
-    },
-    onError: () => toast({ title: "Erro ao criar squad", variant: "destructive" }),
-  });
-
-  const deleteSquadMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await supabase
-        .from("obras" as any)
-        .update({ squad_id: null })
-        .eq("squad_id", id);
-      await supabase
-        .from("squads" as any)
-        .delete()
-        .eq("id", id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gestaoMetas"] });
-      toast({ title: "Squad removido!" });
-    },
-  });
-
   // Helpers
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -294,10 +259,10 @@ const GestaoMetas = () => {
     return "bg-red-100 text-red-700 border-red-200";
   };
 
-  // --- CÁLCULOS KPI (Usam dados do cache, não os locais em edição) ---
+  // --- CÁLCULOS KPI ---
   const meta = dashboardData?.meta || { meta_faturamento: 0, meta_margem_liquida: 0 };
   const obras = dashboardData?.obras || [];
-  const squads = dashboardData?.squads || [];
+  const squads = dashboardData?.squads || []; // Agora contem os usuários
 
   const obrasConsideradas = obras.filter((o) => o.considerar_na_meta);
   const totalFaturamento = obrasConsideradas.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
@@ -309,7 +274,7 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Squads
+  // Ranking Squads (Agora Usuários)
   const rankingSquads = squads
     .map((squad) => {
       const obrasDoSquad = obrasConsideradas.filter((o) => o.squad_id === squad.id);
@@ -335,7 +300,7 @@ const GestaoMetas = () => {
 
   const topSquad = rankingSquads.length > 0 ? rankingSquads[0] : null;
 
-  // Obras sem squad
+  // Obras sem squad (sem usuário definido)
   const obrasSemSquad = obrasConsideradas.filter((o) => !o.squad_id);
   if (obrasSemSquad.length > 0) {
     const fat = obrasSemSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
@@ -348,7 +313,7 @@ const GestaoMetas = () => {
 
     rankingSquads.push({
       id: "sem-squad",
-      nome: "Sem Squad Definido",
+      nome: "Sem Responsável",
       faturamento: fat,
       lucro: luc,
       margem: fat > 0 ? (luc / fat) * 100 : 0,
@@ -406,13 +371,12 @@ const GestaoMetas = () => {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Configurações de Gestão</DialogTitle>
-                <DialogDescription>Gerencie metas anuais e squads da empresa.</DialogDescription>
+                <DialogDescription>Defina as metas anuais da empresa.</DialogDescription>
               </DialogHeader>
 
               <Tabs defaultValue="metas" className="w-full mt-2">
-                <TabsList className="grid w-full grid-cols-2 bg-slate-100">
+                <TabsList className="grid w-full grid-cols-1 bg-slate-100">
                   <TabsTrigger value="metas">Metas Anuais</TabsTrigger>
-                  <TabsTrigger value="squads">Gestão de Squads</TabsTrigger>
                 </TabsList>
 
                 {/* ABA METAS */}
@@ -449,45 +413,6 @@ const GestaoMetas = () => {
                       )}
                       Salvar Metas
                     </Button>
-                  </div>
-                </TabsContent>
-
-                {/* ABA SQUADS */}
-                <TabsContent value="squads" className="space-y-4 py-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nome do Squad (Ex: Squad Heitor)"
-                      value={novoSquadNome}
-                      onChange={(e) => setNovoSquadNome(e.target.value)}
-                    />
-                    <Button onClick={() => addSquadMutation.mutate()} className="bg-[#C7A347] hover:bg-[#b08d3b]">
-                      {addSquadMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Plus className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto border rounded-md p-2 bg-slate-50">
-                    {squads.length === 0 && (
-                      <p className="text-sm text-slate-400 text-center py-4">Nenhum squad cadastrado.</p>
-                    )}
-                    {squads.map((s) => (
-                      <div
-                        key={s.id}
-                        className="flex justify-between items-center p-2 bg-white rounded border border-slate-100 shadow-sm"
-                      >
-                        <span className="font-medium text-slate-700 text-sm">{s.nome}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteSquadMutation.mutate(s.id)}
-                          className="h-8 w-8 text-red-400 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
                   </div>
                 </TabsContent>
               </Tabs>
@@ -556,7 +481,9 @@ const GestaoMetas = () => {
         {/* Card 3: Top Squad (DETALHADO) */}
         <Card className="border-0 shadow-md bg-white col-span-1">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">Top 1 Squad</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+              Top 1 Responsável
+            </CardTitle>
             {topSquad && (
               <Badge className="bg-[#C7A347] text-white hover:bg-[#b08d3b] text-[10px] px-1.5">Campeão</Badge>
             )}
@@ -632,7 +559,7 @@ const GestaoMetas = () => {
               onClick={() => setViewMode("squad")}
               className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "squad" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
             >
-              <Users className="h-3 w-3" /> Squads
+              <Users className="h-3 w-3" /> Responsáveis
             </button>
             <button
               onClick={() => setViewMode("obra")}
@@ -710,7 +637,7 @@ const GestaoMetas = () => {
                       {obra.nome_obra}
                     </h3>
                     <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
-                      {squads.find((s) => s.id === obra.squad_id)?.nome || "Sem Squad"}
+                      {squads.find((s) => s.id === obra.squad_id)?.nome || "Sem Responsável"}
                     </p>
                   </div>
                   {obra.nps !== null && (
@@ -761,7 +688,7 @@ const GestaoMetas = () => {
                     <TableHead className="w-[50px] text-center">Ativa?</TableHead>
                     <TableHead className="min-w-[150px]">Obra</TableHead>
                     <TableHead className="w-[130px]">Início (Ano)</TableHead>
-                    <TableHead className="min-w-[150px]">Squad</TableHead>
+                    <TableHead className="min-w-[150px]">Responsável</TableHead>
                     <TableHead className="w-[140px]">Faturamento</TableHead>
                     <TableHead className="w-[140px]">Lucro</TableHead>
                     <TableHead className="w-[90px]">NPS</TableHead>
@@ -800,7 +727,7 @@ const GestaoMetas = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none" className="text-slate-400 italic">
-                              Sem Squad
+                              Sem Responsável
                             </SelectItem>
                             {squads.map((s) => (
                               <SelectItem key={s.id} value={s.id}>
