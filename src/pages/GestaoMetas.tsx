@@ -21,7 +21,7 @@ import {
   LayoutGrid,
   Settings,
   Save,
-  Star, // Adicionado aqui para corrigir o erro
+  Star,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -56,7 +56,7 @@ interface ObraFinanceira {
   faturamento_realizado: number;
   lucro_realizado: number;
   considerar_na_meta: boolean;
-  usuario_id: string | null; // MUDANÇA: Usando a coluna nativa usuario_id
+  usuario_id: string | null;
   nps: number | null;
   data_inicio: string | null;
   status?: string;
@@ -193,7 +193,7 @@ const GestaoMetas = () => {
           localObra.faturamento_realizado !== original.faturamento_realizado ||
           localObra.lucro_realizado !== original.lucro_realizado ||
           localObra.considerar_na_meta !== original.considerar_na_meta ||
-          localObra.usuario_id !== original.usuario_id || // MUDANÇA: Verifica usuario_id
+          localObra.usuario_id !== original.usuario_id ||
           localObra.nps !== original.nps ||
           localObra.data_inicio !== original.data_inicio;
 
@@ -205,7 +205,7 @@ const GestaoMetas = () => {
                 faturamento_realizado: localObra.faturamento_realizado,
                 lucro_realizado: localObra.lucro_realizado,
                 considerar_na_meta: localObra.considerar_na_meta,
-                usuario_id: localObra.usuario_id, // MUDANÇA: Atualiza usuario_id
+                usuario_id: localObra.usuario_id,
                 nps: localObra.nps,
                 data_inicio: localObra.data_inicio,
               })
@@ -274,10 +274,9 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Responsáveis (Agrupado por usuario_id)
+  // Ranking Responsáveis (FILTRADO)
   const rankingResponsaveis = responsaveis
     .map((resp) => {
-      // MUDANÇA: Filtra pelo usuario_id
       const obrasDoResp = obrasConsideradas.filter((o) => o.usuario_id === resp.id);
       const fat = obrasDoResp.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
       const luc = obrasDoResp.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
@@ -297,11 +296,12 @@ const GestaoMetas = () => {
         nps_medio: npsMedio,
       };
     })
+    .filter((r) => r.qtd_obras > 0) // MUDANÇA: Exibe apenas quem tem obras no ano
     .sort((a, b) => b.faturamento - a.faturamento);
 
   const topResponsavel = rankingResponsaveis.length > 0 ? rankingResponsaveis[0] : null;
 
-  // Obras sem responsável (usuario_id nulo)
+  // Obras sem responsável
   const obrasSemResponsavel = obrasConsideradas.filter((o) => !o.usuario_id);
   if (obrasSemResponsavel.length > 0) {
     const fat = obrasSemResponsavel.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
