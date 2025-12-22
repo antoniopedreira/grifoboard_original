@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LucideIcon,
+  Bot, // <--- IMPORT DO ÍCONE NOVO
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ const menuItems: MenuItem[] = [
   { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
   { path: "/playbook", label: "Playbook", icon: BookOpen },
   { path: "/marketplace", label: "Marketplace", icon: Store },
+  { path: "/grifo-ai", label: "GrifoAI", icon: Bot }, // <--- ITEM NOVO
   { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold },
 ];
 
@@ -159,7 +161,7 @@ const CustomSidebar = () => {
                   isActive
                     ? "bg-secondary text-white shadow-lg font-medium"
                     : "hover:bg-white/10 hover:text-white text-primary-foreground/80",
-                  (item as any).inDevelopment && "opacity-70"
+                  (item as any).inDevelopment && "opacity-70",
                 )}
               >
                 {item.customIcon ? (
@@ -168,9 +170,7 @@ const CustomSidebar = () => {
                     alt={item.label}
                     className={cn(
                       "h-6 w-6 transition-all duration-200 flex-shrink-0",
-                      isActive 
-                        ? "brightness-0 invert" 
-                        : "group-hover:brightness-0 group-hover:invert"
+                      isActive ? "brightness-0 invert" : "group-hover:brightness-0 group-hover:invert",
                     )}
                   />
                 ) : item.icon ? (
@@ -193,8 +193,8 @@ const CustomSidebar = () => {
                       {item.label}
                     </motion.span>
                     {(item as any).inDevelopment && (
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className="text-[9px] px-1.5 py-0 h-4 border-secondary/50 text-secondary bg-secondary/10 whitespace-nowrap"
                       >
                         Em breve
