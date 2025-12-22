@@ -21,7 +21,8 @@ import {
   Trash2,
   Star,
   LayoutGrid,
-  CalendarDays,
+  Settings,
+  Save,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // --- TIPOS ---
 interface MetaAnual {
@@ -57,7 +59,7 @@ interface ObraFinanceira {
   considerar_na_meta: boolean;
   squad_id: string | null;
   nps: number | null;
-  data_inicio: string | null; // USANDO DATA_INICIO AGORA
+  data_inicio: string | null;
   status?: string;
 }
 
@@ -66,14 +68,13 @@ const GestaoMetas = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
 
-  // Default para 2026
+  // Filtros e View
   const [anoSelecionado, setAnoSelecionado] = useState("2026");
   const [viewMode, setViewMode] = useState<"squad" | "obra">("squad");
 
   // Modais
-  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false); // Modal Unificado
   const [isLancamentoModalOpen, setIsLancamentoModalOpen] = useState(false);
-  const [isSquadsModalOpen, setIsSquadsModalOpen] = useState(false);
 
   // Dados
   const [meta, setMeta] = useState<MetaAnual>({
@@ -99,7 +100,7 @@ const GestaoMetas = () => {
           .single();
 
         if (userData?.empresa_id) {
-          // 1. Metas do Ano Selecionado
+          // 1. Metas
           const { data: metaData } = await supabase
             .from("metas_anuais" as any)
             .select("*")
@@ -128,7 +129,7 @@ const GestaoMetas = () => {
             setSquads(squadsData as unknown as Squad[]);
           }
 
-          // 3. Obras (FILTRANDO POR DATA_INICIO NO ANO SELECIONADO)
+          // 3. Obras
           const dataInicioAno = `${anoSelecionado}-01-01`;
           const dataFimAno = `${anoSelecionado}-12-31`;
 
@@ -138,7 +139,6 @@ const GestaoMetas = () => {
               "id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, squad_id, nps, data_inicio, status",
             )
             .eq("empresa_id", userData.empresa_id)
-            // Filtra onde data_inicio >= 01/01/ANO e data_inicio <= 31/12/ANO
             .gte("data_inicio", dataInicioAno)
             .lte("data_inicio", dataFimAno)
             .order("nome_obra");
@@ -156,7 +156,7 @@ const GestaoMetas = () => {
       }
     };
     loadData();
-  }, [userSession, anoSelecionado]); // Recarrega ao mudar o ano
+  }, [userSession, anoSelecionado]);
 
   // --- AÇÕES ---
   const handleAddSquad = async () => {
@@ -219,7 +219,6 @@ const GestaoMetas = () => {
       if (error) throw error;
 
       setMeta(tempMeta);
-      setIsMetaModalOpen(false);
       toast({ title: "Metas atualizadas." });
     } catch (e) {
       toast({ title: "Erro", variant: "destructive" });
@@ -283,6 +282,8 @@ const GestaoMetas = () => {
     })
     .sort((a, b) => b.faturamento - a.faturamento);
 
+  const topSquad = rankingSquads.length > 0 ? rankingSquads[0] : null;
+
   // Obras sem squad
   const obrasSemSquad = obrasConsideradas.filter((o) => !o.squad_id);
   if (obrasSemSquad.length > 0) {
@@ -339,88 +340,97 @@ const GestaoMetas = () => {
             </SelectContent>
           </Select>
 
-          {/* Botões de Ação */}
-          <Dialog open={isSquadsModalOpen} onOpenChange={setIsSquadsModalOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="h-10 gap-2 text-slate-600">
-                <Users className="h-4 w-4" /> Squads
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Cadastro de Squads</DialogTitle>
-                <DialogDescription>Crie times com nomes dos engenheiros responsáveis.</DialogDescription>
-              </DialogHeader>
-              <div className="flex gap-2 my-4">
-                <Input
-                  placeholder="Nome do Squad (Ex: Squad Heitor)"
-                  value={novoSquadNome}
-                  onChange={(e) => setNovoSquadNome(e.target.value)}
-                />
-                <Button onClick={handleAddSquad} className="bg-[#112131]">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {squads.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100"
-                  >
-                    <span className="font-medium text-slate-700">{s.nome}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteSquad(s.id)}
-                      className="text-red-400 hover:text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={isMetaModalOpen} onOpenChange={setIsMetaModalOpen}>
+          {/* BOTÃO ÚNICO DE CONFIGURAÇÕES */}
+          <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="outline"
                 className="h-10 gap-2 text-slate-600 hover:text-[#C7A347] hover:border-[#C7A347]"
               >
-                <Target className="h-4 w-4" /> Metas
+                <Settings className="h-4 w-4" />
+                Configurações
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Metas {anoSelecionado}</DialogTitle>
+                <DialogTitle>Configurações de Gestão</DialogTitle>
+                <DialogDescription>Gerencie metas anuais e squads da empresa.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label>Meta de Faturamento</Label>
-                  <Input
-                    type="number"
-                    value={tempMeta.meta_faturamento}
-                    onChange={(e) => setTempMeta({ ...tempMeta, meta_faturamento: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Meta de Margem (%)</Label>
-                  <Input
-                    type="number"
-                    value={tempMeta.meta_margem_liquida}
-                    onChange={(e) => setTempMeta({ ...tempMeta, meta_margem_liquida: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleSaveMeta} className="bg-[#112131]">
-                  Salvar
-                </Button>
-              </DialogFooter>
+
+              <Tabs defaultValue="metas" className="w-full mt-2">
+                <TabsList className="grid w-full grid-cols-2 bg-slate-100">
+                  <TabsTrigger value="metas">Metas Anuais</TabsTrigger>
+                  <TabsTrigger value="squads">Gestão de Squads</TabsTrigger>
+                </TabsList>
+
+                {/* ABA METAS */}
+                <TabsContent value="metas" className="space-y-4 py-4">
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <Label>Meta de Faturamento ({anoSelecionado})</Label>
+                      <Input
+                        type="number"
+                        value={tempMeta.meta_faturamento}
+                        onChange={(e) =>
+                          setTempMeta({ ...tempMeta, meta_faturamento: parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Meta de Margem Líquida (%)</Label>
+                      <Input
+                        type="number"
+                        value={tempMeta.meta_margem_liquida}
+                        onChange={(e) =>
+                          setTempMeta({ ...tempMeta, meta_margem_liquida: parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                    <Button onClick={handleSaveMeta} className="bg-[#112131] w-full mt-2 gap-2">
+                      <Save className="h-4 w-4" /> Salvar Metas
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                {/* ABA SQUADS */}
+                <TabsContent value="squads" className="space-y-4 py-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nome do Squad (Ex: Squad Heitor)"
+                      value={novoSquadNome}
+                      onChange={(e) => setNovoSquadNome(e.target.value)}
+                    />
+                    <Button onClick={handleAddSquad} className="bg-[#C7A347] hover:bg-[#b08d3b]">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto border rounded-md p-2 bg-slate-50">
+                    {squads.length === 0 && (
+                      <p className="text-sm text-slate-400 text-center py-4">Nenhum squad cadastrado.</p>
+                    )}
+                    {squads.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex justify-between items-center p-2 bg-white rounded border border-slate-100 shadow-sm"
+                      >
+                        <span className="font-medium text-slate-700 text-sm">{s.nome}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteSquad(s.id)}
+                          className="h-8 w-8 text-red-400 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
 
+          {/* Botão Lançar Resultados */}
           <Button
             onClick={() => setIsLancamentoModalOpen(true)}
             className="h-10 bg-[#C7A347] hover:bg-[#b08d3b] text-white gap-2 shadow-md transition-all hover:scale-105"
@@ -432,6 +442,7 @@ const GestaoMetas = () => {
 
       {/* --- DASHBOARD VIEW --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card 1: Faturamento */}
         <Card className="border-0 shadow-lg bg-gradient-to-br from-[#112131] to-[#1a334d] text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <DollarSign className="h-24 w-24" />
@@ -449,6 +460,7 @@ const GestaoMetas = () => {
           </CardContent>
         </Card>
 
+        {/* Card 2: Margem */}
         <Card className="border-0 shadow-md bg-white">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -470,35 +482,70 @@ const GestaoMetas = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Top Squad (Fin.)
-            </CardTitle>
+        {/* Card 3: Top Squad (DETALHADO) */}
+        <Card className="border-0 shadow-md bg-white col-span-1">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">Top 1 Squad</CardTitle>
+            {topSquad && (
+              <Badge className="bg-[#C7A347] text-white hover:bg-[#b08d3b] text-[10px] px-1.5">Campeão</Badge>
+            )}
           </CardHeader>
           <CardContent>
-            {rankingSquads.length > 0 ? (
-              <>
-                <div className="text-xl font-bold text-[#112131] truncate">{rankingSquads[0].nome}</div>
-                <div className="text-sm font-bold text-[#C7A347]">{formatCurrency(rankingSquads[0].faturamento)}</div>
-              </>
+            {topSquad ? (
+              <div className="space-y-3">
+                <div className="text-xl font-bold text-[#112131] truncate border-b border-slate-100 pb-2">
+                  {topSquad.nome}
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase">Faturamento</p>
+                    <p className="text-sm font-bold text-[#112131]">{formatCurrency(topSquad.faturamento)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase">Lucro Líq.</p>
+                    <p className="text-sm font-bold text-green-600">{formatCurrency(topSquad.lucro)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase">Margem</p>
+                    <p
+                      className={`text-sm font-bold ${topSquad.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-500"}`}
+                    >
+                      {topSquad.margem.toFixed(1)}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase">NPS Médio</p>
+                    {topSquad.nps_medio !== null ? (
+                      <Badge variant="outline" className={`${getNpsColor(topSquad.nps_medio)} text-[10px] px-1 h-5`}>
+                        {topSquad.nps_medio.toFixed(1)}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-slate-300">-</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             ) : (
-              <div className="text-slate-400 text-sm">N/A</div>
+              <div className="text-slate-400 text-sm py-4">Sem dados suficientes</div>
             )}
           </CardContent>
         </Card>
 
+        {/* Card 4: NPS Médio Geral */}
         <Card className="border-0 shadow-md bg-white">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">NPS Médio</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">NPS Global</CardTitle>
             <Star className="h-4 w-4 text-amber-400" fill="currentColor" />
           </CardHeader>
           <CardContent>
             <div className="flex items-end gap-2">
-              <div className="text-2xl font-bold text-[#112131]">{npsMedioEmpresa.toFixed(1)}</div>
+              <div className="text-3xl font-bold text-[#112131]">{npsMedioEmpresa.toFixed(1)}</div>
               <div className="text-xs text-slate-400 mb-1">/ 10</div>
             </div>
-            <div className="text-[10px] text-slate-400 mt-1">Geral da Empresa</div>
+            <div className="text-[10px] text-slate-400 mt-1">Média ponderada da empresa</div>
+            <div className="mt-3">
+              <Progress value={npsMedioEmpresa * 10} className="h-1.5 bg-slate-100 [&>*]:bg-amber-400" />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -620,7 +667,7 @@ const GestaoMetas = () => {
         )}
       </div>
 
-      {/* --- MODAL DE LANÇAMENTO --- */}
+      {/* --- MODAL DE LANÇAMENTO (TABELA COMPLETA) --- */}
       <Dialog open={isLancamentoModalOpen} onOpenChange={setIsLancamentoModalOpen}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-6 pb-2 border-b border-slate-100">
@@ -642,7 +689,7 @@ const GestaoMetas = () => {
                   <TableRow>
                     <TableHead className="w-[50px] text-center">Meta?</TableHead>
                     <TableHead className="min-w-[150px]">Obra</TableHead>
-                    <TableHead className="w-[130px]">Início (Ano)</TableHead> {/* NOVA COLUNA DATA */}
+                    <TableHead className="w-[130px]">Início (Ano)</TableHead>
                     <TableHead className="min-w-[150px]">Squad</TableHead>
                     <TableHead className="w-[140px]">Faturamento</TableHead>
                     <TableHead className="w-[140px]">Lucro</TableHead>
@@ -663,7 +710,6 @@ const GestaoMetas = () => {
                         <div className="text-[10px] text-slate-400 uppercase">{obra.status}</div>
                       </TableCell>
 
-                      {/* CAMPO DE DATA INÍCIO */}
                       <TableCell>
                         <Input
                           type="date"
