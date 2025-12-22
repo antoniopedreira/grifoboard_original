@@ -431,7 +431,7 @@ const GestaoMetas = () => {
                             <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                             <Input
                               type="number"
-                              className="pl-9 bg-slate-950 border-slate-700 text-white font-mono"
+                              className="pl-9 bg-slate-950 border-slate-700 text-white font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               value={tempMeta.meta_faturamento}
                               onChange={(e) =>
                                 setTempMeta({ ...tempMeta, meta_faturamento: parseFloat(e.target.value) || 0 })
@@ -445,7 +445,7 @@ const GestaoMetas = () => {
                             <TrendingUp className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                             <Input
                               type="number"
-                              className="pl-9 bg-slate-950 border-slate-700 text-white font-mono"
+                              className="pl-9 bg-slate-950 border-slate-700 text-white font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               value={tempMeta.meta_margem_liquida}
                               onChange={(e) =>
                                 setTempMeta({ ...tempMeta, meta_margem_liquida: parseFloat(e.target.value) || 0 })
@@ -672,7 +672,7 @@ const GestaoMetas = () => {
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-500 text-xs uppercase tracking-wider">Margem</span>
                       <span
-                        className={`font-mono font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-500"}`}
+                        className={`font-mono font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-400"}`}
                       >
                         {squad.margem.toFixed(2)}%
                       </span>
@@ -832,7 +832,7 @@ const GestaoMetas = () => {
                           <Input
                             type="number"
                             placeholder="0,00"
-                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={obra.faturamento_realizado === 0 ? "" : obra.faturamento_realizado}
                             onChange={(e) => {
                               const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
@@ -845,7 +845,7 @@ const GestaoMetas = () => {
                           <Input
                             type="number"
                             placeholder="0,00"
-                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={obra.lucro_realizado === 0 ? "" : obra.lucro_realizado}
                             onChange={(e) => {
                               const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
@@ -859,7 +859,7 @@ const GestaoMetas = () => {
                             type="number"
                             min={0}
                             max={10}
-                            className="h-8 text-center bg-slate-950 border-slate-700 text-white font-bold text-xs focus:border-[#C7A347]"
+                            className="h-8 text-center bg-slate-950 border-slate-700 text-white font-bold text-xs focus:border-[#C7A347] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             placeholder="-"
                             value={obra.nps !== null ? obra.nps : ""}
                             onChange={(e) => {
