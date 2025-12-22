@@ -690,7 +690,8 @@ const GestaoMetas = () => {
               <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow>
-                    <TableHead className="w-[50px] text-center">Meta?</TableHead>
+                    {/* CORREÇÃO: Título alterado para "Ativa?" */}
+                    <TableHead className="w-[50px] text-center">Ativa?</TableHead>
                     <TableHead className="min-w-[150px]">Obra</TableHead>
                     <TableHead className="w-[130px]">Início (Ano)</TableHead>
                     <TableHead className="min-w-[150px]">Squad</TableHead>
@@ -752,34 +753,41 @@ const GestaoMetas = () => {
                           </SelectContent>
                         </Select>
                       </TableCell>
+
+                      {/* CORREÇÃO: Input de Faturamento com comportamento de placeholder zero */}
                       <TableCell>
                         <Input
                           type="number"
+                          placeholder="0,00"
                           className="h-8 text-right bg-white font-mono text-xs"
-                          value={obra.faturamento_realizado}
+                          value={obra.faturamento_realizado === 0 ? "" : obra.faturamento_realizado}
                           onChange={(e) =>
                             updateObraMutation.mutate({
                               id: obra.id,
                               field: "faturamento_realizado",
-                              value: parseFloat(e.target.value),
+                              value: e.target.value === "" ? 0 : parseFloat(e.target.value),
                             })
                           }
                         />
                       </TableCell>
+
+                      {/* CORREÇÃO: Input de Lucro com comportamento de placeholder zero */}
                       <TableCell>
                         <Input
                           type="number"
+                          placeholder="0,00"
                           className="h-8 text-right bg-white font-mono text-xs"
-                          value={obra.lucro_realizado}
+                          value={obra.lucro_realizado === 0 ? "" : obra.lucro_realizado}
                           onChange={(e) =>
                             updateObraMutation.mutate({
                               id: obra.id,
                               field: "lucro_realizado",
-                              value: parseFloat(e.target.value),
+                              value: e.target.value === "" ? 0 : parseFloat(e.target.value),
                             })
                           }
                         />
                       </TableCell>
+
                       <TableCell>
                         <Input
                           type="number"
