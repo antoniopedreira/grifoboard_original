@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client"; // Import do Supabase
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,6 +19,7 @@ import {
   ChevronRight,
   LucideIcon,
   Bot,
+  Target, // Novo ícone para Gestão de Metas
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -32,20 +34,24 @@ interface MenuItem {
   inDevelopment?: boolean;
 }
 
-// ORDEM ATUALIZADA AQUI
-const menuItems: MenuItem[] = [
-  { path: "/tarefas", label: "PCP", icon: LayoutDashboard },
-  { path: "/playbook", label: "Playbook", icon: BookOpen },
-  { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
-  { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold },
-  { path: "/marketplace", label: "Marketplace", icon: Store },
-  { path: "/grifo-ai", label: "GrifoAI", icon: Bot },
-];
-
 const CustomSidebar = () => {
   const { userSession, signOut, setObraAtiva } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Verifica se é Admin ao carregar
+  useEffect(() => {
+    const checkRole = async () => {
+      if (userSession?.user) {
+        const { data } = await supabase.from("usuarios").select("role").eq("id", userSession.user.id).single();
+
+        // Verifica se a role é admin ou master_admin
+        setIsAdmin(data?.role === "admin" || data?.role === "master_admin");
+      }
+    };
+    checkRole();
+  }, [userSession]);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem("sidebarCollapsed");
@@ -56,6 +62,21 @@ const CustomSidebar = () => {
   useEffect(() => {
     localStorage.setItem("sidebarCollapsed", JSON.stringify(isCollapsed));
   }, [isCollapsed]);
+
+  // Lista de Menus Dinâmica (Baseada no Admin)
+  const menuItems: MenuItem[] = useMemo(
+    () => [
+      { path: "/tarefas", label: "PCP", icon: LayoutDashboard },
+      { path: "/playbook", label: "Playbook", icon: BookOpen },
+      { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
+      { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold },
+      // Adiciona Gestão de Metas APENAS se for Admin, acima do Marketplace
+      ...(isAdmin ? [{ path: "/gestao-metas", label: "Gestão de Metas", icon: Target }] : []),
+      { path: "/marketplace", label: "Marketplace", icon: Store },
+      { path: "/grifo-ai", label: "GrifoAI", icon: Bot },
+    ],
+    [isAdmin],
+  );
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
@@ -107,6 +128,7 @@ const CustomSidebar = () => {
               isCollapsed ? "h-8 w-8" : "h-12 w-auto",
             )}
             loading="eager"
+            decoding="sync"
           />
         </div>
 
@@ -173,6 +195,8 @@ const CustomSidebar = () => {
                       "h-6 w-6 transition-all duration-200 flex-shrink-0",
                       isActive ? "brightness-0 invert" : "group-hover:brightness-0 group-hover:invert",
                     )}
+                    loading="eager" // CORREÇÃO: Força carregamento imediato
+                    decoding="sync" // CORREÇÃO: Prioriza decodificação
                   />
                 ) : item.icon ? (
                   <item.icon
