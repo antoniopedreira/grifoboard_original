@@ -33,10 +33,8 @@ export const gamificationService = {
 
       // Se tiver empresa_id, busca apenas usuários dessa empresa
       if (empresaId) {
-        // CORREÇÃO: Usa a view segura em vez da tabela usuarios direta
-        // O TypeScript pode reclamar se não tiver atualizado types.ts, o 'as any' resolve temporariamente
         const { data: empresaUsers, error: empresaError } = await supabase
-          .from("ranking_users_view" as any)
+          .from("usuarios")
           .select("id")
           .eq("empresa_id", empresaId);
 
@@ -45,7 +43,7 @@ export const gamificationService = {
           throw empresaError;
         }
 
-        userIds = empresaUsers?.map((u: any) => u.id) || [];
+        userIds = empresaUsers?.map((u) => u.id) || [];
 
         // Se não encontrou usuários na empresa, retorna lista vazia
         if (userIds.length === 0) {
@@ -54,10 +52,10 @@ export const gamificationService = {
       }
 
       // Busca perfis de gamificação
-      // Se userIds > 0, filtra por esses IDs (que são da empresa)
       let query = supabase.from("gamification_profiles").select("*").order("xp_total", { ascending: false }).limit(20);
 
-      if (userIds.length > 0) {
+      // Se tiver filtro de usuários (por empresa), aplica o filtro
+      if (empresaId && userIds.length > 0) {
         query = query.in("id", userIds);
       }
 
@@ -68,11 +66,13 @@ export const gamificationService = {
         throw profileError;
       }
 
+      console.log("Perfis encontrados:", profiles?.length, profiles);
+
       if (!profiles || profiles.length === 0) return [];
 
       const profileIds = profiles.map((p) => p.id);
 
-      // Busca nomes para exibir no ranking
+      // CORREÇÃO AQUI: Adicionado 'as any' para evitar o erro de tipo TS2339
       const { data: users, error: userError } = await supabase
         .from("ranking_users_view" as any)
         .select("id, nome")
@@ -84,8 +84,9 @@ export const gamificationService = {
       }
 
       const ranking: RankingItem[] = profiles.map((profile, index) => {
+        // Agora o TypeScript aceita que 'users' é um array de objetos com 'id' e 'nome'
         const userDetails = users?.find((u: any) => u.id === profile.id);
-        const displayName = userDetails?.nome || "Usuário Grifo";
+        const displayName = userDetails?.nome || "Usuário";
         return {
           ...profile,
           nome: displayName,
@@ -115,6 +116,7 @@ export const gamificationService = {
   // 4. Dar XP (Positivo)
   async awardXP(userId: string, action: string, amount: number, referenceId?: string) {
     try {
+      // Se tiver ID de referência, verifica se já existe para evitar duplicidade
       if (referenceId) {
         const { data: existing } = await supabase
           .from("gamification_logs")
@@ -124,9 +126,13 @@ export const gamificationService = {
           .eq("action_type", action)
           .maybeSingle();
 
-        if (existing) return;
+        if (existing) {
+          console.log("XP já atribuído para este item.");
+          return;
+        }
       }
 
+      // Insere o log
       const { error: logError } = await supabase.from("gamification_logs").insert({
         user_id: userId,
         action_type: action,
@@ -136,12 +142,13 @@ export const gamificationService = {
 
       if (logError) throw logError;
 
+      // Atualiza Perfil
       await this.updateProfileXP(userId, amount);
 
       toast({
         title: `+${amount} XP Conquistado! 🦅`,
         description: `Ação: ${formatActionName(action)}`,
-        variant: "gold", // Usa a variante Gold que criamos
+        variant: "gold",
         duration: 3000,
       });
     } catch (error) {
@@ -152,6 +159,7 @@ export const gamificationService = {
   // 5. Remover XP (Quando desfaz uma ação)
   async removeXP(userId: string, actionToCheck: string, amountToRemove: number, referenceId: string) {
     try {
+      // 1. Encontra e APAGA o log anterior (para permitir ganhar de novo no futuro)
       const { data: existingLog } = await supabase
         .from("gamification_logs")
         .select("id")
@@ -163,9 +171,11 @@ export const gamificationService = {
       if (existingLog) {
         await supabase.from("gamification_logs").delete().eq("id", existingLog.id);
       } else {
+        // Se não achou log, não faz nada
         return;
       }
 
+      // 2. Atualiza o perfil subtraindo os pontos
       await this.updateProfileXP(userId, -Math.abs(amountToRemove));
 
       toast({
@@ -179,6 +189,7 @@ export const gamificationService = {
     }
   },
 
+  // Função auxiliar interna para recalcular e salvar
   async updateProfileXP(userId: string, amountToAdd: number) {
     const { data: profile } = await supabase
       .from("gamification_profiles")
