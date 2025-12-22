@@ -8,8 +8,6 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import ReactMarkdown from "react-markdown"; // <--- NOVO IMPORT
-import remarkGfm from "remark-gfm"; // <--- NOVO IMPORT
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +19,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+// @ts-ignore
+import ReactMarkdown from "react-markdown";
+// @ts-ignore
+import remarkGfm from "remark-gfm";
 
 interface Message {
   id?: string;
@@ -230,7 +233,6 @@ const GrifoAI = () => {
                         remarkPlugins={[remarkGfm]}
                         className="prose prose-sm prose-slate max-w-none break-words"
                         components={{
-                          // Customização dos elementos Markdown para ficarem bonitos
                           strong: ({ node, ...props }) => <span className="font-bold text-slate-900" {...props} />,
                           ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
                           ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
