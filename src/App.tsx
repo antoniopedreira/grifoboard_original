@@ -18,7 +18,7 @@ import Marketplace from "@/pages/Marketplace";
 import PortalParceiro from "@/pages/PortalParceiro";
 import GrifoWay from "@/pages/GrifoWay";
 import GrifoAI from "@/pages/GrifoAI";
-import GestaoMetas from "@/pages/GestaoMetas"; // <--- 1. IMPORT NOVO
+import GestaoMetas from "@/pages/GestaoMetas";
 import FormProfissionais from "@/pages/form/Profissionais";
 import FormEmpresas from "@/pages/form/Empresas";
 import FormFornecedores from "@/pages/form/Fornecedores";
@@ -40,10 +40,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Rotas exclusivas do master admin
 const masterAdminRoutes = ["/master-admin", "/formularios", "/base-de-dados"];
 
-// Componente Mobile Nav para telas pequenas
 const MobileNav = ({ isMasterAdmin }: { isMasterAdmin: boolean }) => {
   return (
     <Sheet>
@@ -69,10 +67,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const isPortalParceiro = location.pathname === "/portal-parceiro";
   const isMasterAdminPage = masterAdminRoutes.includes(location.pathname);
 
-  // Layout do App (Dashboard, Obras, etc)
   const isAppPage = !isAuthPage && !isFormPage && !isPortalParceiro;
 
-  // Layout Público / Autenticação (Login, Cadastro, Forms Públicos)
   if (!isAppPage) {
     return (
       <div className="flex flex-col min-h-screen bg-background font-sans">
@@ -81,14 +77,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Layout Logado (Sidebar + Conteúdo)
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans">
-      {/* Sidebar Desktop - Master Admin ou Regular */}
       {isMasterAdminPage ? <MasterAdminSidebar /> : <CustomSidebar />}
 
       <div className="flex flex-col flex-1 w-full overflow-hidden">
-        {/* Header Mobile Simplificado */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-border shadow-sm z-20">
           <div className="flex items-center gap-2">
             <img src="/lovable-uploads/grifo-logo-header.png" className="h-8 w-auto" alt="Grifo" />
@@ -97,7 +90,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           <MobileNav isMasterAdmin={isMasterAdminPage} />
         </div>
 
-        {/* Área de Conteúdo */}
         <main className="flex-1 relative overflow-hidden flex flex-col bg-background">
           <ScrollArea className="flex-1 h-full">
             <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full pb-20">{children}</div>
@@ -108,18 +100,22 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// --- LOGICA DO LOOP CORRIGIDA AQUI ---
 const RouteRestorer = () => {
   const { userSession } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
-    // Não salva se logout em progresso
-    if (localStorage.getItem("logging_out") === "true") return;
+    // 1. Prioridade Máxima: Se está saindo, LIMPA a rota e aborta
+    if (localStorage.getItem("logging_out") === "true") {
+      sessionStorage.removeItem("lastRoute");
+      return;
+    }
 
-    // Não salva se não tem usuário logado
+    // 2. Se não tem usuário, não salva
     if (!userSession?.user) return;
 
-    // Lista de rotas que não devem ser salvas
+    // 3. Salva apenas rotas permitidas
     const excludedRoutes = ["/auth", "/reset-password", "/portal-parceiro", "/master-admin"];
 
     if (!excludedRoutes.includes(location.pathname)) {
@@ -131,20 +127,16 @@ const RouteRestorer = () => {
 };
 
 function App() {
-  const handleObraSelect = (obra: Obra) => {
-    // Selection logic handled by context
-  };
+  const handleObraSelect = (obra: Obra) => {};
 
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          {/* Rotas públicas */}
           <Route path="/form/profissionais" element={<FormProfissionais />} />
           <Route path="/form/empresas" element={<FormEmpresas />} />
           <Route path="/form/fornecedores" element={<FormFornecedores />} />
 
-          {/* Rotas privadas e Auth */}
           <Route
             path="/*"
             element={
@@ -165,7 +157,7 @@ function App() {
                         <Route path="/marketplace" element={<Marketplace />} />
                         <Route path="/grifoway" element={<GrifoWay />} />
                         <Route path="/grifo-ai" element={<GrifoAI />} />
-                        <Route path="/gestao-metas" element={<GestaoMetas />} /> {/* <--- 2. ROTA NOVA */}
+                        <Route path="/gestao-metas" element={<GestaoMetas />} />
                         <Route path="/portal-parceiro" element={<PortalParceiro />} />
                         <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                         <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
