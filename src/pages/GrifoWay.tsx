@@ -11,9 +11,9 @@ import {
   Flame,
   CheckCircle2,
   Medal,
+  TrendingUp,
   Users,
   Loader2,
-  ListTodo, // <-- Ícone adicionado para as tarefas
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,8 +45,8 @@ const LevelBadge = ({ level }: { level: number }) => {
     </Badge>
   );
 };
-
 const XPProgressBar = ({ current, level }: { current: number; level: number }) => {
+  // Calcula XP necessário para o próximo nível (Ex: Nível 1 = 0-1000, Nível 2 = 1000-2000)
   const previousLevelXP = (level - 1) * 1000;
   const nextLevelXP = level * 1000;
   const progressInLevel = current - previousLevelXP;
@@ -73,6 +73,7 @@ const XPProgressBar = ({ current, level }: { current: number; level: number }) =
   );
 };
 
+// Função para obter iniciais do nome
 const getInitials = (name?: string | null) => {
   if (!name) return "U";
   const parts = name.trim().split(" ").filter(Boolean);
@@ -80,99 +81,6 @@ const getInitials = (name?: string | null) => {
     return parts[0].substring(0, 2).toUpperCase();
   }
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-};
-
-// --- COMPONENTE: PÓDIO ---
-const RankingPodium = ({ users, currentUserId }: { users: RankingItem[]; currentUserId?: string }) => {
-  const first = users[0];
-  const second = users[1];
-  const third = users[2];
-
-  const PodiumStep = ({ user, rank }: { user: RankingItem; rank: number }) => {
-    if (!user) return <div className="w-1/3" />;
-
-    const isCurrentUser = user.id === currentUserId;
-
-    let ringColor = "ring-slate-300";
-    let bgColor = "bg-slate-50";
-    let height = "h-32";
-    let avatarSize = "h-16 w-16";
-    let rankLabel = "2";
-
-    if (rank === 1) {
-      ringColor = "ring-[#C7A347] ring-offset-2";
-      bgColor = "bg-gradient-to-t from-[#C7A347]/10 to-transparent border-[#C7A347]/30";
-      height = "h-40";
-      avatarSize = "h-24 w-24";
-      rankLabel = "1";
-    } else if (rank === 3) {
-      ringColor = "ring-amber-700/50";
-      rankLabel = "3";
-    }
-
-    return (
-      <div
-        className={cn("flex flex-col items-center justify-end w-1/3 relative group", rank === 1 ? "-mt-8 z-10" : "z-0")}
-      >
-        {rank === 1 && <Crown className="h-8 w-8 text-[#C7A347] absolute -top-10 animate-bounce" />}
-
-        <div className="relative mb-3 transition-transform duration-300 group-hover:scale-105">
-          <Avatar className={cn("border-2 border-white shadow-xl ring-2", ringColor, avatarSize)}>
-            <AvatarImage src={undefined} />
-            <AvatarFallback
-              className={cn(
-                "text-xl font-bold text-white",
-                rank === 1 ? "bg-[#C7A347]" : rank === 2 ? "bg-slate-400" : "bg-amber-700",
-              )}
-            >
-              {getInitials(user.nome)}
-            </AvatarFallback>
-          </Avatar>
-          <div
-            className={cn(
-              "absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold text-white shadow-md border-2 border-white",
-              rank === 1 ? "bg-[#C7A347]" : rank === 2 ? "bg-slate-400" : "bg-amber-700",
-            )}
-          >
-            {rankLabel}
-          </div>
-        </div>
-
-        <div className="text-center mb-2">
-          <p
-            className={cn(
-              "font-bold text-sm truncate max-w-[100px] sm:max-w-[120px]",
-              isCurrentUser ? "text-[#C7A347]" : "text-slate-700",
-            )}
-          >
-            {isCurrentUser ? "Você" : user.nome.split(" ")[0]}
-          </p>
-          <p className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full inline-block">
-            {user.xp_total} XP
-          </p>
-        </div>
-
-        <div
-          className={cn(
-            "w-full rounded-t-lg border-x border-t relative overflow-hidden flex items-end justify-center pb-2",
-            bgColor,
-            height,
-          )}
-        >
-          <div className="opacity-10 absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-          {rank === 1 && <Trophy className="h-8 w-8 text-[#C7A347] opacity-20" />}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="flex justify-center items-end gap-2 sm:gap-4 px-4 pt-12 pb-4 mb-4 bg-gradient-to-b from-slate-50/50 to-transparent rounded-xl">
-      {second && <PodiumStep user={second} rank={2} />}
-      {first && <PodiumStep user={first} rank={1} />}
-      {third && <PodiumStep user={third} rank={3} />}
-    </div>
-  );
 };
 
 // --- PÁGINA PRINCIPAL ---
@@ -186,6 +94,7 @@ const GrifoWay = () => {
   const [rankingFilter, setRankingFilter] = useState<"geral" | "empresa">("geral");
   const [userEmpresaId, setUserEmpresaId] = useState<string | null>(null);
 
+  // Carregar dados iniciais
   useEffect(() => {
     const loadInitialData = async () => {
       if (!userSession?.user?.id) return;
@@ -215,6 +124,7 @@ const GrifoWay = () => {
     loadInitialData();
   }, [userSession]);
 
+  // Atualizar ranking quando filtro mudar (realtime)
   useEffect(() => {
     if (loading || !userSession?.user?.id) return;
 
@@ -230,7 +140,6 @@ const GrifoWay = () => {
 
     updateRanking();
   }, [rankingFilter, userEmpresaId, userSession?.user?.id, loading]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -238,12 +147,9 @@ const GrifoWay = () => {
       </div>
     );
   }
-
-  const top3 = ranking.slice(0, 3);
-  const restOfRanking = ranking.slice(3);
-
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
+      {/* Header com Identidade Grifo */}
       <div className="bg-[#112131] text-white pb-24 pt-10 px-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#C7A347] opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
@@ -262,6 +168,7 @@ const GrifoWay = () => {
               </p>
             </div>
 
+            {/* Status Rápido */}
             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-md">
               <div className="text-center px-4 border-r border-white/10">
                 <div className="text-2xl font-bold text-[#C7A347]">{profile?.current_streak || 0}</div>
@@ -303,9 +210,10 @@ const GrifoWay = () => {
             </TabsList>
           </div>
 
+          {/* --- TAB DASHBOARD --- */}
           <TabsContent value="dashboard" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Esquerda: Stats e Missões */}
+              {/* Coluna Esquerda: Perfil e Stats */}
               <div className="space-y-6">
                 <Card className="border-none shadow-xl bg-white overflow-hidden relative">
                   <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-slate-100 to-slate-200" />
@@ -334,7 +242,7 @@ const GrifoWay = () => {
                   </CardContent>
                 </Card>
 
-                {/* --- CARTÃO DE MISSÕES DIÁRIAS ATUALIZADO --- */}
+                {/* Quests Fixas (Apenas visual por enquanto) */}
                 <Card className="border-none shadow-md">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -344,7 +252,6 @@ const GrifoWay = () => {
                     <CardDescription>Conclua rituais para ganhar XP</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {/* Item 1: Diário */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
@@ -356,27 +263,12 @@ const GrifoWay = () => {
                         +50 XP
                       </Badge>
                     </div>
-
-                    {/* Item 2: Tarefas PCP (NOVO) */}
-                    <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-slate-100 text-slate-500">
-                          <ListTodo className="h-4 w-4" />
-                        </div>
-                        <span className="text-sm font-medium">Concluir Tarefas do PCP</span>
-                      </div>
-                      <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100">
-                        +30 XP
-                      </Badge>
-                    </div>
-
-                    {/* Item 3: Checklist */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
                           <CheckCircle2 className="h-4 w-4" />
                         </div>
-                        <span className="text-sm font-medium">Concluir Checklist FAST</span>
+                        <span className="text-sm font-medium">Concluir Checklist</span>
                       </div>
                       <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100">
                         +30 XP
@@ -386,7 +278,7 @@ const GrifoWay = () => {
                 </Card>
               </div>
 
-              {/* Direita: Ranking com Pódio */}
+              {/* Coluna Direita: Ranking Real */}
               <div className="lg:col-span-2">
                 <Card className="border-none shadow-xl h-full flex flex-col">
                   <CardHeader>
@@ -434,62 +326,53 @@ const GrifoWay = () => {
                         Nenhum colaborador pontuou ainda. Seja o primeiro!
                       </div>
                     ) : (
-                      <>
-                        {/* --- PÓDIO TOP 3 --- */}
-                        <div className="px-4">
-                          <RankingPodium users={top3} currentUserId={userSession?.user?.id} />
-                        </div>
+                      <div className="divide-y divide-slate-100">
+                        {ranking.map((user, index) => (
+                          <div
+                            key={user.id}
+                            className={cn(
+                              "flex items-center gap-4 p-4 transition-colors hover:bg-slate-50",
+                              user.id === userSession?.user?.id && "bg-blue-50/50",
+                            )}
+                          >
+                            <div className="flex-shrink-0 w-8 text-center font-bold text-slate-400">
+                              {index === 0 ? (
+                                <Medal className="h-6 w-6 text-yellow-500 mx-auto" />
+                              ) : index === 1 ? (
+                                <Medal className="h-6 w-6 text-slate-400 mx-auto" />
+                              ) : index === 2 ? (
+                                <Medal className="h-6 w-6 text-amber-700 mx-auto" />
+                              ) : (
+                                `#${index + 1}`
+                              )}
+                            </div>
 
-                        {/* --- LISTA DO RESTO (4º em diante) --- */}
-                        {restOfRanking.length > 0 && (
-                          <div className="border-t border-slate-100 divide-y divide-slate-50">
-                            {restOfRanking.map((user, index) => (
-                              <div
-                                key={user.id}
-                                className={cn(
-                                  "flex items-center gap-4 p-4 transition-colors hover:bg-slate-50",
-                                  user.id === userSession?.user?.id && "bg-blue-50/50",
+                            <Avatar className="h-10 w-10 border border-slate-200">
+                              <AvatarFallback className="bg-slate-100 text-slate-600 font-bold text-xs">
+                                {getInitials(user.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-bold text-slate-900 truncate">{user.nome}</p>
+                                {user.id === userSession?.user?.id && (
+                                  <Badge variant="outline" className="text-[10px] h-4 px-1">
+                                    Você
+                                  </Badge>
                                 )}
-                              >
-                                <div className="flex-shrink-0 w-8 text-center font-bold text-slate-400">
-                                  #{index + 4}
-                                </div>
-
-                                <Avatar className="h-10 w-10 border border-slate-200">
-                                  <AvatarFallback className="bg-slate-100 text-slate-600 font-bold text-xs">
-                                    {getInitials(user.nome)}
-                                  </AvatarFallback>
-                                </Avatar>
-
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-bold text-slate-900 truncate">{user.nome}</p>
-                                    {user.id === userSession?.user?.id && (
-                                      <Badge variant="outline" className="text-[10px] h-4 px-1">
-                                        Você
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                                    <span className="text-[#C7A347] font-medium">Nível {user.level_current}</span>
-                                  </div>
-                                </div>
-
-                                <div className="text-right">
-                                  <span className="block text-sm font-bold text-[#112131]">{user.xp_total} XP</span>
-                                </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              <div className="flex items-center gap-2 text-xs text-slate-500">
+                                <span className="text-[#C7A347] font-medium">Nível {user.level_current}</span>
+                              </div>
+                            </div>
 
-                        {/* Se só tiver o Top 3 e nada mais */}
-                        {restOfRanking.length === 0 && ranking.length > 0 && (
-                          <div className="p-4 text-center text-xs text-slate-400 border-t border-slate-100">
-                            Estes são os líderes absolutos. Ouse desafiá-los!
+                            <div className="text-right">
+                              <span className="block text-sm font-bold text-[#112131]">{user.xp_total} XP</span>
+                            </div>
                           </div>
-                        )}
-                      </>
+                        ))}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -497,6 +380,7 @@ const GrifoWay = () => {
             </div>
           </TabsContent>
 
+          {/* --- TAB MANUAL (TEXTO ESTÁTICO) --- */}
           <TabsContent value="manual" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div className="md:col-span-1 space-y-4">
