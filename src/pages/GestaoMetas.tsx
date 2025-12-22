@@ -21,7 +21,7 @@ import {
   LayoutGrid,
   Settings,
   Save,
-  Star,
+  Star, // Adicionado aqui para corrigir o erro
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -45,7 +45,6 @@ interface MetaAnual {
   meta_margem_liquida: number;
 }
 
-// "Squad" agora representa um Usuário do sistema
 interface UsuarioResponsavel {
   id: string;
   nome: string;
@@ -57,7 +56,7 @@ interface ObraFinanceira {
   faturamento_realizado: number;
   lucro_realizado: number;
   considerar_na_meta: boolean;
-  squad_id: string | null; // Mantemos o nome squad_id no banco para compatibilidade, mas guarda o ID do usuário
+  usuario_id: string | null; // MUDANÇA: Usando a coluna nativa usuario_id
   nps: number | null;
   data_inicio: string | null;
   status?: string;
@@ -84,7 +83,6 @@ const GestaoMetas = () => {
   });
 
   // ESTADO LOCAL PARA EDIÇÃO EM MASSA (Obras)
-  // Isso resolve a lentidão: editamos aqui e salvamos tudo de uma vez.
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
 
@@ -115,7 +113,7 @@ const GestaoMetas = () => {
         ? (metaData as unknown as MetaAnual)
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
-      // 3. Pegar Usuários da Empresa (Para usar como responsáveis/squads)
+      // 3. Pegar Usuários da Empresa (Responsáveis)
       const { data: usuariosData } = await supabase
         .from("usuarios")
         .select("id, nome")
@@ -134,7 +132,7 @@ const GestaoMetas = () => {
       const { data: obrasData } = await supabase
         .from("obras" as any)
         .select(
-          "id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, squad_id, nps, data_inicio, status",
+          "id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, usuario_id, nps, data_inicio, status",
         )
         .eq("empresa_id", userData.empresa_id)
         .gte("data_inicio", dataInicioAno)
@@ -163,7 +161,6 @@ const GestaoMetas = () => {
 
   const handleOpenLancamento = (open: boolean) => {
     if (open && dashboardData?.obras) {
-      // Clona os dados para evitar mutação direta e resetar ao abrir
       setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
     }
     setIsLancamentoModalOpen(open);
@@ -180,7 +177,7 @@ const GestaoMetas = () => {
     );
   };
 
-  // Salva tudo de uma vez
+  // Salva tudo de uma vez (Batch Update)
   const handleSaveAll = async () => {
     setIsSavingObras(true);
     try {
@@ -191,12 +188,12 @@ const GestaoMetas = () => {
         const original = originalObras.find((o) => o.id === localObra.id);
         if (!original) continue;
 
-        // Verifica se houve mudança para não enviar updates desnecessários
+        // Detecta mudanças
         const hasChanged =
           localObra.faturamento_realizado !== original.faturamento_realizado ||
           localObra.lucro_realizado !== original.lucro_realizado ||
           localObra.considerar_na_meta !== original.considerar_na_meta ||
-          localObra.squad_id !== original.squad_id ||
+          localObra.usuario_id !== original.usuario_id || // MUDANÇA: Verifica usuario_id
           localObra.nps !== original.nps ||
           localObra.data_inicio !== original.data_inicio;
 
@@ -208,7 +205,7 @@ const GestaoMetas = () => {
                 faturamento_realizado: localObra.faturamento_realizado,
                 lucro_realizado: localObra.lucro_realizado,
                 considerar_na_meta: localObra.considerar_na_meta,
-                squad_id: localObra.squad_id, // Salva o ID do usuário aqui
+                usuario_id: localObra.usuario_id, // MUDANÇA: Atualiza usuario_id
                 nps: localObra.nps,
                 data_inicio: localObra.data_inicio,
               })
@@ -277,10 +274,11 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Responsáveis
+  // Ranking Responsáveis (Agrupado por usuario_id)
   const rankingResponsaveis = responsaveis
     .map((resp) => {
-      const obrasDoResp = obrasConsideradas.filter((o) => o.squad_id === resp.id);
+      // MUDANÇA: Filtra pelo usuario_id
+      const obrasDoResp = obrasConsideradas.filter((o) => o.usuario_id === resp.id);
       const fat = obrasDoResp.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
       const luc = obrasDoResp.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
       const respObrasComNps = obrasDoResp.filter((o) => o.nps !== null);
@@ -303,8 +301,8 @@ const GestaoMetas = () => {
 
   const topResponsavel = rankingResponsaveis.length > 0 ? rankingResponsaveis[0] : null;
 
-  // Obras sem responsável
-  const obrasSemResponsavel = obrasConsideradas.filter((o) => !o.squad_id);
+  // Obras sem responsável (usuario_id nulo)
+  const obrasSemResponsavel = obrasConsideradas.filter((o) => !o.usuario_id);
   if (obrasSemResponsavel.length > 0) {
     const fat = obrasSemResponsavel.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
     const luc = obrasSemResponsavel.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
@@ -643,7 +641,7 @@ const GestaoMetas = () => {
                       {obra.nome_obra}
                     </h3>
                     <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
-                      {responsaveis.find((s) => s.id === obra.squad_id)?.nome || "Sem Responsável"}
+                      {responsaveis.find((s) => s.id === obra.usuario_id)?.nome || "Sem Responsável"}
                     </p>
                   </div>
                   {obra.nps !== null && (
@@ -725,8 +723,8 @@ const GestaoMetas = () => {
 
                       <TableCell>
                         <Select
-                          value={obra.squad_id || "none"}
-                          onValueChange={(val) => handleLocalChange(obra.id, "squad_id", val === "none" ? null : val)}
+                          value={obra.usuario_id || "none"}
+                          onValueChange={(val) => handleLocalChange(obra.id, "usuario_id", val === "none" ? null : val)}
                         >
                           <SelectTrigger className="h-8 text-xs bg-white w-full">
                             <SelectValue placeholder="Selecione..." />
