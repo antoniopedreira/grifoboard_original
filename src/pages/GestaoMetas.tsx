@@ -21,6 +21,7 @@ import {
   LayoutGrid,
   Settings,
   Save,
+  Star,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -44,8 +45,8 @@ interface MetaAnual {
   meta_margem_liquida: number;
 }
 
-// Squad agora representa um Usuário do sistema
-interface Squad {
+// "Squad" agora representa um Usuário do sistema
+interface UsuarioResponsavel {
   id: string;
   nome: string;
 }
@@ -56,7 +57,7 @@ interface ObraFinanceira {
   faturamento_realizado: number;
   lucro_realizado: number;
   considerar_na_meta: boolean;
-  squad_id: string | null;
+  squad_id: string | null; // Mantemos o nome squad_id no banco para compatibilidade, mas guarda o ID do usuário
   nps: number | null;
   data_inicio: string | null;
   status?: string;
@@ -69,7 +70,7 @@ const GestaoMetas = () => {
 
   // Filtros
   const [anoSelecionado, setAnoSelecionado] = useState("2026");
-  const [viewMode, setViewMode] = useState<"squad" | "obra">("squad");
+  const [viewMode, setViewMode] = useState<"responsavel" | "obra">("responsavel");
 
   // Modais
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -83,6 +84,7 @@ const GestaoMetas = () => {
   });
 
   // ESTADO LOCAL PARA EDIÇÃO EM MASSA (Obras)
+  // Isso resolve a lentidão: editamos aqui e salvamos tudo de uma vez.
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
 
@@ -113,16 +115,14 @@ const GestaoMetas = () => {
         ? (metaData as unknown as MetaAnual)
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
-      // 3. Pegar Usuários da Empresa (Antigos Squads)
-      // MUDANÇA: Agora buscamos na tabela 'usuarios' em vez de 'squads'
+      // 3. Pegar Usuários da Empresa (Para usar como responsáveis/squads)
       const { data: usuariosData } = await supabase
         .from("usuarios")
         .select("id, nome")
         .eq("empresa_id", userData.empresa_id)
         .order("nome");
 
-      // Adaptamos para o formato esperado (id, nome)
-      const squadsList: Squad[] = (usuariosData || []).map((u) => ({
+      const responsaveis: UsuarioResponsavel[] = (usuariosData || []).map((u) => ({
         id: u.id,
         nome: u.nome || "Usuário sem nome",
       }));
@@ -144,7 +144,7 @@ const GestaoMetas = () => {
       return {
         empresa_id: userData.empresa_id,
         meta,
-        squads: squadsList, // Agora são os usuários
+        responsaveis,
         obras: (obrasData || []) as unknown as ObraFinanceira[],
       };
     },
@@ -163,6 +163,7 @@ const GestaoMetas = () => {
 
   const handleOpenLancamento = (open: boolean) => {
     if (open && dashboardData?.obras) {
+      // Clona os dados para evitar mutação direta e resetar ao abrir
       setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
     }
     setIsLancamentoModalOpen(open);
@@ -179,6 +180,7 @@ const GestaoMetas = () => {
     );
   };
 
+  // Salva tudo de uma vez
   const handleSaveAll = async () => {
     setIsSavingObras(true);
     try {
@@ -189,6 +191,7 @@ const GestaoMetas = () => {
         const original = originalObras.find((o) => o.id === localObra.id);
         if (!original) continue;
 
+        // Verifica se houve mudança para não enviar updates desnecessários
         const hasChanged =
           localObra.faturamento_realizado !== original.faturamento_realizado ||
           localObra.lucro_realizado !== original.lucro_realizado ||
@@ -205,7 +208,7 @@ const GestaoMetas = () => {
                 faturamento_realizado: localObra.faturamento_realizado,
                 lucro_realizado: localObra.lucro_realizado,
                 considerar_na_meta: localObra.considerar_na_meta,
-                squad_id: localObra.squad_id,
+                squad_id: localObra.squad_id, // Salva o ID do usuário aqui
                 nps: localObra.nps,
                 data_inicio: localObra.data_inicio,
               })
@@ -231,7 +234,7 @@ const GestaoMetas = () => {
     }
   };
 
-  // --- MUTATIONS ---
+  // --- MUTATION (Metas Globais) ---
   const saveMetaMutation = useMutation({
     mutationFn: async (newMeta: MetaAnual) => {
       const payload = {
@@ -262,7 +265,7 @@ const GestaoMetas = () => {
   // --- CÁLCULOS KPI ---
   const meta = dashboardData?.meta || { meta_faturamento: 0, meta_margem_liquida: 0 };
   const obras = dashboardData?.obras || [];
-  const squads = dashboardData?.squads || []; // Agora contem os usuários
+  const responsaveis = dashboardData?.responsaveis || [];
 
   const obrasConsideradas = obras.filter((o) => o.considerar_na_meta);
   const totalFaturamento = obrasConsideradas.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
@@ -274,51 +277,51 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Squads (Agora Usuários)
-  const rankingSquads = squads
-    .map((squad) => {
-      const obrasDoSquad = obrasConsideradas.filter((o) => o.squad_id === squad.id);
-      const fat = obrasDoSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
-      const luc = obrasDoSquad.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
-      const squadObrasComNps = obrasDoSquad.filter((o) => o.nps !== null);
+  // Ranking Responsáveis
+  const rankingResponsaveis = responsaveis
+    .map((resp) => {
+      const obrasDoResp = obrasConsideradas.filter((o) => o.squad_id === resp.id);
+      const fat = obrasDoResp.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
+      const luc = obrasDoResp.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
+      const respObrasComNps = obrasDoResp.filter((o) => o.nps !== null);
       const npsMedio =
-        squadObrasComNps.length > 0
-          ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
+        respObrasComNps.length > 0
+          ? respObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / respObrasComNps.length
           : null;
 
       return {
-        ...squad,
+        ...resp,
         faturamento: fat,
         lucro: luc,
         margem: fat > 0 ? (luc / fat) * 100 : 0,
         contrib: meta.meta_faturamento > 0 ? (fat / meta.meta_faturamento) * 100 : 0,
-        qtd_obras: obrasDoSquad.length,
+        qtd_obras: obrasDoResp.length,
         nps_medio: npsMedio,
       };
     })
     .sort((a, b) => b.faturamento - a.faturamento);
 
-  const topSquad = rankingSquads.length > 0 ? rankingSquads[0] : null;
+  const topResponsavel = rankingResponsaveis.length > 0 ? rankingResponsaveis[0] : null;
 
-  // Obras sem squad (sem usuário definido)
-  const obrasSemSquad = obrasConsideradas.filter((o) => !o.squad_id);
-  if (obrasSemSquad.length > 0) {
-    const fat = obrasSemSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
-    const luc = obrasSemSquad.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
-    const squadObrasComNps = obrasSemSquad.filter((o) => o.nps !== null);
+  // Obras sem responsável
+  const obrasSemResponsavel = obrasConsideradas.filter((o) => !o.squad_id);
+  if (obrasSemResponsavel.length > 0) {
+    const fat = obrasSemResponsavel.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
+    const luc = obrasSemResponsavel.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
+    const respObrasComNps = obrasSemResponsavel.filter((o) => o.nps !== null);
     const npsMedio =
-      squadObrasComNps.length > 0
-        ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
+      respObrasComNps.length > 0
+        ? respObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / respObrasComNps.length
         : null;
 
-    rankingSquads.push({
-      id: "sem-squad",
+    rankingResponsaveis.push({
+      id: "sem-responsavel",
       nome: "Sem Responsável",
       faturamento: fat,
       lucro: luc,
       margem: fat > 0 ? (luc / fat) * 100 : 0,
       contrib: meta.meta_faturamento > 0 ? (fat / meta.meta_faturamento) * 100 : 0,
-      qtd_obras: obrasSemSquad.length,
+      qtd_obras: obrasSemResponsavel.length,
       nps_medio: npsMedio,
     } as any);
   }
@@ -478,44 +481,47 @@ const GestaoMetas = () => {
           </CardContent>
         </Card>
 
-        {/* Card 3: Top Squad (DETALHADO) */}
+        {/* Card 3: Top Responsável (DETALHADO) */}
         <Card className="border-0 shadow-md bg-white col-span-1">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
               Top 1 Responsável
             </CardTitle>
-            {topSquad && (
+            {topResponsavel && (
               <Badge className="bg-[#C7A347] text-white hover:bg-[#b08d3b] text-[10px] px-1.5">Campeão</Badge>
             )}
           </CardHeader>
           <CardContent>
-            {topSquad ? (
+            {topResponsavel ? (
               <div className="space-y-3">
                 <div className="text-xl font-bold text-[#112131] truncate border-b border-slate-100 pb-2">
-                  {topSquad.nome}
+                  {topResponsavel.nome}
                 </div>
                 <div className="grid grid-cols-2 gap-x-2 gap-y-3">
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">Faturamento</p>
-                    <p className="text-sm font-bold text-[#112131]">{formatCurrency(topSquad.faturamento)}</p>
+                    <p className="text-sm font-bold text-[#112131]">{formatCurrency(topResponsavel.faturamento)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">Lucro Líq.</p>
-                    <p className="text-sm font-bold text-green-600">{formatCurrency(topSquad.lucro)}</p>
+                    <p className="text-sm font-bold text-green-600">{formatCurrency(topResponsavel.lucro)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">Margem</p>
                     <p
-                      className={`text-sm font-bold ${topSquad.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-500"}`}
+                      className={`text-sm font-bold ${topResponsavel.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-500"}`}
                     >
-                      {topSquad.margem.toFixed(1)}%
+                      {topResponsavel.margem.toFixed(1)}%
                     </p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">NPS Médio</p>
-                    {topSquad.nps_medio !== null ? (
-                      <Badge variant="outline" className={`${getNpsColor(topSquad.nps_medio)} text-[10px] px-1 h-5`}>
-                        {topSquad.nps_medio.toFixed(1)}
+                    {topResponsavel.nps_medio !== null ? (
+                      <Badge
+                        variant="outline"
+                        className={`${getNpsColor(topResponsavel.nps_medio)} text-[10px] px-1 h-5`}
+                      >
+                        {topResponsavel.nps_medio.toFixed(1)}
                       </Badge>
                     ) : (
                       <span className="text-xs text-slate-300">-</span>
@@ -556,8 +562,8 @@ const GestaoMetas = () => {
           </h2>
           <div className="bg-slate-100 p-1 rounded-lg flex items-center">
             <button
-              onClick={() => setViewMode("squad")}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "squad" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
+              onClick={() => setViewMode("responsavel")}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "responsavel" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
             >
               <Users className="h-3 w-3" /> Responsáveis
             </button>
@@ -570,44 +576,44 @@ const GestaoMetas = () => {
           </div>
         </div>
 
-        {viewMode === "squad" && (
+        {viewMode === "responsavel" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rankingSquads.map((squad) => (
+            {rankingResponsaveis.map((resp) => (
               <div
-                key={squad.id}
+                key={resp.id}
                 className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-bold text-[#112131] text-lg">{squad.nome}</h3>
+                    <h3 className="font-bold text-[#112131] text-lg">{resp.nome}</h3>
                     <p className="text-xs text-slate-400">
-                      {squad.qtd_obras} obras em {anoSelecionado}
+                      {resp.qtd_obras} obras em {anoSelecionado}
                     </p>
                   </div>
                   <Badge variant="outline" className="border-[#C7A347] text-[#C7A347] bg-[#C7A347]/5">
-                    {squad.contrib.toFixed(1)}% do Alvo
+                    {resp.contrib.toFixed(1)}% do Alvo
                   </Badge>
                 </div>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500">Faturamento</span>
-                    <span className="font-semibold text-[#112131]">{formatCurrency(squad.faturamento)}</span>
+                    <span className="font-semibold text-[#112131]">{formatCurrency(resp.faturamento)}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500">Margem Liq.</span>
                     <span
-                      className={`font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-600"}`}
+                      className={`font-bold ${resp.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-600"}`}
                     >
-                      {squad.margem.toFixed(2)}%
+                      {resp.margem.toFixed(2)}%
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-2 mt-2">
                     <span className="text-slate-500 flex items-center gap-1">
                       <Star className="h-3 w-3" /> NPS Médio
                     </span>
-                    {squad.nps_medio !== null ? (
-                      <Badge variant="outline" className={getNpsColor(squad.nps_medio)}>
-                        {squad.nps_medio.toFixed(1)}
+                    {resp.nps_medio !== null ? (
+                      <Badge variant="outline" className={getNpsColor(resp.nps_medio)}>
+                        {resp.nps_medio.toFixed(1)}
                       </Badge>
                     ) : (
                       <span className="text-xs text-slate-400">N/A</span>
@@ -616,7 +622,7 @@ const GestaoMetas = () => {
                 </div>
               </div>
             ))}
-            {rankingSquads.length === 0 && (
+            {rankingResponsaveis.length === 0 && (
               <p className="col-span-full text-center text-slate-400 py-10">
                 Nenhum resultado encontrado em {anoSelecionado}.
               </p>
@@ -637,7 +643,7 @@ const GestaoMetas = () => {
                       {obra.nome_obra}
                     </h3>
                     <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
-                      {squads.find((s) => s.id === obra.squad_id)?.nome || "Sem Responsável"}
+                      {responsaveis.find((s) => s.id === obra.squad_id)?.nome || "Sem Responsável"}
                     </p>
                   </div>
                   {obra.nps !== null && (
@@ -729,9 +735,9 @@ const GestaoMetas = () => {
                             <SelectItem value="none" className="text-slate-400 italic">
                               Sem Responsável
                             </SelectItem>
-                            {squads.map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.nome}
+                            {responsaveis.map((resp) => (
+                              <SelectItem key={resp.id} value={resp.id}>
+                                {resp.nome}
                               </SelectItem>
                             ))}
                           </SelectContent>
