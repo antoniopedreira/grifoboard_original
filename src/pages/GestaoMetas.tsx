@@ -24,6 +24,9 @@ import {
   Star,
   Trophy,
   Medal,
+  Shield,
+  Activity,
+  Crosshair,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -64,7 +67,6 @@ interface ObraFinanceira {
   status?: string;
 }
 
-// Tipo manual para o ranking para evitar erros de inferência
 interface RankingData {
   user_id: string;
   pontuacao_geral: number;
@@ -85,24 +87,22 @@ const GestaoMetas = () => {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isLancamentoModalOpen, setIsLancamentoModalOpen] = useState(false);
 
-  // Estados de Edição (Metas Gerais)
+  // Estados de Edição
   const [tempMeta, setTempMeta] = useState<MetaAnual>({
     ano: 2026,
     meta_faturamento: 0,
     meta_margem_liquida: 0,
   });
 
-  // ESTADO LOCAL PARA EDIÇÃO EM MASSA (Obras)
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
 
-  // --- QUERY PRINCIPAL (Data Fetching) ---
+  // --- QUERY PRINCIPAL ---
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["gestaoMetas", userSession?.user?.id, anoSelecionado],
     queryFn: async () => {
       if (!userSession?.user?.id) throw new Error("Usuário não logado");
 
-      // 1. Pegar Empresa ID
       const { data: userData } = await supabase
         .from("usuarios")
         .select("empresa_id")
@@ -111,7 +111,6 @@ const GestaoMetas = () => {
 
       if (!userData?.empresa_id) throw new Error("Empresa não encontrada");
 
-      // 2. Pegar Metas
       const { data: metaData } = await supabase
         .from("metas_anuais" as any)
         .select("*")
@@ -123,8 +122,6 @@ const GestaoMetas = () => {
         ? (metaData as unknown as MetaAnual)
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
-      // 3. Pegar Usuários da Empresa (Agora chamados de Squads na UI)
-      // REMOVIDO 'avatar_url' DA SELEÇÃO PARA CORRIGIR ERRO
       const { data: usuariosData } = await supabase
         .from("usuarios")
         .select("id, nome")
@@ -133,10 +130,9 @@ const GestaoMetas = () => {
 
       const squadsList: Squad[] = (usuariosData || []).map((u) => ({
         id: u.id,
-        nome: u.nome || "Usuário sem nome",
+        nome: u.nome || "Agente Desconhecido",
       }));
 
-      // 4. Pegar Obras do Ano
       const dataInicioAno = `${anoSelecionado}-01-01`;
       const dataFimAno = `${anoSelecionado}-12-31`;
 
@@ -161,39 +157,31 @@ const GestaoMetas = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- QUERY PARA RANKING GRIFOWAY ---
+  // --- QUERY RANKING ---
   const { data: rankings } = useQuery({
     queryKey: ["rankingsGrifoWay", dashboardData?.empresa_id],
     queryFn: async () => {
       try {
-        // CASTING PARA 'any' NO SELECT E NO RESULTADO PARA EVITAR ERRO DE TIPO
-        // JÁ QUE A TABELA PODE NÃO EXISTIR NOS TIPOS GERADOS AINDA
         const { data, error } = await supabase
           .from("ranking_grifoway" as any)
           .select("user_id, pontuacao_geral, posicao_geral, posicao_empresa");
 
-        if (error) {
-          console.warn("Erro ao buscar ranking (tabela pode não existir):", error.message);
-          return [];
-        }
-
+        if (error) return [];
         return (data as unknown as RankingData[]) || [];
       } catch (e) {
-        console.error("Erro ao buscar rankings", e);
         return [];
       }
     },
     enabled: !!dashboardData?.empresa_id,
   });
 
-  // Sincroniza estado temporário das metas
   useEffect(() => {
     if (dashboardData?.meta) {
       setTempMeta(dashboardData.meta);
     }
   }, [dashboardData]);
 
-  // --- LÓGICA DE EDIÇÃO LOCAL (Obras) ---
+  // --- LÓGICA DE EDIÇÃO ---
   const handleOpenLancamento = (open: boolean) => {
     if (open && dashboardData?.obras) {
       setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
@@ -250,7 +238,7 @@ const GestaoMetas = () => {
       if (updates.length > 0) {
         await Promise.all(updates);
         await queryClient.invalidateQueries({ queryKey: ["gestaoMetas"] });
-        toast({ title: `${updates.length} registros atualizados!` });
+        toast({ title: "Dados Sincronizados com Sucesso", className: "bg-emerald-600 text-white border-none" });
       } else {
         toast({ title: "Nenhuma alteração detectada." });
       }
@@ -258,7 +246,7 @@ const GestaoMetas = () => {
       setIsLancamentoModalOpen(false);
     } catch (error) {
       console.error(error);
-      toast({ title: "Erro ao salvar alterações", variant: "destructive" });
+      toast({ title: "Falha na Sincronização", variant: "destructive" });
     } finally {
       setIsSavingObras(false);
     }
@@ -277,17 +265,18 @@ const GestaoMetas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gestaoMetas"] });
-      toast({ title: "Metas atualizadas!" });
+      toast({ title: "Metas Operacionais Atualizadas", className: "bg-[#C7A347] text-white border-none" });
     },
     onError: () => toast({ title: "Erro ao salvar metas", variant: "destructive" }),
   });
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+
   const getNpsColor = (score: number) => {
-    if (score >= 9) return "bg-green-100 text-green-700 border-green-200";
-    if (score >= 7) return "bg-yellow-100 text-yellow-700 border-yellow-200";
-    return "bg-red-100 text-red-700 border-red-200";
+    if (score >= 9) return "bg-emerald-900/30 text-emerald-400 border-emerald-800";
+    if (score >= 7) return "bg-yellow-900/30 text-yellow-400 border-yellow-800";
+    return "bg-red-900/30 text-red-400 border-red-800";
   };
 
   // --- CÁLCULOS KPI ---
@@ -305,7 +294,7 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Squads (Usuários) com Dados GrifoWay
+  // Ranking Squads (Usuários)
   const rankingSquads = squads
     .map((squad) => {
       const obrasDoSquad = obrasConsideradas.filter((o) => o.usuario_id === squad.id);
@@ -317,7 +306,6 @@ const GestaoMetas = () => {
           ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
           : null;
 
-      // Pegar dados do GrifoWay (Dados Reais ou Fallback Limpo)
       const rankingInfo = rankings?.find((r) => r.user_id === squad.id);
 
       return {
@@ -350,7 +338,7 @@ const GestaoMetas = () => {
 
     rankingSquads.push({
       id: "sem-squad",
-      nome: "Sem Squad Definido",
+      nome: "Unidade Não Atribuída",
       faturamento: fat,
       lucro: luc,
       margem: fat > 0 ? (luc / fat) * 100 : 0,
@@ -366,491 +354,547 @@ const GestaoMetas = () => {
 
   if (isLoading)
     return (
-      <div className="flex justify-center items-center h-[80vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-[#C7A347]" />
+      <div className="flex justify-center items-center h-[80vh] bg-slate-950">
+        <Loader2 className="h-12 w-12 animate-spin text-[#C7A347]" />
       </div>
     );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      {/* --- HEADER --- */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold text-[#112131] flex items-center gap-2">
-            <Target className="h-6 w-6 text-[#C7A347]" />
-            Performance & Qualidade
-          </h1>
-          <p className="text-slate-500">Gestão estratégica de metas, squads e NPS.</p>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#C7A347] selection:text-black pb-20">
+      {/* --- COMMAND CENTER HEADER --- */}
+      <div className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-10 shadow-2xl">
+        <div className="max-w-[1600px] mx-auto p-4 md:p-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-4">
+              <img
+                src="https://qacaerwosglbayjfskyx.supabase.co/storage/v1/object/public/templates/GrifoStrikeForce.png"
+                alt="Grifo Strike Force"
+                className="h-16 md:h-20 object-contain drop-shadow-[0_0_15px_rgba(199,163,71,0.3)]"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-white tracking-wider uppercase flex items-center gap-2">
+                  Painel de Controle
+                </h1>
+                <p className="text-slate-400 text-xs tracking-widest uppercase">Performance & Elite Squads</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={anoSelecionado} onValueChange={setAnoSelecionado}>
+                <SelectTrigger className="w-[100px] h-10 bg-slate-800 border-slate-700 text-slate-200 focus:ring-[#C7A347]">
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                  <SelectItem value="2027">2027</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* BOTÃO CONFIGURAÇÕES */}
+              <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-10 gap-2 bg-slate-800 border-slate-700 text-slate-400 hover:text-[#C7A347] hover:border-[#C7A347] hover:bg-slate-900 transition-all uppercase text-xs tracking-wider font-bold"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Metas
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] bg-slate-900 border-slate-800 text-slate-100">
+                  <DialogHeader>
+                    <DialogTitle className="text-[#C7A347] uppercase tracking-widest flex items-center gap-2">
+                      <Crosshair className="h-5 w-5" /> Definição de Alvos
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-400">
+                      Parâmetros operacionais para {anoSelecionado}.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <Tabs defaultValue="metas" className="w-full mt-4">
+                    <TabsList className="grid w-full grid-cols-1 bg-slate-800">
+                      <TabsTrigger
+                        value="metas"
+                        className="data-[state=active]:bg-[#C7A347] data-[state=active]:text-black font-bold uppercase"
+                      >
+                        Metas Anuais
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="metas" className="space-y-6 py-4">
+                      <div className="grid gap-5">
+                        <div className="grid gap-2">
+                          <Label className="text-slate-300 uppercase text-xs">Meta de Faturamento (Anual)</Label>
+                          <div className="relative">
+                            <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                            <Input
+                              type="number"
+                              className="pl-9 bg-slate-950 border-slate-700 text-white font-mono"
+                              value={tempMeta.meta_faturamento}
+                              onChange={(e) =>
+                                setTempMeta({ ...tempMeta, meta_faturamento: parseFloat(e.target.value) || 0 })
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label className="text-slate-300 uppercase text-xs">Meta de Margem Líquida (%)</Label>
+                          <div className="relative">
+                            <TrendingUp className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                            <Input
+                              type="number"
+                              className="pl-9 bg-slate-950 border-slate-700 text-white font-mono"
+                              value={tempMeta.meta_margem_liquida}
+                              onChange={(e) =>
+                                setTempMeta({ ...tempMeta, meta_margem_liquida: parseFloat(e.target.value) || 0 })
+                              }
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => saveMetaMutation.mutate(tempMeta)}
+                          className="bg-[#C7A347] hover:bg-[#b08d3b] text-black w-full mt-2 gap-2 font-bold uppercase tracking-widest"
+                        >
+                          {saveMetaMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                          Salvar Diretrizes
+                        </Button>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+
+              {/* Botão Lançar Resultados */}
+              <Button
+                onClick={() => handleOpenLancamento(true)}
+                className="h-10 bg-[#C7A347] hover:bg-[#b08d3b] text-black gap-2 shadow-[0_0_15px_rgba(199,163,71,0.4)] transition-all hover:scale-105 font-bold uppercase tracking-widest"
+              >
+                <Edit3 className="h-4 w-4" /> Lançar Operação
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1600px] mx-auto p-4 md:p-6 space-y-8">
+        {/* --- KPI HUD --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* KPI 1: Faturamento */}
+          <Card className="bg-slate-900 border-slate-800 shadow-xl overflow-hidden relative group">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Target className="h-32 w-32 text-white" />
+            </div>
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C7A347]"></div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">
+                Faturamento Realizado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-mono font-bold text-white mb-2">{formatCurrency(totalFaturamento)}</div>
+
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-slate-500 uppercase">Target</span>
+                <span className="text-[#C7A347] font-mono">{formatCurrency(meta.meta_faturamento)}</span>
+              </div>
+              <Progress value={Math.min(percentualMeta, 100)} className="h-2 bg-slate-800 [&>*]:bg-[#C7A347]" />
+              <div className="mt-2 text-right text-xs text-slate-400 font-mono">
+                {percentualMeta.toFixed(1)}% Concluído
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* KPI 2: Margem */}
+          <Card className="bg-slate-900 border-slate-800 shadow-xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Activity className="h-32 w-32 text-emerald-500" />
+            </div>
+            <div
+              className={`absolute left-0 top-0 bottom-0 w-1 ${margemAtual >= meta.meta_margem_liquida ? "bg-emerald-500" : "bg-red-500"}`}
+            ></div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">
+                Margem Líquida
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`text-3xl font-mono font-bold mb-2 ${margemAtual >= meta.meta_margem_liquida ? "text-emerald-400" : "text-red-400"}`}
+              >
+                {margemAtual.toFixed(2)}%
+              </div>
+              <div className="text-xs text-slate-500 uppercase">
+                Alvo Estratégico: <span className="font-bold text-slate-300">{meta.meta_margem_liquida}%</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* KPI 3: Top Operator */}
+          <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-800 shadow-xl col-span-1 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between relative z-10">
+              <CardTitle className="text-xs font-bold text-[#C7A347] uppercase tracking-[0.2em] flex items-center gap-2">
+                <Trophy className="h-4 w-4" /> Top Operator
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative z-10">
+              {topSquad ? (
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-2xl font-bold text-white truncate border-b border-slate-700/50 pb-2 mb-2">
+                      {topSquad.nome}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase">Faturamento</p>
+                        <p className="text-sm font-mono text-slate-200">{formatCurrency(topSquad.faturamento)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase">Margem</p>
+                        <p
+                          className={`text-sm font-mono font-bold ${topSquad.margem >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-400"}`}
+                        >
+                          {topSquad.margem.toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-slate-600 text-sm py-4 italic">Sem dados de inteligência</div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* KPI 4: NPS */}
+          <Card className="bg-slate-900 border-slate-800 shadow-xl relative overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                <Star className="h-4 w-4 text-[#C7A347]" fill="currentColor" /> Qualidade Global (NPS)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end gap-2">
+                <div className="text-4xl font-mono font-bold text-white">{npsMedioEmpresa.toFixed(1)}</div>
+                <div className="text-sm text-slate-500 mb-1 font-mono">/ 10</div>
+              </div>
+              <div className="mt-3 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-600 to-[#C7A347]"
+                  style={{ width: `${npsMedioEmpresa * 10}%` }}
+                ></div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={anoSelecionado} onValueChange={setAnoSelecionado}>
-            <SelectTrigger className="w-[100px] h-10 border-slate-200">
-              <SelectValue placeholder="Ano" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
-              <SelectItem value="2027">2027</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* --- RANKING SWITCHER --- */}
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-3 uppercase tracking-wider">
+              <BarChart3 className="h-6 w-6 text-[#C7A347]" /> Ranking de Performance
+            </h2>
+            <div className="bg-slate-900 p-1 rounded-md border border-slate-800 flex items-center">
+              <button
+                onClick={() => setViewMode("squad")}
+                className={`px-6 py-2 text-xs font-bold rounded uppercase tracking-wider transition-all flex items-center gap-2 ${viewMode === "squad" ? "bg-[#C7A347] text-black shadow-lg" : "text-slate-500 hover:text-slate-300"}`}
+              >
+                <Shield className="h-3 w-3" /> Squads
+              </button>
+              <button
+                onClick={() => setViewMode("obra")}
+                className={`px-6 py-2 text-xs font-bold rounded uppercase tracking-wider transition-all flex items-center gap-2 ${viewMode === "obra" ? "bg-[#C7A347] text-black shadow-lg" : "text-slate-500 hover:text-slate-300"}`}
+              >
+                <LayoutGrid className="h-3 w-3" /> Obras
+              </button>
+            </div>
+          </div>
 
-          {/* BOTÃO ÚNICO DE CONFIGURAÇÕES */}
-          <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
-            <DialogTrigger asChild>
+          {viewMode === "squad" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rankingSquads.map((squad, index) => (
+                <div
+                  key={squad.id}
+                  className={`bg-slate-900 p-6 rounded-lg border hover:border-[#C7A347] transition-all relative group overflow-hidden ${index === 0 ? "border-[#C7A347]/50 shadow-[0_0_20px_rgba(199,163,71,0.1)]" : "border-slate-800"}`}
+                >
+                  {/* RANKING BADGE */}
+                  <div className="absolute top-0 right-0 p-0">
+                    <div
+                      className={`px-3 py-1 rounded-bl-lg text-[10px] font-bold uppercase tracking-widest ${index === 0 ? "bg-[#C7A347] text-black" : index === 1 ? "bg-slate-400 text-black" : index === 2 ? "bg-amber-800 text-white" : "bg-slate-800 text-slate-500"}`}
+                    >
+                      Rank #{index + 1}
+                    </div>
+                  </div>
+
+                  {/* GRIFO WAY RANKING CHIPS */}
+                  <div className="absolute top-10 right-3 flex flex-col items-end gap-1 opacity-80">
+                    {squad.ranking_empresa && (
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] bg-slate-950 border-slate-700 text-blue-400 gap-1 h-5"
+                      >
+                        <Trophy className="h-3 w-3" /> #{squad.ranking_empresa} Corp
+                      </Badge>
+                    )}
+                    {squad.ranking_geral && (
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] bg-slate-950 border-slate-700 text-[#C7A347] gap-1 h-5"
+                      >
+                        <Medal className="h-3 w-3" /> #{squad.ranking_geral} Geral
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="mb-6 pr-12">
+                    <h3 className="font-bold text-white text-lg truncate mb-1">{squad.nome}</h3>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="border-slate-700 text-slate-400 text-[10px]">
+                        {squad.qtd_obras} MISSÕES
+                      </Badge>
+                      <Badge variant="outline" className="border-[#C7A347]/30 text-[#C7A347] text-[10px]">
+                        {squad.contrib.toFixed(1)}% IMPACTO
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-slate-800">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500 text-xs uppercase tracking-wider">Faturamento</span>
+                      <span className="font-mono text-slate-200">{formatCurrency(squad.faturamento)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500 text-xs uppercase tracking-wider">Margem</span>
+                      <span
+                        className={`font-mono font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-500"}`}
+                      >
+                        {squad.margem.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500 text-xs uppercase tracking-wider flex items-center gap-1">
+                        <Star className="h-3 w-3" /> NPS
+                      </span>
+                      {squad.nps_medio !== null ? (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getNpsColor(squad.nps_medio)}`}>
+                          {squad.nps_medio.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-600">N/A</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {rankingSquads.length === 0 && (
+                <p className="col-span-full text-center text-slate-600 py-10 uppercase tracking-widest text-sm">
+                  Nenhum operador ativo no período.
+                </p>
+              )}
+            </div>
+          )}
+
+          {viewMode === "obra" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rankingObras.map((obra) => (
+                <div
+                  key={obra.id}
+                  className="bg-slate-900 p-5 rounded-lg border border-slate-800 hover:border-slate-600 transition-all flex flex-col gap-4 group"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3
+                        className="font-bold text-white truncate max-w-[180px] group-hover:text-[#C7A347] transition-colors"
+                        title={obra.nome_obra}
+                      >
+                        {obra.nome_obra}
+                      </h3>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wide mt-1 flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {squads.find((s) => s.id === obra.usuario_id)?.nome || "Não Atribuído"}
+                      </p>
+                    </div>
+                    {obra.nps !== null && (
+                      <div className={`px-2 py-1 rounded text-[10px] font-bold border ${getNpsColor(obra.nps)}`}>
+                        NPS {obra.nps}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-800/50">
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase mb-1">Faturamento</p>
+                      <p className="font-mono text-sm text-slate-300">{formatCurrency(obra.faturamento_realizado)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase mb-1">Lucro</p>
+                      <p className="font-mono text-sm text-slate-300">{formatCurrency(obra.lucro_realizado)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {rankingObras.length === 0 && (
+                <p className="col-span-full text-center text-slate-600 py-10 uppercase tracking-widest text-sm">
+                  Nenhuma missão ativa no período.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* --- MODAL DE LANÇAMENTO (MANTÉM UI MAIS LIMPA PARA EDIÇÃO, MAS COM TEMA DARK) --- */}
+        <Dialog open={isLancamentoModalOpen} onOpenChange={handleOpenLancamento}>
+          <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0 bg-slate-950 border-slate-800 text-slate-100">
+            <DialogHeader className="p-6 pb-2 border-b border-slate-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-xl uppercase tracking-wider text-[#C7A347] font-bold">
+                    Lançamento de Resultados - {anoSelecionado}
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-400">Atualização de status operacional.</DialogDescription>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest">Total Selecionado</p>
+                  <p className="text-lg font-mono font-bold text-white">{formatCurrency(totalFaturamento)}</p>
+                </div>
+              </div>
+            </DialogHeader>
+            <ScrollArea className="flex-1 p-6 bg-slate-900/50">
+              <div className="rounded-lg border border-slate-800 overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-slate-900">
+                    <TableRow className="border-slate-800 hover:bg-slate-900">
+                      <TableHead className="w-[50px] text-center text-slate-400">Ativa?</TableHead>
+                      <TableHead className="min-w-[150px] text-slate-400">Obra</TableHead>
+                      <TableHead className="w-[130px] text-slate-400">Início (Ano)</TableHead>
+                      <TableHead className="min-w-[150px] text-slate-400">Squad Responsável</TableHead>
+                      <TableHead className="w-[140px] text-slate-400">Faturamento</TableHead>
+                      <TableHead className="w-[140px] text-slate-400">Lucro</TableHead>
+                      <TableHead className="w-[90px] text-slate-400">NPS</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {localObras.map((obra) => (
+                      <TableRow
+                        key={obra.id}
+                        className={`border-slate-800 hover:bg-slate-900/50 ${!obra.considerar_na_meta ? "opacity-40 grayscale" : ""}`}
+                      >
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={obra.considerar_na_meta}
+                            onCheckedChange={(checked) => handleLocalChange(obra.id, "considerar_na_meta", checked)}
+                            className="data-[state=checked]:bg-[#C7A347]"
+                          />
+                        </TableCell>
+                        <TableCell className="font-bold text-slate-200">
+                          {obra.nome_obra}
+                          <div className="text-[10px] text-slate-500 uppercase">{obra.status}</div>
+                        </TableCell>
+
+                        <TableCell>
+                          <Input
+                            type="date"
+                            className="h-8 w-full text-xs bg-slate-950 border-slate-700 text-white"
+                            value={obra.data_inicio || ""}
+                            onChange={(e) => handleLocalChange(obra.id, "data_inicio", e.target.value)}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Select
+                            value={obra.usuario_id || "none"}
+                            onValueChange={(val) =>
+                              handleLocalChange(obra.id, "usuario_id", val === "none" ? null : val)
+                            }
+                          >
+                            <SelectTrigger className="h-8 text-xs bg-slate-950 border-slate-700 text-white w-full">
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                              <SelectItem value="none" className="text-slate-500 italic">
+                                Sem Squad
+                              </SelectItem>
+                              {squads.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+
+                        <TableCell>
+                          <Input
+                            type="number"
+                            placeholder="0,00"
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
+                            value={obra.faturamento_realizado === 0 ? "" : obra.faturamento_realizado}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                              handleLocalChange(obra.id, "faturamento_realizado", val);
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Input
+                            type="number"
+                            placeholder="0,00"
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
+                            value={obra.lucro_realizado === 0 ? "" : obra.lucro_realizado}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                              handleLocalChange(obra.id, "lucro_realizado", val);
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={10}
+                            className="h-8 text-center bg-slate-950 border-slate-700 text-white font-bold text-xs focus:border-[#C7A347]"
+                            placeholder="-"
+                            value={obra.nps !== null ? obra.nps : ""}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                              if (val !== null && (val < 0 || val > 10)) return;
+                              handleLocalChange(obra.id, "nps", val);
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+            <DialogFooter className="p-4 border-t border-slate-800 bg-slate-900 gap-2">
               <Button
                 variant="outline"
-                className="h-10 gap-2 text-slate-600 hover:text-[#C7A347] hover:border-[#C7A347]"
+                onClick={() => setIsLancamentoModalOpen(false)}
+                className="border-slate-700 text-slate-300 hover:bg-slate-800"
               >
-                <Settings className="h-4 w-4" />
-                Configurações
+                CANCELAR
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Configurações de Gestão</DialogTitle>
-                <DialogDescription>Defina as metas anuais da empresa.</DialogDescription>
-              </DialogHeader>
-
-              <Tabs defaultValue="metas" className="w-full mt-2">
-                <TabsList className="grid w-full grid-cols-1 bg-slate-100">
-                  <TabsTrigger value="metas">Metas Anuais</TabsTrigger>
-                </TabsList>
-
-                {/* ABA METAS */}
-                <TabsContent value="metas" className="space-y-4 py-4">
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label>Meta de Faturamento ({anoSelecionado})</Label>
-                      <Input
-                        type="number"
-                        value={tempMeta.meta_faturamento}
-                        onChange={(e) =>
-                          setTempMeta({ ...tempMeta, meta_faturamento: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Meta de Margem Líquida (%)</Label>
-                      <Input
-                        type="number"
-                        value={tempMeta.meta_margem_liquida}
-                        onChange={(e) =>
-                          setTempMeta({ ...tempMeta, meta_margem_liquida: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <Button
-                      onClick={() => saveMetaMutation.mutate(tempMeta)}
-                      className="bg-[#112131] w-full mt-2 gap-2"
-                    >
-                      {saveMetaMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4" />
-                      )}
-                      Salvar Metas
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </DialogContent>
-          </Dialog>
-
-          {/* Botão Lançar Resultados */}
-          <Button
-            onClick={() => handleOpenLancamento(true)}
-            className="h-10 bg-[#C7A347] hover:bg-[#b08d3b] text-white gap-2 shadow-md transition-all hover:scale-105"
-          >
-            <Edit3 className="h-4 w-4" /> Lançar Resultados
-          </Button>
-        </div>
-      </div>
-
-      {/* --- DASHBOARD VIEW --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 1: Faturamento */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-[#112131] to-[#1a334d] text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <DollarSign className="h-24 w-24" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-slate-300 uppercase tracking-wider">Faturamento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-1">{formatCurrency(totalFaturamento)}</div>
-
-            {/* Meta Alvo Destacada */}
-            <div className="flex items-center gap-2 mb-2 bg-white/10 p-1.5 rounded-md w-fit">
-              <span className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Meta:</span>
-              <span className="text-sm font-semibold text-[#C7A347]">{formatCurrency(meta.meta_faturamento)}</span>
-            </div>
-
-            <div className="flex justify-between items-center text-xs mt-2">
-              <span className="text-slate-300">Progresso</span>
-              <span>{percentualMeta.toFixed(1)}%</span>
-            </div>
-            <Progress value={Math.min(percentualMeta, 100)} className="h-1.5 bg-slate-700 mt-1 [&>*]:bg-[#C7A347]" />
-          </CardContent>
-        </Card>
-
-        {/* Card 2: Margem */}
-        <Card className="border-0 shadow-md bg-white">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Margem Líquida
-            </CardTitle>
-            <TrendingUp
-              className={margemAtual >= meta.meta_margem_liquida ? "h-4 w-4 text-green-500" : "h-4 w-4 text-red-500"}
-            />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold mb-1 ${margemAtual >= meta.meta_margem_liquida ? "text-green-600" : "text-red-600"}`}
-            >
-              {margemAtual.toFixed(2)}%
-            </div>
-            <div className="text-xs text-slate-500">
-              Meta Alvo: <span className="font-bold">{meta.meta_margem_liquida}%</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 3: Top Squad (DETALHADO) */}
-        <Card className="border-0 shadow-md bg-white col-span-1">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">Top 1 Squad</CardTitle>
-            {topSquad && (
-              <Badge className="bg-[#C7A347] text-white hover:bg-[#b08d3b] text-[10px] px-1.5">Campeão</Badge>
-            )}
-          </CardHeader>
-          <CardContent>
-            {topSquad ? (
-              <div className="space-y-3">
-                <div className="text-xl font-bold text-[#112131] truncate border-b border-slate-100 pb-2">
-                  {topSquad.nome}
-                </div>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-3">
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase">Faturamento</p>
-                    <p className="text-sm font-bold text-[#112131]">{formatCurrency(topSquad.faturamento)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase">Lucro Líq.</p>
-                    <p className="text-sm font-bold text-green-600">{formatCurrency(topSquad.lucro)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase">Margem</p>
-                    <p
-                      className={`text-sm font-bold ${topSquad.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-500"}`}
-                    >
-                      {topSquad.margem.toFixed(1)}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase">NPS Médio</p>
-                    {topSquad.nps_medio !== null ? (
-                      <Badge variant="outline" className={`${getNpsColor(topSquad.nps_medio)} text-[10px] px-1 h-5`}>
-                        {topSquad.nps_medio.toFixed(1)}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-slate-300">-</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-slate-400 text-sm py-4">Sem dados suficientes</div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Card 4: NPS Médio Geral */}
-        <Card className="border-0 shadow-md bg-white">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">NPS Global</CardTitle>
-            <Star className="h-4 w-4 text-amber-400" fill="currentColor" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-2">
-              <div className="text-3xl font-bold text-[#112131]">{npsMedioEmpresa.toFixed(1)}</div>
-              <div className="text-xs text-slate-400 mb-1">/ 10</div>
-            </div>
-            <div className="text-[10px] text-slate-400 mt-1">Média ponderada da empresa</div>
-            <div className="mt-3">
-              <Progress value={npsMedioEmpresa * 10} className="h-1.5 bg-slate-100 [&>*]:bg-amber-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* --- RANKING SWITCHER --- */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="text-lg font-bold text-[#112131] flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-[#C7A347]" /> Ranking de Performance
-          </h2>
-          <div className="bg-slate-100 p-1 rounded-lg flex items-center">
-            <button
-              onClick={() => setViewMode("squad")}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "squad" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
-            >
-              <Users className="h-3 w-3" /> Squads
-            </button>
-            <button
-              onClick={() => setViewMode("obra")}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "obra" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
-            >
-              <LayoutGrid className="h-3 w-3" /> Obras
-            </button>
-          </div>
-        </div>
-
-        {viewMode === "squad" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rankingSquads.map((squad) => (
-              <div
-                key={squad.id}
-                className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
+              <Button
+                onClick={handleSaveAll}
+                className="bg-[#C7A347] hover:bg-[#b08d3b] text-black w-full sm:w-auto min-w-[120px] font-bold uppercase tracking-widest"
+                disabled={isSavingObras}
               >
-                {/* DESTAQUE DE RANKING (Novo) */}
-                <div className="absolute top-0 right-0 p-3 flex flex-col items-end gap-1">
-                  {squad.ranking_empresa && (
-                    <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 border-blue-100 gap-1">
-                      <Trophy className="h-3 w-3" />#{squad.ranking_empresa} Empresa
-                    </Badge>
-                  )}
-                  {squad.ranking_geral && (
-                    <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-200 gap-1">
-                      <Medal className="h-3 w-3" />#{squad.ranking_geral} Geral
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-start mb-4 pr-16">
-                  <div>
-                    <h3 className="font-bold text-[#112131] text-lg truncate max-w-[150px]" title={squad.nome}>
-                      {squad.nome}
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      {squad.qtd_obras} obras em {anoSelecionado}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Faturamento</span>
-                    <span className="font-semibold text-[#112131]">{formatCurrency(squad.faturamento)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Margem Liq.</span>
-                    <span
-                      className={`font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-600"}`}
-                    >
-                      {squad.margem.toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-2 mt-2">
-                    <span className="text-slate-500 flex items-center gap-1">
-                      <Star className="h-3 w-3" /> NPS Médio
-                    </span>
-                    {squad.nps_medio !== null ? (
-                      <Badge variant="outline" className={getNpsColor(squad.nps_medio)}>
-                        {squad.nps_medio.toFixed(1)}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-slate-400">N/A</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {rankingSquads.length === 0 && (
-              <p className="col-span-full text-center text-slate-400 py-10">
-                Nenhum resultado encontrado em {anoSelecionado}.
-              </p>
-            )}
-          </div>
-        )}
-
-        {viewMode === "obra" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rankingObras.map((obra) => (
-              <div
-                key={obra.id}
-                className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col gap-3"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-[#112131] truncate max-w-[180px]" title={obra.nome_obra}>
-                      {obra.nome_obra}
-                    </h3>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
-                      {squads.find((s) => s.id === obra.usuario_id)?.nome || "Sem Squad"}
-                    </p>
-                  </div>
-                  {obra.nps !== null && (
-                    <Badge variant="outline" className={`${getNpsColor(obra.nps)} font-bold`}>
-                      NPS {obra.nps}
-                    </Badge>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-2 pt-3 border-t border-slate-50">
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase">Faturamento</p>
-                    <p className="font-semibold text-slate-700">{formatCurrency(obra.faturamento_realizado)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase">Lucro</p>
-                    <p className="font-semibold text-slate-700">{formatCurrency(obra.lucro_realizado)}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {rankingObras.length === 0 && (
-              <p className="col-span-full text-center text-slate-400 py-10">Nenhuma obra em {anoSelecionado}.</p>
-            )}
-          </div>
-        )}
+                {isSavingObras ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                CONFIRMAR DADOS
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* --- MODAL DE LANÇAMENTO (TABELA COMPLETA COM ESTADO LOCAL) --- */}
-      <Dialog open={isLancamentoModalOpen} onOpenChange={handleOpenLancamento}>
-        <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="p-6 pb-2 border-b border-slate-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-xl">Lançamento de Resultados - {anoSelecionado}</DialogTitle>
-                <DialogDescription>Edite os dados e clique em "Concluir" para salvar.</DialogDescription>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-slate-400 uppercase">Total Selecionado</p>
-                <p className="text-lg font-bold text-[#C7A347]">{formatCurrency(totalFaturamento)}</p>
-              </div>
-            </div>
-          </DialogHeader>
-          <ScrollArea className="flex-1 p-6 bg-slate-50/50">
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="w-[50px] text-center">Ativa?</TableHead>
-                    <TableHead className="min-w-[150px]">Obra</TableHead>
-                    <TableHead className="w-[130px]">Início (Ano)</TableHead>
-                    <TableHead className="min-w-[150px]">Squad</TableHead>
-                    <TableHead className="w-[140px]">Faturamento</TableHead>
-                    <TableHead className="w-[140px]">Lucro</TableHead>
-                    <TableHead className="w-[90px]">NPS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {localObras.map((obra) => (
-                    <TableRow key={obra.id} className={!obra.considerar_na_meta ? "opacity-50 bg-slate-50" : ""}>
-                      <TableCell className="text-center">
-                        <Switch
-                          checked={obra.considerar_na_meta}
-                          onCheckedChange={(checked) => handleLocalChange(obra.id, "considerar_na_meta", checked)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium text-slate-700">
-                        {obra.nome_obra}
-                        <div className="text-[10px] text-slate-400 uppercase">{obra.status}</div>
-                      </TableCell>
-
-                      <TableCell>
-                        <Input
-                          type="date"
-                          className="h-8 w-full text-xs bg-white"
-                          value={obra.data_inicio || ""}
-                          onChange={(e) => handleLocalChange(obra.id, "data_inicio", e.target.value)}
-                        />
-                      </TableCell>
-
-                      <TableCell>
-                        <Select
-                          value={obra.usuario_id || "none"}
-                          onValueChange={(val) => handleLocalChange(obra.id, "usuario_id", val === "none" ? null : val)}
-                        >
-                          <SelectTrigger className="h-8 text-xs bg-white w-full">
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none" className="text-slate-400 italic">
-                              Sem Squad
-                            </SelectItem>
-                            {squads.map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-
-                      <TableCell>
-                        <Input
-                          type="number"
-                          placeholder="0,00"
-                          className="h-8 text-right bg-white font-mono text-xs"
-                          value={obra.faturamento_realizado === 0 ? "" : obra.faturamento_realizado}
-                          onChange={(e) => {
-                            const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                            handleLocalChange(obra.id, "faturamento_realizado", val);
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell>
-                        <Input
-                          type="number"
-                          placeholder="0,00"
-                          className="h-8 text-right bg-white font-mono text-xs"
-                          value={obra.lucro_realizado === 0 ? "" : obra.lucro_realizado}
-                          onChange={(e) => {
-                            const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                            handleLocalChange(obra.id, "lucro_realizado", val);
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={10}
-                          className="h-8 text-center bg-white font-bold text-xs"
-                          placeholder="-"
-                          value={obra.nps !== null ? obra.nps : ""}
-                          onChange={(e) => {
-                            const val = e.target.value === "" ? null : parseFloat(e.target.value);
-                            if (val !== null && (val < 0 || val > 10)) return;
-                            handleLocalChange(obra.id, "nps", val);
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </ScrollArea>
-          <DialogFooter className="p-4 border-t border-slate-100 bg-white gap-2">
-            <Button variant="outline" onClick={() => setIsLancamentoModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSaveAll}
-              className="bg-[#112131] w-full sm:w-auto min-w-[120px]"
-              disabled={isSavingObras}
-            >
-              {isSavingObras ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-              Concluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
