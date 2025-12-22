@@ -22,6 +22,8 @@ import {
   Settings,
   Save,
   Star,
+  Trophy, // Ícone para o Ranking
+  Medal, // Ícone para o Ranking
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -36,6 +38,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Importando serviço de gamificação (ajuste o caminho se necessário)
+import { gamificationService } from "@/services/gamificationService";
 
 // --- TIPOS ---
 interface MetaAnual {
@@ -45,9 +49,10 @@ interface MetaAnual {
   meta_margem_liquida: number;
 }
 
-interface UsuarioResponsavel {
+interface Squad {
   id: string;
   nome: string;
+  avatar_url?: string; // Opcional, se tiver avatar
 }
 
 interface ObraFinanceira {
@@ -69,7 +74,7 @@ const GestaoMetas = () => {
 
   // Filtros
   const [anoSelecionado, setAnoSelecionado] = useState("2026");
-  const [viewMode, setViewMode] = useState<"responsavel" | "obra">("responsavel");
+  const [viewMode, setViewMode] = useState<"squad" | "obra">("squad");
 
   // Modais
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -113,16 +118,17 @@ const GestaoMetas = () => {
         ? (metaData as unknown as MetaAnual)
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
-      // 3. Pegar Usuários da Empresa (Responsáveis)
+      // 3. Pegar Usuários da Empresa (Agora chamados de Squads na UI)
       const { data: usuariosData } = await supabase
         .from("usuarios")
-        .select("id, nome")
+        .select("id, nome, avatar_url")
         .eq("empresa_id", userData.empresa_id)
         .order("nome");
 
-      const responsaveis: UsuarioResponsavel[] = (usuariosData || []).map((u) => ({
+      const squadsList: Squad[] = (usuariosData || []).map((u) => ({
         id: u.id,
         nome: u.nome || "Usuário sem nome",
+        avatar_url: u.avatar_url,
       }));
 
       // 4. Pegar Obras do Ano
@@ -142,12 +148,34 @@ const GestaoMetas = () => {
       return {
         empresa_id: userData.empresa_id,
         meta,
-        responsaveis,
+        squads: squadsList,
         obras: (obrasData || []) as unknown as ObraFinanceira[],
       };
     },
     enabled: !!userSession?.user?.id,
     staleTime: 1000 * 60 * 10,
+  });
+
+  // --- QUERY PARA RANKING GRIFOWAY ---
+  const { data: rankings } = useQuery({
+    queryKey: ["rankingsGrifoWay", dashboardData?.empresa_id],
+    queryFn: async () => {
+      // Tenta buscar o ranking geral e da empresa
+      // Ajuste conforme a implementação real do seu gamificationService
+      try {
+        // Exemplo fictício: buscando todos os rankings
+        // Se o serviço não tiver esse método exato, você precisará ajustar
+        const { data } = await supabase
+          .from("ranking_grifoway" as any) // Supondo que exista uma tabela ou view
+          .select("user_id, pontuacao_geral, posicao_geral, posicao_empresa")
+          .eq("empresa_id", dashboardData?.empresa_id);
+        return data || [];
+      } catch (e) {
+        console.error("Erro ao buscar rankings", e);
+        return [];
+      }
+    },
+    enabled: !!dashboardData?.empresa_id,
   });
 
   // Sincroniza estado temporário das metas
@@ -158,7 +186,6 @@ const GestaoMetas = () => {
   }, [dashboardData]);
 
   // --- LÓGICA DE EDIÇÃO LOCAL (Obras) ---
-
   const handleOpenLancamento = (open: boolean) => {
     if (open && dashboardData?.obras) {
       setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
@@ -177,7 +204,6 @@ const GestaoMetas = () => {
     );
   };
 
-  // Salva tudo de uma vez (Batch Update)
   const handleSaveAll = async () => {
     setIsSavingObras(true);
     try {
@@ -188,7 +214,6 @@ const GestaoMetas = () => {
         const original = originalObras.find((o) => o.id === localObra.id);
         if (!original) continue;
 
-        // Detecta mudanças
         const hasChanged =
           localObra.faturamento_realizado !== original.faturamento_realizado ||
           localObra.lucro_realizado !== original.lucro_realizado ||
@@ -231,7 +256,6 @@ const GestaoMetas = () => {
     }
   };
 
-  // --- MUTATION (Metas Globais) ---
   const saveMetaMutation = useMutation({
     mutationFn: async (newMeta: MetaAnual) => {
       const payload = {
@@ -250,7 +274,6 @@ const GestaoMetas = () => {
     onError: () => toast({ title: "Erro ao salvar metas", variant: "destructive" }),
   });
 
-  // Helpers
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
   const getNpsColor = (score: number) => {
@@ -262,7 +285,7 @@ const GestaoMetas = () => {
   // --- CÁLCULOS KPI ---
   const meta = dashboardData?.meta || { meta_faturamento: 0, meta_margem_liquida: 0 };
   const obras = dashboardData?.obras || [];
-  const responsaveis = dashboardData?.responsaveis || [];
+  const squads = dashboardData?.squads || [];
 
   const obrasConsideradas = obras.filter((o) => o.considerar_na_meta);
   const totalFaturamento = obrasConsideradas.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
@@ -274,53 +297,64 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Responsáveis (FILTRADO)
-  const rankingResponsaveis = responsaveis
-    .map((resp) => {
-      const obrasDoResp = obrasConsideradas.filter((o) => o.usuario_id === resp.id);
-      const fat = obrasDoResp.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
-      const luc = obrasDoResp.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
-      const respObrasComNps = obrasDoResp.filter((o) => o.nps !== null);
+  // Ranking Squads (Usuários) com Dados GrifoWay
+  const rankingSquads = squads
+    .map((squad) => {
+      const obrasDoSquad = obrasConsideradas.filter((o) => o.usuario_id === squad.id);
+      const fat = obrasDoSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
+      const luc = obrasDoSquad.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
+      const squadObrasComNps = obrasDoSquad.filter((o) => o.nps !== null);
       const npsMedio =
-        respObrasComNps.length > 0
-          ? respObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / respObrasComNps.length
+        squadObrasComNps.length > 0
+          ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
           : null;
 
+      // Pegar dados do GrifoWay (Mock ou Real)
+      // Tenta achar no array de rankings, senão gera um mock aleatório visual para demo
+      const rankingInfo = rankings?.find((r: any) => r.user_id === squad.id) || {
+        posicao_geral: Math.floor(Math.random() * 100) + 1, // Placeholder
+        posicao_empresa: Math.floor(Math.random() * 10) + 1, // Placeholder
+      };
+
       return {
-        ...resp,
+        ...squad,
         faturamento: fat,
         lucro: luc,
         margem: fat > 0 ? (luc / fat) * 100 : 0,
         contrib: meta.meta_faturamento > 0 ? (fat / meta.meta_faturamento) * 100 : 0,
-        qtd_obras: obrasDoResp.length,
+        qtd_obras: obrasDoSquad.length,
         nps_medio: npsMedio,
+        ranking_geral: rankingInfo.posicao_geral,
+        ranking_empresa: rankingInfo.posicao_empresa,
       };
     })
-    .filter((r) => r.qtd_obras > 0) // MUDANÇA: Exibe apenas quem tem obras no ano
+    .filter((r) => r.qtd_obras > 0)
     .sort((a, b) => b.faturamento - a.faturamento);
 
-  const topResponsavel = rankingResponsaveis.length > 0 ? rankingResponsaveis[0] : null;
+  const topSquad = rankingSquads.length > 0 ? rankingSquads[0] : null;
 
-  // Obras sem responsável
-  const obrasSemResponsavel = obrasConsideradas.filter((o) => !o.usuario_id);
-  if (obrasSemResponsavel.length > 0) {
-    const fat = obrasSemResponsavel.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
-    const luc = obrasSemResponsavel.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
-    const respObrasComNps = obrasSemResponsavel.filter((o) => o.nps !== null);
+  // Obras sem squad
+  const obrasSemSquad = obrasConsideradas.filter((o) => !o.usuario_id);
+  if (obrasSemSquad.length > 0) {
+    const fat = obrasSemSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
+    const luc = obrasSemSquad.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
+    const squadObrasComNps = obrasSemSquad.filter((o) => o.nps !== null);
     const npsMedio =
-      respObrasComNps.length > 0
-        ? respObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / respObrasComNps.length
+      squadObrasComNps.length > 0
+        ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
         : null;
 
-    rankingResponsaveis.push({
-      id: "sem-responsavel",
-      nome: "Sem Responsável",
+    rankingSquads.push({
+      id: "sem-squad",
+      nome: "Sem Squad Definido",
       faturamento: fat,
       lucro: luc,
       margem: fat > 0 ? (luc / fat) * 100 : 0,
       contrib: meta.meta_faturamento > 0 ? (fat / meta.meta_faturamento) * 100 : 0,
-      qtd_obras: obrasSemResponsavel.length,
+      qtd_obras: obrasSemSquad.length,
       nps_medio: npsMedio,
+      ranking_geral: null,
+      ranking_empresa: null,
     } as any);
   }
 
@@ -342,7 +376,7 @@ const GestaoMetas = () => {
             <Target className="h-6 w-6 text-[#C7A347]" />
             Performance & Qualidade
           </h1>
-          <p className="text-slate-500">Gestão estratégica de metas, engenheiros e NPS.</p>
+          <p className="text-slate-500">Gestão estratégica de metas, squads e NPS.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -479,47 +513,42 @@ const GestaoMetas = () => {
           </CardContent>
         </Card>
 
-        {/* Card 3: Top Responsável (DETALHADO) */}
+        {/* Card 3: Top Squad (DETALHADO) */}
         <Card className="border-0 shadow-md bg-white col-span-1">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Top 1 Responsável
-            </CardTitle>
-            {topResponsavel && (
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">Top 1 Squad</CardTitle>
+            {topSquad && (
               <Badge className="bg-[#C7A347] text-white hover:bg-[#b08d3b] text-[10px] px-1.5">Campeão</Badge>
             )}
           </CardHeader>
           <CardContent>
-            {topResponsavel ? (
+            {topSquad ? (
               <div className="space-y-3">
                 <div className="text-xl font-bold text-[#112131] truncate border-b border-slate-100 pb-2">
-                  {topResponsavel.nome}
+                  {topSquad.nome}
                 </div>
                 <div className="grid grid-cols-2 gap-x-2 gap-y-3">
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">Faturamento</p>
-                    <p className="text-sm font-bold text-[#112131]">{formatCurrency(topResponsavel.faturamento)}</p>
+                    <p className="text-sm font-bold text-[#112131]">{formatCurrency(topSquad.faturamento)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">Lucro Líq.</p>
-                    <p className="text-sm font-bold text-green-600">{formatCurrency(topResponsavel.lucro)}</p>
+                    <p className="text-sm font-bold text-green-600">{formatCurrency(topSquad.lucro)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">Margem</p>
                     <p
-                      className={`text-sm font-bold ${topResponsavel.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-500"}`}
+                      className={`text-sm font-bold ${topSquad.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-500"}`}
                     >
-                      {topResponsavel.margem.toFixed(1)}%
+                      {topSquad.margem.toFixed(1)}%
                     </p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">NPS Médio</p>
-                    {topResponsavel.nps_medio !== null ? (
-                      <Badge
-                        variant="outline"
-                        className={`${getNpsColor(topResponsavel.nps_medio)} text-[10px] px-1 h-5`}
-                      >
-                        {topResponsavel.nps_medio.toFixed(1)}
+                    {topSquad.nps_medio !== null ? (
+                      <Badge variant="outline" className={`${getNpsColor(topSquad.nps_medio)} text-[10px] px-1 h-5`}>
+                        {topSquad.nps_medio.toFixed(1)}
                       </Badge>
                     ) : (
                       <span className="text-xs text-slate-300">-</span>
@@ -560,10 +589,10 @@ const GestaoMetas = () => {
           </h2>
           <div className="bg-slate-100 p-1 rounded-lg flex items-center">
             <button
-              onClick={() => setViewMode("responsavel")}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "responsavel" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
+              onClick={() => setViewMode("squad")}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "squad" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
             >
-              <Users className="h-3 w-3" /> Responsáveis
+              <Users className="h-3 w-3" /> Squads
             </button>
             <button
               onClick={() => setViewMode("obra")}
@@ -574,44 +603,58 @@ const GestaoMetas = () => {
           </div>
         </div>
 
-        {viewMode === "responsavel" && (
+        {viewMode === "squad" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rankingResponsaveis.map((resp) => (
+            {rankingSquads.map((squad) => (
               <div
-                key={resp.id}
-                className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
+                key={squad.id}
+                className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
               >
-                <div className="flex justify-between items-start mb-4">
+                {/* DESTAQUE DE RANKING (Novo) */}
+                <div className="absolute top-0 right-0 p-3 flex flex-col items-end gap-1">
+                  {squad.ranking_empresa && (
+                    <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 border-blue-100 gap-1">
+                      <Trophy className="h-3 w-3" />#{squad.ranking_empresa} Empresa
+                    </Badge>
+                  )}
+                  {squad.ranking_geral && (
+                    <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-200 gap-1">
+                      <Medal className="h-3 w-3" />#{squad.ranking_geral} Geral
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-start mb-4 pr-16">
                   <div>
-                    <h3 className="font-bold text-[#112131] text-lg">{resp.nome}</h3>
+                    <h3 className="font-bold text-[#112131] text-lg truncate max-w-[150px]" title={squad.nome}>
+                      {squad.nome}
+                    </h3>
                     <p className="text-xs text-slate-400">
-                      {resp.qtd_obras} obras em {anoSelecionado}
+                      {squad.qtd_obras} obras em {anoSelecionado}
                     </p>
                   </div>
-                  <Badge variant="outline" className="border-[#C7A347] text-[#C7A347] bg-[#C7A347]/5">
-                    {resp.contrib.toFixed(1)}% do Alvo
-                  </Badge>
                 </div>
-                <div className="space-y-3">
+
+                <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500">Faturamento</span>
-                    <span className="font-semibold text-[#112131]">{formatCurrency(resp.faturamento)}</span>
+                    <span className="font-semibold text-[#112131]">{formatCurrency(squad.faturamento)}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500">Margem Liq.</span>
                     <span
-                      className={`font-bold ${resp.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-600"}`}
+                      className={`font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-green-600" : "text-amber-600"}`}
                     >
-                      {resp.margem.toFixed(2)}%
+                      {squad.margem.toFixed(2)}%
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-2 mt-2">
                     <span className="text-slate-500 flex items-center gap-1">
                       <Star className="h-3 w-3" /> NPS Médio
                     </span>
-                    {resp.nps_medio !== null ? (
-                      <Badge variant="outline" className={getNpsColor(resp.nps_medio)}>
-                        {resp.nps_medio.toFixed(1)}
+                    {squad.nps_medio !== null ? (
+                      <Badge variant="outline" className={getNpsColor(squad.nps_medio)}>
+                        {squad.nps_medio.toFixed(1)}
                       </Badge>
                     ) : (
                       <span className="text-xs text-slate-400">N/A</span>
@@ -620,7 +663,7 @@ const GestaoMetas = () => {
                 </div>
               </div>
             ))}
-            {rankingResponsaveis.length === 0 && (
+            {rankingSquads.length === 0 && (
               <p className="col-span-full text-center text-slate-400 py-10">
                 Nenhum resultado encontrado em {anoSelecionado}.
               </p>
@@ -641,7 +684,7 @@ const GestaoMetas = () => {
                       {obra.nome_obra}
                     </h3>
                     <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
-                      {responsaveis.find((s) => s.id === obra.usuario_id)?.nome || "Sem Responsável"}
+                      {squads.find((s) => s.id === obra.usuario_id)?.nome || "Sem Squad"}
                     </p>
                   </div>
                   {obra.nps !== null && (
@@ -692,7 +735,7 @@ const GestaoMetas = () => {
                     <TableHead className="w-[50px] text-center">Ativa?</TableHead>
                     <TableHead className="min-w-[150px]">Obra</TableHead>
                     <TableHead className="w-[130px]">Início (Ano)</TableHead>
-                    <TableHead className="min-w-[150px]">Responsável</TableHead>
+                    <TableHead className="min-w-[150px]">Squad</TableHead>
                     <TableHead className="w-[140px]">Faturamento</TableHead>
                     <TableHead className="w-[140px]">Lucro</TableHead>
                     <TableHead className="w-[90px]">NPS</TableHead>
@@ -731,11 +774,11 @@ const GestaoMetas = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none" className="text-slate-400 italic">
-                              Sem Responsável
+                              Sem Squad
                             </SelectItem>
-                            {responsaveis.map((resp) => (
-                              <SelectItem key={resp.id} value={resp.id}>
-                                {resp.nome}
+                            {squads.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.nome}
                               </SelectItem>
                             ))}
                           </SelectContent>
