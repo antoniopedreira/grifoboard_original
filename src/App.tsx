@@ -17,6 +17,7 @@ import Playbook from "@/pages/Playbook";
 import Marketplace from "@/pages/Marketplace";
 import PortalParceiro from "@/pages/PortalParceiro";
 import GrifoWay from "@/pages/GrifoWay";
+import GrifoAI from "@/pages/GrifoAI"; // <--- IMPORT NOVO
 import FormProfissionais from "@/pages/form/Profissionais";
 import FormEmpresas from "@/pages/form/Empresas";
 import FormFornecedores from "@/pages/form/Fornecedores";
@@ -113,13 +114,13 @@ const RouteRestorer = () => {
   useEffect(() => {
     // Não salva se logout em progresso
     if (localStorage.getItem("logging_out") === "true") return;
-    
+
     // Não salva se não tem usuário logado
     if (!userSession?.user) return;
-    
+
     // Lista de rotas que não devem ser salvas
     const excludedRoutes = ["/auth", "/reset-password", "/portal-parceiro", "/master-admin"];
-    
+
     if (!excludedRoutes.includes(location.pathname)) {
       sessionStorage.setItem("lastRoute", location.pathname);
     }
@@ -162,6 +163,7 @@ function App() {
                         <Route path="/playbook" element={<Playbook />} />
                         <Route path="/marketplace" element={<Marketplace />} />
                         <Route path="/grifoway" element={<GrifoWay />} />
+                        <Route path="/grifo-ai" element={<GrifoAI />} /> {/* <--- ROTA NOVA */}
                         <Route path="/portal-parceiro" element={<PortalParceiro />} />
                         <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                         <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
