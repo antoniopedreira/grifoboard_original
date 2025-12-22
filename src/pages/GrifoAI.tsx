@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown"; // <--- NOVO IMPORT
+import remarkGfm from "remark-gfm"; // <--- NOVO IMPORT
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,57 +85,50 @@ const GrifoAI = () => {
     setInput("");
     setLoading(true);
 
-    // Adiciona otimista na UI
     const tempUserMsg: Message = { role: "user", content: userMessageContent };
     setMessages((prev) => [...prev, tempUserMsg]);
 
     try {
-      // 1. Salvar mensagem do usuário no Banco
       await supabase.from("grifo_chat_messages" as any).insert({
         user_id: userSession.user.id,
         role: "user",
         content: userMessageContent,
       });
 
-      // 2. Chamar a IA (Edge Function)
-      // CORREÇÃO CRÍTICA AQUI: Enviando chat_id e user_id
       const { data, error } = await supabase.functions.invoke("grifo-ai", {
         body: {
           query: userMessageContent,
           user_id: userSession.user.id,
-          chat_id: userSession.user.id, // Usamos user_id como session_id para o histórico no n8n
+          chat_id: userSession.user.id,
         },
       });
 
       let aiResponse = "";
 
       if (error) {
-        console.warn("Edge Function não configurada ou erro:", error);
+        console.warn("Edge Function erro:", error);
         aiResponse = "⚠️ Erro de conexão com o GrifoMind. Verifique se o n8n está ativo.";
       } else {
-        // Se a Edge Function retornar erro no JSON (ex: erro do n8n), tratamos aqui
         if (data?.error) {
-          console.error("Erro retornado pela Edge Function:", data.error);
+          console.error("Erro Edge:", data.error);
           aiResponse = "Ocorreu um erro no processamento da sua pergunta. Tente novamente.";
         } else {
           aiResponse = data?.answer || "Não encontrei essa informação.";
         }
       }
 
-      // 3. Salvar resposta da IA no Banco
       await supabase.from("grifo_chat_messages" as any).insert({
         user_id: userSession.user.id,
         role: "assistant",
         content: aiResponse,
       });
 
-      // 4. Atualizar UI com a resposta real
       setMessages((prev) => [...prev, { role: "assistant", content: aiResponse }]);
     } catch (error) {
-      console.error("Erro no fluxo:", error);
+      console.error("Erro fluxo:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar a mensagem ou conectar à IA.",
+        description: "Falha na comunicação.",
         variant: "destructive",
       });
     } finally {
@@ -157,10 +152,10 @@ const GrifoAI = () => {
           content: "Histórico limpo. Como posso ajudar agora?",
         },
       ]);
-      toast({ title: "Histórico apagado com sucesso." });
+      toast({ title: "Histórico apagado." });
     } catch (error) {
       console.error(error);
-      toast({ title: "Erro ao limpar histórico", variant: "destructive" });
+      toast({ title: "Erro ao limpar", variant: "destructive" });
     }
   };
 
@@ -195,9 +190,7 @@ const GrifoAI = () => {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Apagar histórico?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Isso removerá permanentemente todas as mensagens desta conversa.
-              </AlertDialogDescription>
+              <AlertDialogDescription>Isso removerá permanentemente todas as mensagens.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -220,26 +213,67 @@ const GrifoAI = () => {
             <div className="space-y-6">
               {messages.map((msg, index) => (
                 <div key={index} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  {/* Avatar do Robô (Esquerda) */}
                   {msg.role === "assistant" && (
-                    <Avatar className="h-8 w-8 border border-slate-200 mt-1">
+                    <Avatar className="h-8 w-8 border border-slate-200 mt-1 flex-shrink-0">
                       <AvatarFallback className="bg-[#112131] text-[#C7A347]">
                         <Bot className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
                   )}
 
-                  <div
-                    className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${
-                      msg.role === "user"
-                        ? "bg-[#112131] text-white rounded-tr-none"
-                        : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
+                  {/* Balão de Mensagem */}
+                  {msg.role === "assistant" ? (
+                    // --- ASSISTENTE (Markdown Renderizado) ---
+                    <div className="max-w-[85%] sm:max-w-[75%] p-4 rounded-2xl rounded-tl-none bg-white text-slate-700 border border-slate-100 shadow-sm text-sm leading-relaxed overflow-hidden">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        className="prose prose-sm prose-slate max-w-none break-words"
+                        components={{
+                          // Customização dos elementos Markdown para ficarem bonitos
+                          strong: ({ node, ...props }) => <span className="font-bold text-slate-900" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
+                          ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
+                          li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                          p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                          a: ({ node, ...props }) => (
+                            <a
+                              className="text-blue-600 hover:underline font-medium"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              {...props}
+                            />
+                          ),
+                          h1: ({ node, ...props }) => (
+                            <h1 className="text-lg font-bold text-[#112131] mt-4 mb-2" {...props} />
+                          ),
+                          h2: ({ node, ...props }) => (
+                            <h2 className="text-base font-bold text-[#112131] mt-3 mb-2" {...props} />
+                          ),
+                          h3: ({ node, ...props }) => (
+                            <h3 className="text-sm font-bold text-[#112131] mt-2 mb-1" {...props} />
+                          ),
+                          code: ({ node, ...props }) => (
+                            <code
+                              className="bg-slate-100 px-1 py-0.5 rounded text-xs font-mono text-red-500"
+                              {...props}
+                            />
+                          ),
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    // --- USUÁRIO (Texto Simples) ---
+                    <div className="max-w-[85%] sm:max-w-[75%] p-4 rounded-2xl rounded-tr-none bg-[#112131] text-white shadow-sm text-sm leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </div>
+                  )}
 
+                  {/* Avatar do Usuário (Direita) */}
                   {msg.role === "user" && (
-                    <Avatar className="h-8 w-8 border border-slate-200 mt-1">
+                    <Avatar className="h-8 w-8 border border-slate-200 mt-1 flex-shrink-0">
                       <AvatarImage src={userSession?.user?.user_metadata?.avatar_url} />
                       <AvatarFallback className="bg-slate-200 text-slate-600">
                         <User className="h-4 w-4" />
@@ -258,7 +292,7 @@ const GrifoAI = () => {
                   </Avatar>
                   <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm flex items-center gap-2 text-slate-500 text-sm">
                     <Loader2 className="h-4 w-4 animate-spin text-[#C7A347]" />
-                    Processando...
+                    <span className="text-xs">Consultando o Grifo Way...</span>
                   </div>
                 </div>
               )}
