@@ -38,25 +38,41 @@ export const gamificationService = {
           .select("id")
           .eq("empresa_id", empresaId);
         
-        if (empresaError) throw empresaError;
-        userIds = empresaUsers?.map(u => u.id) || [];
+        if (empresaError) {
+          console.error("Erro ao buscar usuários da empresa:", empresaError);
+          throw empresaError;
+        }
         
-        if (userIds.length === 0) return [];
+        userIds = empresaUsers?.map(u => u.id) || [];
+        console.log("Usuários da empresa encontrados:", userIds.length, userIds);
+        
+        if (userIds.length === 0) {
+          console.log("Nenhum usuário encontrado para empresa:", empresaId);
+          return [];
+        }
       }
 
-      let query = supabase
-        .from("gamification_profiles")
-        .select("*")
-        .order("xp_total", { ascending: false })
-        .limit(20);
+      // Busca perfis de gamificação
+      const { data: profiles, error: profileError } = empresaId && userIds.length > 0
+        ? await supabase
+            .from("gamification_profiles")
+            .select("*")
+            .in("id", userIds)
+            .order("xp_total", { ascending: false })
+            .limit(20)
+        : await supabase
+            .from("gamification_profiles")
+            .select("*")
+            .order("xp_total", { ascending: false })
+            .limit(20);
+
+      if (profileError) {
+        console.error("Erro ao buscar perfis:", profileError);
+        throw profileError;
+      }
       
-      if (empresaId && userIds.length > 0) {
-        query = query.in("id", userIds);
-      }
-
-      const { data: profiles, error: profileError } = await query;
-
-      if (profileError) throw profileError;
+      console.log("Perfis encontrados:", profiles?.length, profiles);
+      
       if (!profiles || profiles.length === 0) return [];
 
       const profileIds = profiles.map((p) => p.id);
@@ -66,7 +82,10 @@ export const gamificationService = {
         .select("id, nome")
         .in("id", profileIds);
 
-      if (userError) throw userError;
+      if (userError) {
+        console.error("Erro ao buscar nomes:", userError);
+        throw userError;
+      }
 
       const ranking: RankingItem[] = profiles.map((profile, index) => {
         const userDetails = users?.find((u) => u.id === profile.id);
