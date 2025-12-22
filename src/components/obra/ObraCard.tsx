@@ -1,8 +1,7 @@
-
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Obra } from '@/types/supabase';
-import { MapPin } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Obra } from "@/types/supabase";
+import { MapPin } from "lucide-react";
 
 interface ObraCardProps {
   obra: Obra;
@@ -12,33 +11,39 @@ interface ObraCardProps {
 }
 
 const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
+  // Função auxiliar para formatar a data corretamente
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    // Usa 'UTC' como timeZone para evitar que o fuso horário local altere o dia
+    return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+  };
+
   return (
-    <Card 
+    <Card
       className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100 bg-white h-full flex flex-col"
       onClick={() => onSelect(obra)}
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div className="min-w-0 flex-1" style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-            <CardTitle 
+          <div className="min-w-0 flex-1" style={{ overflow: "hidden", whiteSpace: "normal", wordWrap: "break-word" }}>
+            <CardTitle
               className="text-gray-900"
-              style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
+              style={{ overflow: "hidden", whiteSpace: "normal", wordWrap: "break-word" }}
             >
               {obra.nome_obra}
             </CardTitle>
             <CardDescription className="text-gray-500 flex items-center mt-1">
               <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
-              <span 
-                style={{ overflow: 'hidden', whiteSpace: 'normal', wordWrap: 'break-word' }}
-              >
+              <span style={{ overflow: "hidden", whiteSpace: "normal", wordWrap: "break-word" }}>
                 {obra.localizacao}
               </span>
             </CardDescription>
           </div>
           <div className="flex space-x-2 flex-shrink-0 ml-2">
             {onEdit && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -48,8 +53,8 @@ const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
                 Editar
               </Button>
             )}
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
@@ -65,21 +70,26 @@ const ObraCard = ({ obra, onSelect, onDelete, onEdit }: ObraCardProps) => {
         <div className="text-sm text-gray-700">
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Início:</span>
-            <span>{new Date(obra.data_inicio).toLocaleDateString()}</span>
+            {/* Correção aplicada aqui usando a função formatDate */}
+            <span>{formatDate(obra.data_inicio)}</span>
           </div>
           <div className="flex justify-between items-center mt-1">
             <span className="text-gray-500">Status:</span>
             <span className="capitalize">
-              {obra.status === 'em_andamento' ? 'Em andamento' : 
-                obra.status === 'concluida' ? 'Concluída' : 
-                obra.status === 'nao_iniciada' ? 'Não iniciada' : obra.status}
+              {obra.status === "em_andamento"
+                ? "Em andamento"
+                : obra.status === "concluida"
+                  ? "Concluída"
+                  : obra.status === "nao_iniciada"
+                    ? "Não iniciada"
+                    : obra.status}
             </span>
           </div>
         </div>
       </CardContent>
       <CardFooter className="mt-auto">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full text-gray-700 border-gray-200 hover:bg-gray-50"
           onClick={(e) => {
             e.stopPropagation();
