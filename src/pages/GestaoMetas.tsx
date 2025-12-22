@@ -18,7 +18,7 @@ interface MetaAnual {
 }
 
 interface ObraFinanceira {
-  id: any; // Tipagem flexível para aceitar number ou UUID (string)
+  id: any;
   nome_obra: string;
   faturamento_realizado: number;
   lucro_realizado: number;
@@ -53,7 +53,7 @@ const GestaoMetas = () => {
           .single();
 
         if (userData?.empresa_id) {
-          // 1. Buscar Meta do Ano (Usando 'as any' para evitar erro de tipagem)
+          // 1. Buscar Meta do Ano
           const { data: metaData } = await supabase
             .from("metas_anuais" as any)
             .select("*")
@@ -62,7 +62,8 @@ const GestaoMetas = () => {
             .maybeSingle();
 
           if (metaData) {
-            setMeta(metaData as MetaAnual);
+            // CORREÇÃO AQUI: as unknown as MetaAnual
+            setMeta(metaData as unknown as MetaAnual);
           } else {
             setMeta({
               ano: parseInt(anoSelecionado),
@@ -71,14 +72,17 @@ const GestaoMetas = () => {
             });
           }
 
-          // 2. Buscar Obras (Usando 'as any' pois adicionamos colunas novas)
+          // 2. Buscar Obras
           const { data: obrasData } = await supabase
             .from("obras" as any)
             .select("id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, time_squad")
             .eq("empresa_id", userData.empresa_id)
             .eq("status", "Ativa");
 
-          if (obrasData) setObras(obrasData as ObraFinanceira[]);
+          if (obrasData) {
+            // CORREÇÃO AQUI: as unknown as ObraFinanceira[]
+            setObras(obrasData as unknown as ObraFinanceira[]);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
