@@ -5,10 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Target, Users } from "lucide-react";
+import { Loader2, Target, Users, Pencil, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface MetaAnual {
   id?: string;
@@ -24,6 +35,7 @@ interface ObraFinanceira {
   lucro_realizado: number;
   considerar_na_meta: boolean;
   time_squad: string[] | null;
+  status?: string; // Para debug
 }
 
 const GestaoMetas = () => {
@@ -31,6 +43,7 @@ const GestaoMetas = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear().toString());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Dados
   const [meta, setMeta] = useState<MetaAnual>({
@@ -38,6 +51,10 @@ const GestaoMetas = () => {
     meta_faturamento: 0,
     meta_margem_liquida: 0,
   });
+
+  // Estado temporário para o Modal (para não alterar a tela enquanto digita)
+  const [tempMeta, setTempMeta] = useState<MetaAnual>(meta);
+
   const [obras, setObras] = useState<ObraFinanceira[]>([]);
 
   // Carregar Dados
@@ -53,6 +70,8 @@ const GestaoMetas = () => {
           .single();
 
         if (userData?.empresa_id) {
+          console.log("Empresa ID:", userData.empresa_id);
+
           // 1. Buscar Meta do Ano
           const { data: metaData } = await supabase
             .from("metas_anuais" as any)
@@ -62,25 +81,33 @@ const GestaoMetas = () => {
             .maybeSingle();
 
           if (metaData) {
-            // CORREÇÃO AQUI: as unknown as MetaAnual
-            setMeta(metaData as unknown as MetaAnual);
+            const m = metaData as unknown as MetaAnual;
+            setMeta(m);
+            setTempMeta(m); // Sincroniza o temp
           } else {
-            setMeta({
+            const emptyMeta = {
               ano: parseInt(anoSelecionado),
               meta_faturamento: 0,
               meta_margem_liquida: 0,
-            });
+            };
+            setMeta(emptyMeta);
+            setTempMeta(emptyMeta);
           }
 
-          // 2. Buscar Obras
-          const { data: obrasData } = await supabase
+          // 2. Buscar Obras (REMOVIDO O FILTRO DE STATUS 'ATIVA' PARA DEBUG)
+          // Trazemos todas as obras da empresa para garantir que apareçam
+          const { data: obrasData, error: obrasError } = await supabase
             .from("obras" as any)
-            .select("id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, time_squad")
+            .select("id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, time_squad, status")
             .eq("empresa_id", userData.empresa_id)
-            .eq("status", "Ativa");
+            .order("nome_obra");
+
+          if (obrasError) {
+            console.error("Erro ao buscar obras:", obrasError);
+          }
 
           if (obrasData) {
-            // CORREÇÃO AQUI: as unknown as ObraFinanceira[]
+            console.log("Obras encontradas:", obrasData);
             setObras(obrasData as unknown as ObraFinanceira[]);
           }
         }
@@ -93,7 +120,7 @@ const GestaoMetas = () => {
     loadData();
   }, [userSession, anoSelecionado]);
 
-  // Salvar Meta Geral
+  // Salvar Meta (Vem do Modal)
   const handleSaveMeta = async () => {
     try {
       const { data: userData } = await supabase
@@ -107,17 +134,20 @@ const GestaoMetas = () => {
       const payload = {
         empresa_id: userData.empresa_id,
         ano: parseInt(anoSelecionado),
-        meta_faturamento: meta.meta_faturamento,
-        meta_margem_liquida: meta.meta_margem_liquida,
+        meta_faturamento: tempMeta.meta_faturamento,
+        meta_margem_liquida: tempMeta.meta_margem_liquida,
       };
 
       const { error } = await supabase.from("metas_anuais" as any).upsert(payload, { onConflict: "empresa_id, ano" });
 
       if (error) throw error;
-      toast({ title: "Sucesso", description: "Meta anual atualizada." });
+
+      setMeta(tempMeta); // Atualiza a UI principal
+      setIsModalOpen(false); // Fecha o modal
+      toast({ title: "Sucesso", description: "Metas anuais atualizadas." });
     } catch (e) {
       console.error(e);
-      toast({ title: "Erro", description: "Falha ao salvar meta.", variant: "destructive" });
+      toast({ title: "Erro", description: "Falha ao salvar metas.", variant: "destructive" });
     }
   };
 
@@ -155,7 +185,7 @@ const GestaoMetas = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      {/* Header e Seleção de Ano */}
+      {/* Header e Ações */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -164,40 +194,84 @@ const GestaoMetas = () => {
           </h1>
           <p className="text-slate-500">Planejamento estratégico e acompanhamento de squads.</p>
         </div>
-        <Select value={anoSelecionado} onValueChange={setAnoSelecionado}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Ano" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="2024">2024</SelectItem>
-            <SelectItem value="2025">2025</SelectItem>
-            <SelectItem value="2026">2026</SelectItem>
-          </SelectContent>
-        </Select>
+
+        <div className="flex items-center gap-3">
+          <Select value={anoSelecionado} onValueChange={setAnoSelecionado}>
+            <SelectTrigger className="w-[100px] h-9">
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2024">2024</SelectItem>
+              <SelectItem value="2025">2025</SelectItem>
+              <SelectItem value="2026">2026</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Botão para abrir o Modal */}
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="h-9 gap-2 border-[#C7A347] text-[#C7A347] hover:bg-[#C7A347]/10">
+                <Pencil className="h-4 w-4" />
+                Definir Metas
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Definir Metas da Empresa ({anoSelecionado})</DialogTitle>
+                <DialogDescription>Estabeleça os objetivos financeiros anuais para guiar os squads.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="metaFat">Meta de Faturamento (Anual)</Label>
+                  <Input
+                    id="metaFat"
+                    type="number"
+                    value={tempMeta.meta_faturamento || ""}
+                    onChange={(e) => setTempMeta({ ...tempMeta, meta_faturamento: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="metaMargem">Meta de Margem Líquida (%)</Label>
+                  <div className="relative">
+                    <Input
+                      id="metaMargem"
+                      type="number"
+                      value={tempMeta.meta_margem_liquida || ""}
+                      onChange={(e) =>
+                        setTempMeta({ ...tempMeta, meta_margem_liquida: parseFloat(e.target.value) || 0 })
+                      }
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-2.5 text-slate-400 font-bold">%</span>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleSaveMeta} className="bg-[#C7A347] hover:bg-[#b08d3b] gap-2">
+                  <Save className="h-4 w-4" />
+                  Salvar Metas
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {/* Cards de KPIs */}
+      {/* Cards de KPIs (Agora Read-Only) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Meta Faturamento */}
-        <Card className="border-l-4 border-l-blue-500 shadow-sm">
+        <Card className="border-l-4 border-l-blue-500 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Meta Faturamento</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(meta.meta_faturamento)}</div>
-            <Input
-              type="number"
-              className="mt-2 h-8 text-xs bg-slate-50"
-              placeholder="Definir Meta..."
-              value={meta.meta_faturamento || ""}
-              onChange={(e) => setMeta({ ...meta, meta_faturamento: parseFloat(e.target.value) || 0 })}
-              onBlur={handleSaveMeta}
-            />
+            <p className="text-xs text-slate-400 mt-1">Objetivo anual definido</p>
           </CardContent>
         </Card>
 
         {/* Realizado */}
-        <Card className="border-l-4 border-l-green-500 shadow-sm">
+        <Card className="border-l-4 border-l-green-500 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Realizado (Obras Sel.)</CardTitle>
           </CardHeader>
@@ -216,7 +290,7 @@ const GestaoMetas = () => {
         </Card>
 
         {/* Lucro & Margem */}
-        <Card className="border-l-4 border-l-amber-500 shadow-sm">
+        <Card className="border-l-4 border-l-amber-500 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Lucro & Margem Real</CardTitle>
           </CardHeader>
@@ -235,20 +309,13 @@ const GestaoMetas = () => {
         </Card>
 
         {/* Meta Margem */}
-        <Card className="border-l-4 border-l-purple-500 shadow-sm">
+        <Card className="border-l-4 border-l-purple-500 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Meta Margem Líquida</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{meta.meta_margem_liquida}%</div>
-            <Input
-              type="number"
-              className="mt-2 h-8 text-xs bg-slate-50"
-              placeholder="Definir %..."
-              value={meta.meta_margem_liquida || ""}
-              onChange={(e) => setMeta({ ...meta, meta_margem_liquida: parseFloat(e.target.value) || 0 })}
-              onBlur={handleSaveMeta}
-            />
+            <div className="text-2xl font-bold text-purple-700">{meta.meta_margem_liquida}%</div>
+            <p className="text-xs text-slate-400 mt-1">Rentabilidade alvo</p>
           </CardContent>
         </Card>
       </div>
@@ -275,8 +342,11 @@ const GestaoMetas = () => {
             <TableBody>
               {obras.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-400">
-                    Nenhuma obra ativa encontrada nesta empresa.
+                  <TableCell colSpan={6} className="text-center py-12 text-slate-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <p>Nenhuma obra encontrada nesta empresa.</p>
+                      <p className="text-xs text-slate-400">Verifique se as obras estão cadastradas corretamente.</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -297,7 +367,13 @@ const GestaoMetas = () => {
                           onCheckedChange={(checked) => handleUpdateObra(obra.id, "considerar_na_meta", checked)}
                         />
                       </TableCell>
-                      <TableCell className="font-semibold text-slate-700">{obra.nome_obra}</TableCell>
+                      <TableCell>
+                        <div className="font-semibold text-slate-700">{obra.nome_obra}</div>
+                        {/* Mostra o status para ajudar no debug */}
+                        <div className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">
+                          {obra.status || "Sem Status"}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1.5 py-1">
                           <Input
