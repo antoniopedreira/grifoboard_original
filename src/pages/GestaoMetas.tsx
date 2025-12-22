@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Target, Users, Pencil, Save, TrendingUp, DollarSign, Wallet, BarChart3, Edit3 } from "lucide-react";
+import { Loader2, Target, Edit3, DollarSign, TrendingUp, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -269,11 +269,9 @@ const GestaoMetas = () => {
                 <span>Progresso</span>
                 <span>{percentualMeta.toFixed(1)}%</span>
               </div>
-              <Progress
-                value={Math.min(percentualMeta, 100)}
-                className="h-2 bg-slate-700"
-                indicatorClassName="bg-[#C7A347]"
-              />
+
+              {/* CORREÇÃO AQUI: Removemos indicatorClassName e usamos seletor CSS */}
+              <Progress value={Math.min(percentualMeta, 100)} className="h-2 bg-slate-700 [&>*]:bg-[#C7A347]" />
             </div>
           </CardContent>
         </Card>
