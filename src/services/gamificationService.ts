@@ -14,6 +14,12 @@ export interface RankingItem extends GamificationProfile {
   position?: number;
 }
 
+// Tipo auxiliar para a view de usuários
+type RankingUserView = {
+  id: string;
+  nome: string | null;
+};
+
 export const gamificationService = {
   // 1. Busca o perfil do usuário atual
   async getProfile(userId: string) {
@@ -66,14 +72,13 @@ export const gamificationService = {
         throw profileError;
       }
 
-      console.log("Perfis encontrados:", profiles?.length, profiles);
-
       if (!profiles || profiles.length === 0) return [];
 
       const profileIds = profiles.map((p) => p.id);
 
-      // CORREÇÃO AQUI: Adicionado 'as any' para evitar o erro de tipo TS2339
-      const { data: users, error: userError } = await supabase
+      // Busca nomes para exibir no ranking
+      // CORREÇÃO: Usamos 'data: usersData' e fazemos o cast manual logo abaixo
+      const { data: usersData, error: userError } = await supabase
         .from("ranking_users_view" as any)
         .select("id, nome")
         .in("id", profileIds);
@@ -83,10 +88,14 @@ export const gamificationService = {
         throw userError;
       }
 
+      // CAST EXPLÍCITO: Força o TypeScript a entender a estrutura, resolvendo o erro TS2339
+      const users = usersData as unknown as RankingUserView[] | null;
+
       const ranking: RankingItem[] = profiles.map((profile, index) => {
-        // Agora o TypeScript aceita que 'users' é um array de objetos com 'id' e 'nome'
-        const userDetails = users?.find((u: any) => u.id === profile.id);
-        const displayName = userDetails?.nome || "Usuário";
+        const userDetails = users?.find((u) => u.id === profile.id);
+        // Agora 'userDetails' tem o tipo correto (RankingUserView), então .nome é válido
+        const displayName = userDetails?.nome || "Usuário Grifo";
+
         return {
           ...profile,
           nome: displayName,
@@ -116,7 +125,6 @@ export const gamificationService = {
   // 4. Dar XP (Positivo)
   async awardXP(userId: string, action: string, amount: number, referenceId?: string) {
     try {
-      // Se tiver ID de referência, verifica se já existe para evitar duplicidade
       if (referenceId) {
         const { data: existing } = await supabase
           .from("gamification_logs")
@@ -126,13 +134,9 @@ export const gamificationService = {
           .eq("action_type", action)
           .maybeSingle();
 
-        if (existing) {
-          console.log("XP já atribuído para este item.");
-          return;
-        }
+        if (existing) return;
       }
 
-      // Insere o log
       const { error: logError } = await supabase.from("gamification_logs").insert({
         user_id: userId,
         action_type: action,
@@ -142,7 +146,6 @@ export const gamificationService = {
 
       if (logError) throw logError;
 
-      // Atualiza Perfil
       await this.updateProfileXP(userId, amount);
 
       toast({
@@ -159,7 +162,6 @@ export const gamificationService = {
   // 5. Remover XP (Quando desfaz uma ação)
   async removeXP(userId: string, actionToCheck: string, amountToRemove: number, referenceId: string) {
     try {
-      // 1. Encontra e APAGA o log anterior (para permitir ganhar de novo no futuro)
       const { data: existingLog } = await supabase
         .from("gamification_logs")
         .select("id")
@@ -171,11 +173,9 @@ export const gamificationService = {
       if (existingLog) {
         await supabase.from("gamification_logs").delete().eq("id", existingLog.id);
       } else {
-        // Se não achou log, não faz nada
         return;
       }
 
-      // 2. Atualiza o perfil subtraindo os pontos
       await this.updateProfileXP(userId, -Math.abs(amountToRemove));
 
       toast({
@@ -189,7 +189,6 @@ export const gamificationService = {
     }
   },
 
-  // Função auxiliar interna para recalcular e salvar
   async updateProfileXP(userId: string, amountToAdd: number) {
     const { data: profile } = await supabase
       .from("gamification_profiles")
