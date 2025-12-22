@@ -2,13 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,14 +17,14 @@ const UserSettingsModal = ({ open, onOpenChange }: UserSettingsModalProps) => {
   const { userSession } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  
+
   // Pega o nome atual do user_metadata ou da tabela usuarios
   const currentName = userSession?.user?.user_metadata?.full_name || "";
   const [displayName, setDisplayName] = useState(currentName);
 
   const handleSave = async () => {
     if (!userSession?.user?.id) return;
-    
+
     const trimmedName = displayName.trim();
     if (!trimmedName) {
       toast({
@@ -45,7 +39,7 @@ const UserSettingsModal = ({ open, onOpenChange }: UserSettingsModalProps) => {
     try {
       // 1. Atualiza o display_name no Auth (user_metadata)
       const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: trimmedName }
+        data: { full_name: trimmedName },
       });
 
       if (authError) throw authError;
@@ -63,10 +57,10 @@ const UserSettingsModal = ({ open, onOpenChange }: UserSettingsModalProps) => {
         description: "Seu nome foi salvo com sucesso.",
       });
 
+      // 3. Atualiza a sessão localmente para refletir a mudança imediatamente sem reload
+      await supabase.auth.refreshSession();
+
       onOpenChange(false);
-      
-      // Força refresh da página para atualizar o estado do auth
-      window.location.reload();
     } catch (error: any) {
       console.error("Erro ao atualizar nome:", error);
       toast({
@@ -95,9 +89,7 @@ const UserSettingsModal = ({ open, onOpenChange }: UserSettingsModalProps) => {
             <User className="h-5 w-5 text-secondary" />
             Configurações do Perfil
           </DialogTitle>
-          <DialogDescription>
-            Atualize suas informações pessoais
-          </DialogDescription>
+          <DialogDescription>Atualize suas informações pessoais</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -110,30 +102,18 @@ const UserSettingsModal = ({ open, onOpenChange }: UserSettingsModalProps) => {
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={loading}
             />
-            <p className="text-xs text-muted-foreground">
-              Este nome aparecerá no seu perfil e no ranking.
-            </p>
+            <p className="text-xs text-muted-foreground">Este nome aparecerá no seu perfil e no ranking.</p>
           </div>
 
           <div className="space-y-2">
             <Label>Email</Label>
-            <Input
-              value={userSession?.user?.email || ""}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground">
-              O email não pode ser alterado.
-            </p>
+            <Input value={userSession?.user?.email || ""} disabled className="bg-muted" />
+            <p className="text-xs text-muted-foreground">O email não pode ser alterado.</p>
           </div>
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={loading}>
