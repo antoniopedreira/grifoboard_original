@@ -22,8 +22,8 @@ import {
   Settings,
   Save,
   Star,
-  Trophy, // Ícone para o Ranking
-  Medal, // Ícone para o Ranking
+  Trophy,
+  Medal,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -38,8 +38,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Importando serviço de gamificação (ajuste o caminho se necessário)
-import { gamificationService } from "@/services/gamificationService";
 
 // --- TIPOS ---
 interface MetaAnual {
@@ -52,7 +50,6 @@ interface MetaAnual {
 interface Squad {
   id: string;
   nome: string;
-  avatar_url?: string; // Opcional, se tiver avatar
 }
 
 interface ObraFinanceira {
@@ -65,6 +62,14 @@ interface ObraFinanceira {
   nps: number | null;
   data_inicio: string | null;
   status?: string;
+}
+
+// Tipo manual para o ranking para evitar erros de inferência
+interface RankingData {
+  user_id: string;
+  pontuacao_geral: number;
+  posicao_geral: number;
+  posicao_empresa: number;
 }
 
 const GestaoMetas = () => {
@@ -119,16 +124,16 @@ const GestaoMetas = () => {
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
       // 3. Pegar Usuários da Empresa (Agora chamados de Squads na UI)
+      // REMOVIDO 'avatar_url' DA SELEÇÃO PARA CORRIGIR ERRO
       const { data: usuariosData } = await supabase
         .from("usuarios")
-        .select("id, nome, avatar_url")
+        .select("id, nome")
         .eq("empresa_id", userData.empresa_id)
         .order("nome");
 
       const squadsList: Squad[] = (usuariosData || []).map((u) => ({
         id: u.id,
         nome: u.nome || "Usuário sem nome",
-        avatar_url: u.avatar_url,
       }));
 
       // 4. Pegar Obras do Ano
@@ -160,16 +165,19 @@ const GestaoMetas = () => {
   const { data: rankings } = useQuery({
     queryKey: ["rankingsGrifoWay", dashboardData?.empresa_id],
     queryFn: async () => {
-      // Tenta buscar o ranking geral e da empresa
-      // Ajuste conforme a implementação real do seu gamificationService
       try {
-        // Exemplo fictício: buscando todos os rankings
-        // Se o serviço não tiver esse método exato, você precisará ajustar
-        const { data } = await supabase
-          .from("ranking_grifoway" as any) // Supondo que exista uma tabela ou view
-          .select("user_id, pontuacao_geral, posicao_geral, posicao_empresa")
-          .eq("empresa_id", dashboardData?.empresa_id);
-        return data || [];
+        // CASTING PARA 'any' NO SELECT E NO RESULTADO PARA EVITAR ERRO DE TIPO
+        // JÁ QUE A TABELA PODE NÃO EXISTIR NOS TIPOS GERADOS AINDA
+        const { data, error } = await supabase
+          .from("ranking_grifoway" as any)
+          .select("user_id, pontuacao_geral, posicao_geral, posicao_empresa");
+
+        if (error) {
+          console.warn("Erro ao buscar ranking (tabela pode não existir):", error.message);
+          return [];
+        }
+
+        return (data as unknown as RankingData[]) || [];
       } catch (e) {
         console.error("Erro ao buscar rankings", e);
         return [];
@@ -309,12 +317,8 @@ const GestaoMetas = () => {
           ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
           : null;
 
-      // Pegar dados do GrifoWay (Mock ou Real)
-      // Tenta achar no array de rankings, senão gera um mock aleatório visual para demo
-      const rankingInfo = rankings?.find((r: any) => r.user_id === squad.id) || {
-        posicao_geral: Math.floor(Math.random() * 100) + 1, // Placeholder
-        posicao_empresa: Math.floor(Math.random() * 10) + 1, // Placeholder
-      };
+      // Pegar dados do GrifoWay (Dados Reais ou Fallback Limpo)
+      const rankingInfo = rankings?.find((r) => r.user_id === squad.id);
 
       return {
         ...squad,
@@ -324,8 +328,8 @@ const GestaoMetas = () => {
         contrib: meta.meta_faturamento > 0 ? (fat / meta.meta_faturamento) * 100 : 0,
         qtd_obras: obrasDoSquad.length,
         nps_medio: npsMedio,
-        ranking_geral: rankingInfo.posicao_geral,
-        ranking_empresa: rankingInfo.posicao_empresa,
+        ranking_geral: rankingInfo?.posicao_geral ?? null,
+        ranking_empresa: rankingInfo?.posicao_empresa ?? null,
       };
     })
     .filter((r) => r.qtd_obras > 0)
