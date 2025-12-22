@@ -261,10 +261,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // --- LOGICA CORRIGIDA AQUI ---
+  // --- FUNÇÃO CORRIGIDA ---
   const signOut = async () => {
     try {
-      setIsLoading(true);
+      // REMOVIDO: setIsLoading(true); // Isso causava o "flash" branco do loader
 
       // 1. Marca flag para impedir que RouteGuard/Restorer salvem a rota atual
       localStorage.setItem("logging_out", "true");
@@ -273,9 +273,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.removeItem("lastRoute");
       sessionStorage.clear(); // Limpa todo o session storage por garantia
 
-      // Limpa dados locais da sessão
+      // Limpa dados locais da sessão do LocalStorage
       const currentUserId = userSession.user?.id;
-      setUserSession({ user: null, obraAtiva: null });
+      // REMOVIDO: setUserSession(...) manual para evitar renderizar a tela atual com dados nulos antes do redirect
+
       setSessionId(null);
 
       ["current_session_id", "last_activity"].forEach((key) => {
@@ -299,7 +300,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Limpeza forçada em caso de erro
       localStorage.setItem("logging_out", "true");
       sessionStorage.clear();
-      setUserSession({ user: null, obraAtiva: null });
     } finally {
       // 3. REDIRECIONAMENTO AGRESSIVO
       // Usa replace() em vez de href para não deixar histórico e força ida para /auth
