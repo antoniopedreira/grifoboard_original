@@ -22,8 +22,8 @@ import {
   Settings,
   Save,
   Star,
-  Trophy, // Ícone para o Ranking
-  Medal, // Ícone para o Ranking
+  Trophy,
+  Medal,
   Shield,
   Activity,
   Crosshair,
@@ -41,8 +41,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Importando serviço de gamificação (ajuste o caminho se necessário)
-import { gamificationService } from "@/services/gamificationService";
 
 // --- TIPOS ---
 interface MetaAnual {
@@ -55,7 +53,6 @@ interface MetaAnual {
 interface Squad {
   id: string;
   nome: string;
-  avatar_url?: string; // Opcional, se tiver avatar
 }
 
 interface ObraFinanceira {
@@ -70,7 +67,6 @@ interface ObraFinanceira {
   status?: string;
 }
 
-// Tipo manual para o ranking para evitar erros de inferência
 interface RankingData {
   user_id: string;
   pontuacao_geral: number;
@@ -91,24 +87,22 @@ const GestaoMetas = () => {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isLancamentoModalOpen, setIsLancamentoModalOpen] = useState(false);
 
-  // Estados de Edição (Metas Gerais)
+  // Estados de Edição
   const [tempMeta, setTempMeta] = useState<MetaAnual>({
     ano: 2026,
     meta_faturamento: 0,
     meta_margem_liquida: 0,
   });
 
-  // ESTADO LOCAL PARA EDIÇÃO EM MASSA (Obras)
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
 
-  // --- QUERY PRINCIPAL (Data Fetching) ---
+  // --- QUERY PRINCIPAL ---
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["gestaoMetas", userSession?.user?.id, anoSelecionado],
     queryFn: async () => {
       if (!userSession?.user?.id) throw new Error("Usuário não logado");
 
-      // 1. Pegar Empresa ID
       const { data: userData } = await supabase
         .from("usuarios")
         .select("empresa_id")
@@ -117,7 +111,6 @@ const GestaoMetas = () => {
 
       if (!userData?.empresa_id) throw new Error("Empresa não encontrada");
 
-      // 2. Pegar Metas
       const { data: metaData } = await supabase
         .from("metas_anuais" as any)
         .select("*")
@@ -129,8 +122,7 @@ const GestaoMetas = () => {
         ? (metaData as unknown as MetaAnual)
         : { ano: parseInt(anoSelecionado), meta_faturamento: 0, meta_margem_liquida: 0 };
 
-      // 3. Pegar Usuários da Empresa (Agora chamados de Squads na UI)
-      // REMOVIDO 'avatar_url' DA SELEÇÃO PARA CORRIGIR ERRO
+      // Busca usuários para mapear como Squads
       const { data: usuariosData } = await supabase
         .from("usuarios")
         .select("id, nome")
@@ -139,10 +131,9 @@ const GestaoMetas = () => {
 
       const squadsList: Squad[] = (usuariosData || []).map((u) => ({
         id: u.id,
-        nome: u.nome || "Usuário sem nome",
+        nome: u.nome || "Agente Desconhecido",
       }));
 
-      // 4. Pegar Obras do Ano
       const dataInicioAno = `${anoSelecionado}-01-01`;
       const dataFimAno = `${anoSelecionado}-12-31`;
 
@@ -167,40 +158,36 @@ const GestaoMetas = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- QUERY PARA RANKING GRIFOWAY ---
+  // --- QUERY RANKING GRIFOWAY ---
   const { data: rankings } = useQuery({
     queryKey: ["rankingsGrifoWay", dashboardData?.empresa_id],
     queryFn: async () => {
       try {
-        // Tenta buscar de uma view ou tabela de ranking se existir
-        // Caso contrário, retorna vazio ou adapta para buscar de gamification_profiles
-        // Usando 'any' para evitar erro de tipo se a tabela ainda não foi gerada nos types
+        // Tenta buscar da view de ranking
         const { data, error } = await supabase
           .from("ranking_grifoway" as any)
           .select("user_id, pontuacao_geral, posicao_geral, posicao_empresa");
 
         if (error) {
-          // Fallback: Se a view não existir, tenta buscar profiles normais (opcional)
+          // Fallback silencioso se a view não existir ainda
+          console.warn("Ranking view unavailable");
           return [];
         }
-
         return (data as unknown as RankingData[]) || [];
       } catch (e) {
-        console.error("Erro ao buscar rankings", e);
         return [];
       }
     },
     enabled: !!dashboardData?.empresa_id,
   });
 
-  // Sincroniza estado temporário das metas
   useEffect(() => {
     if (dashboardData?.meta) {
       setTempMeta(dashboardData.meta);
     }
   }, [dashboardData]);
 
-  // --- LÓGICA DE EDIÇÃO LOCAL (Obras) ---
+  // --- LÓGICA DE EDIÇÃO (MODAL) ---
   const handleOpenLancamento = (open: boolean) => {
     if (open && dashboardData?.obras) {
       setLocalObras(JSON.parse(JSON.stringify(dashboardData.obras)));
@@ -284,13 +271,14 @@ const GestaoMetas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gestaoMetas"] });
-      toast({ title: "Metas Operacionais Atualizadas", className: "bg-[#C7A347] text-white border-none" });
+      toast({ title: "Diretrizes Atualizadas", className: "bg-[#C7A347] text-white border-none" });
     },
     onError: () => toast({ title: "Erro ao salvar metas", variant: "destructive" }),
   });
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+
   const getNpsColor = (score: number) => {
     if (score >= 9) return "bg-emerald-900/30 text-emerald-400 border-emerald-800";
     if (score >= 7) return "bg-yellow-900/30 text-yellow-400 border-yellow-800";
@@ -312,7 +300,7 @@ const GestaoMetas = () => {
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
 
-  // Ranking Squads (Usuários) com Dados GrifoWay
+  // --- RANKING LOGIC ---
   const rankingSquads = squads
     .map((squad) => {
       const obrasDoSquad = obrasConsideradas.filter((o) => o.usuario_id === squad.id);
@@ -324,7 +312,7 @@ const GestaoMetas = () => {
           ? squadObrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / squadObrasComNps.length
           : null;
 
-      // Pegar dados do GrifoWay (Dados Reais ou Fallback Limpo)
+      // Pega dados do GrifoWay (Geral/Empresa)
       const rankingInfo = rankings?.find((r) => r.user_id === squad.id);
 
       return {
@@ -339,12 +327,12 @@ const GestaoMetas = () => {
         ranking_empresa: rankingInfo?.posicao_empresa ?? null,
       };
     })
-    .filter((r) => r.qtd_obras > 0)
+    .filter((r) => r.qtd_obras > 0) // Filtra quem não tem obras no ano
     .sort((a, b) => b.faturamento - a.faturamento);
 
   const topSquad = rankingSquads.length > 0 ? rankingSquads[0] : null;
 
-  // Obras sem squad
+  // Lógica para obras sem dono
   const obrasSemSquad = obrasConsideradas.filter((o) => !o.usuario_id);
   if (obrasSemSquad.length > 0) {
     const fat = obrasSemSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
@@ -381,7 +369,7 @@ const GestaoMetas = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#C7A347] selection:text-black pb-20">
       {/* --- COMMAND CENTER HEADER --- */}
-      <div className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-10 shadow-2xl">
+      <div className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 shadow-2xl">
         <div className="max-w-[1600px] mx-auto p-4 md:p-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-4">
@@ -651,12 +639,12 @@ const GestaoMetas = () => {
                     </div>
                   </div>
 
-                  {/* GRIFO WAY RANKING CHIPS */}
-                  <div className="absolute top-10 right-3 flex flex-col items-end gap-1 opacity-80">
+                  {/* GRIFO WAY RANKING CHIPS (INTEGRADO AQUI) */}
+                  <div className="absolute top-10 right-3 flex flex-col items-end gap-1 opacity-90">
                     {squad.ranking_empresa && (
                       <Badge
-                        variant="outline"
-                        className="text-[9px] bg-slate-950 border-slate-700 text-blue-400 gap-1 h-5"
+                        variant="secondary"
+                        className="text-[9px] bg-blue-900/40 border-blue-500/30 text-blue-300 gap-1 h-5 hover:bg-blue-900/60"
                       >
                         <Trophy className="h-3 w-3" /> #{squad.ranking_empresa} Corp
                       </Badge>
@@ -664,14 +652,14 @@ const GestaoMetas = () => {
                     {squad.ranking_geral && (
                       <Badge
                         variant="outline"
-                        className="text-[9px] bg-slate-950 border-slate-700 text-[#C7A347] gap-1 h-5"
+                        className="text-[9px] bg-amber-900/20 border-[#C7A347]/30 text-[#C7A347] gap-1 h-5 hover:bg-amber-900/40"
                       >
                         <Medal className="h-3 w-3" /> #{squad.ranking_geral} Geral
                       </Badge>
                     )}
                   </div>
 
-                  <div className="mb-6 pr-12">
+                  <div className="mb-6 pr-14">
                     <h3 className="font-bold text-white text-lg truncate mb-1">{squad.nome}</h3>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="border-slate-700 text-slate-400 text-[10px]">
