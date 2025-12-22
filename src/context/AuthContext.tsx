@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { Obra, UserSession } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { User, Session } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   userSession: UserSession;
@@ -36,16 +36,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return {
       id: user.id,
       email: user.email || "",
-      user_metadata: user.user_metadata, // ADICIONADO: Passando os metadados
+      user_metadata: user.user_metadata,
     };
   };
 
-  // Session conflict detection disabled - was causing false positives
+  // Session conflict detection disabled
   const handleSessionConflict = (currentSessionId: string) => {
-    return false; // No conflict detection
+    return false;
   };
 
-  // Monitor user activity to detect active sessions
+  // Monitor user activity
   const updateActivity = () => {
     setLastActivity(Date.now());
     if (sessionId) {
@@ -53,13 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Health check (no auto-logout on inactivity or conflicts)
+  // Health check
   const checkSessionHealth = () => {
     if (!userSession.user || !sessionId) return;
-    // Intentionally no-op: user will only be logged out when they click "Sair"
   };
 
-  // Retrieve obra ativa from localStorage on initial load
+  // Retrieve obra ativa from localStorage
   const getInitialObraAtiva = (userId: string | undefined) => {
     if (!userId) return null;
 
@@ -78,53 +77,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let healthCheckInterval: NodeJS.Timeout;
 
-    // Set up auth state listener with better error handling
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (session && session.user) {
-          // Generate or get session ID
           const newSessionId = generateSessionId();
           setSessionId(newSessionId);
 
-          // Check for conflicts before proceeding
           if (!handleSessionConflict(newSessionId)) {
-            // Store session ID and activity
             localStorage.setItem("current_session_id", newSessionId);
             localStorage.setItem("last_activity", Date.now().toString());
 
-            // Get the active obra
             const obraAtiva = getInitialObraAtiva(session.user.id);
             setUserSession({ user: mapUser(session.user), obraAtiva });
 
-            // Start health check interval
-            healthCheckInterval = setInterval(checkSessionHealth, 60000); // Check every minute
+            healthCheckInterval = setInterval(checkSessionHealth, 60000);
           }
         } else {
-          // Clear session on logout
           setUserSession({ user: null, obraAtiva: null });
           setSessionId(null);
 
-          // Clear session-related localStorage
           ["current_session_id", "last_activity"].forEach((key) => {
             localStorage.removeItem(key);
           });
 
-          // Clear user-specific data
           Object.keys(localStorage).forEach((key) => {
             if (key.startsWith("obraAtiva_") || key.startsWith("user_")) {
               localStorage.removeItem(key);
             }
           });
 
-          // Clear health check interval
           if (healthCheckInterval) {
             clearInterval(healthCheckInterval);
           }
         }
       } catch (error) {
-        // On error, force logout to prevent corrupted state
         setUserSession({ user: null, obraAtiva: null });
         setSessionId(null);
       }
@@ -132,11 +120,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     });
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         if (error.message.includes("refresh_token_not_found") || error.message.includes("Invalid Refresh Token")) {
-          localStorage.clear(); // Clear all localStorage on token errors
+          localStorage.clear();
           setUserSession({ user: null, obraAtiva: null });
         }
       } else if (session?.user) {
@@ -150,7 +137,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     });
 
-    // Add activity listeners
     const activityEvents = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"];
     const handleActivity = () => updateActivity();
 
@@ -158,10 +144,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       document.addEventListener(event, handleActivity, true);
     });
 
-    // Remove visibility change listener to prevent layout shifts
-    // Only track activity through user interactions, not tab switching
-
-    // Cleanup
     return () => {
       subscription.unsubscribe();
       if (healthCheckInterval) {
@@ -176,15 +158,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-
-      // Clear any existing session data before new login
       localStorage.removeItem("current_session_id");
       localStorage.removeItem("last_activity");
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        // Handle specific auth errors
         if (error.message.includes("Email not confirmed")) {
           throw new Error("Por favor, confirme seu email antes de fazer login.");
         } else if (error.message.includes("Invalid login credentials")) {
@@ -194,7 +173,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Success - session will be handled by onAuthStateChange
       toast({
         title: "Login bem-sucedido",
         description: "Bem-vindo de volta!",
@@ -227,13 +205,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
 
       if (data?.session) {
-        // Email confirmation disabled: user is already logged in
         toast({
           title: "Conta criada",
           description: "Bem-vindo!",
         });
       } else {
-        // Email confirmation enabled
         toast({
           title: "Cadastro iniciado",
           description: `Enviamos um email de confirmação para ${email}. Verifique sua caixa de entrada e o spam.`,
@@ -285,90 +261,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // --- LOGICA CORRIGIDA AQUI ---
   const signOut = async () => {
     try {
       setIsLoading(true);
 
-      // Marca que está fazendo logout ANTES de qualquer outra operação
-      // Isso previne que RouteRestorer salve rotas durante o logout
+      // 1. Marca flag para impedir que RouteGuard/Restorer salvem a rota atual
       localStorage.setItem("logging_out", "true");
 
-      // Clear local session state first
+      // 2. IMPORTANTE: Remove a rota salva para evitar o loop ao recarregar
+      sessionStorage.removeItem("lastRoute");
+      sessionStorage.clear(); // Limpa todo o session storage por garantia
+
+      // Limpa dados locais da sessão
       const currentUserId = userSession.user?.id;
       setUserSession({ user: null, obraAtiva: null });
       setSessionId(null);
 
-      // Clear ALL sessionStorage para evitar redirecionamentos incorretos
-      sessionStorage.clear();
-
-      // Clear session-specific data
       ["current_session_id", "last_activity"].forEach((key) => {
         localStorage.removeItem(key);
       });
 
-      // Clear user-specific data
       if (currentUserId) {
         localStorage.removeItem(`obraAtiva_${currentUserId}`);
       }
 
-      // Clear any other localStorage items that might persist user data
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith("obraAtiva_") || key.startsWith("user_")) {
           localStorage.removeItem(key);
         }
       });
 
-      // Sign out from Supabase - use 'global' scope to ensure complete logout
+      // Logout no Supabase
       await supabase.auth.signOut({ scope: "global" });
-
-      toast({
-        title: "Desconectado",
-        description: "Você foi desconectado com sucesso.",
-      });
-
-      // Force redirect to auth page (logging_out será limpo no próximo login)
-      window.location.href = "/auth";
     } catch (error: any) {
-      // Even if logout fails on server, clear local state and redirect
-      setUserSession({ user: null, obraAtiva: null });
-      setSessionId(null);
-      
-      // Mantém logging_out flag
-      const loggingOut = localStorage.getItem("logging_out");
-      localStorage.clear();
+      console.error("Erro no logout:", error);
+      // Limpeza forçada em caso de erro
+      localStorage.setItem("logging_out", "true");
       sessionStorage.clear();
-      if (loggingOut) localStorage.setItem("logging_out", "true");
-
-      toast({
-        title: "Desconectado",
-        description: "Sessão local limpa com sucesso.",
-      });
-
-      // Force redirect even on error
-      window.location.href = "/auth";
+      setUserSession({ user: null, obraAtiva: null });
     } finally {
-      setIsLoading(false);
+      // 3. REDIRECIONAMENTO AGRESSIVO
+      // Usa replace() em vez de href para não deixar histórico e força ida para /auth
+      window.location.replace("/auth");
     }
   };
 
   const setObraAtiva = (obra: Obra | null) => {
     setUserSession((prev) => {
       const newSession = prev ? { ...prev, obraAtiva: obra } : { user: null, obraAtiva: null };
-
-      // Save active obra in localStorage for persistence
       if (prev?.user && obra) {
         localStorage.setItem(`obraAtiva_${prev.user.id}`, JSON.stringify(obra));
       } else if (prev?.user) {
         localStorage.removeItem(`obraAtiva_${prev.user.id}`);
       }
-
       return newSession;
     });
   };
 
   const value = {
     userSession,
-    session: userSession, // Alias for backward compatibility
+    session: userSession,
     isLoading,
     signIn,
     signUp,
