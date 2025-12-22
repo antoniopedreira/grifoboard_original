@@ -17,7 +17,8 @@ import Playbook from "@/pages/Playbook";
 import Marketplace from "@/pages/Marketplace";
 import PortalParceiro from "@/pages/PortalParceiro";
 import GrifoWay from "@/pages/GrifoWay";
-import GrifoAI from "@/pages/GrifoAI"; // <--- IMPORT NOVO
+import GrifoAI from "@/pages/GrifoAI";
+import GestaoMetas from "@/pages/GestaoMetas"; // <--- 1. IMPORT NOVO
 import FormProfissionais from "@/pages/form/Profissionais";
 import FormEmpresas from "@/pages/form/Empresas";
 import FormFornecedores from "@/pages/form/Fornecedores";
@@ -163,7 +164,8 @@ function App() {
                         <Route path="/playbook" element={<Playbook />} />
                         <Route path="/marketplace" element={<Marketplace />} />
                         <Route path="/grifoway" element={<GrifoWay />} />
-                        <Route path="/grifo-ai" element={<GrifoAI />} /> {/* <--- ROTA NOVA */}
+                        <Route path="/grifo-ai" element={<GrifoAI />} />
+                        <Route path="/gestao-metas" element={<GestaoMetas />} /> {/* <--- 2. ROTA NOVA */}
                         <Route path="/portal-parceiro" element={<PortalParceiro />} />
                         <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                         <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
