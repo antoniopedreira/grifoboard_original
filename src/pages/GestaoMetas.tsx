@@ -21,7 +21,7 @@ import {
   Trash2,
   Star,
   LayoutGrid,
-  List,
+  CalendarDays,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // --- TIPOS ---
 interface MetaAnual {
@@ -57,7 +56,8 @@ interface ObraFinanceira {
   lucro_realizado: number;
   considerar_na_meta: boolean;
   squad_id: string | null;
-  nps: number | null; // NOVO CAMPO
+  nps: number | null;
+  data_inicio: string | null; // USANDO DATA_INICIO AGORA
   status?: string;
 }
 
@@ -65,8 +65,10 @@ const GestaoMetas = () => {
   const { userSession } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear().toString());
-  const [viewMode, setViewMode] = useState<"squad" | "obra">("squad"); // Toggle de Visualização
+
+  // Default para 2026
+  const [anoSelecionado, setAnoSelecionado] = useState("2026");
+  const [viewMode, setViewMode] = useState<"squad" | "obra">("squad");
 
   // Modais
   const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
@@ -75,7 +77,7 @@ const GestaoMetas = () => {
 
   // Dados
   const [meta, setMeta] = useState<MetaAnual>({
-    ano: new Date().getFullYear(),
+    ano: 2026,
     meta_faturamento: 0,
     meta_margem_liquida: 0,
   });
@@ -97,7 +99,7 @@ const GestaoMetas = () => {
           .single();
 
         if (userData?.empresa_id) {
-          // 1. Metas
+          // 1. Metas do Ano Selecionado
           const { data: metaData } = await supabase
             .from("metas_anuais" as any)
             .select("*")
@@ -126,15 +128,25 @@ const GestaoMetas = () => {
             setSquads(squadsData as unknown as Squad[]);
           }
 
-          // 3. Obras (Incluindo NPS agora)
+          // 3. Obras (FILTRANDO POR DATA_INICIO NO ANO SELECIONADO)
+          const dataInicioAno = `${anoSelecionado}-01-01`;
+          const dataFimAno = `${anoSelecionado}-12-31`;
+
           const { data: obrasData } = await supabase
             .from("obras" as any)
-            .select("id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, squad_id, nps, status")
+            .select(
+              "id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, squad_id, nps, data_inicio, status",
+            )
             .eq("empresa_id", userData.empresa_id)
+            // Filtra onde data_inicio >= 01/01/ANO e data_inicio <= 31/12/ANO
+            .gte("data_inicio", dataInicioAno)
+            .lte("data_inicio", dataFimAno)
             .order("nome_obra");
 
           if (obrasData) {
             setObras(obrasData as unknown as ObraFinanceira[]);
+          } else {
+            setObras([]);
           }
         }
       } catch (error) {
@@ -144,7 +156,7 @@ const GestaoMetas = () => {
       }
     };
     loadData();
-  }, [userSession, anoSelecionado]);
+  }, [userSession, anoSelecionado]); // Recarrega ao mudar o ano
 
   // --- AÇÕES ---
   const handleAddSquad = async () => {
@@ -233,7 +245,6 @@ const GestaoMetas = () => {
   const margemAtual = totalFaturamento > 0 ? (totalLucro / totalFaturamento) * 100 : 0;
   const percentualMeta = meta.meta_faturamento > 0 ? (totalFaturamento / meta.meta_faturamento) * 100 : 0;
 
-  // Cálculo NPS Médio da Empresa
   const obrasComNps = obrasConsideradas.filter((o) => o.nps !== null && o.nps !== undefined);
   const npsMedioEmpresa =
     obrasComNps.length > 0 ? obrasComNps.reduce((acc, curr) => acc + (curr.nps || 0), 0) / obrasComNps.length : 0;
@@ -241,21 +252,19 @@ const GestaoMetas = () => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  // Helper de Cores do NPS
   const getNpsColor = (score: number) => {
-    if (score >= 9) return "bg-green-100 text-green-700 border-green-200"; // Promotor
-    if (score >= 7) return "bg-yellow-100 text-yellow-700 border-yellow-200"; // Neutro
-    return "bg-red-100 text-red-700 border-red-200"; // Detrator
+    if (score >= 9) return "bg-green-100 text-green-700 border-green-200";
+    if (score >= 7) return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    return "bg-red-100 text-red-700 border-red-200";
   };
 
-  // 1. Agrupamento por Squad (Ranking Squads)
+  // Ranking Squads
   const rankingSquads = squads
     .map((squad) => {
       const obrasDoSquad = obrasConsideradas.filter((o) => o.squad_id === squad.id);
       const fat = obrasDoSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
       const luc = obrasDoSquad.reduce((acc, curr) => acc + (curr.lucro_realizado || 0), 0);
 
-      // NPS do Squad
       const squadObrasComNps = obrasDoSquad.filter((o) => o.nps !== null);
       const npsMedio =
         squadObrasComNps.length > 0
@@ -274,7 +283,7 @@ const GestaoMetas = () => {
     })
     .sort((a, b) => b.faturamento - a.faturamento);
 
-  // Adicionar "Sem Squad" se houver
+  // Obras sem squad
   const obrasSemSquad = obrasConsideradas.filter((o) => !o.squad_id);
   if (obrasSemSquad.length > 0) {
     const fat = obrasSemSquad.reduce((acc, curr) => acc + (curr.faturamento_realizado || 0), 0);
@@ -296,7 +305,6 @@ const GestaoMetas = () => {
     } as any);
   }
 
-  // 2. Ranking por Obra
   const rankingObras = [...obrasConsideradas].sort((a, b) => b.faturamento_realizado - a.faturamento_realizado);
 
   if (loading)
@@ -327,15 +335,15 @@ const GestaoMetas = () => {
               <SelectItem value="2024">2024</SelectItem>
               <SelectItem value="2025">2025</SelectItem>
               <SelectItem value="2026">2026</SelectItem>
+              <SelectItem value="2027">2027</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Botão Squads */}
+          {/* Botões de Ação */}
           <Dialog open={isSquadsModalOpen} onOpenChange={setIsSquadsModalOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="h-10 gap-2 text-slate-600">
-                <Users className="h-4 w-4" />
-                Squads
+                <Users className="h-4 w-4" /> Squads
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -354,9 +362,6 @@ const GestaoMetas = () => {
                 </Button>
               </div>
               <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {squads.length === 0 && (
-                  <p className="text-sm text-slate-400 text-center py-4">Nenhum squad cadastrado.</p>
-                )}
                 {squads.map((s) => (
                   <div
                     key={s.id}
@@ -367,7 +372,7 @@ const GestaoMetas = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteSquad(s.id)}
-                      className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                      className="text-red-400 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -377,36 +382,33 @@ const GestaoMetas = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Botão Metas */}
           <Dialog open={isMetaModalOpen} onOpenChange={setIsMetaModalOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="outline"
                 className="h-10 gap-2 text-slate-600 hover:text-[#C7A347] hover:border-[#C7A347]"
               >
-                <Target className="h-4 w-4" />
-                Definir Alvos
+                <Target className="h-4 w-4" /> Metas
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Metas Estratégicas ({anoSelecionado})</DialogTitle>
-                <DialogDescription>Defina os objetivos globais da empresa.</DialogDescription>
+                <DialogTitle>Metas {anoSelecionado}</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label>Meta de Faturamento Anual</Label>
+                  <Label>Meta de Faturamento</Label>
                   <Input
                     type="number"
-                    value={tempMeta.meta_faturamento || ""}
+                    value={tempMeta.meta_faturamento}
                     onChange={(e) => setTempMeta({ ...tempMeta, meta_faturamento: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Meta de Margem Líquida (%)</Label>
+                  <Label>Meta de Margem (%)</Label>
                   <Input
                     type="number"
-                    value={tempMeta.meta_margem_liquida || ""}
+                    value={tempMeta.meta_margem_liquida}
                     onChange={(e) => setTempMeta({ ...tempMeta, meta_margem_liquida: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
@@ -419,20 +421,17 @@ const GestaoMetas = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Botão Lançar Resultados */}
           <Button
             onClick={() => setIsLancamentoModalOpen(true)}
             className="h-10 bg-[#C7A347] hover:bg-[#b08d3b] text-white gap-2 shadow-md transition-all hover:scale-105"
           >
-            <Edit3 className="h-4 w-4" />
-            Lançar Resultados
+            <Edit3 className="h-4 w-4" /> Lançar Resultados
           </Button>
         </div>
       </div>
 
       {/* --- DASHBOARD VIEW --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 1: Faturamento */}
         <Card className="border-0 shadow-lg bg-gradient-to-br from-[#112131] to-[#1a334d] text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <DollarSign className="h-24 w-24" />
@@ -450,7 +449,6 @@ const GestaoMetas = () => {
           </CardContent>
         </Card>
 
-        {/* Card 2: Margem */}
         <Card className="border-0 shadow-md bg-white">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -472,7 +470,6 @@ const GestaoMetas = () => {
           </CardContent>
         </Card>
 
-        {/* Card 3: Top Squad */}
         <Card className="border-0 shadow-md bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -484,7 +481,6 @@ const GestaoMetas = () => {
               <>
                 <div className="text-xl font-bold text-[#112131] truncate">{rankingSquads[0].nome}</div>
                 <div className="text-sm font-bold text-[#C7A347]">{formatCurrency(rankingSquads[0].faturamento)}</div>
-                <div className="text-[10px] text-slate-400 mt-1">Maior contribuição financeira</div>
               </>
             ) : (
               <div className="text-slate-400 text-sm">N/A</div>
@@ -492,7 +488,6 @@ const GestaoMetas = () => {
           </CardContent>
         </Card>
 
-        {/* Card 4: NPS Médio (NOVO) */}
         <Card className="border-0 shadow-md bg-white">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">NPS Médio</CardTitle>
@@ -503,54 +498,51 @@ const GestaoMetas = () => {
               <div className="text-2xl font-bold text-[#112131]">{npsMedioEmpresa.toFixed(1)}</div>
               <div className="text-xs text-slate-400 mb-1">/ 10</div>
             </div>
-            <div className="text-[10px] text-slate-400 mt-1">Satisfação geral do cliente</div>
+            <div className="text-[10px] text-slate-400 mt-1">Geral da Empresa</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* --- RANKING SWITCHER & LIST --- */}
+      {/* --- RANKING SWITCHER --- */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-lg font-bold text-[#112131] flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-[#C7A347]" />
-            Ranking de Performance
+            <BarChart3 className="h-5 w-5 text-[#C7A347]" /> Ranking de Performance
           </h2>
-
-          {/* Toggle Squad vs Obra */}
           <div className="bg-slate-100 p-1 rounded-lg flex items-center">
             <button
               onClick={() => setViewMode("squad")}
               className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "squad" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
             >
-              <Users className="h-3 w-3" /> Por Squads
+              <Users className="h-3 w-3" /> Squads
             </button>
             <button
               onClick={() => setViewMode("obra")}
               className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === "obra" ? "bg-white shadow-sm text-[#112131]" : "text-slate-500 hover:text-slate-700"}`}
             >
-              <LayoutGrid className="h-3 w-3" /> Por Obras
+              <LayoutGrid className="h-3 w-3" /> Obras
             </button>
           </div>
         </div>
 
-        {/* --- VIEW: SQUADS --- */}
         {viewMode === "squad" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rankingSquads.map((squad) => (
               <div
                 key={squad.id}
-                className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all relative overflow-hidden group"
+                className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-[#112131] text-lg">{squad.nome}</h3>
-                    <p className="text-xs text-slate-400">{squad.qtd_obras} obras ativas</p>
+                    <p className="text-xs text-slate-400">
+                      {squad.qtd_obras} obras em {anoSelecionado}
+                    </p>
                   </div>
                   <Badge variant="outline" className="border-[#C7A347] text-[#C7A347] bg-[#C7A347]/5">
                     {squad.contrib.toFixed(1)}% do Alvo
                   </Badge>
                 </div>
-
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500">Faturamento</span>
@@ -564,7 +556,6 @@ const GestaoMetas = () => {
                       {squad.margem.toFixed(2)}%
                     </span>
                   </div>
-                  {/* NPS DO SQUAD */}
                   <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-2 mt-2">
                     <span className="text-slate-500 flex items-center gap-1">
                       <Star className="h-3 w-3" /> NPS Médio
@@ -574,19 +565,20 @@ const GestaoMetas = () => {
                         {squad.nps_medio.toFixed(1)}
                       </Badge>
                     ) : (
-                      <span className="text-xs text-slate-400">Sem avaliações</span>
+                      <span className="text-xs text-slate-400">N/A</span>
                     )}
                   </div>
                 </div>
               </div>
             ))}
             {rankingSquads.length === 0 && (
-              <p className="col-span-full text-center text-slate-400 py-10">Nenhum squad com obras vinculadas.</p>
+              <p className="col-span-full text-center text-slate-400 py-10">
+                Nenhum resultado encontrado em {anoSelecionado}.
+              </p>
             )}
           </div>
         )}
 
-        {/* --- VIEW: OBRAS --- */}
         {viewMode === "obra" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rankingObras.map((obra) => (
@@ -599,19 +591,16 @@ const GestaoMetas = () => {
                     <h3 className="font-bold text-[#112131] truncate max-w-[180px]" title={obra.nome_obra}>
                       {obra.nome_obra}
                     </h3>
-                    {/* Nome do Squad abaixo da obra */}
                     <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">
                       {squads.find((s) => s.id === obra.squad_id)?.nome || "Sem Squad"}
                     </p>
                   </div>
-                  {/* NPS DA OBRA (Badge) */}
                   {obra.nps !== null && (
                     <Badge variant="outline" className={`${getNpsColor(obra.nps)} font-bold`}>
                       NPS {obra.nps}
                     </Badge>
                   )}
                 </div>
-
                 <div className="grid grid-cols-2 gap-4 mt-2 pt-3 border-t border-slate-50">
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase">Faturamento</p>
@@ -625,39 +614,39 @@ const GestaoMetas = () => {
               </div>
             ))}
             {rankingObras.length === 0 && (
-              <p className="col-span-full text-center text-slate-400 py-10">Nenhuma obra lançada.</p>
+              <p className="col-span-full text-center text-slate-400 py-10">Nenhuma obra em {anoSelecionado}.</p>
             )}
           </div>
         )}
       </div>
 
-      {/* --- MODAL DE LANÇAMENTO (TABELA COMPLETA) --- */}
+      {/* --- MODAL DE LANÇAMENTO --- */}
       <Dialog open={isLancamentoModalOpen} onOpenChange={setIsLancamentoModalOpen}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-6 pb-2 border-b border-slate-100">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-xl">Lançamento de Resultados - {anoSelecionado}</DialogTitle>
-                <DialogDescription>Dados financeiros e de qualidade (NPS).</DialogDescription>
+                <DialogDescription>Dados financeiros e qualidade (NPS).</DialogDescription>
               </div>
               <div className="text-right">
-                <p className="text-xs text-slate-400 uppercase">Faturamento Total</p>
+                <p className="text-xs text-slate-400 uppercase">Total Selecionado</p>
                 <p className="text-lg font-bold text-[#C7A347]">{formatCurrency(totalFaturamento)}</p>
               </div>
             </div>
           </DialogHeader>
-
           <ScrollArea className="flex-1 p-6 bg-slate-50/50">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
               <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow>
                     <TableHead className="w-[50px] text-center">Meta?</TableHead>
-                    <TableHead className="min-w-[200px]">Obra</TableHead>
-                    <TableHead className="min-w-[180px]">Squad</TableHead>
-                    <TableHead className="w-[150px]">Faturamento</TableHead>
-                    <TableHead className="w-[150px]">Lucro</TableHead>
-                    <TableHead className="w-[100px]">NPS (0-10)</TableHead>
+                    <TableHead className="min-w-[150px]">Obra</TableHead>
+                    <TableHead className="w-[130px]">Início (Ano)</TableHead> {/* NOVA COLUNA DATA */}
+                    <TableHead className="min-w-[150px]">Squad</TableHead>
+                    <TableHead className="w-[140px]">Faturamento</TableHead>
+                    <TableHead className="w-[140px]">Lucro</TableHead>
+                    <TableHead className="w-[90px]">NPS</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -673,6 +662,17 @@ const GestaoMetas = () => {
                         {obra.nome_obra}
                         <div className="text-[10px] text-slate-400 uppercase">{obra.status}</div>
                       </TableCell>
+
+                      {/* CAMPO DE DATA INÍCIO */}
+                      <TableCell>
+                        <Input
+                          type="date"
+                          className="h-8 w-full text-xs bg-white"
+                          value={obra.data_inicio || ""}
+                          onChange={(e) => handleUpdateObra(obra.id, "data_inicio", e.target.value)}
+                        />
+                      </TableCell>
+
                       <TableCell>
                         <Select
                           value={obra.squad_id || "none"}
@@ -712,7 +712,6 @@ const GestaoMetas = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        {/* INPUT NPS */}
                         <Input
                           type="number"
                           min={0}
@@ -722,7 +721,7 @@ const GestaoMetas = () => {
                           value={obra.nps !== null ? obra.nps : ""}
                           onChange={(e) => {
                             const val = e.target.value === "" ? null : parseFloat(e.target.value);
-                            if (val !== null && (val < 0 || val > 10)) return; // Trava visual simples
+                            if (val !== null && (val < 0 || val > 10)) return;
                             handleUpdateObra(obra.id, "nps", val);
                           }}
                         />
@@ -733,10 +732,9 @@ const GestaoMetas = () => {
               </Table>
             </div>
           </ScrollArea>
-
           <DialogFooter className="p-4 border-t border-slate-100 bg-white">
             <Button onClick={() => setIsLancamentoModalOpen(false)} className="bg-[#112131] w-full sm:w-auto">
-              Concluir Lançamentos
+              Concluir
             </Button>
           </DialogFooter>
         </DialogContent>
