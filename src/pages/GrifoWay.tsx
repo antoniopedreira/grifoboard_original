@@ -1,7 +1,20 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { gamificationService, type RankingItem, type GamificationProfile } from "@/services/gamificationService";
-import { Trophy, Zap, Target, Shield, BookOpen, Crown, Flame, CheckCircle2, Medal, Users, Loader2 } from "lucide-react";
+import {
+  Trophy,
+  Zap,
+  Target,
+  Shield,
+  BookOpen,
+  Crown,
+  Flame,
+  CheckCircle2,
+  Medal,
+  Users,
+  Loader2,
+  ListTodo, // <-- Ícone adicionado para as tarefas
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,24 +82,21 @@ const getInitials = (name?: string | null) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
-// --- NOVO COMPONENTE: PÓDIO ---
+// --- COMPONENTE: PÓDIO ---
 const RankingPodium = ({ users, currentUserId }: { users: RankingItem[]; currentUserId?: string }) => {
-  // Ordena para visualização: 2º (Esq), 1º (Centro), 3º (Dir)
   const first = users[0];
   const second = users[1];
   const third = users[2];
 
   const PodiumStep = ({ user, rank }: { user: RankingItem; rank: number }) => {
-    if (!user) return <div className="w-1/3" />; // Espaço vazio se não houver usuário
+    if (!user) return <div className="w-1/3" />;
 
     const isCurrentUser = user.id === currentUserId;
 
-    // Configurações visuais baseadas no rank
     let ringColor = "ring-slate-300";
     let bgColor = "bg-slate-50";
     let height = "h-32";
     let avatarSize = "h-16 w-16";
-    let medalColor = "text-slate-400";
     let rankLabel = "2";
 
     if (rank === 1) {
@@ -94,11 +104,9 @@ const RankingPodium = ({ users, currentUserId }: { users: RankingItem[]; current
       bgColor = "bg-gradient-to-t from-[#C7A347]/10 to-transparent border-[#C7A347]/30";
       height = "h-40";
       avatarSize = "h-24 w-24";
-      medalColor = "text-[#C7A347]";
       rankLabel = "1";
     } else if (rank === 3) {
       ringColor = "ring-amber-700/50";
-      medalColor = "text-amber-700";
       rankLabel = "3";
     }
 
@@ -111,7 +119,6 @@ const RankingPodium = ({ users, currentUserId }: { users: RankingItem[]; current
         <div className="relative mb-3 transition-transform duration-300 group-hover:scale-105">
           <Avatar className={cn("border-2 border-white shadow-xl ring-2", ringColor, avatarSize)}>
             <AvatarImage src={undefined} />
-            {/* Se tiver URL de avatar real, coloque aqui. Usei undefined para cair no fallback */}
             <AvatarFallback
               className={cn(
                 "text-xl font-bold text-white",
@@ -145,7 +152,6 @@ const RankingPodium = ({ users, currentUserId }: { users: RankingItem[]; current
           </p>
         </div>
 
-        {/* O Degrau do Pódio */}
         <div
           className={cn(
             "w-full rounded-t-lg border-x border-t relative overflow-hidden flex items-end justify-center pb-2",
@@ -233,7 +239,6 @@ const GrifoWay = () => {
     );
   }
 
-  // Separar Top 3 do resto da lista
   const top3 = ranking.slice(0, 3);
   const restOfRanking = ranking.slice(3);
 
@@ -300,7 +305,7 @@ const GrifoWay = () => {
 
           <TabsContent value="dashboard" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Esquerda: Stats */}
+              {/* Esquerda: Stats e Missões */}
               <div className="space-y-6">
                 <Card className="border-none shadow-xl bg-white overflow-hidden relative">
                   <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-slate-100 to-slate-200" />
@@ -329,6 +334,7 @@ const GrifoWay = () => {
                   </CardContent>
                 </Card>
 
+                {/* --- CARTÃO DE MISSÕES DIÁRIAS ATUALIZADO --- */}
                 <Card className="border-none shadow-md">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -338,6 +344,7 @@ const GrifoWay = () => {
                     <CardDescription>Conclua rituais para ganhar XP</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    {/* Item 1: Diário */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
@@ -349,6 +356,21 @@ const GrifoWay = () => {
                         +50 XP
                       </Badge>
                     </div>
+
+                    {/* Item 2: Tarefas PCP (NOVO) */}
+                    <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-slate-100 text-slate-500">
+                          <ListTodo className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-medium">Concluir Tarefas do PCP</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100">
+                        +30 XP
+                      </Badge>
+                    </div>
+
+                    {/* Item 3: Checklist */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
