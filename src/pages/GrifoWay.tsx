@@ -505,7 +505,7 @@ const GrifoWay = () => {
                     <CardTitle className="text-sm uppercase tracking-wider text-slate-500">Índice</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 p-2">
-                    {["Introdução", "Pilares FAST 2.0", "Valores Culturais", "Comportamentos"].map((item, i) => (
+                    {["Introdução", "Pilares FAST", "Valores Culturais", "Comportamentos"].map((item, i) => (
                       <Button
                         key={item}
                         variant="ghost"
@@ -533,7 +533,7 @@ const GrifoWay = () => {
                       </h3>
                       <p className="text-slate-600 leading-relaxed">
                         O <strong>Grifo Way</strong> é o manual que define a forma Grifo de pensar, agir, executar e
-                        entregar. É o padrão cultural que sustenta o FAST 2.0.
+                        entregar. É o padrão cultural que sustenta o FAST.
                       </p>
                     </CardContent>
                   </Card>
@@ -542,7 +542,7 @@ const GrifoWay = () => {
                 <div id="section-1">
                   <h3 className="text-2xl font-bold text-[#112131] mb-6 flex items-center gap-2">
                     <Zap className="h-6 w-6 text-[#C7A347]" />
-                    1. Pilares & FAST 2.0
+                    1. Pilares & FAST
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-[#112131] text-white border-none">
@@ -555,7 +555,7 @@ const GrifoWay = () => {
                     </Card>
                     <Card className="bg-white border border-slate-200">
                       <CardContent className="pt-6">
-                        <h4 className="font-bold text-lg mb-2 text-[#112131]">FAST 2.0</h4>
+                        <h4 className="font-bold text-lg mb-2 text-[#112131]">FAST</h4>
                         <ul className="text-sm text-slate-600 space-y-2 list-disc list-inside">
                           <li>Planejamento extremamente claro</li>
                           <li>Checklist diário obrigatório</li>
