@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LucideIcon,
-  Bot, // <--- IMPORT DO ÍCONE NOVO
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -32,13 +32,14 @@ interface MenuItem {
   inDevelopment?: boolean;
 }
 
+// ORDEM ATUALIZADA AQUI
 const menuItems: MenuItem[] = [
   { path: "/tarefas", label: "PCP", icon: LayoutDashboard },
-  { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
   { path: "/playbook", label: "Playbook", icon: BookOpen },
-  { path: "/marketplace", label: "Marketplace", icon: Store },
-  { path: "/grifo-ai", label: "GrifoAI", icon: Bot }, // <--- ITEM NOVO
+  { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
   { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold },
+  { path: "/marketplace", label: "Marketplace", icon: Store },
+  { path: "/grifo-ai", label: "GrifoAI", icon: Bot },
 ];
 
 const CustomSidebar = () => {
@@ -150,7 +151,7 @@ const CustomSidebar = () => {
 
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path; // Mantivemos a rota /tarefas internamente por enquanto
+            const isActive = location.pathname === item.path;
 
             const LinkContent = (
               <Link
@@ -237,14 +238,13 @@ const CustomSidebar = () => {
           })}
         </nav>
 
-        {/* Footer da Sidebar (User Profile) - Mantido igual */}
+        {/* Footer da Sidebar (User Profile) */}
         <div
           className={cn(
             "m-4 rounded-xl bg-black/20 border border-white/5 overflow-hidden transition-all duration-300",
             isCollapsed ? "p-2 flex flex-col items-center gap-4" : "p-4",
           )}
         >
-          {/* ... Código do perfil mantido ... */}
           <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3 mb-3")}>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
