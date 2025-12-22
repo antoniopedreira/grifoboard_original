@@ -294,7 +294,7 @@ const GrifoAI = () => {
                   </Avatar>
                   <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm flex items-center gap-2 text-slate-500 text-sm">
                     <Loader2 className="h-4 w-4 animate-spin text-[#C7A347]" />
-                    <span className="text-xs">Consultando o Grifo Way...</span>
+                    <span className="text-xs">Consultando...</span>
                   </div>
                 </div>
               )}
