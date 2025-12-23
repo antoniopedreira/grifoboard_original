@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, CalendarRange, GripVertical, FileText } from "lucide-react";
+import { Loader2, Plus, Trash2, CalendarRange, GripVertical, FileText, Edit2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, differenceInWeeks, parseISO, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -26,8 +26,7 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
-// --- CONFIGURAÇÃO DE CORES (IDENTIDADE PADRÃO) ---
-// Usamos bordas laterais para indicar cor, mantendo o card limpo (estilo Pipefy/Trello moderno)
+// --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
   yellow: { border: "border-l-yellow-400", bg: "bg-white", text: "text-slate-700", ring: "ring-yellow-400" },
   green: { border: "border-l-emerald-500", bg: "bg-white", text: "text-slate-700", ring: "ring-emerald-500" },
@@ -51,10 +50,12 @@ interface PmpAtividade {
 const KanbanCard = ({
   atividade,
   onDelete,
+  onClick,
   isOverlay = false,
 }: {
   atividade: PmpAtividade;
   onDelete?: (id: string) => void;
+  onClick?: (atividade: PmpAtividade) => void;
   isOverlay?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -68,12 +69,11 @@ const KanbanCard = ({
 
   const theme = POSTIT_COLORS[atividade.cor as ColorKey] || POSTIT_COLORS.yellow;
 
-  // Classes base do card
   const cardClasses = `
     relative group select-none p-3 rounded-md 
     border border-slate-200 border-l-[4px] ${theme.border}
     bg-white shadow-sm hover:shadow-md transition-all duration-200
-    flex items-start gap-2
+    flex items-start gap-2 cursor-grab active:cursor-grabbing
   `;
 
   if (isOverlay) {
@@ -101,7 +101,9 @@ const KanbanCard = ({
       style={style}
       {...attributes}
       {...listeners}
-      className={`${cardClasses} cursor-grab active:cursor-grabbing`}
+      // O clique aqui dispara a edição, mas o Drag (listeners) tem prioridade se houver movimento
+      onClick={() => onClick && onClick(atividade)}
+      className={cardClasses}
     >
       <div className="mt-0.5 text-slate-300 group-hover:text-slate-400 transition-colors">
         <GripVertical className="h-4 w-4" />
@@ -156,13 +158,16 @@ const PMP = () => {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorKey>("yellow");
+
+  // Estado para edição
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const [activeDragItem, setActiveDragItem] = useState<PmpAtividade | null>(null);
 
+  // Sensor com distância mínima de 5px para distinguir clique de arrastar
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  // 1. Gera as colunas de semanas (Lógica corrigida para data_termino)
   const weeks = useMemo(() => {
-    // Casting 'any' para garantir acesso a propriedade data_termino
     const obra = obraAtiva as any;
     if (!obra?.data_inicio || !obra?.data_termino) return [];
 
@@ -187,7 +192,6 @@ const PMP = () => {
     return weeksArray;
   }, [obraAtiva]);
 
-  // 2. Busca atividades
   const { data: atividades = [], isLoading } = useQuery({
     queryKey: ["pmp_atividades", obraAtiva?.id],
     queryFn: async () => {
@@ -203,7 +207,8 @@ const PMP = () => {
     enabled: !!obraAtiva?.id,
   });
 
-  // 3. Mutations (CRUD)
+  // --- MUTATIONS ---
+
   const moveMutation = useMutation({
     mutationFn: async ({ id, novaSemana }: { id: string; novaSemana: string }) => {
       const { error } = await supabase
@@ -241,9 +246,23 @@ const PMP = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
-      setNewTaskTitle("");
-      setIsModalOpen(false);
-      toast({ title: "Atividade criada com sucesso" });
+      handleCloseModal();
+      toast({ title: "Atividade criada" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, title, color }: { id: string; title: string; color: string }) => {
+      const { error } = await supabase
+        .from("pmp_atividades" as any)
+        .update({ titulo: title, cor: color })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
+      handleCloseModal();
+      toast({ title: "Atividade atualizada" });
     },
   });
 
@@ -262,6 +281,7 @@ const PMP = () => {
   });
 
   // --- HANDLERS ---
+
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.atividade) {
       setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
@@ -278,7 +298,6 @@ const PMP = () => {
     const draggedTask = active.data.current?.atividade as PmpAtividade;
     let targetWeekId = "";
 
-    // Lógica inteligente para detectar destino (Coluna ou Card)
     if (over.data.current?.type === "Column") {
       targetWeekId = over.data.current.weekId;
     } else if (over.data.current?.type === "Card") {
@@ -290,9 +309,37 @@ const PMP = () => {
     }
   };
 
+  // Funções de Modal
   const handleOpenAdd = (weekId: string) => {
+    setEditingId(null);
+    setNewTaskTitle("");
+    setSelectedColor("yellow");
     setSelectedWeek(weekId);
     setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (atividade: PmpAtividade) => {
+    setEditingId(atividade.id);
+    setNewTaskTitle(atividade.titulo);
+    setSelectedColor(atividade.cor as ColorKey);
+    // Para edição, não precisamos mudar a semana, mas mantemos no estado se necessário
+    setSelectedWeek(atividade.semana_referencia);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setNewTaskTitle("");
+    setSelectedColor("yellow");
+  };
+
+  const handleSave = () => {
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, title: newTaskTitle, color: selectedColor });
+    } else {
+      createMutation.mutate();
+    }
   };
 
   const dropAnimation: DropAnimation = {
@@ -313,10 +360,8 @@ const PMP = () => {
     );
   }
 
-  // --- RENDER ---
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 font-sans bg-slate-50/30">
-      {/* HEADER PADRÃO */}
       <div className="flex justify-between items-center px-2 py-2">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -339,12 +384,10 @@ const PMP = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {/* ÁREA DO KANBAN */}
         <ScrollArea className="w-full flex-1 border border-slate-200 rounded-xl bg-white shadow-sm">
           <div className="flex p-6 gap-4">
             {weeks.map((week) => (
               <div key={week.id} className="flex-shrink-0 w-[280px] flex flex-col gap-3 group/column">
-                {/* CABEÇALHO DA COLUNA */}
                 <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
@@ -357,7 +400,6 @@ const PMP = () => {
                   </div>
                 </div>
 
-                {/* ÁREA DE CARDS (Droppable) */}
                 <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] transition-colors hover:border-slate-300">
                   <KanbanColumn weekId={week.id}>
                     {atividades
@@ -367,11 +409,11 @@ const PMP = () => {
                           key={atividade.id}
                           atividade={atividade}
                           onDelete={(id) => deleteMutation.mutate(id)}
+                          onClick={(item) => handleOpenEdit(item)}
                         />
                       ))}
                   </KanbanColumn>
 
-                  {/* BOTÃO ADICIONAR */}
                   <Button
                     variant="ghost"
                     className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-9 text-xs transition-all"
@@ -391,11 +433,14 @@ const PMP = () => {
         </DragOverlay>
       </DndContext>
 
-      {/* MODAL DE CRIAÇÃO (Estilo Padrão) */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      {/* MODAL DE CRIAÇÃO / EDIÇÃO */}
+      <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold flex items-center gap-2">Nova Atividade</DialogTitle>
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+              {editingId ? <Edit2 className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+              {editingId ? "Editar Atividade" : "Nova Atividade"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
             <div className="space-y-2">
@@ -413,7 +458,6 @@ const PMP = () => {
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Etiqueta de Cor</span>
               <div className="flex flex-wrap gap-3">
                 {Object.entries(POSTIT_COLORS).map(([key, value]) => {
-                  // Mapeamento de cores para os botões de seleção
                   let bgClass = "bg-slate-200";
                   if (key === "yellow") bgClass = "bg-yellow-400";
                   if (key === "green") bgClass = "bg-emerald-500";
@@ -440,12 +484,14 @@ const PMP = () => {
           </div>
           <DialogFooter>
             <Button
-              onClick={() => createMutation.mutate()}
-              disabled={createMutation.isPending}
+              onClick={handleSave}
+              disabled={createMutation.isPending || updateMutation.isPending}
               className="bg-primary text-white hover:bg-primary/90"
             >
-              {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Criar Atividade
+              {(createMutation.isPending || updateMutation.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {editingId ? "Salvar Alterações" : "Criar Atividade"}
             </Button>
           </DialogFooter>
         </DialogContent>
