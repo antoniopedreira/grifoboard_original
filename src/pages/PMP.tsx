@@ -18,12 +18,12 @@ import {
   useSensor,
   useSensors,
   closestCorners,
-  DragOverEvent,
-  defaultDropAnimationSideEffects,
   DropAnimation,
+  defaultDropAnimationSideEffects,
+  useDroppable,
+  useDraggable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { useDroppable, useDraggable } from "@dnd-kit/core";
 
 // --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
@@ -64,11 +64,7 @@ const KanbanCard = ({
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: atividade.id,
-    data: {
-      type: "Card",
-      atividade,
-      weekId: atividade.semana_referencia, // IMPORTANTE: Saber de onde ele veio
-    },
+    data: { atividade }, // Passando dados apenas para o Overlay, não para a lógica crítica
   });
 
   const style = {
@@ -80,7 +76,7 @@ const KanbanCard = ({
   if (isOverlay) {
     return (
       <div
-        className={`p-3 rounded-md border shadow-2xl rotate-3 cursor-grabbing w-[280px] ${colorStyle.bg} ${colorStyle.border} ${colorStyle.text}`}
+        className={`p-3 rounded-md border shadow-2xl rotate-3 cursor-grabbing w-[280px] ${colorStyle.bg} ${colorStyle.border} ${colorStyle.text} z-[9999]`}
       >
         <div className="flex items-start gap-2">
           <GripVertical className="h-4 w-4 opacity-50 flex-shrink-0 mt-0.5" />
@@ -132,11 +128,7 @@ const KanbanCard = ({
 // --- COLUNA (Droppable) ---
 const KanbanColumn = ({ weekId, children }: { weekId: string; children: React.ReactNode }) => {
   const { setNodeRef, isOver } = useDroppable({
-    id: weekId,
-    data: {
-      type: "Column",
-      weekId,
-    },
+    id: weekId, // O ID da coluna é o ID da semana (YYYY-MM-DD)
   });
 
   return (
@@ -162,14 +154,12 @@ const PMP = () => {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorKey>("yellow");
-
-  // Drag State
   const [activeDragItem, setActiveDragItem] = useState<PmpAtividade | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 5px de movimento para iniciar o drag (evita cliques acidentais)
+        distance: 5, // Só arrasta se mover 5px (evita cliques acidentais)
       },
     }),
   );
@@ -208,52 +198,18 @@ const PMP = () => {
       const { data, error } = await supabase
         .from("pmp_atividades" as any)
         .select("*")
-        .eq("obra_id", obraAtiva.id);
+        .eq("obra_id", obraAtiva.id)
+        .order("created_at", { ascending: true }); // Ordena por criação
       if (error) throw error;
       return (data || []) as unknown as PmpAtividade[];
     },
     enabled: !!obraAtiva?.id,
   });
 
-  // 3. Mutation: Criar
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      if (!obraAtiva?.id || !selectedWeek || !newTaskTitle.trim()) return;
-      const { error } = await supabase.from("pmp_atividades" as any).insert({
-        obra_id: obraAtiva.id,
-        semana_referencia: selectedWeek,
-        titulo: newTaskTitle,
-        cor: selectedColor,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
-      setNewTaskTitle("");
-      setIsModalOpen(false);
-      toast({ title: "Post-it criado!" });
-    },
-    onError: () => toast({ title: "Erro ao criar", variant: "destructive" }),
-  });
-
-  // 4. Mutation: Deletar
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("pmp_atividades" as any)
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
-      toast({ title: "Removido!" });
-    },
-  });
-
-  // 5. Mutation: Mover (Lógica do Drag and Drop)
+  // 3. Mutation: Mover (Lógica do Drag and Drop)
   const moveMutation = useMutation({
     mutationFn: async ({ id, novaSemana }: { id: string; novaSemana: string }) => {
+      console.log(`Salvando no banco: ID ${id} -> Semana ${novaSemana}`);
       const { error } = await supabase
         .from("pmp_atividades" as any)
         .update({ semana_referencia: novaSemana })
@@ -261,7 +217,7 @@ const PMP = () => {
       if (error) throw error;
     },
     onMutate: async ({ id, novaSemana }) => {
-      // Otimização visual instantânea (Optimistic Update)
+      // Atualização Otimista
       await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
       const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
 
@@ -281,11 +237,48 @@ const PMP = () => {
     },
   });
 
+  // 4. Mutation: Criar
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!obraAtiva?.id || !selectedWeek || !newTaskTitle.trim()) return;
+      const { error } = await supabase.from("pmp_atividades" as any).insert({
+        obra_id: obraAtiva.id,
+        semana_referencia: selectedWeek,
+        titulo: newTaskTitle,
+        cor: selectedColor,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
+      setNewTaskTitle("");
+      setIsModalOpen(false);
+      toast({ title: "Post-it criado!" });
+    },
+  });
+
+  // 5. Mutation: Deletar
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("pmp_atividades" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
+      toast({ title: "Removido!" });
+    },
+  });
+
   // --- HANDLERS DND ---
 
   const handleDragStart = (event: DragStartEvent) => {
-    if (event.active.data.current?.atividade) {
-      setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
+    // Encontra o item que está sendo arrastado na lista de dados
+    const currentItem = atividades.find((item) => item.id === event.active.id);
+    if (currentItem) {
+      setActiveDragItem(currentItem);
     }
   };
 
@@ -293,28 +286,43 @@ const PMP = () => {
     const { active, over } = event;
     setActiveDragItem(null);
 
-    if (!over) return;
+    // Se não soltou em lugar nenhum válido
+    if (!over) {
+      console.log("Soltou fora");
+      return;
+    }
 
     const activeId = String(active.id);
-    const draggedTask = active.data.current?.atividade as PmpAtividade;
+    const overId = String(over.id);
 
-    // Identificar ONDE soltou
-    let targetWeekId = "";
+    console.log("Moveu:", activeId, "Para:", overId);
 
-    // Caso 1: Soltou em cima de uma Coluna (vazia ou na área de drop)
-    if (over.data.current?.type === "Column") {
-      targetWeekId = over.data.current.weekId;
+    // Encontra o item que foi arrastado
+    const itemArrastado = atividades.find((item) => item.id === activeId);
+    if (!itemArrastado) return;
+
+    let novaSemanaDestino = null;
+
+    // LÓGICA DE DETECÇÃO DO DESTINO
+    // 1. Verifica se 'overId' é o ID de uma COLUNA (Semana)
+    const isWeekColumn = weeks.some((w) => w.id === overId);
+    if (isWeekColumn) {
+      novaSemanaDestino = overId;
     }
-    // Caso 2: Soltou em cima de outro Card
-    else if (over.data.current?.type === "Card") {
-      targetWeekId = over.data.current.weekId;
+    // 2. Se não for coluna, verifica se é um CARD que está dentro de uma coluna
+    else {
+      const itemSobPosicao = atividades.find((item) => item.id === overId);
+      if (itemSobPosicao) {
+        novaSemanaDestino = itemSobPosicao.semana_referencia;
+      }
     }
 
-    // Se achou uma semana válida e é diferente da atual, move!
-    if (targetWeekId && draggedTask && targetWeekId !== draggedTask.semana_referencia) {
+    // Se achou um destino válido e é diferente da origem
+    if (novaSemanaDestino && novaSemanaDestino !== itemArrastado.semana_referencia) {
+      console.log("Confirmado! Movendo para:", novaSemanaDestino);
       moveMutation.mutate({
         id: activeId,
-        novaSemana: targetWeekId,
+        novaSemana: novaSemanaDestino,
       });
     }
   };
@@ -322,6 +330,15 @@ const PMP = () => {
   const handleOpenAdd = (weekId: string) => {
     setSelectedWeek(weekId);
     setIsModalOpen(true);
+  };
+
+  // Animação de Drop suave
+  const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: { opacity: "0.5" },
+      },
+    }),
   };
 
   if (!obraAtiva) {
@@ -333,17 +350,6 @@ const PMP = () => {
       </div>
     );
   }
-
-  // Animação de Drop (Opcional, para suavidade)
-  const dropAnimation: DropAnimation = {
-    sideEffects: defaultDropAnimationSideEffects({
-      styles: {
-        active: {
-          opacity: "0.5",
-        },
-      },
-    }),
-  };
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 animate-in fade-in duration-500">
@@ -361,7 +367,7 @@ const PMP = () => {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners} // Melhor algoritmo para cards em listas
+        collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -405,7 +411,7 @@ const PMP = () => {
           <ScrollBar orientation="horizontal" className="h-3" />
         </ScrollArea>
 
-        {/* Overlay (O card que segue o mouse) */}
+        {/* Overlay (Item arrastado) */}
         <DragOverlay dropAnimation={dropAnimation}>
           {activeDragItem ? <KanbanCard atividade={activeDragItem} isOverlay /> : null}
         </DragOverlay>
