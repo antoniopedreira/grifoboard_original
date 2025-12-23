@@ -17,7 +17,7 @@ import {
   Calendar as CalendarIcon,
   CheckCircle2,
   Circle,
-  AlertCircle, // Novo ícone para atraso
+  AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -29,8 +29,8 @@ import {
   areIntervalsOverlapping,
   differenceInCalendarDays,
   isValid,
-  isBefore, // Importado para verificar atraso
-  startOfDay, // Importado para pegar o inicio do dia atual
+  isBefore,
+  startOfDay,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -48,6 +48,8 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+// Importação do componente de Countdown
+import ProjectCountdown from "@/components/dashboard/ProjectCountdown";
 
 // --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
@@ -106,7 +108,6 @@ const KanbanCard = ({
   // Lógica de Atraso
   const today = startOfDay(new Date());
   const endDate = atividade.data_termino ? parseISO(atividade.data_termino) : null;
-  // Está atrasado se: NÃO está concluído E tem data de término E data de término é antes de hoje
   const isDelayed = !isCompleted && endDate && isBefore(endDate, today);
 
   const cardClasses = `
@@ -153,9 +154,7 @@ const KanbanCard = ({
       onClick={() => onClick && onClick(atividade)}
       className={cardClasses}
     >
-      {/* Cabeçalho do Card com Check e Título */}
       <div className="flex items-start gap-2">
-        {/* Botão de Check */}
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
@@ -176,7 +175,6 @@ const KanbanCard = ({
             {atividade.titulo}
           </p>
 
-          {/* Badges de Status */}
           <div className="flex flex-wrap gap-1 mt-1">
             {isCompleted && (
               <Badge
@@ -195,13 +193,11 @@ const KanbanCard = ({
           </div>
         </div>
 
-        {/* Grip para arrastar (visible on hover) */}
         <div className="mt-0.5 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
           <GripVertical className="h-4 w-4" />
         </div>
       </div>
 
-      {/* Rodapé do Card */}
       <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100/50">
         <div className="flex items-center gap-2 text-[10px] text-slate-500">
           {dateDisplay && (
@@ -537,7 +533,8 @@ const PMP = () => {
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 font-sans bg-slate-50/30">
-      <div className="flex justify-between items-center px-2 py-2">
+      {/* HEADER ATUALIZADO COM COUNTDOWN */}
+      <div className="flex flex-col md:flex-row justify-between items-end px-2 py-2 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <CalendarRange className="h-6 w-6 text-primary" />
@@ -546,6 +543,11 @@ const PMP = () => {
           <p className="text-sm text-slate-500">
             {obraAtiva.nome_obra} • {weeks.length} semanas • {atividades.length} atividades
           </p>
+        </div>
+
+        {/* ÁREA DO COUNTDOWN - BOMBA RELÓGIO */}
+        <div className="w-full md:w-80 lg:w-96">
+          <ProjectCountdown />
         </div>
       </div>
 
