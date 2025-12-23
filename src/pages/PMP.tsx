@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge"; // Import Badge
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   Loader2,
@@ -15,8 +15,9 @@ import {
   GripVertical,
   User,
   Calendar as CalendarIcon,
-  CheckCircle2, // Icone de Concluido
-  Circle, // Icone de Pendente
+  CheckCircle2,
+  Circle,
+  AlertCircle, // Novo ícone para atraso
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -28,7 +29,10 @@ import {
   areIntervalsOverlapping,
   differenceInCalendarDays,
   isValid,
+  isBefore, // Importado para verificar atraso
+  startOfDay, // Importado para pegar o inicio do dia atual
 } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   DndContext,
   DragEndEvent,
@@ -47,12 +51,12 @@ import { CSS } from "@dnd-kit/utilities";
 
 // --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
-  yellow: { border: "border-l-yellow-400", bg: "bg-white", text: "text-slate-700" },
-  green: { border: "border-l-emerald-500", bg: "bg-white", text: "text-slate-700" },
-  blue: { border: "border-l-blue-500", bg: "bg-white", text: "text-slate-700" },
-  red: { border: "border-l-red-500", bg: "bg-white", text: "text-slate-700" },
-  purple: { border: "border-l-purple-500", bg: "bg-white", text: "text-slate-700" },
-  orange: { border: "border-l-orange-500", bg: "bg-white", text: "text-slate-700" },
+  yellow: { border: "border-l-yellow-400", bg: "bg-white", text: "text-slate-700", ring: "ring-yellow-400" },
+  green: { border: "border-l-emerald-500", bg: "bg-white", text: "text-slate-700", ring: "ring-emerald-500" },
+  blue: { border: "border-l-blue-500", bg: "bg-white", text: "text-slate-700", ring: "ring-blue-500" },
+  red: { border: "border-l-red-500", bg: "bg-white", text: "text-slate-700", ring: "ring-red-500" },
+  purple: { border: "border-l-purple-500", bg: "bg-white", text: "text-slate-700", ring: "ring-purple-500" },
+  orange: { border: "border-l-orange-500", bg: "bg-white", text: "text-slate-700", ring: "ring-orange-500" },
 };
 
 type ColorKey = keyof typeof POSTIT_COLORS;
@@ -66,7 +70,7 @@ interface PmpAtividade {
   data_inicio?: string | null;
   data_termino?: string | null;
   responsavel?: string | null;
-  concluido?: boolean; // Novo campo
+  concluido?: boolean;
 }
 
 // --- CARD (Draggable) ---
@@ -74,7 +78,7 @@ const KanbanCard = ({
   atividade,
   weekId,
   onDelete,
-  onToggleCheck, // Nova função
+  onToggleCheck,
   onClick,
   isOverlay = false,
 }: {
@@ -99,12 +103,19 @@ const KanbanCard = ({
   const theme = POSTIT_COLORS[atividade.cor as ColorKey] || POSTIT_COLORS.yellow;
   const isCompleted = atividade.concluido;
 
+  // Lógica de Atraso
+  const today = startOfDay(new Date());
+  const endDate = atividade.data_termino ? parseISO(atividade.data_termino) : null;
+  // Está atrasado se: NÃO está concluído E tem data de término E data de término é antes de hoje
+  const isDelayed = !isCompleted && endDate && isBefore(endDate, today);
+
   const cardClasses = `
     relative group select-none p-3 rounded-md 
-    border border-slate-200 border-l-[4px] ${theme.border}
-    bg-white shadow-sm hover:shadow-md transition-all duration-200
+    border border-slate-200 border-l-[4px] 
+    ${isDelayed ? "border-l-red-600 bg-red-50/50" : theme.border} 
+    ${isCompleted ? "opacity-75 bg-slate-50 border-l-slate-300" : "bg-white"}
+    shadow-sm hover:shadow-md transition-all duration-200
     flex flex-col gap-2 cursor-grab active:cursor-grabbing
-    ${isCompleted ? "opacity-75 bg-slate-50" : ""} 
   `;
 
   const dateDisplay =
@@ -114,7 +125,7 @@ const KanbanCard = ({
 
   if (isOverlay) {
     return (
-      <div className={`${cardClasses} w-[280px] z-[9999] rotate-2 scale-105 shadow-xl`}>
+      <div className={`${cardClasses} w-[280px] z-[9999] rotate-2 scale-105 shadow-xl bg-white`}>
         <div className="flex items-start gap-2">
           <GripVertical className="h-4 w-4 text-slate-400 mt-0.5" />
           <p className="text-sm font-medium text-slate-700 leading-snug">{atividade.titulo}</p>
@@ -151,40 +162,52 @@ const KanbanCard = ({
             e.stopPropagation();
             if (onToggleCheck) onToggleCheck(atividade.id, !!isCompleted);
           }}
-          className={`mt-0.5 transition-colors ${isCompleted ? "text-green-500" : "text-slate-300 hover:text-slate-400"}`}
+          className={`mt-0.5 transition-colors ${
+            isCompleted ? "text-green-500" : isDelayed ? "text-red-500" : "text-slate-300 hover:text-slate-400"
+          }`}
         >
           {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
         </button>
 
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p
             className={`text-sm font-medium leading-snug break-words ${isCompleted ? "text-slate-500 line-through decoration-slate-400" : "text-slate-700"}`}
           >
             {atividade.titulo}
           </p>
 
-          {/* Badge de Concluído */}
-          {isCompleted && (
-            <Badge
-              variant="outline"
-              className="mt-1 text-[10px] h-5 bg-green-50 text-green-700 border-green-200 px-1.5"
-            >
-              CONCLUÍDO
-            </Badge>
-          )}
+          {/* Badges de Status */}
+          <div className="flex flex-wrap gap-1 mt-1">
+            {isCompleted && (
+              <Badge
+                variant="outline"
+                className="text-[9px] h-4 bg-green-50 text-green-700 border-green-200 px-1.5 font-bold"
+              >
+                CONCLUÍDO
+              </Badge>
+            )}
+
+            {isDelayed && (
+              <Badge variant="destructive" className="text-[9px] h-4 px-1.5 font-bold flex items-center gap-1">
+                <AlertCircle className="h-2 w-2" /> ATRASADO
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Grip para arrastar (visible on hover) */}
-        <div className="mt-0.5 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="mt-0.5 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
           <GripVertical className="h-4 w-4" />
         </div>
       </div>
 
       {/* Rodapé do Card */}
-      <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-50">
+      <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100/50">
         <div className="flex items-center gap-2 text-[10px] text-slate-500">
           {dateDisplay && (
-            <div className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
+            <div
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${isDelayed ? "bg-red-50 text-red-600 font-medium" : "bg-slate-100 text-slate-600"}`}
+            >
               <CalendarIcon className="h-3 w-3" />
               <span>{dateDisplay}</span>
             </div>
@@ -291,7 +314,7 @@ const PMP = () => {
         .from("pmp_atividades" as any)
         .select("*")
         .eq("obra_id", obraAtiva.id)
-        .order("concluido", { ascending: true }) // Tarefas não concluídas aparecem primeiro
+        .order("concluido", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data || []) as unknown as PmpAtividade[];
@@ -337,7 +360,6 @@ const PMP = () => {
     onError: () => toast({ title: "Erro ao mover", variant: "destructive" }),
   });
 
-  // Mutação para dar Check/Uncheck
   const toggleCheckMutation = useMutation({
     mutationFn: async ({ id, novoStatus }: { id: string; novoStatus: boolean }) => {
       const { error } = await supabase
@@ -425,7 +447,6 @@ const PMP = () => {
     if (over.data.current?.type === "Column") {
       targetWeekId = over.data.current.weekId;
     } else if (over.data.current?.type === "Card") {
-      // Se soltar em card, ignora por simplicidade ou implementa lógica complexa de reordenação
       return;
     }
 
@@ -609,7 +630,7 @@ const PMP = () => {
                 <label className="text-xs font-medium text-slate-500 uppercase">Início</label>
                 <Input
                   type="date"
-                  value={formData.data_inicio ? format(parseISO(formData.data_inicio), "yyyy-MM-dd") : ""}
+                  value={formData.data_inicio}
                   onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
                 />
               </div>
@@ -617,7 +638,7 @@ const PMP = () => {
                 <label className="text-xs font-medium text-slate-500 uppercase">Término</label>
                 <Input
                   type="date"
-                  value={formData.data_termino ? format(parseISO(formData.data_termino), "yyyy-MM-dd") : ""}
+                  value={formData.data_termino}
                   onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
                 />
               </div>
