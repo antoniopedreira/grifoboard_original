@@ -3,7 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, MessageSquare, Upload, Eye, Loader2, Paperclip } from "lucide-react"; // Novos ícones
+// Adicionado Trash2 nas importações
+import { CalendarIcon, MessageSquare, Upload, Eye, Loader2, Paperclip, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -14,7 +15,7 @@ import { gamificationService } from "@/services/gamificationService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client"; // Import Supabase
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ContractingItem {
   id: number | string;
@@ -29,7 +30,7 @@ export interface ContractingItem {
   valor_contratado: number | null;
   status_contratacao: string;
   observacao: string | null;
-  contract_url: string | null; // Adicionado
+  contract_url: string | null;
 }
 
 interface EnrichedContractingItem extends ContractingItem {
@@ -51,7 +52,6 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   const [fieldValue, setFieldValue] = useState<string>("");
   const [dateValue, setDateValue] = useState<Date | undefined>(undefined);
 
-  // Estado para upload
   const [isUploading, setIsUploading] = useState<string | number | null>(null);
 
   let currentMainStage = "";
@@ -71,7 +71,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  // Lógica de Upload de Contrato
+  // --- LÓGICA DE UPLOAD ---
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, itemId: string | number) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -83,26 +83,47 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
       const fileName = `${itemId}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // Upload para Bucket
       const { error: uploadError } = await supabase.storage.from("playbook-documents").upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Obter URL Pública
       const {
         data: { publicUrl },
       } = supabase.storage.from("playbook-documents").getPublicUrl(filePath);
 
-      // Atualizar Banco
       await playbookService.updateItem(String(itemId), { contract_url: publicUrl });
 
       toast({ title: "Contrato anexado com sucesso!" });
-      onUpdate(); // Refresh
+      onUpdate();
     } catch (error) {
       console.error(error);
       toast({ title: "Erro ao anexar contrato", variant: "destructive" });
     } finally {
       setIsUploading(null);
+    }
+  };
+
+  // --- LÓGICA DE EXCLUSÃO DE ARQUIVO ---
+  const handleRemoveFile = async (itemId: string | number, fileUrl: string) => {
+    try {
+      // 1. Tentar remover do Storage (Opcional, para não deixar lixo)
+      try {
+        const path = fileUrl.split("/playbook-documents/")[1];
+        if (path) {
+          await supabase.storage.from("playbook-documents").remove([path]);
+        }
+      } catch (err) {
+        console.warn("Erro ao remover arquivo do storage, mas prosseguindo com desvinculo", err);
+      }
+
+      // 2. Atualizar banco para null
+      await playbookService.updateItem(String(itemId), { contract_url: null });
+
+      toast({ title: "Contrato removido." });
+      onUpdate();
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao remover contrato", variant: "destructive" });
     }
   };
 
@@ -164,44 +185,32 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
       await playbookService.updateItem(String(editingItem.id), updates);
 
-      // === GAMIFICAÇÃO 🎮 ===
       if (userSession?.user?.id) {
-        // 1. Dar XP quando status muda para "Negociada" ou "Contratado"
         if (
           editingField === "status" &&
           (fieldValue === "Negociada" || fieldValue === "Contratado") &&
           previousStatus !== "Negociada" &&
           previousStatus !== "Contratado"
         ) {
-          // A) XP pela Contratação (+100 XP)
           await gamificationService.awardXP(userSession.user.id, "CONTRATACAO_FAST", 100, String(editingItem.id));
 
-          // B) XP pela Economia (+50 XP) 💰
-          // CORREÇÃO AQUI: Como estamos no bloco "status", usamos o valor que já existe no item
           const valorContratadoFinal = editingItem.valor_contratado || 0;
           const valorMeta = editingItem.precoTotalMeta || 0;
 
           if (valorMeta > 0 && valorContratadoFinal > 0 && valorContratadoFinal < valorMeta) {
-            console.log("💰 Economia detectada! Disparando bônus...");
             await gamificationService.awardXP(
               userSession.user.id,
               "ECONOMIA_PLAYBOOK",
               50,
-              `${editingItem.id}_ECONOMY`, // ID Único para o bônus de economia
+              `${editingItem.id}_ECONOMY`,
             );
           }
-        }
-
-        // 2. Se reverter o status (voltar para A Negociar), remover XP
-        else if (
+        } else if (
           editingField === "status" &&
           (fieldValue === "A Negociar" || fieldValue === "Em Andamento") &&
           (previousStatus === "Negociada" || previousStatus === "Contratado")
         ) {
-          // Remove XP da contratação
           await gamificationService.removeXP(userSession.user.id, "CONTRATACAO_FAST", 100, String(editingItem.id));
-
-          // Remove XP da economia (se tiver ganho)
           await gamificationService.removeXP(userSession.user.id, "ECONOMIA_PLAYBOOK", 50, `${editingItem.id}_ECONOMY`);
         }
       }
@@ -295,17 +304,14 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
   const calculateSummary = (filtered: EnrichedContractingItem[]) => {
     const statuses = ["Negociada", "Em Andamento", "A Negociar"];
-
     const byStatus = statuses.map((status) => {
       const items = filtered.filter((i) => (i.status_contratacao || "A Negociar") === status);
       const totalMeta = items.reduce((sum, i) => sum + i.precoTotalMeta, 0);
       const totalContratado = items.reduce((sum, i) => sum + (i.valor_contratado || 0), 0);
       return { status, totalMeta, totalContratado, count: items.length };
     });
-
     const totalMeta = byStatus.reduce((sum, s) => sum + s.totalMeta, 0);
     const totalContratado = byStatus.reduce((sum, s) => sum + s.totalContratado, 0);
-
     return { byStatus, totalMeta, totalContratado };
   };
 
@@ -329,7 +335,6 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
   const renderSummary = (filtered: EnrichedContractingItem[]) => {
     const { byStatus, totalMeta, totalContratado } = calculateSummary(filtered);
-
     if (filtered.length === 0) return null;
 
     return (
@@ -350,7 +355,6 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
             {byStatus.map((row) => {
               const verbaDisponivel = row.totalMeta - row.totalContratado;
               const percentVerba = row.totalMeta > 0 ? (row.totalContratado / row.totalMeta) * 100 : 0;
-
               return (
                 <TableRow key={row.status} className="hover:bg-slate-50">
                   <TableCell className="font-medium text-sm text-slate-700 flex items-center gap-2">
@@ -385,7 +389,6 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                 </TableRow>
               );
             })}
-            {/* TOTAL Row */}
             <TableRow className="bg-[#A47528]/10 hover:bg-[#A47528]/15 border-t-2 border-[#A47528]/30">
               <TableCell className="font-bold text-sm text-slate-900">TOTAL</TableCell>
               <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
@@ -436,7 +439,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                 <TableHead className="text-right w-[100px]">Meta</TableHead>
                 <TableHead className="text-right w-[100px]">Contratado</TableHead>
                 <TableHead className="w-[120px]">Status</TableHead>
-                <TableHead className="text-center w-[80px]">Contrato</TableHead> {/* NOVA COLUNA */}
+                <TableHead className="text-center w-[80px]">Contrato</TableHead>
                 <TableHead className="w-[40px]">Obs</TableHead>
               </TableRow>
             </TableHeader>
@@ -502,10 +505,10 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                       </Badge>
                     </TableCell>
 
-                    {/* NOVA CÉLULA DE CONTRATO */}
+                    {/* CÉLULA DE CONTRATO ATUALIZADA */}
                     <TableCell className="text-center">
                       {isNegotiated ? (
-                        <div className="flex justify-center items-center gap-2">
+                        <div className="flex justify-center items-center gap-1">
                           <label className="cursor-pointer">
                             <input
                               type="file"
@@ -516,7 +519,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                             {isUploading === item.id ? (
                               <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                             ) : item.contract_url ? (
-                              <div className="flex gap-1">
+                              <div className="flex items-center gap-1">
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -526,9 +529,10 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
+                                {/* Botão de Substituir */}
                                 <div
                                   title="Substituir"
-                                  className="flex items-center text-slate-400 hover:text-slate-600"
+                                  className="flex items-center text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"
                                 >
                                   <Upload className="h-3 w-3" />
                                 </div>
@@ -536,12 +540,25 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                             ) : (
                               <div
                                 title="Anexar Contrato"
-                                className="flex items-center text-slate-300 hover:text-[#C7A347] transition-colors"
+                                className="flex items-center text-slate-300 hover:text-[#C7A347] transition-colors p-1"
                               >
                                 <Paperclip className="h-4 w-4" />
                               </div>
                             )}
                           </label>
+
+                          {/* BOTÃO DE EXCLUIR */}
+                          {item.contract_url && !isUploading && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => handleRemoveFile(item.id, item.contract_url!)}
+                              title="Remover Contrato"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       ) : (
                         <span className="text-slate-200 text-[10px]">-</span>
@@ -586,7 +603,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </DialogContent>
       </Dialog>
 
-      {/* Header */}
+      {/* Header e Tabs omitidos para brevidade, mantendo igual ao original ... */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-800">Farol de Contratações</h2>
@@ -594,7 +611,6 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="Obra" className="w-full">
         <TabsList className="bg-slate-100 p-1 border border-slate-200 w-full justify-start h-auto">
           <TabsTrigger
