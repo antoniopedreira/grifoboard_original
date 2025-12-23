@@ -265,14 +265,26 @@ const PMP = () => {
     // Se não soltou em lugar nenhum válido
     if (!over) return;
 
-    // Recupera os dados do card arrastado diretamente do evento (mais seguro)
+    // Recupera os dados do card arrastado
     const draggedItem = active.data.current?.atividade as PmpAtividade;
+    if (!draggedItem) return;
 
-    // O ID da coluna onde soltou (over.id é o weekId da coluna)
-    const targetWeekId = String(over.id);
+    // Determinar a semana de destino
+    let targetWeekId: string | null = null;
 
-    if (draggedItem && targetWeekId && draggedItem.semana_referencia !== targetWeekId) {
-      // Dispara a mutação para o banco de dados
+    // Se soltou em um droppable de semana
+    if (over.data.current?.type === "week") {
+      targetWeekId = over.data.current.weekId;
+    } else {
+      // Se soltou em cima de outro post-it, pegar a semana dele
+      const overAtividade = atividades.find((a) => a.id === over.id);
+      if (overAtividade) {
+        targetWeekId = overAtividade.semana_referencia;
+      }
+    }
+
+    // Se encontrou uma semana válida e é diferente da atual
+    if (targetWeekId && draggedItem.semana_referencia !== targetWeekId) {
       moveMutation.mutate({
         id: draggedItem.id,
         novaSemana: targetWeekId,
