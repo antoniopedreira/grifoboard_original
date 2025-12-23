@@ -17,9 +17,8 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  pointerWithin, // <--- MUDANÇA IMPORTANTE: Algoritmo melhor para colunas
 } from "@dnd-kit/core";
-import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 import { useDraggable } from "@dnd-kit/core";
@@ -52,16 +51,10 @@ interface PmpAtividade {
 }
 
 // Componente Draggable para cada Post-it
-const DraggablePostIt = ({
-  atividade,
-  onDelete,
-}: {
-  atividade: PmpAtividade;
-  onDelete: (id: string) => void;
-}) => {
+const DraggablePostIt = ({ atividade, onDelete }: { atividade: PmpAtividade; onDelete: (id: string) => void }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: atividade.id,
-    data: { atividade },
+    data: { atividade }, // Passamos o objeto completo aqui para recuperar no DragEnd
   });
 
   const getPostItStyle = (colorName: string) => {
@@ -79,21 +72,22 @@ const DraggablePostIt = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 rounded-md border shadow-sm transition-all relative group select-none ${getPostItStyle(atividade.cor)} ${isDragging ? "rotate-3 scale-105" : ""}`}
+      className={`p-3 rounded-md border shadow-sm transition-all relative group select-none ${getPostItStyle(atividade.cor)} ${isDragging ? "rotate-3 scale-105 shadow-xl" : ""}`}
     >
       <div className="flex items-start gap-2">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-          <GripVertical className="h-4 w-4 opacity-20 flex-shrink-0 mt-0.5" />
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 -ml-1">
+          <GripVertical className="h-4 w-4 opacity-30 hover:opacity-100 transition-opacity flex-shrink-0" />
         </div>
         <p className="text-sm font-medium pr-6 break-words leading-snug">{atividade.titulo}</p>
       </div>
 
       <button
+        onPointerDown={(e) => e.stopPropagation()} // Impede que o clique no lixo inicie o drag
         onClick={(e) => {
           e.stopPropagation();
           onDelete(atividade.id);
         }}
-        className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity text-current"
+        className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity text-current cursor-pointer"
       >
         <Trash2 className="h-3 w-3" />
       </button>
@@ -118,8 +112,10 @@ const DroppableWeek = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col gap-2 min-h-[150px] transition-colors rounded-lg p-1 ${
-        isOver ? "bg-slate-200/50 ring-2 ring-[#C7A347]/20" : ""
+      className={`flex flex-col gap-2 min-h-[150px] transition-colors rounded-lg p-2 ${
+        isOver
+          ? "bg-slate-200/50 ring-2 ring-[#C7A347] border-dashed border-2 border-[#C7A347]/50"
+          : "border-2 border-transparent"
       }`}
     >
       {children}
@@ -140,12 +136,13 @@ const PMP = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
+  // Sensores otimizados para evitar conflito com clique e drag
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 8, // Só começa a arrastar se mover 8px
       },
-    })
+    }),
   );
 
   // 1. Gera as colunas de semanas
@@ -238,6 +235,7 @@ const PMP = () => {
       if (error) throw error;
     },
     onMutate: async ({ id, novaSemana }) => {
+      // Otimização visual instantânea
       await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
       const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
 
@@ -271,15 +269,17 @@ const PMP = () => {
     setActiveId(null);
     setOverId(null);
 
+    // Se não soltou em lugar nenhum válido
     if (!over) return;
 
-    const draggedItem = atividades.find((a) => a.id === active.id);
-    if (!draggedItem) return;
+    // Recupera os dados do card arrastado diretamente do evento (mais seguro)
+    const draggedItem = active.data.current?.atividade as PmpAtividade;
 
-    // Check if dropped on a week column
-    const targetWeekId = weeks.find((w) => w.id === over.id)?.id;
-    
-    if (targetWeekId && targetWeekId !== draggedItem.semana_referencia) {
+    // O ID da coluna onde soltou (over.id é o weekId da coluna)
+    const targetWeekId = String(over.id);
+
+    if (draggedItem && targetWeekId && draggedItem.semana_referencia !== targetWeekId) {
+      // Dispara a mutação para o banco de dados
       moveMutation.mutate({
         id: draggedItem.id,
         novaSemana: targetWeekId,
@@ -297,6 +297,7 @@ const PMP = () => {
     return `${color.bg} ${color.border} ${color.text} ${color.hover}`;
   };
 
+  // Encontra o item ativo para o Overlay (efeito visual enquanto arrasta)
   const activeItem = activeId ? atividades.find((a) => a.id === activeId) : null;
 
   if (!obraAtiva) {
@@ -325,7 +326,7 @@ const PMP = () => {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={pointerWithin} // <--- MUDANÇA: 'pointerWithin' funciona muito melhor para colunas do que 'closestCenter'
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -370,14 +371,14 @@ const PMP = () => {
           <ScrollBar orientation="horizontal" className="h-3" />
         </ScrollArea>
 
-        {/* Drag Overlay */}
+        {/* Drag Overlay - O que aparece flutuando quando você arrasta */}
         <DragOverlay>
           {activeItem ? (
             <div
-              className={`p-3 rounded-md border shadow-lg rotate-3 scale-105 ${getPostItStyle(activeItem.cor)}`}
+              className={`p-3 rounded-md border shadow-2xl rotate-3 scale-105 cursor-grabbing ${getPostItStyle(activeItem.cor)}`}
             >
               <div className="flex items-start gap-2">
-                <GripVertical className="h-4 w-4 opacity-20 flex-shrink-0 mt-0.5" />
+                <GripVertical className="h-4 w-4 opacity-50 flex-shrink-0 mt-0.5" />
                 <p className="text-sm font-medium pr-6 break-words leading-snug">{activeItem.titulo}</p>
               </div>
             </div>
