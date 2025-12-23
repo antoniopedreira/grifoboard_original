@@ -1,545 +1,345 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, MessageSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { playbookService } from "@/services/playbookService";
-import { gamificationService } from "@/services/gamificationService";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Loader2, Plus, Trash2, Upload, Eye, Paperclip } from "lucide-react";
 
-export interface ContractingItem {
-  id: number | string;
-  descricao: string;
-  unidade: string;
-  qtd: number;
-  precoTotalMeta: number;
-  nivel?: number;
-  destino: string | null;
-  responsavel: string | null;
-  data_limite: string | null;
-  valor_contratado: number | null;
-  status_contratacao: string;
-  observacao: string | null;
+interface ContractingItem {
+  id: string;
+  item_name: string;
+  category: string;
+  estimated_value: number;
+  status: "Pendente" | "Em Cotação" | "Negociada" | "Contratada" | "Cancelada";
+  supplier_name?: string;
+  contract_url?: string; // Coluna do link do contrato
 }
 
-interface EnrichedContractingItem extends ContractingItem {
-  etapaPrincipal: string;
-}
-
-interface ContractingManagementProps {
-  items: ContractingItem[];
-  onUpdate: () => void;
-}
-
-type FieldType = "responsavel" | "data" | "valor" | "status" | "obs";
-
-export function ContractingManagement({ items, onUpdate }: ContractingManagementProps) {
+const ContractingManagement = () => {
   const { toast } = useToast();
-  const { userSession } = useAuth();
-  const [editingItem, setEditingItem] = useState<EnrichedContractingItem | null>(null);
-  const [editingField, setEditingField] = useState<FieldType | null>(null);
-  const [fieldValue, setFieldValue] = useState<string>("");
-  const [dateValue, setDateValue] = useState<Date | undefined>(undefined);
+  const queryClient = useQueryClient();
+  const [newItemName, setNewItemName] = useState("");
+  const [isUploading, setIsUploading] = useState<string | null>(null);
 
-  let currentMainStage = "";
-  const enrichedItems: EnrichedContractingItem[] = items.map((item) => {
-    if (item.nivel === 0) {
-      currentMainStage = item.descricao;
-    }
-    return { ...item, etapaPrincipal: currentMainStage || item.descricao };
+  // --- QUERIES & MUTATIONS ---
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["playbook_items"], // Chave atualizada
+    queryFn: async () => {
+      // Apontando para a tabela correta: playbook_items
+      const { data, error } = await supabase
+        .from("playbook_items" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as ContractingItem[];
+    },
   });
 
-  const activeItems = enrichedItems.filter((i) => i.destino);
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!newItemName.trim()) return;
+      const { error } = await supabase.from("playbook_items" as any).insert({
+        item_name: newItemName,
+        status: "Pendente",
+        category: "Material",
+        estimated_value: 0,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["playbook_items"] });
+      setNewItemName("");
+      toast({ title: "Item adicionado com sucesso" });
+    },
+  });
 
-  const capitalize = (str: string) => {
-    return str.toLowerCase().replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
-  };
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, field, value }: { id: string; field: string; value: any }) => {
+      const { error } = await supabase
+        .from("playbook_items" as any)
+        .update({ [field]: value })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["playbook_items"] });
+    },
+  });
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("playbook_items" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["playbook_items"] });
+      toast({ title: "Item removido" });
+    },
+  });
 
-  const openFieldModal = (item: EnrichedContractingItem, field: FieldType, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingItem(item);
-    setEditingField(field);
+  // --- LÓGICA DE UPLOAD ---
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, itemId: string) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    switch (field) {
-      case "responsavel":
-        setFieldValue(item.responsavel || "");
-        break;
-      case "data":
-        setDateValue(item.data_limite ? new Date(item.data_limite) : undefined);
-        break;
-      case "valor":
-        setFieldValue(item.valor_contratado?.toString() || "");
-        break;
-      case "status":
-        setFieldValue(item.status_contratacao || "A Negociar");
-        break;
-      case "obs":
-        setFieldValue(item.observacao || "");
-        break;
-    }
-  };
-
-  const closeModal = () => {
-    setEditingItem(null);
-    setEditingField(null);
-    setFieldValue("");
-    setDateValue(undefined);
-  };
-
-  const handleSave = async () => {
-    if (!editingItem || !editingField) return;
+    setIsUploading(itemId);
 
     try {
-      const updates: Record<string, unknown> = {};
-      const previousStatus = editingItem.status_contratacao;
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${itemId}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
 
-      switch (editingField) {
-        case "responsavel":
-          updates.responsavel = fieldValue || null;
-          break;
-        case "data":
-          updates.data_limite = dateValue?.toISOString() || null;
-          break;
-        case "valor":
-          updates.valor_contratado = fieldValue ? parseFloat(fieldValue) : null;
-          break;
-        case "status":
-          updates.status_contratacao = fieldValue;
-          break;
-        case "obs":
-          updates.observacao = fieldValue || null;
-          break;
-      }
+      // 1. Upload para o Storage
+      const { error: uploadError } = await supabase.storage.from("playbook-documents").upload(filePath, file);
 
-      await playbookService.updateItem(String(editingItem.id), updates);
+      if (uploadError) throw uploadError;
 
-      // === GAMIFICAÇÃO 🎮 ===
-      if (userSession?.user?.id) {
-        // 1. Dar XP quando status muda para "Negociada" ou "Contratado"
-        if (
-          editingField === "status" &&
-          (fieldValue === "Negociada" || fieldValue === "Contratado") &&
-          previousStatus !== "Negociada" &&
-          previousStatus !== "Contratado"
-        ) {
-          // A) XP pela Contratação (+100 XP)
-          await gamificationService.awardXP(userSession.user.id, "CONTRATACAO_FAST", 100, String(editingItem.id));
+      // 2. Pegar URL Pública
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("playbook-documents").getPublicUrl(filePath);
 
-          // B) XP pela Economia (+50 XP) 💰
-          // CORREÇÃO AQUI: Como estamos no bloco "status", usamos o valor que já existe no item
-          const valorContratadoFinal = editingItem.valor_contratado || 0;
-          const valorMeta = editingItem.precoTotalMeta || 0;
+      // 3. Salvar URL no banco (tabela playbook_items)
+      await updateMutation.mutateAsync({
+        id: itemId,
+        field: "contract_url",
+        value: publicUrl,
+      });
 
-          if (valorMeta > 0 && valorContratadoFinal > 0 && valorContratadoFinal < valorMeta) {
-            console.log("💰 Economia detectada! Disparando bônus...");
-            await gamificationService.awardXP(
-              userSession.user.id,
-              "ECONOMIA_PLAYBOOK",
-              50,
-              `${editingItem.id}_ECONOMY`, // ID Único para o bônus de economia
-            );
-          }
-        }
-
-        // 2. Se reverter o status (voltar para A Negociar), remover XP
-        else if (
-          editingField === "status" &&
-          (fieldValue === "A Negociar" || fieldValue === "Em Andamento") &&
-          (previousStatus === "Negociada" || previousStatus === "Contratado")
-        ) {
-          // Remove XP da contratação
-          await gamificationService.removeXP(userSession.user.id, "CONTRATACAO_FAST", 100, String(editingItem.id));
-
-          // Remove XP da economia (se tiver ganho)
-          await gamificationService.removeXP(userSession.user.id, "ECONOMIA_PLAYBOOK", 50, `${editingItem.id}_ECONOMY`);
-        }
-      }
-
-      toast({ description: "Salvo!" });
-      closeModal();
-      onUpdate();
+      toast({ title: "Contrato anexado com sucesso!" });
     } catch (error) {
       console.error(error);
-      toast({ title: "Erro", description: "Falha ao salvar.", variant: "destructive" });
+      toast({ title: "Erro ao anexar contrato", variant: "destructive" });
+    } finally {
+      setIsUploading(null);
     }
   };
 
-  const getModalTitle = () => {
-    switch (editingField) {
-      case "responsavel":
-        return "Responsável";
-      case "data":
-        return "Data Limite";
-      case "valor":
-        return "Valor Contratado";
-      case "status":
-        return "Status";
-      case "obs":
-        return "Observação";
-      default:
-        return "";
-    }
-  };
-
-  const renderFieldInput = () => {
-    switch (editingField) {
-      case "responsavel":
-        return (
-          <Input
-            autoFocus
-            placeholder="Nome do responsável"
-            value={fieldValue}
-            onChange={(e) => setFieldValue(e.target.value)}
-          />
-        );
-      case "data":
-        return (
-          <Calendar
-            mode="single"
-            selected={dateValue}
-            onSelect={setDateValue}
-            locale={ptBR}
-            className="rounded-md border"
-          />
-        );
-      case "valor":
-        return (
-          <Input
-            autoFocus
-            type="number"
-            placeholder="0.00"
-            value={fieldValue}
-            onChange={(e) => setFieldValue(e.target.value)}
-          />
-        );
-      case "status":
-        return (
-          <div className="flex flex-col gap-2">
-            {["A Negociar", "Em Andamento", "Negociada"].map((status) => (
-              <Button
-                key={status}
-                variant={fieldValue === status ? "default" : "outline"}
-                className="justify-start"
-                onClick={() => setFieldValue(status)}
-              >
-                {status}
-              </Button>
-            ))}
-          </div>
-        );
-      case "obs":
-        return (
-          <textarea
-            autoFocus
-            className="w-full min-h-[100px] text-sm p-3 border rounded-md resize-none"
-            placeholder="Observações..."
-            value={fieldValue}
-            onChange={(e) => setFieldValue(e.target.value)}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const calculateSummary = (filtered: EnrichedContractingItem[]) => {
-    const statuses = ["Negociada", "Em Andamento", "A Negociar"];
-
-    const byStatus = statuses.map((status) => {
-      const items = filtered.filter((i) => (i.status_contratacao || "A Negociar") === status);
-      const totalMeta = items.reduce((sum, i) => sum + i.precoTotalMeta, 0);
-      const totalContratado = items.reduce((sum, i) => sum + (i.valor_contratado || 0), 0);
-      return { status, totalMeta, totalContratado, count: items.length };
-    });
-
-    const totalMeta = byStatus.reduce((sum, s) => sum + s.totalMeta, 0);
-    const totalContratado = byStatus.reduce((sum, s) => sum + s.totalContratado, 0);
-
-    return { byStatus, totalMeta, totalContratado };
-  };
-
-  const formatPercent = (value: number, total: number) => {
-    if (total === 0) return "0,00%";
-    return ((value / total) * 100).toFixed(2).replace(".", ",") + "%";
-  };
-
+  // --- HELPERS VISUAIS ---
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "Contratada":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "Negociada":
-        return "bg-green-500";
-      case "Em Andamento":
-        return "bg-yellow-500";
-      case "A Negociar":
-        return "bg-red-500";
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "Em Cotação":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "Cancelada":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return "bg-red-500";
+        return "bg-slate-100 text-slate-800 border-slate-200";
     }
   };
 
-  const renderSummary = (filtered: EnrichedContractingItem[]) => {
-    const { byStatus, totalMeta, totalContratado } = calculateSummary(filtered);
-
-    if (filtered.length === 0) return null;
-
+  if (isLoading) {
     return (
-      <div className="mt-4 border border-slate-200 rounded-lg bg-white overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader className="bg-[#112231]">
-            <TableRow className="hover:bg-[#112231]">
-              <TableHead className="w-[180px] text-white font-bold text-xs">SITUAÇÃO</TableHead>
-              <TableHead className="text-right text-white font-bold text-xs">ORÇADO</TableHead>
-              <TableHead className="text-center text-white font-bold text-xs w-[80px]">%</TableHead>
-              <TableHead className="text-right text-white font-bold text-xs">EFETIVADO</TableHead>
-              <TableHead className="text-center text-white font-bold text-xs w-[80px]">%</TableHead>
-              <TableHead className="text-right text-white font-bold text-xs">VERBA DISPONÍVEL</TableHead>
-              <TableHead className="text-center text-white font-bold text-xs w-[80px]">%</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {byStatus.map((row) => {
-              const verbaDisponivel = row.totalMeta - row.totalContratado;
-              const percentVerba = row.totalMeta > 0 ? (row.totalContratado / row.totalMeta) * 100 : 0;
-
-              return (
-                <TableRow key={row.status} className="hover:bg-slate-50">
-                  <TableCell className="font-medium text-sm text-slate-700 flex items-center gap-2">
-                    <span className={cn("w-2 h-2 rounded-full", getStatusColor(row.status))} />
-                    {row.status.toUpperCase()}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-mono text-slate-700">
-                    {formatCurrency(row.totalMeta)}
-                  </TableCell>
-                  <TableCell className="text-center text-sm font-mono text-slate-500">
-                    {formatPercent(row.totalMeta, totalMeta)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-mono text-slate-700">
-                    {row.totalContratado > 0 ? formatCurrency(row.totalContratado) : "-"}
-                  </TableCell>
-                  <TableCell className="text-center text-sm font-mono text-slate-500">
-                    {row.totalContratado > 0 ? formatPercent(row.totalContratado, totalContratado) : "0,00%"}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-mono text-slate-700">
-                    {formatCurrency(verbaDisponivel)}
-                  </TableCell>
-                  <TableCell className="text-center text-sm font-mono">
-                    <span
-                      className={cn(
-                        "font-medium",
-                        percentVerba <= 0 ? "text-green-600" : percentVerba < 100 ? "text-amber-600" : "text-red-500",
-                      )}
-                    >
-                      {(100 - percentVerba).toFixed(2).replace(".", ",")}%
-                    </span>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {/* TOTAL Row */}
-            <TableRow className="bg-[#A47528]/10 hover:bg-[#A47528]/15 border-t-2 border-[#A47528]/30">
-              <TableCell className="font-bold text-sm text-slate-900">TOTAL</TableCell>
-              <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
-                {formatCurrency(totalMeta)}
-              </TableCell>
-              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">100,00%</TableCell>
-              <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
-                {formatCurrency(totalContratado)}
-              </TableCell>
-              <TableCell className="text-center text-sm font-mono font-bold text-slate-700">100,00%</TableCell>
-              <TableCell className="text-right text-sm font-mono font-bold text-slate-900">
-                {formatCurrency(totalMeta - totalContratado)}
-              </TableCell>
-              <TableCell className="text-center text-sm font-mono font-bold">
-                <span className={cn(totalContratado >= totalMeta ? "text-green-600" : "text-amber-600")}>
-                  {totalMeta > 0 ? ((1 - totalContratado / totalMeta) * 100).toFixed(2).replace(".", ",") : "100,00"}%
-                </span>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  };
-
-  const renderTable = (filterDestino: string) => {
-    const filtered = activeItems.filter((i) => i.destino === filterDestino);
-
-    if (filtered.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200 mt-4">
-          <p className="text-sm">Nenhum item enviado para {filterDestino} ainda.</p>
-          <p className="text-xs mt-1">Vá na aba "Orçamento" e classifique os itens relevantes.</p>
-        </div>
-      );
-    }
-
-    return (
-      <>
-        <div className="border border-slate-200 rounded-lg bg-white overflow-hidden mt-4 shadow-sm">
-          <Table>
-            <TableHeader className="bg-slate-50 border-b border-slate-200">
-              <TableRow>
-                <TableHead className="w-[140px] font-bold text-slate-900">Etapa</TableHead>
-                <TableHead>Proposta</TableHead>
-                <TableHead className="w-[110px]">Responsável</TableHead>
-                <TableHead className="w-[90px]">Data</TableHead>
-                <TableHead className="text-right w-[100px]">Meta</TableHead>
-                <TableHead className="text-right w-[100px]">Contratado</TableHead>
-                <TableHead className="w-[120px]">Status</TableHead>
-                <TableHead className="w-[40px]">Obs</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((item) => {
-                const valorNum = item.valor_contratado || 0;
-                const diferenca = valorNum - item.precoTotalMeta;
-                return (
-                  <TableRow key={item.id} className="hover:bg-slate-50">
-                    <TableCell className="font-bold text-[10px] text-slate-500 uppercase truncate">
-                      {item.etapaPrincipal.toLowerCase()}
-                    </TableCell>
-                    <TableCell className="font-medium text-sm text-slate-700">{capitalize(item.descricao)}</TableCell>
-                    <TableCell
-                      className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                      onClick={(e) => openFieldModal(item, "responsavel", e)}
-                    >
-                      {item.responsavel || <span className="text-blue-400 text-[10px]">+ adicionar</span>}
-                    </TableCell>
-                    <TableCell
-                      className="text-xs text-slate-600 cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                      onClick={(e) => openFieldModal(item, "data", e)}
-                    >
-                      {item.data_limite ? (
-                        format(new Date(item.data_limite), "dd/MM/yy")
-                      ) : (
-                        <CalendarIcon className="h-3 w-3 text-blue-400" />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-xs font-mono text-blue-700 font-medium">
-                      {formatCurrency(item.precoTotalMeta)}
-                    </TableCell>
-                    <TableCell
-                      className="text-right text-xs font-mono cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                      onClick={(e) => openFieldModal(item, "valor", e)}
-                    >
-                      {valorNum > 0 ? (
-                        <span className={diferenca <= 0 ? "text-green-600" : "text-red-600"}>
-                          {formatCurrency(valorNum)}
-                        </span>
-                      ) : (
-                        <span className="text-blue-400 text-[10px]">+ valor</span>
-                      )}
-                    </TableCell>
-                    <TableCell
-                      className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                      onClick={(e) => openFieldModal(item, "status", e)}
-                    >
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[10px] transition-all whitespace-nowrap",
-                          item.status_contratacao === "Negociada" && "bg-green-100 text-green-800 hover:bg-green-200",
-                          item.status_contratacao === "Em Andamento" &&
-                            "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
-                          (!item.status_contratacao || item.status_contratacao === "A Negociar") &&
-                            "bg-red-100 text-red-700 hover:bg-red-200",
-                        )}
-                      >
-                        {item.status_contratacao || "A Negociar"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell
-                      className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
-                      onClick={(e) => openFieldModal(item, "obs", e)}
-                    >
-                      <MessageSquare className={cn("h-4 w-4", item.observacao ? "text-amber-500" : "text-slate-300")} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-        {renderSummary(filtered)}
-      </>
-    );
-  };
+  }
 
   return (
     <div className="space-y-6">
-      {/* Mini-Modal por Campo */}
-      <Dialog open={!!editingItem && !!editingField} onOpenChange={(open) => !open && closeModal()}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{getModalTitle()}</DialogTitle>
-            {editingItem && <p className="text-xs text-slate-500 truncate">{capitalize(editingItem.descricao)}</p>}
-          </DialogHeader>
-          <div className="py-4">{renderFieldInput()}</div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={closeModal}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={handleSave}>
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-slate-800">Farol de Contratações</h2>
-          <p className="text-sm text-slate-500">Clique em cada campo para editar.</p>
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold text-slate-800">Mapa de Compras & Contratações</h2>
+          <p className="text-sm text-slate-500">Gerencie o status de aquisições e anexe contratos.</p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="Obra" className="w-full">
-        <TabsList className="bg-slate-100 p-1 border border-slate-200 w-full justify-start h-auto">
-          <TabsTrigger
-            value="Obra"
-            className="px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700 font-medium"
-          >
-            Obra
-            <Badge variant="secondary" className="ml-2 bg-slate-200 text-slate-600 text-[10px] h-5 px-1.5">
-              {activeItems.filter((i) => i.destino === "Obra").length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger
-            value="Fornecimento"
-            className="px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-amber-700 font-medium"
-          >
-            Fornecimento
-            <Badge variant="secondary" className="ml-2 bg-slate-200 text-slate-600 text-[10px] h-5 px-1.5">
-              {activeItems.filter((i) => i.destino === "Fornecimento").length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger
-            value="Cliente"
-            className="px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-green-700 font-medium"
-          >
-            Cliente
-            <Badge variant="secondary" className="ml-2 bg-slate-200 text-slate-600 text-[10px] h-5 px-1.5">
-              {activeItems.filter((i) => i.destino === "Cliente").length}
-            </Badge>
-          </TabsTrigger>
-        </TabsList>
+      {/* Input de Adicionar */}
+      <div className="flex gap-3 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+        <Input
+          placeholder="Nome do material ou serviço (ex: Cimento, Pintura...)"
+          value={newItemName}
+          onChange={(e) => setNewItemName(e.target.value)}
+          className="max-w-md"
+        />
+        <Button
+          onClick={() => createMutation.mutate()}
+          disabled={createMutation.isPending}
+          className="bg-primary text-white"
+        >
+          <Plus className="h-4 w-4 mr-2" /> Adicionar Item
+        </Button>
+      </div>
 
-        <TabsContent value="Obra">{renderTable("Obra")}</TabsContent>
-        <TabsContent value="Fornecimento">{renderTable("Fornecimento")}</TabsContent>
-        <TabsContent value="Cliente">{renderTable("Cliente")}</TabsContent>
-      </Tabs>
+      {/* Tabela */}
+      <div className="rounded-md border border-slate-200 bg-white overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50">
+            <TableRow>
+              <TableHead className="w-[250px]">Item / Serviço</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Fornecedor</TableHead>
+              <TableHead>Valor Est. (R$)</TableHead>
+              <TableHead className="w-[180px]">Status</TableHead>
+              <TableHead className="w-[180px] text-center">Contrato</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center h-24 text-slate-500">
+                  Nenhum item cadastrado.
+                </TableCell>
+              </TableRow>
+            ) : (
+              items.map((item) => (
+                <TableRow key={item.id} className="hover:bg-slate-50/50">
+                  <TableCell className="font-medium">{item.item_name}</TableCell>
+
+                  <TableCell>
+                    <Select
+                      defaultValue={item.category || "Material"}
+                      onValueChange={(val) => updateMutation.mutate({ id: item.id, field: "category", value: val })}
+                    >
+                      <SelectTrigger className="h-8 w-[130px] border-none bg-transparent hover:bg-slate-100">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Material">Material</SelectItem>
+                        <SelectItem value="Mão de Obra">Mão de Obra</SelectItem>
+                        <SelectItem value="Equipamento">Equipamento</SelectItem>
+                        <SelectItem value="Serviço">Serviço</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+
+                  <TableCell>
+                    <Input
+                      className="h-8 border-none bg-transparent hover:bg-slate-100 focus:bg-white transition-colors"
+                      placeholder="-"
+                      defaultValue={item.supplier_name || ""}
+                      onBlur={(e) =>
+                        updateMutation.mutate({ id: item.id, field: "supplier_name", value: e.target.value })
+                      }
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <Input
+                      type="number"
+                      className="h-8 w-[100px] border-none bg-transparent hover:bg-slate-100 focus:bg-white transition-colors"
+                      placeholder="0.00"
+                      defaultValue={item.estimated_value}
+                      onBlur={(e) =>
+                        updateMutation.mutate({
+                          id: item.id,
+                          field: "estimated_value",
+                          value: parseFloat(e.target.value),
+                        })
+                      }
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <Select
+                      defaultValue={item.status}
+                      onValueChange={(val) => updateMutation.mutate({ id: item.id, field: "status", value: val })}
+                    >
+                      <SelectTrigger className="h-8 border-none p-0">
+                        <Badge
+                          variant="outline"
+                          className={`${getStatusColor(item.status)} hover:opacity-80 transition-opacity`}
+                        >
+                          {item.status}
+                        </Badge>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pendente">Pendente</SelectItem>
+                        <SelectItem value="Em Cotação">Em Cotação</SelectItem>
+                        <SelectItem value="Negociada">Negociada</SelectItem>
+                        <SelectItem value="Contratada">Contratada</SelectItem>
+                        <SelectItem value="Cancelada">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+
+                  {/* COLUNA DO CONTRATO */}
+                  <TableCell className="text-center">
+                    {item.status === "Negociada" || item.status === "Contratada" ? (
+                      <div className="flex items-center justify-center gap-2">
+                        {item.contract_url ? (
+                          <>
+                            <a
+                              href={item.contract_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center h-8 w-8 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors border border-blue-200"
+                              title="Visualizar Contrato"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </a>
+                            <label
+                              className="cursor-pointer inline-flex items-center justify-center h-8 w-8 rounded-md bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors border border-slate-200"
+                              title="Substituir Arquivo"
+                            >
+                              <input
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => handleFileUpload(e, item.id)}
+                                disabled={isUploading === item.id}
+                              />
+                              {isUploading === item.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Upload className="h-3 w-3" />
+                              )}
+                            </label>
+                          </>
+                        ) : (
+                          <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 h-8 rounded-md bg-[#C7A347] text-white hover:bg-[#b08d3b] transition-all shadow-sm text-xs font-medium uppercase tracking-wide">
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => handleFileUpload(e, item.id)}
+                              disabled={isUploading === item.id}
+                            />
+                            {isUploading === item.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <Paperclip className="h-3 w-3" /> Anexar
+                              </>
+                            )}
+                          </label>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-300 text-xs italic">--</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteMutation.mutate(item.id)}
+                      className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
-}
+};
+
+export default ContractingManagement;
