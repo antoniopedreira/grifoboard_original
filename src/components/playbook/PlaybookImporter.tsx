@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
   DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
@@ -18,7 +17,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import {
   Upload,
   FileSpreadsheet,
-  ArrowRight,
   Save,
   AlertCircle,
   X,
@@ -26,6 +24,7 @@ import {
   LayoutList,
   ListTree,
   Minus,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { playbookService } from "@/services/playbookService";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Interface interna do componente com NIVEL
 interface PlaybookItem {
@@ -43,7 +43,7 @@ interface PlaybookItem {
   precoUnitario: number;
   precoTotal: number;
   nivel: 0 | 1 | 2; // 0=Principal, 1=Subetapa, 2=Item
-  isEtapa: boolean; // Mantido para compatibilidade, mas derivado de nivel
+  isEtapa: boolean;
 }
 
 interface PlaybookImporterProps {
@@ -109,12 +109,11 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
           qtd: row[2] ? Number(row[2]) : 0,
           precoUnitario: row[3] ? Number(row[3]) : 0,
           precoTotal: row[4] ? Number(row[4]) : 0,
-          nivel: 2 as 0 | 1 | 2, // Padrão: Item
+          nivel: 2 as 0 | 1 | 2,
           isEtapa: false,
         }))
         .filter((item) => item.descricao !== "");
 
-      // Auto-detecção: Se não tem Unidade/Qtd -> Etapa Principal (0)
       const autoDetected = formatted.map((item) => {
         const isPotentialHeader =
           (!item.unidade || item.unidade.toLowerCase() === "vb") && (!item.qtd || item.qtd === 0);
@@ -130,7 +129,6 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
     reader.readAsBinaryString(file);
   };
 
-  // CICLO DE NÍVEIS: Item (2) -> Etapa (0) -> Subetapa (1) -> Item (2)
   const cycleLevel = (index: number) => {
     setRawData((prev) =>
       prev.map((item, i) => {
@@ -156,7 +154,6 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
       const precoUnitarioMeta = item.precoUnitario * validCoef;
       const precoTotalMeta = item.precoTotal * validCoef;
 
-      // Soma apenas itens (nível 2) para o total geral
       if (item.nivel === 2) {
         grandTotalMeta += precoTotalMeta;
         grandTotalOriginal += item.precoTotal;
@@ -189,7 +186,7 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
         preco_unitario: item.precoUnitario,
         preco_total: item.precoTotal,
         is_etapa: item.nivel !== 2,
-        nivel: item.nivel, // CORREÇÃO AQUI: Adicionado o campo 'nivel'
+        nivel: item.nivel,
         ordem: index,
       }));
 
@@ -235,9 +232,7 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
           <div>
             <DialogTitle className="text-xl font-heading text-slate-800">Importação Inteligente</DialogTitle>
             <DialogDescription>
-              {step === 1
-                ? "Defina a hierarquia clicando nas linhas: Principal > Subetapa > Item."
-                : "Revise os valores calculados."}
+              {step === 1 ? "Prepare seu arquivo e defina a hierarquia." : "Revise os valores calculados."}
             </DialogDescription>
           </div>
           <div className="flex items-center gap-4">
@@ -256,32 +251,69 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
         {step === 1 && (
           <div className="flex-1 flex flex-col p-6 gap-6 overflow-hidden">
             {rawData.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
-                <Label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-4 p-10">
-                  <div className="bg-white p-4 rounded-full shadow-sm">
-                    <Upload className="h-8 w-8 text-primary" />
+              <div className="flex-1 flex flex-col gap-6 max-w-3xl mx-auto w-full">
+                {/* AVISO IMPORTANTE SOBRE A IMPORTAÇÃO */}
+                <Alert className="bg-amber-50 border-amber-200 text-amber-900">
+                  <Info className="h-5 w-5 text-amber-600" />
+                  <div className="ml-2">
+                    <AlertTitle className="text-amber-800 font-bold mb-1">Antes de importar:</AlertTitle>
+                    <AlertDescription className="text-sm text-amber-700 space-y-1">
+                      <p>
+                        1. <strong>Baixe o Modelo:</strong> Use o botão abaixo para baixar a planilha padrão.
+                      </p>
+                      <p>
+                        2. <strong>Copie os dados:</strong> Cole seu orçamento no modelo respeitando as colunas.
+                      </p>
+                      <p>
+                        3. <strong>Sem formatação:</strong> Remova células mescladas, cores e fórmulas.
+                      </p>
+                      <p>
+                        4. <strong>Sem numeração:</strong> Não inclua a coluna de numeração dos itens (ex: 1.1, 1.2).
+                      </p>
+                    </AlertDescription>
                   </div>
-                  <div className="text-center space-y-1">
-                    <span className="text-lg font-medium text-slate-700">Selecione o arquivo .xlsx</span>
-                  </div>
-                </Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept=".xlsx, .xls, .csv"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-                <Button variant="outline" onClick={handleDownloadTemplate} className="mt-4 gap-2">
-                  <Download className="h-4 w-4" /> Baixar Modelo
-                </Button>
+                </Alert>
+
+                <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors p-8 shadow-sm">
+                  <Label
+                    htmlFor="file-upload"
+                    className="cursor-pointer flex flex-col items-center gap-4 w-full h-full justify-center"
+                  >
+                    <div className="bg-blue-50 p-4 rounded-full shadow-sm">
+                      <Upload className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <span className="text-lg font-medium text-slate-700">Clique para selecionar o arquivo .xlsx</span>
+                      <p className="text-sm text-slate-400">Importe o modelo preenchido aqui</p>
+                    </div>
+                  </Label>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </div>
+
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={handleDownloadTemplate}
+                    className="gap-2 border-slate-300 text-slate-700 hover:bg-slate-100"
+                  >
+                    <Download className="h-4 w-4" /> Baixar Modelo Padrão
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col h-full gap-4">
                 <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg text-blue-800 text-xs flex flex-col md:flex-row items-center gap-4 justify-between">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
-                    <span>Clique na linha para alternar:</span>
+                    <span>
+                      Clique na linha para alternar a hierarquia (Principal {">"} Subetapa {">"} Item)
+                    </span>
                   </div>
                   <div className="flex gap-2">
                     <Badge className="bg-slate-800">PRINCIPAL (0)</Badge>
@@ -359,6 +391,7 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
           </div>
         )}
 
+        {/* ... (restante do código igual) ... */}
         {step === 2 && (
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="bg-slate-50 border-b border-slate-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-6 items-end shadow-sm z-10">
