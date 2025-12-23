@@ -17,7 +17,10 @@ import {
   Calendar as CalendarIcon,
   CheckCircle2,
   Circle,
-  AlertCircle, // Novo ícone para atraso
+  AlertCircle,
+  // Novos ícones para o alerta de prazo
+  Bomb,
+  TimerReset,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -29,8 +32,8 @@ import {
   areIntervalsOverlapping,
   differenceInCalendarDays,
   isValid,
-  isBefore, // Importado para verificar atraso
-  startOfDay, // Importado para pegar o inicio do dia atual
+  isBefore,
+  startOfDay,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -48,6 +51,7 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+// REMOVIDO: import ProjectCountdown from "@/components/dashboard/ProjectCountdown";
 
 // --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
@@ -106,7 +110,6 @@ const KanbanCard = ({
   // Lógica de Atraso
   const today = startOfDay(new Date());
   const endDate = atividade.data_termino ? parseISO(atividade.data_termino) : null;
-  // Está atrasado se: NÃO está concluído E tem data de término E data de término é antes de hoje
   const isDelayed = !isCompleted && endDate && isBefore(endDate, today);
 
   const cardClasses = `
@@ -153,9 +156,7 @@ const KanbanCard = ({
       onClick={() => onClick && onClick(atividade)}
       className={cardClasses}
     >
-      {/* Cabeçalho do Card com Check e Título */}
       <div className="flex items-start gap-2">
-        {/* Botão de Check */}
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
@@ -176,7 +177,6 @@ const KanbanCard = ({
             {atividade.titulo}
           </p>
 
-          {/* Badges de Status */}
           <div className="flex flex-wrap gap-1 mt-1">
             {isCompleted && (
               <Badge
@@ -195,13 +195,11 @@ const KanbanCard = ({
           </div>
         </div>
 
-        {/* Grip para arrastar (visible on hover) */}
         <div className="mt-0.5 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
           <GripVertical className="h-4 w-4" />
         </div>
       </div>
 
-      {/* Rodapé do Card */}
       <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100/50">
         <div className="flex items-center gap-2 text-[10px] text-slate-500">
           {dateDisplay && (
@@ -279,6 +277,41 @@ const PMP = () => {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
+  // Lógica do "Relógio Bomba"
+  const { daysRemaining, urgencyColor, urgencyBg, urgencyText, isCritical } = useMemo(() => {
+    if (!obraAtiva?.data_termino)
+      return {
+        daysRemaining: null,
+        urgencyColor: "text-slate-400",
+        urgencyBg: "bg-slate-100",
+        urgencyText: "text-slate-600",
+        isCritical: false,
+      };
+
+    const end = parseISO(obraAtiva.data_termino);
+    const today = startOfDay(new Date());
+    const days = differenceInCalendarDays(end, today);
+
+    let color = "text-emerald-600";
+    let bg = "bg-emerald-50 border-emerald-200";
+    let text = "text-emerald-800";
+    let critical = false;
+
+    if (days < 0) {
+      color = "text-red-600 animate-pulse";
+      bg = "bg-red-100 border-red-300 shadow-red-100/50 shadow-lg";
+      text = "text-red-800 font-black";
+      critical = true;
+    } else if (days <= 14) {
+      // Menos de 2 semanas
+      color = "text-orange-500";
+      bg = "bg-orange-50 border-orange-200";
+      text = "text-orange-800";
+    }
+
+    return { daysRemaining: days, urgencyColor: color, urgencyBg: bg, urgencyText: text, isCritical: critical };
+  }, [obraAtiva]);
+
   const weeks = useMemo(() => {
     const obra = obraAtiva as any;
     if (!obra?.data_inicio || !obra?.data_termino) return [];
@@ -340,23 +373,16 @@ const PMP = () => {
     });
   };
 
-  // --- MUTATIONS ---
-
+  // --- MUTATIONS --- (Mantidas iguais)
   const moveMutation = useMutation({
     mutationFn: async ({ id, newDataInicio, newDataTermino, novaSemanaRef }: any) => {
       const { error } = await supabase
         .from("pmp_atividades" as any)
-        .update({
-          data_inicio: newDataInicio,
-          data_termino: newDataTermino,
-          semana_referencia: novaSemanaRef,
-        })
+        .update({ data_inicio: newDataInicio, data_termino: newDataTermino, semana_referencia: novaSemanaRef })
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
     onError: () => toast({ title: "Erro ao mover", variant: "destructive" }),
   });
 
@@ -371,7 +397,6 @@ const PMP = () => {
     onMutate: async ({ id, novoStatus }) => {
       await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
       const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
-
       queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], (old: PmpAtividade[] | undefined) => {
         if (!old) return [];
         return old.map((t) => (t.id === id ? { ...t, concluido: novoStatus } : t));
@@ -382,9 +407,7 @@ const PMP = () => {
       queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context?.previousData);
       toast({ title: "Erro ao atualizar status", variant: "destructive" });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
   });
 
   const saveMutation = useMutation({
@@ -396,10 +419,7 @@ const PMP = () => {
           .eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("pmp_atividades" as any).insert({
-          obra_id: obraAtiva.id,
-          ...data,
-        });
+        const { error } = await supabase.from("pmp_atividades" as any).insert({ obra_id: obraAtiva.id, ...data });
         if (error) throw error;
       }
     },
@@ -424,40 +444,27 @@ const PMP = () => {
     },
   });
 
-  // --- HANDLERS ---
-
+  // --- HANDLERS --- (Mantidos iguais)
   const handleDragStart = (event: DragStartEvent) => {
-    if (event.active.data.current?.atividade) {
-      setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
-    }
+    if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragItem(null);
-
     if (!over) return;
-
     const activeData = active.data.current;
     const draggedTask = activeData?.atividade as PmpAtividade;
     const originWeekId = activeData?.originWeekId as string;
-
     let targetWeekId = "";
-
-    if (over.data.current?.type === "Column") {
-      targetWeekId = over.data.current.weekId;
-    } else if (over.data.current?.type === "Card") {
-      return;
-    }
-
+    if (over.data.current?.type === "Column") targetWeekId = over.data.current.weekId;
+    else if (over.data.current?.type === "Card") return;
     if (targetWeekId && draggedTask && originWeekId && targetWeekId !== originWeekId) {
       const originDate = parseISO(originWeekId);
       const targetDate = parseISO(targetWeekId);
       const daysDiff = differenceInCalendarDays(targetDate, originDate);
-
       let newDataInicio = null;
       let newDataTermino = null;
-
       if (draggedTask.data_inicio && draggedTask.data_termino) {
         newDataInicio = addDays(parseISO(draggedTask.data_inicio), daysDiff).toISOString();
         newDataTermino = addDays(parseISO(draggedTask.data_termino), daysDiff).toISOString();
@@ -465,13 +472,7 @@ const PMP = () => {
         newDataInicio = targetDate.toISOString();
         newDataTermino = addDays(targetDate, 5).toISOString();
       }
-
-      moveMutation.mutate({
-        id: draggedTask.id,
-        newDataInicio,
-        newDataTermino,
-        novaSemanaRef: targetWeekId,
-      });
+      moveMutation.mutate({ id: draggedTask.id, newDataInicio, newDataTermino, novaSemanaRef: targetWeekId });
     }
   };
 
@@ -506,9 +507,7 @@ const PMP = () => {
 
   const handleSaveForm = () => {
     if (!formData.titulo) return toast({ title: "Título obrigatório", variant: "destructive" });
-
     const semanaRef = formData.data_inicio || format(new Date(), "yyyy-MM-dd");
-
     saveMutation.mutate({
       titulo: formData.titulo,
       cor: formData.cor,
@@ -520,9 +519,7 @@ const PMP = () => {
   };
 
   const dropAnimation: DropAnimation = {
-    sideEffects: defaultDropAnimationSideEffects({
-      styles: { active: { opacity: "0.5" } },
-    }),
+    sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.5" } } }),
   };
 
   if (!obraAtiva) {
@@ -537,7 +534,8 @@ const PMP = () => {
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 font-sans bg-slate-50/30">
-      <div className="flex justify-between items-center px-2 py-2">
+      {/* HEADER ATUALIZADO COM ALERTA DE BOMBA RELÓGIO */}
+      <div className="flex flex-col md:flex-row justify-between items-end px-2 py-2 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <CalendarRange className="h-6 w-6 text-primary" />
@@ -547,6 +545,47 @@ const PMP = () => {
             {obraAtiva.nome_obra} • {weeks.length} semanas • {atividades.length} atividades
           </p>
         </div>
+
+        {/* ÁREA DO ALERTA DE PRAZO (BOMBA RELÓGIO) */}
+        {daysRemaining !== null && (
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${urgencyBg} backdrop-blur-sm shadow-sm transition-all relative overflow-hidden group`}
+          >
+            {/* Efeito de "Pulso" para crítico */}
+            {isCritical && <div className="absolute inset-0 bg-red-500/10 animate-pulse z-0"></div>}
+
+            <div className={`relative z-10 p-2 rounded-full bg-white/80 ${urgencyColor}`}>
+              <Bomb className={`h-6 w-6 ${isCritical ? "animate-bounce" : ""}`} />
+              {isCritical && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                </span>
+              )}
+            </div>
+
+            <div className="z-10 flex flex-col">
+              <span className={`text-xs font-bold uppercase tracking-wider ${urgencyText}`}>
+                {isCritical ? "PRAZO ESTOURADO!" : daysRemaining <= 14 ? "ATENÇÃO AO PRAZO" : "Prazo da Obra"}
+              </span>
+              <span className={`text-xl font-black font-mono leading-none ${urgencyText} flex items-center gap-2`}>
+                {daysRemaining < 0 ? (
+                  <>Isso é uma bomba! {Math.abs(daysRemaining)} dias de atraso</>
+                ) : daysRemaining === 0 ? (
+                  "Vence Hoje!"
+                ) : (
+                  <>{daysRemaining} dias restantes</>
+                )}
+                {daysRemaining <= 14 && daysRemaining >= 0 && <TimerReset className="h-5 w-5 opacity-50" />}
+              </span>
+              {obraAtiva.data_termino && (
+                <span className={`text-[10px] font-medium mt-0.5 ${urgencyText} opacity-80`}>
+                  Previsão: {format(parseISO(obraAtiva.data_termino), "dd/MM/yyyy")}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <DndContext
@@ -606,7 +645,7 @@ const PMP = () => {
         </DragOverlay>
       </DndContext>
 
-      {/* MODAL EDITAR/CRIAR */}
+      {/* MODAL EDITAR/CRIAR (Mantido igual) */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
