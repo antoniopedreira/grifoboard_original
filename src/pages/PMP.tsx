@@ -17,11 +17,13 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  pointerWithin,
+  closestCorners,
+  DragOverEvent,
+  defaultDropAnimationSideEffects,
+  DropAnimation,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { useDroppable } from "@dnd-kit/core";
-import { useDraggable } from "@dnd-kit/core";
+import { useDroppable, useDraggable } from "@dnd-kit/core";
 
 // --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
@@ -50,74 +52,98 @@ interface PmpAtividade {
   cor: string;
 }
 
-// Componente Draggable
-const DraggablePostIt = ({ atividade, onDelete }: { atividade: PmpAtividade; onDelete: (id: string) => void }) => {
+// --- CARD (Draggable) ---
+const KanbanCard = ({
+  atividade,
+  onDelete,
+  isOverlay = false,
+}: {
+  atividade: PmpAtividade;
+  onDelete?: (id: string) => void;
+  isOverlay?: boolean;
+}) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: atividade.id,
-    data: { atividade }, // Passando dados para recuperar no onDragEnd
+    data: {
+      type: "Card",
+      atividade,
+      weekId: atividade.semana_referencia, // IMPORTANTE: Saber de onde ele veio
+    },
   });
-
-  const getPostItStyle = (colorName: string) => {
-    const color = POSTIT_COLORS[colorName as ColorKey] || POSTIT_COLORS.yellow;
-    return `${color.bg} ${color.border} ${color.text} ${color.hover}`;
-  };
 
   const style = {
     transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 9999 : 1,
   };
+
+  const colorStyle = POSTIT_COLORS[atividade.cor as ColorKey] || POSTIT_COLORS.yellow;
+
+  if (isOverlay) {
+    return (
+      <div
+        className={`p-3 rounded-md border shadow-2xl rotate-3 cursor-grabbing w-[280px] ${colorStyle.bg} ${colorStyle.border} ${colorStyle.text}`}
+      >
+        <div className="flex items-start gap-2">
+          <GripVertical className="h-4 w-4 opacity-50 flex-shrink-0 mt-0.5" />
+          <p className="text-sm font-medium pr-6 break-words leading-snug">{atividade.titulo}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDragging) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`p-3 rounded-md border-2 border-dashed border-slate-300 bg-slate-50 opacity-50 h-[80px] w-full`}
+      />
+    );
+  }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 rounded-md border shadow-sm transition-all relative group select-none ${getPostItStyle(atividade.cor)} ${
-        isDragging ? "rotate-3 scale-105" : ""
-      }`}
+      {...attributes}
+      {...listeners}
+      className={`p-3 rounded-md border shadow-sm transition-all relative group select-none cursor-grab active:cursor-grabbing ${colorStyle.bg} ${colorStyle.border} ${colorStyle.text} ${colorStyle.hover}`}
     >
       <div className="flex items-start gap-2">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 -ml-1">
-          <GripVertical className="h-4 w-4 opacity-30 hover:opacity-100 transition-opacity flex-shrink-0" />
-        </div>
+        <GripVertical className="h-4 w-4 opacity-20 flex-shrink-0 mt-0.5" />
         <p className="text-sm font-medium pr-6 break-words leading-snug">{atividade.titulo}</p>
       </div>
-      <button
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(atividade.id);
-        }}
-        className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity text-current cursor-pointer"
-      >
-        <Trash2 className="h-3 w-3" />
-      </button>
+
+      {onDelete && (
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(atividade.id);
+          }}
+          className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity text-current cursor-pointer"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      )}
     </div>
   );
 };
 
-// Componente Droppable
-const DroppableWeek = ({
-  weekId,
-  children,
-  isOver,
-}: {
-  weekId: string;
-  children: React.ReactNode;
-  isOver: boolean;
-}) => {
-  const { setNodeRef } = useDroppable({
+// --- COLUNA (Droppable) ---
+const KanbanColumn = ({ weekId, children }: { weekId: string; children: React.ReactNode }) => {
+  const { setNodeRef, isOver } = useDroppable({
     id: weekId,
-    data: { type: "week", weekId }, // Identificando que é uma coluna de semana
+    data: {
+      type: "Column",
+      weekId,
+    },
   });
 
   return (
     <div
       ref={setNodeRef}
       className={`flex flex-col gap-2 min-h-[150px] transition-colors rounded-lg p-2 ${
-        isOver
-          ? "bg-slate-200/50 ring-2 ring-[#C7A347] border-dashed border-2 border-[#C7A347]/50"
-          : "border-2 border-transparent"
+        isOver ? "bg-slate-100 ring-2 ring-inset ring-[#C7A347]/50" : ""
       }`}
     >
       {children}
@@ -125,6 +151,7 @@ const DroppableWeek = ({
   );
 };
 
+// --- PÁGINA PRINCIPAL ---
 const PMP = () => {
   const { userSession } = useAuth();
   const obraAtiva = userSession?.obraAtiva;
@@ -135,13 +162,14 @@ const PMP = () => {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorKey>("yellow");
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [overId, setOverId] = useState<string | null>(null);
+
+  // Drag State
+  const [activeDragItem, setActiveDragItem] = useState<PmpAtividade | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 5, // 5px de movimento para iniciar o drag (evita cliques acidentais)
       },
     }),
   );
@@ -223,7 +251,7 @@ const PMP = () => {
     },
   });
 
-  // 5. Mutation: Mover (Drag and Drop)
+  // 5. Mutation: Mover (Lógica do Drag and Drop)
   const moveMutation = useMutation({
     mutationFn: async ({ id, novaSemana }: { id: string; novaSemana: string }) => {
       const { error } = await supabase
@@ -233,10 +261,10 @@ const PMP = () => {
       if (error) throw error;
     },
     onMutate: async ({ id, novaSemana }) => {
+      // Otimização visual instantânea (Optimistic Update)
       await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
       const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
 
-      // Atualização Otimista
       queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], (old: PmpAtividade[] | undefined) => {
         if (!old) return [];
         return old.map((task) => (task.id === id ? { ...task, semana_referencia: novaSemana } : task));
@@ -245,9 +273,7 @@ const PMP = () => {
       return { previousData };
     },
     onError: (_err, _newTodo, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context.previousData);
-      }
+      queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context?.previousData);
       toast({ title: "Erro ao mover", variant: "destructive" });
     },
     onSettled: () => {
@@ -255,52 +281,39 @@ const PMP = () => {
     },
   });
 
+  // --- HANDLERS DND ---
+
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragOver = (event: any) => {
-    const { over } = event;
-    // Identifica se estamos sobre uma coluna (semana) ou sobre outro card
-    const overIdStr = over?.id ? String(over.id) : null;
-
-    // Se o ID corresponder a uma semana (está na lista de weeks), setamos como overId
-    // Caso contrário, se for um card, pegamos a semana dele no dragEnd
-    if (overIdStr && weeks.some((w) => w.id === overIdStr)) {
-      setOverId(overIdStr);
-    } else {
-      setOverId(null);
+    if (event.active.data.current?.atividade) {
+      setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    setActiveId(null);
-    setOverId(null);
+    setActiveDragItem(null);
 
     if (!over) return;
 
-    const draggedItem = active.data.current?.atividade as PmpAtividade;
-    if (!draggedItem) return;
+    const activeId = String(active.id);
+    const draggedTask = active.data.current?.atividade as PmpAtividade;
 
-    let targetWeekId: string | null = null;
+    // Identificar ONDE soltou
+    let targetWeekId = "";
 
-    // Cenário 1: Soltou diretamente na coluna (droppable da semana)
-    if (over.data.current?.type === "week") {
+    // Caso 1: Soltou em cima de uma Coluna (vazia ou na área de drop)
+    if (over.data.current?.type === "Column") {
       targetWeekId = over.data.current.weekId;
     }
-    // Cenário 2: Soltou em cima de outro card
-    else {
-      const overItem = atividades.find((a) => a.id === over.id);
-      if (overItem) {
-        targetWeekId = overItem.semana_referencia;
-      }
+    // Caso 2: Soltou em cima de outro Card
+    else if (over.data.current?.type === "Card") {
+      targetWeekId = over.data.current.weekId;
     }
 
-    // Executa a movimentação se o destino for válido e diferente da origem
-    if (targetWeekId && draggedItem.semana_referencia !== targetWeekId) {
+    // Se achou uma semana válida e é diferente da atual, move!
+    if (targetWeekId && draggedTask && targetWeekId !== draggedTask.semana_referencia) {
       moveMutation.mutate({
-        id: draggedItem.id,
+        id: activeId,
         novaSemana: targetWeekId,
       });
     }
@@ -311,13 +324,6 @@ const PMP = () => {
     setIsModalOpen(true);
   };
 
-  const getPostItStyle = (colorName: string) => {
-    const color = POSTIT_COLORS[colorName as ColorKey] || POSTIT_COLORS.yellow;
-    return `${color.bg} ${color.border} ${color.text} ${color.hover}`;
-  };
-
-  const activeItem = activeId ? atividades.find((a) => a.id === activeId) : null;
-
   if (!obraAtiva) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] text-slate-500 animate-in fade-in">
@@ -327,6 +333,17 @@ const PMP = () => {
       </div>
     );
   }
+
+  // Animação de Drop (Opcional, para suavidade)
+  const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: "0.5",
+        },
+      },
+    }),
+  };
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 animate-in fade-in duration-500">
@@ -344,9 +361,8 @@ const PMP = () => {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={pointerWithin}
+        collisionDetection={closestCorners} // Melhor algoritmo para cards em listas
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <ScrollArea className="w-full flex-1 border rounded-xl bg-slate-50/50">
@@ -362,18 +378,18 @@ const PMP = () => {
                   <div className="text-sm font-medium text-slate-600">{week.dateRange}</div>
                 </div>
 
-                {/* Área de Drop (Lista de Tarefas) */}
-                <DroppableWeek weekId={week.id} isOver={overId === week.id}>
+                {/* Coluna Droppable */}
+                <KanbanColumn weekId={week.id}>
                   {atividades
                     .filter((a) => a.semana_referencia === week.id)
                     .map((atividade) => (
-                      <DraggablePostIt
+                      <KanbanCard
                         key={atividade.id}
                         atividade={atividade}
                         onDelete={(id) => deleteMutation.mutate(id)}
                       />
                     ))}
-                </DroppableWeek>
+                </KanbanColumn>
 
                 {/* Botão Adicionar */}
                 <Button
@@ -389,20 +405,13 @@ const PMP = () => {
           <ScrollBar orientation="horizontal" className="h-3" />
         </ScrollArea>
 
-        <DragOverlay>
-          {activeItem ? (
-            <div
-              className={`p-3 rounded-md border shadow-2xl rotate-3 scale-105 cursor-grabbing ${getPostItStyle(activeItem.cor)}`}
-            >
-              <div className="flex items-start gap-2">
-                <GripVertical className="h-4 w-4 opacity-50 flex-shrink-0 mt-0.5" />
-                <p className="text-sm font-medium pr-6 break-words leading-snug">{activeItem.titulo}</p>
-              </div>
-            </div>
-          ) : null}
+        {/* Overlay (O card que segue o mouse) */}
+        <DragOverlay dropAnimation={dropAnimation}>
+          {activeDragItem ? <KanbanCard atividade={activeDragItem} isOverlay /> : null}
         </DragOverlay>
       </DndContext>
 
+      {/* Modal de Criação */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
