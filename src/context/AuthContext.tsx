@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Obra, UserSession } from "@/types/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -19,7 +19,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { toast } = useToast();
   const [userSession, setUserSession] = useState<UserSession>({ user: null, obraAtiva: null });
   const [isLoading, setIsLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
