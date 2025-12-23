@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, MessageSquare } from "lucide-react";
+import { CalendarIcon, MessageSquare, Upload, Eye, Loader2, Paperclip } from "lucide-react"; // Novos ícones
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -14,6 +14,7 @@ import { gamificationService } from "@/services/gamificationService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client"; // Import Supabase
 
 export interface ContractingItem {
   id: number | string;
@@ -28,6 +29,7 @@ export interface ContractingItem {
   valor_contratado: number | null;
   status_contratacao: string;
   observacao: string | null;
+  contract_url: string | null; // Adicionado
 }
 
 interface EnrichedContractingItem extends ContractingItem {
@@ -49,6 +51,9 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
   const [fieldValue, setFieldValue] = useState<string>("");
   const [dateValue, setDateValue] = useState<Date | undefined>(undefined);
 
+  // Estado para upload
+  const [isUploading, setIsUploading] = useState<string | number | null>(null);
+
   let currentMainStage = "";
   const enrichedItems: EnrichedContractingItem[] = items.map((item) => {
     if (item.nivel === 0) {
@@ -65,6 +70,41 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+
+  // Lógica de Upload de Contrato
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, itemId: string | number) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(itemId);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${itemId}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Upload para Bucket
+      const { error: uploadError } = await supabase.storage.from("playbook-documents").upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Obter URL Pública
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("playbook-documents").getPublicUrl(filePath);
+
+      // Atualizar Banco
+      await playbookService.updateItem(String(itemId), { contract_url: publicUrl });
+
+      toast({ title: "Contrato anexado com sucesso!" });
+      onUpdate(); // Refresh
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao anexar contrato", variant: "destructive" });
+    } finally {
+      setIsUploading(null);
+    }
+  };
 
   const openFieldModal = (item: EnrichedContractingItem, field: FieldType, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -396,6 +436,7 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                 <TableHead className="text-right w-[100px]">Meta</TableHead>
                 <TableHead className="text-right w-[100px]">Contratado</TableHead>
                 <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="text-center w-[80px]">Contrato</TableHead> {/* NOVA COLUNA */}
                 <TableHead className="w-[40px]">Obs</TableHead>
               </TableRow>
             </TableHeader>
@@ -403,6 +444,8 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
               {filtered.map((item) => {
                 const valorNum = item.valor_contratado || 0;
                 const diferenca = valorNum - item.precoTotalMeta;
+                const isNegotiated = item.status_contratacao === "Negociada";
+
                 return (
                   <TableRow key={item.id} className="hover:bg-slate-50">
                     <TableCell className="font-bold text-[10px] text-slate-500 uppercase truncate">
@@ -458,6 +501,53 @@ export function ContractingManagement({ items, onUpdate }: ContractingManagement
                         {item.status_contratacao || "A Negociar"}
                       </Badge>
                     </TableCell>
+
+                    {/* NOVA CÉLULA DE CONTRATO */}
+                    <TableCell className="text-center">
+                      {isNegotiated ? (
+                        <div className="flex justify-center items-center gap-2">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => handleFileUpload(e, item.id)}
+                              disabled={isUploading === item.id}
+                            />
+                            {isUploading === item.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                            ) : item.contract_url ? (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-blue-600 hover:bg-blue-50"
+                                  onClick={() => window.open(item.contract_url!, "_blank")}
+                                  title="Ver Contrato"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <div
+                                  title="Substituir"
+                                  className="flex items-center text-slate-400 hover:text-slate-600"
+                                >
+                                  <Upload className="h-3 w-3" />
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                title="Anexar Contrato"
+                                className="flex items-center text-slate-300 hover:text-[#C7A347] transition-colors"
+                              >
+                                <Paperclip className="h-4 w-4" />
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                      ) : (
+                        <span className="text-slate-200 text-[10px]">-</span>
+                      )}
+                    </TableCell>
+
                     <TableCell
                       className="cursor-pointer hover:bg-blue-50 rounded transition-colors"
                       onClick={(e) => openFieldModal(item, "obs", e)}

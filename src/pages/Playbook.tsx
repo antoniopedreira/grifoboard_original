@@ -79,6 +79,7 @@ const Playbook = () => {
         valor_contratado: item.valor_contratado,
         status_contratacao: item.status_contratacao,
         observacao: item.observacao,
+        contract_url: item.contract_url, // <--- ADICIONADO AQUI
       };
     });
 
