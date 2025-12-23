@@ -6,14 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Loader2, Plus, Trash2, CalendarRange, StickyNote } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, differenceInWeeks, parseISO, startOfWeek } from "date-fns";
@@ -40,28 +33,33 @@ const PMP = () => {
 
   // 1. Gera as colunas de semanas baseadas na data da obra
   const weeks = useMemo(() => {
-    if (!obraAtiva?.data_inicio || !obraAtiva?.data_fim) return [];
+    // Casting para 'any' para evitar erro de TS caso a interface Obra global não tenha data_termino ainda
+    const obra = obraAtiva as any;
 
-    const start = parseISO(obraAtiva.data_inicio);
-    const end = parseISO(obraAtiva.data_fim);
+    if (!obra?.data_inicio || !obra?.data_termino) return [];
+
+    const start = parseISO(obra.data_inicio);
+    const end = parseISO(obra.data_termino); // CORRIGIDO: data_termino
+
     // Ajusta para o início da semana (Domingo/Segunda) para alinhar o calendário
-    const firstWeekStart = startOfWeek(start, { weekStartsOn: 0 }); 
-    
-    const totalWeeks = differenceInWeeks(end, firstWeekStart) + 2; // +2 para garantir cobertura total
+    const firstWeekStart = startOfWeek(start, { weekStartsOn: 0 });
+
+    // Calcula diferença e adiciona margem
+    const totalWeeks = Math.max(differenceInWeeks(end, firstWeekStart) + 2, 1);
 
     const weeksArray = [];
     for (let i = 0; i < totalWeeks; i++) {
       const currentWeekStart = addDays(firstWeekStart, i * 7);
       const currentWeekEnd = addDays(currentWeekStart, 6);
-      
-      // Identificador único da semana: Ano-Semana (ex: 2024-W10) ou DataInicio
+
+      // Identificador único da semana: Ano-Semana ou DataInicio (YYYY-MM-DD)
       const weekId = format(currentWeekStart, "yyyy-MM-dd");
-      
+
       weeksArray.push({
         id: weekId,
         label: `Semana ${i + 1}`,
         dateRange: `${format(currentWeekStart, "dd/MM")} - ${format(currentWeekEnd, "dd/MM")}`,
-        fullDate: currentWeekStart
+        fullDate: currentWeekStart,
       });
     }
     return weeksArray;
@@ -72,12 +70,16 @@ const PMP = () => {
     queryKey: ["pmp_atividades", obraAtiva?.id],
     queryFn: async () => {
       if (!obraAtiva?.id) return [];
+
+      // CORRIGIDO: Casting duplo para resolver o erro de SelectQueryError
       const { data, error } = await supabase
         .from("pmp_atividades" as any)
         .select("*")
         .eq("obra_id", obraAtiva.id);
+
       if (error) throw error;
-      return data as PmpAtividade[];
+
+      return (data || []) as unknown as PmpAtividade[];
     },
     enabled: !!obraAtiva?.id,
   });
@@ -86,12 +88,12 @@ const PMP = () => {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!obraAtiva?.id || !selectedWeek || !newTaskTitle.trim()) return;
-      
+
       const { error } = await supabase.from("pmp_atividades" as any).insert({
         obra_id: obraAtiva.id,
         semana_referencia: selectedWeek,
         titulo: newTaskTitle,
-        cor: selectedColor
+        cor: selectedColor,
       });
       if (error) throw error;
     },
@@ -107,7 +109,10 @@ const PMP = () => {
   // 4. Mutation para deletar
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("pmp_atividades" as any).delete().eq("id", id);
+      const { error } = await supabase
+        .from("pmp_atividades" as any)
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -123,10 +128,14 @@ const PMP = () => {
 
   const getPostItColor = (color: string) => {
     switch (color) {
-      case "blue": return "bg-blue-100 border-blue-200 text-blue-900 hover:bg-blue-200";
-      case "green": return "bg-green-100 border-green-200 text-green-900 hover:bg-green-200";
-      case "red": return "bg-red-100 border-red-200 text-red-900 hover:bg-red-200";
-      default: return "bg-yellow-100 border-yellow-200 text-yellow-900 hover:bg-yellow-200"; // yellow
+      case "blue":
+        return "bg-blue-100 border-blue-200 text-blue-900 hover:bg-blue-200";
+      case "green":
+        return "bg-green-100 border-green-200 text-green-900 hover:bg-green-200";
+      case "red":
+        return "bg-red-100 border-red-200 text-red-900 hover:bg-red-200";
+      default:
+        return "bg-yellow-100 border-yellow-200 text-yellow-900 hover:bg-yellow-200"; // yellow
     }
   };
 
@@ -161,16 +170,10 @@ const PMP = () => {
               {/* Header da Coluna (Semana) */}
               <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm sticky top-0 z-10">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-slate-700 uppercase text-xs tracking-wider">
-                    {week.label}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {week.id.split('-')[0]}
-                  </span>
+                  <span className="font-bold text-slate-700 uppercase text-xs tracking-wider">{week.label}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">{week.id.split("-")[0]}</span>
                 </div>
-                <div className="text-sm font-medium text-slate-600">
-                  {week.dateRange}
-                </div>
+                <div className="text-sm font-medium text-slate-600">{week.dateRange}</div>
               </div>
 
               {/* Lista de Atividades (Post-its) */}
@@ -186,9 +189,7 @@ const PMP = () => {
                         className={`p-3 rounded-md border shadow-sm transition-all relative group cursor-default ${getPostItColor(atividade.cor)}`}
                         style={{ transform: "rotate(-1deg)" }}
                       >
-                        <p className="text-sm font-medium pr-6 break-words leading-snug">
-                          {atividade.titulo}
-                        </p>
+                        <p className="text-sm font-medium pr-6 break-words leading-snug">{atividade.titulo}</p>
                         <button
                           onClick={() => deleteMutation.mutate(atividade.id)}
                           className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity"
@@ -228,23 +229,31 @@ const PMP = () => {
               autoFocus
             />
             <div className="flex gap-2 justify-center">
-              {['yellow', 'blue', 'green', 'red'].map((color) => (
+              {["yellow", "blue", "green", "red"].map((color) => (
                 <button
                   key={color}
                   onClick={() => setSelectedColor(color)}
                   className={`w-8 h-8 rounded-full border-2 ${
-                    selectedColor === color ? 'border-slate-900 scale-110' : 'border-transparent'
+                    selectedColor === color ? "border-slate-900 scale-110" : "border-transparent"
                   } ${
-                    color === 'yellow' ? 'bg-yellow-200' : 
-                    color === 'blue' ? 'bg-blue-200' :
-                    color === 'green' ? 'bg-green-200' : 'bg-red-200'
+                    color === "yellow"
+                      ? "bg-yellow-200"
+                      : color === "blue"
+                        ? "bg-blue-200"
+                        : color === "green"
+                          ? "bg-green-200"
+                          : "bg-red-200"
                   }`}
                 />
               ))}
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="bg-[#112131]">
+            <Button
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending}
+              className="bg-[#112131]"
+            >
               {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Colar no Quadro
             </Button>
