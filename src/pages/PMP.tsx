@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   Loader2,
@@ -14,7 +15,8 @@ import {
   GripVertical,
   User,
   Calendar as CalendarIcon,
-  ArrowRight,
+  CheckCircle2, // Icone de Concluido
+  Circle, // Icone de Pendente
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -27,7 +29,6 @@ import {
   differenceInCalendarDays,
   isValid,
 } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import {
   DndContext,
   DragEndEvent,
@@ -46,12 +47,12 @@ import { CSS } from "@dnd-kit/utilities";
 
 // --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
-  yellow: { border: "border-l-yellow-400", bg: "bg-white", text: "text-slate-700", ring: "ring-yellow-400" },
-  green: { border: "border-l-emerald-500", bg: "bg-white", text: "text-slate-700", ring: "ring-emerald-500" },
-  blue: { border: "border-l-blue-500", bg: "bg-white", text: "text-slate-700", ring: "ring-blue-500" },
-  red: { border: "border-l-red-500", bg: "bg-white", text: "text-slate-700", ring: "ring-red-500" },
-  purple: { border: "border-l-purple-500", bg: "bg-white", text: "text-slate-700", ring: "ring-purple-500" },
-  orange: { border: "border-l-orange-500", bg: "bg-white", text: "text-slate-700", ring: "ring-orange-500" },
+  yellow: { border: "border-l-yellow-400", bg: "bg-white", text: "text-slate-700" },
+  green: { border: "border-l-emerald-500", bg: "bg-white", text: "text-slate-700" },
+  blue: { border: "border-l-blue-500", bg: "bg-white", text: "text-slate-700" },
+  red: { border: "border-l-red-500", bg: "bg-white", text: "text-slate-700" },
+  purple: { border: "border-l-purple-500", bg: "bg-white", text: "text-slate-700" },
+  orange: { border: "border-l-orange-500", bg: "bg-white", text: "text-slate-700" },
 };
 
 type ColorKey = keyof typeof POSTIT_COLORS;
@@ -59,37 +60,36 @@ type ColorKey = keyof typeof POSTIT_COLORS;
 interface PmpAtividade {
   id: string;
   obra_id: string;
-  semana_referencia: string; // Mantido para compatibilidade, mas a lógica principal usará as datas
+  semana_referencia: string;
   titulo: string;
   cor: string;
-  // Novos campos
   data_inicio?: string | null;
   data_termino?: string | null;
   responsavel?: string | null;
+  concluido?: boolean; // Novo campo
 }
 
 // --- CARD (Draggable) ---
 const KanbanCard = ({
   atividade,
-  weekId, // ID da coluna onde este card está sendo renderizado visualmente
+  weekId,
   onDelete,
+  onToggleCheck, // Nova função
   onClick,
   isOverlay = false,
 }: {
   atividade: PmpAtividade;
   weekId: string;
   onDelete?: (id: string) => void;
+  onToggleCheck?: (id: string, currentStatus: boolean) => void;
   onClick?: (atividade: PmpAtividade) => void;
   isOverlay?: boolean;
 }) => {
-  // GERAÇÃO DE ID ÚNICO PARA O DRAG AND DROP
-  // Como a mesma atividade pode aparecer em várias colunas, o ID do elemento arrastável
-  // deve ser uma composição: ID_ATIVIDADE + SEPARADOR + ID_SEMANA
   const uniqueDragId = `${atividade.id}::${weekId}`;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: uniqueDragId,
-    data: { atividade, originWeekId: weekId }, // Passamos a semana de origem para calcular o delta de datas
+    data: { atividade, originWeekId: weekId },
   });
 
   const style = {
@@ -97,15 +97,16 @@ const KanbanCard = ({
   };
 
   const theme = POSTIT_COLORS[atividade.cor as ColorKey] || POSTIT_COLORS.yellow;
+  const isCompleted = atividade.concluido;
 
   const cardClasses = `
     relative group select-none p-3 rounded-md 
     border border-slate-200 border-l-[4px] ${theme.border}
     bg-white shadow-sm hover:shadow-md transition-all duration-200
     flex flex-col gap-2 cursor-grab active:cursor-grabbing
+    ${isCompleted ? "opacity-75 bg-slate-50" : ""} 
   `;
 
-  // Formatação de datas para exibir no card
   const dateDisplay =
     atividade.data_inicio && atividade.data_termino
       ? `${format(parseISO(atividade.data_inicio), "dd/MM")} - ${format(parseISO(atividade.data_termino), "dd/MM")}`
@@ -141,14 +142,45 @@ const KanbanCard = ({
       onClick={() => onClick && onClick(atividade)}
       className={cardClasses}
     >
+      {/* Cabeçalho do Card com Check e Título */}
       <div className="flex items-start gap-2">
-        <div className="mt-0.5 text-slate-300 group-hover:text-slate-400 transition-colors">
+        {/* Botão de Check */}
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onToggleCheck) onToggleCheck(atividade.id, !!isCompleted);
+          }}
+          className={`mt-0.5 transition-colors ${isCompleted ? "text-green-500" : "text-slate-300 hover:text-slate-400"}`}
+        >
+          {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+        </button>
+
+        <div className="flex-1">
+          <p
+            className={`text-sm font-medium leading-snug break-words ${isCompleted ? "text-slate-500 line-through decoration-slate-400" : "text-slate-700"}`}
+          >
+            {atividade.titulo}
+          </p>
+
+          {/* Badge de Concluído */}
+          {isCompleted && (
+            <Badge
+              variant="outline"
+              className="mt-1 text-[10px] h-5 bg-green-50 text-green-700 border-green-200 px-1.5"
+            >
+              CONCLUÍDO
+            </Badge>
+          )}
+        </div>
+
+        {/* Grip para arrastar (visible on hover) */}
+        <div className="mt-0.5 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">
           <GripVertical className="h-4 w-4" />
         </div>
-        <p className="text-sm font-medium text-slate-700 flex-1 break-words leading-snug">{atividade.titulo}</p>
       </div>
 
-      {/* Rodapé do Card: Datas e Responsável */}
+      {/* Rodapé do Card */}
       <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-50">
         <div className="flex items-center gap-2 text-[10px] text-slate-500">
           {dateDisplay && (
@@ -211,8 +243,6 @@ const PMP = () => {
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Estado do formulário unificado
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     titulo: "",
@@ -226,7 +256,6 @@ const PMP = () => {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  // 1. Gera as colunas de semanas com datas de início e fim explícitas
   const weeks = useMemo(() => {
     const obra = obraAtiva as any;
     if (!obra?.data_inicio || !obra?.data_termino) return [];
@@ -239,8 +268,8 @@ const PMP = () => {
     const weeksArray = [];
     for (let i = 0; i < totalWeeks; i++) {
       const currentWeekStart = addDays(firstWeekStart, i * 7);
-      const currentWeekEnd = addDays(currentWeekStart, 6); // Sábado
-      const weekId = format(currentWeekStart, "yyyy-MM-dd"); // ID da semana é o dia de início
+      const currentWeekEnd = addDays(currentWeekStart, 6);
+      const weekId = format(currentWeekStart, "yyyy-MM-dd");
 
       weeksArray.push({
         id: weekId,
@@ -254,7 +283,6 @@ const PMP = () => {
     return weeksArray;
   }, [obraAtiva]);
 
-  // 2. Busca atividades
   const { data: atividades = [], isLoading } = useQuery({
     queryKey: ["pmp_atividades", obraAtiva?.id],
     queryFn: async () => {
@@ -263,6 +291,7 @@ const PMP = () => {
         .from("pmp_atividades" as any)
         .select("*")
         .eq("obra_id", obraAtiva.id)
+        .order("concluido", { ascending: true }) // Tarefas não concluídas aparecem primeiro
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data || []) as unknown as PmpAtividade[];
@@ -270,15 +299,11 @@ const PMP = () => {
     enabled: !!obraAtiva?.id,
   });
 
-  // 3. Helpers para filtrar atividades por semana (LÓGICA DE INTERSEÇÃO)
   const getTasksForWeek = (weekStart: Date, weekEnd: Date) => {
     return atividades.filter((atividade) => {
-      // Se não tiver datas definidas, usa a semana_referencia (modo legado)
       if (!atividade.data_inicio || !atividade.data_termino) {
         return atividade.semana_referencia === format(weekStart, "yyyy-MM-dd");
       }
-
-      // Lógica de Interseção: Verifica se o período da tarefa sobrepõe a semana atual
       const taskStart = parseISO(atividade.data_inicio);
       const taskEnd = parseISO(atividade.data_termino);
 
@@ -294,7 +319,6 @@ const PMP = () => {
 
   // --- MUTATIONS ---
 
-  // Mutação para mover/redimensionar data
   const moveMutation = useMutation({
     mutationFn: async ({ id, newDataInicio, newDataTermino, novaSemanaRef }: any) => {
       const { error } = await supabase
@@ -302,7 +326,7 @@ const PMP = () => {
         .update({
           data_inicio: newDataInicio,
           data_termino: newDataTermino,
-          semana_referencia: novaSemanaRef, // Atualiza também a ref para garantir consistência
+          semana_referencia: novaSemanaRef,
         })
         .eq("id", id);
       if (error) throw error;
@@ -311,6 +335,34 @@ const PMP = () => {
       queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
     },
     onError: () => toast({ title: "Erro ao mover", variant: "destructive" }),
+  });
+
+  // Mutação para dar Check/Uncheck
+  const toggleCheckMutation = useMutation({
+    mutationFn: async ({ id, novoStatus }: { id: string; novoStatus: boolean }) => {
+      const { error } = await supabase
+        .from("pmp_atividades" as any)
+        .update({ concluido: novoStatus })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, novoStatus }) => {
+      await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
+      const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
+
+      queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], (old: PmpAtividade[] | undefined) => {
+        if (!old) return [];
+        return old.map((t) => (t.id === id ? { ...t, concluido: novoStatus } : t));
+      });
+      return { previousData };
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context?.previousData);
+      toast({ title: "Erro ao atualizar status", variant: "destructive" });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
+    },
   });
 
   const saveMutation = useMutation({
@@ -366,40 +418,29 @@ const PMP = () => {
 
     const activeData = active.data.current;
     const draggedTask = activeData?.atividade as PmpAtividade;
-    const originWeekId = activeData?.originWeekId as string; // A semana de onde o card foi puxado
+    const originWeekId = activeData?.originWeekId as string;
 
     let targetWeekId = "";
 
-    // Descobrir a semana de destino
     if (over.data.current?.type === "Column") {
       targetWeekId = over.data.current.weekId;
     } else if (over.data.current?.type === "Card") {
-      // Se soltar em cima de outro card, o dnd-kit não dá o weekId fácil,
-      // mas em um kanban simples, assumimos que o drop foi na coluna.
-      // (Opcional: refinar se necessário, mas geralmente o pointerWithin lida bem)
-      // Se precisar, teríamos que buscar o weekId do card "over".
-      // Por hora, se não for coluna, vamos tentar recuperar do contexto (o que exige mais código).
-      // Vamos simplificar e assumir drop na coluna. Se over for null ou card sem weekId explícito no data, aborta.
+      // Se soltar em card, ignora por simplicidade ou implementa lógica complexa de reordenação
       return;
     }
 
     if (targetWeekId && draggedTask && originWeekId && targetWeekId !== originWeekId) {
-      // CÁLCULO DE DESLOCAMENTO DE DATAS
-      // Calculamos a diferença de dias entre a semana de origem e a de destino
       const originDate = parseISO(originWeekId);
       const targetDate = parseISO(targetWeekId);
-
       const daysDiff = differenceInCalendarDays(targetDate, originDate);
 
       let newDataInicio = null;
       let newDataTermino = null;
 
       if (draggedTask.data_inicio && draggedTask.data_termino) {
-        // Move o bloco de tempo inteiro
         newDataInicio = addDays(parseISO(draggedTask.data_inicio), daysDiff).toISOString();
         newDataTermino = addDays(parseISO(draggedTask.data_termino), daysDiff).toISOString();
       } else {
-        // Se não tinha datas (legado), define baseado na semana de destino (ex: 5 dias)
         newDataInicio = targetDate.toISOString();
         newDataTermino = addDays(targetDate, 5).toISOString();
       }
@@ -419,8 +460,8 @@ const PMP = () => {
       titulo: "",
       cor: "yellow",
       responsavel: "",
-      data_inicio: weekId, // Preenche data inicio com o inicio da semana clicada
-      data_termino: addDays(parseISO(weekId), 5).toISOString().split("T")[0], // Sugere 5 dias
+      data_inicio: weekId,
+      data_termino: addDays(parseISO(weekId), 5).toISOString().split("T")[0],
     });
     setIsModalOpen(true);
   };
@@ -445,7 +486,6 @@ const PMP = () => {
   const handleSaveForm = () => {
     if (!formData.titulo) return toast({ title: "Título obrigatório", variant: "destructive" });
 
-    // Fallback: se user não por data, usa a data de inicio como referencia
     const semanaRef = formData.data_inicio || format(new Date(), "yyyy-MM-dd");
 
     saveMutation.mutate({
@@ -515,14 +555,13 @@ const PMP = () => {
                 <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] transition-colors hover:border-slate-300">
                   <KanbanColumn weekId={week.id}>
                     {getTasksForWeek(week.start, week.end).map((atividade) => (
-                      // IMPORTANTE: weekId é passado para o card saber sua origem no Drag
-                      // A key é composta para garantir unicidade visual no React
                       <KanbanCard
                         key={`${atividade.id}::${week.id}`}
                         weekId={week.id}
                         atividade={atividade}
                         onDelete={(id) => deleteMutation.mutate(id)}
                         onClick={(item) => handleOpenEdit(item)}
+                        onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
                       />
                     ))}
                   </KanbanColumn>
@@ -570,7 +609,7 @@ const PMP = () => {
                 <label className="text-xs font-medium text-slate-500 uppercase">Início</label>
                 <Input
                   type="date"
-                  value={formData.data_inicio}
+                  value={formData.data_inicio ? format(parseISO(formData.data_inicio), "yyyy-MM-dd") : ""}
                   onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
                 />
               </div>
@@ -578,7 +617,7 @@ const PMP = () => {
                 <label className="text-xs font-medium text-slate-500 uppercase">Término</label>
                 <Input
                   type="date"
-                  value={formData.data_termino}
+                  value={formData.data_termino ? format(parseISO(formData.data_termino), "yyyy-MM-dd") : ""}
                   onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
                 />
               </div>
