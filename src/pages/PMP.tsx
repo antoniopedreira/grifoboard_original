@@ -9,7 +9,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, Plus, Trash2, CalendarRange, StickyNote, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, differenceInWeeks, parseISO, startOfWeek } from "date-fns";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useDroppable } from "@dnd-kit/core";
+import { useDraggable } from "@dnd-kit/core";
 
 // --- CONFIGURAÇÃO DE CORES ---
 const POSTIT_COLORS = {
@@ -38,6 +51,82 @@ interface PmpAtividade {
   cor: string;
 }
 
+// Componente Draggable para cada Post-it
+const DraggablePostIt = ({
+  atividade,
+  onDelete,
+}: {
+  atividade: PmpAtividade;
+  onDelete: (id: string) => void;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: atividade.id,
+    data: { atividade },
+  });
+
+  const getPostItStyle = (colorName: string) => {
+    const color = POSTIT_COLORS[colorName as ColorKey] || POSTIT_COLORS.yellow;
+    return `${color.bg} ${color.border} ${color.text} ${color.hover}`;
+  };
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 9999 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-3 rounded-md border shadow-sm transition-all relative group select-none ${getPostItStyle(atividade.cor)} ${isDragging ? "rotate-3 scale-105" : ""}`}
+    >
+      <div className="flex items-start gap-2">
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-4 w-4 opacity-20 flex-shrink-0 mt-0.5" />
+        </div>
+        <p className="text-sm font-medium pr-6 break-words leading-snug">{atividade.titulo}</p>
+      </div>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(atividade.id);
+        }}
+        className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity text-current"
+      >
+        <Trash2 className="h-3 w-3" />
+      </button>
+    </div>
+  );
+};
+
+// Componente Droppable para cada semana
+const DroppableWeek = ({
+  weekId,
+  children,
+  isOver,
+}: {
+  weekId: string;
+  children: React.ReactNode;
+  isOver: boolean;
+}) => {
+  const { setNodeRef } = useDroppable({
+    id: weekId,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex flex-col gap-2 min-h-[150px] transition-colors rounded-lg p-1 ${
+        isOver ? "bg-slate-200/50 ring-2 ring-[#C7A347]/20" : ""
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
+
 const PMP = () => {
   const { userSession } = useAuth();
   const obraAtiva = userSession?.obraAtiva;
@@ -48,16 +137,16 @@ const PMP = () => {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorKey>("yellow");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
-  // Fix para Hydration do DND em React Strict Mode
-  const [enabled, setEnabled] = useState(false);
-  useEffect(() => {
-    const animation = requestAnimationFrame(() => setEnabled(true));
-    return () => {
-      cancelAnimationFrame(animation);
-      setEnabled(false);
-    };
-  }, []);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // 1. Gera as colunas de semanas
   const weeks = useMemo(() => {
@@ -96,7 +185,7 @@ const PMP = () => {
       const { data, error } = await supabase
         .from("pmp_atividades" as any)
         .select("*")
-        .eq("obra_id", obraAtiva.id); // Ordem de criação é o padrão simples
+        .eq("obra_id", obraAtiva.id);
       if (error) throw error;
       return (data || []) as unknown as PmpAtividade[];
     },
@@ -149,7 +238,6 @@ const PMP = () => {
       if (error) throw error;
     },
     onMutate: async ({ id, novaSemana }) => {
-      // Otimização: Atualiza a UI antes do servidor responder
       await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
       const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
 
@@ -169,23 +257,34 @@ const PMP = () => {
     },
   });
 
-  // Handler do DragEnd
-  const onDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
 
-    // Se soltou fora ou no mesmo lugar
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+  const handleDragOver = (event: any) => {
+    const { over } = event;
+    setOverId(over?.id ?? null);
+  };
 
-    // Se mudou de coluna (Semana)
-    if (destination.droppableId !== source.droppableId) {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setOverId(null);
+
+    if (!over) return;
+
+    const draggedItem = atividades.find((a) => a.id === active.id);
+    if (!draggedItem) return;
+
+    // Check if dropped on a week column
+    const targetWeekId = weeks.find((w) => w.id === over.id)?.id;
+    
+    if (targetWeekId && targetWeekId !== draggedItem.semana_referencia) {
       moveMutation.mutate({
-        id: draggableId,
-        novaSemana: destination.droppableId,
+        id: draggedItem.id,
+        novaSemana: targetWeekId,
       });
     }
-    // Nota: Reordenação dentro da mesma coluna exigiria um campo 'order' no banco de dados.
-    // Por enquanto, focamos em mover entre semanas.
   };
 
   const handleOpenAdd = (weekId: string) => {
@@ -198,6 +297,8 @@ const PMP = () => {
     return `${color.bg} ${color.border} ${color.text} ${color.hover}`;
   };
 
+  const activeItem = activeId ? atividades.find((a) => a.id === activeId) : null;
+
   if (!obraAtiva) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] text-slate-500 animate-in fade-in">
@@ -207,8 +308,6 @@ const PMP = () => {
       </div>
     );
   }
-
-  if (!enabled) return null; // Previne glitch visual no primeiro render do DnD
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 animate-in fade-in duration-500">
@@ -224,7 +323,13 @@ const PMP = () => {
         </div>
       </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
         <ScrollArea className="w-full flex-1 border rounded-xl bg-slate-50/50">
           <div className="flex p-4 gap-4">
             {weeks.map((week) => (
@@ -239,59 +344,17 @@ const PMP = () => {
                 </div>
 
                 {/* Área de Drop (Lista de Tarefas) */}
-                <Droppable droppableId={week.id}>
-                  {(provided, snapshot) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className={`flex flex-col gap-2 min-h-[150px] transition-colors rounded-lg p-1 ${
-                        snapshot.isDraggingOver ? "bg-slate-200/50 ring-2 ring-[#C7A347]/20" : ""
-                      }`}
-                    >
-                      {atividades
-                        .filter((a) => a.semana_referencia === week.id)
-                        .map((atividade, index) => (
-                          <Draggable key={atividade.id} draggableId={atividade.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`p-3 rounded-md border shadow-sm transition-all relative group select-none ${getPostItStyle(atividade.cor)}`}
-                                style={{
-                                  ...provided.draggableProps.style,
-                                  transform: snapshot.isDragging
-                                    ? `${provided.draggableProps.style?.transform} rotate(3deg) scale(1.05)`
-                                    : `${provided.draggableProps.style?.transform}`,
-                                  opacity: snapshot.isDragging ? 0.9 : 1,
-                                  zIndex: snapshot.isDragging ? 9999 : 1,
-                                }}
-                              >
-                                <div className="flex items-start gap-2">
-                                  {/* Grip Icon para indicar que é arrastável */}
-                                  <GripVertical className="h-4 w-4 opacity-20 flex-shrink-0 cursor-grab active:cursor-grabbing mt-0.5" />
-                                  <p className="text-sm font-medium pr-6 break-words leading-snug">
-                                    {atividade.titulo}
-                                  </p>
-                                </div>
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Evita iniciar o drag se clicar no lixo
-                                    deleteMutation.mutate(atividade.id);
-                                  }}
-                                  className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity text-current"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
+                <DroppableWeek weekId={week.id} isOver={overId === week.id}>
+                  {atividades
+                    .filter((a) => a.semana_referencia === week.id)
+                    .map((atividade) => (
+                      <DraggablePostIt
+                        key={atividade.id}
+                        atividade={atividade}
+                        onDelete={(id) => deleteMutation.mutate(id)}
+                      />
+                    ))}
+                </DroppableWeek>
 
                 {/* Botão Adicionar */}
                 <Button
@@ -306,7 +369,21 @@ const PMP = () => {
           </div>
           <ScrollBar orientation="horizontal" className="h-3" />
         </ScrollArea>
-      </DragDropContext>
+
+        {/* Drag Overlay */}
+        <DragOverlay>
+          {activeItem ? (
+            <div
+              className={`p-3 rounded-md border shadow-lg rotate-3 scale-105 ${getPostItStyle(activeItem.cor)}`}
+            >
+              <div className="flex items-start gap-2">
+                <GripVertical className="h-4 w-4 opacity-20 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-medium pr-6 break-words leading-snug">{activeItem.titulo}</p>
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Modal de Criação */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -334,7 +411,7 @@ const PMP = () => {
                       selectedColor === key
                         ? "border-slate-800 scale-110 ring-2 ring-offset-1 ring-slate-300"
                         : "border-transparent"
-                    } ${value.bg.replace("100", "300")}`} // Usa uma versão mais escura para a bolinha
+                    } ${value.bg.replace("100", "300")}`}
                     title={key}
                   />
                 ))}
