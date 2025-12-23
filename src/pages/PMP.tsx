@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  pointerWithin, // <--- MUDANÇA IMPORTANTE: Algoritmo melhor para colunas
+  pointerWithin,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
@@ -50,11 +50,11 @@ interface PmpAtividade {
   cor: string;
 }
 
-// Componente Draggable para cada Post-it
+// Componente Draggable
 const DraggablePostIt = ({ atividade, onDelete }: { atividade: PmpAtividade; onDelete: (id: string) => void }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: atividade.id,
-    data: { atividade }, // Passamos o objeto completo aqui para recuperar no DragEnd
+    data: { atividade }, // Passando dados para recuperar no onDragEnd
   });
 
   const getPostItStyle = (colorName: string) => {
@@ -72,7 +72,9 @@ const DraggablePostIt = ({ atividade, onDelete }: { atividade: PmpAtividade; onD
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 rounded-md border shadow-sm transition-all relative group select-none ${getPostItStyle(atividade.cor)} ${isDragging ? "rotate-3 scale-105 shadow-xl" : ""}`}
+      className={`p-3 rounded-md border shadow-sm transition-all relative group select-none ${getPostItStyle(atividade.cor)} ${
+        isDragging ? "rotate-3 scale-105" : ""
+      }`}
     >
       <div className="flex items-start gap-2">
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 -ml-1">
@@ -80,9 +82,8 @@ const DraggablePostIt = ({ atividade, onDelete }: { atividade: PmpAtividade; onD
         </div>
         <p className="text-sm font-medium pr-6 break-words leading-snug">{atividade.titulo}</p>
       </div>
-
       <button
-        onPointerDown={(e) => e.stopPropagation()} // Impede que o clique no lixo inicie o drag
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           onDelete(atividade.id);
@@ -95,17 +96,19 @@ const DraggablePostIt = ({ atividade, onDelete }: { atividade: PmpAtividade; onD
   );
 };
 
-// Componente Droppable para cada semana
+// Componente Droppable
 const DroppableWeek = ({
   weekId,
   children,
+  isOver,
 }: {
   weekId: string;
   children: React.ReactNode;
+  isOver: boolean;
 }) => {
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef } = useDroppable({
     id: weekId,
-    data: { type: "week", weekId },
+    data: { type: "week", weekId }, // Identificando que é uma coluna de semana
   });
 
   return (
@@ -133,12 +136,12 @@ const PMP = () => {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorKey>("yellow");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
-  // Sensores otimizados para evitar conflito com clique e drag
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Só começa a arrastar se mover 8px
+        distance: 5,
       },
     }),
   );
@@ -150,8 +153,6 @@ const PMP = () => {
 
     const start = parseISO(obra.data_inicio);
     const end = parseISO(obra.data_termino);
-
-    // Ajusta para Domingo/Segunda
     const firstWeekStart = startOfWeek(start, { weekStartsOn: 0 });
     const totalWeeks = Math.max(differenceInWeeks(end, firstWeekStart) + 2, 1);
 
@@ -159,7 +160,6 @@ const PMP = () => {
     for (let i = 0; i < totalWeeks; i++) {
       const currentWeekStart = addDays(firstWeekStart, i * 7);
       const currentWeekEnd = addDays(currentWeekStart, 6);
-
       const weekId = format(currentWeekStart, "yyyy-MM-dd");
 
       weeksArray.push({
@@ -233,10 +233,10 @@ const PMP = () => {
       if (error) throw error;
     },
     onMutate: async ({ id, novaSemana }) => {
-      // Otimização visual instantânea
       await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
       const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
 
+      // Atualização Otimista
       queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], (old: PmpAtividade[] | undefined) => {
         if (!old) return [];
         return old.map((task) => (task.id === id ? { ...task, semana_referencia: novaSemana } : task));
@@ -245,7 +245,9 @@ const PMP = () => {
       return { previousData };
     },
     onError: (_err, _newTodo, context) => {
-      queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context?.previousData);
+      if (context?.previousData) {
+        queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context.previousData);
+      }
       toast({ title: "Erro ao mover", variant: "destructive" });
     },
     onSettled: () => {
@@ -257,33 +259,45 @@ const PMP = () => {
     setActiveId(event.active.id as string);
   };
 
+  const handleDragOver = (event: any) => {
+    const { over } = event;
+    // Identifica se estamos sobre uma coluna (semana) ou sobre outro card
+    const overIdStr = over?.id ? String(over.id) : null;
+
+    // Se o ID corresponder a uma semana (está na lista de weeks), setamos como overId
+    // Caso contrário, se for um card, pegamos a semana dele no dragEnd
+    if (overIdStr && weeks.some((w) => w.id === overIdStr)) {
+      setOverId(overIdStr);
+    } else {
+      setOverId(null);
+    }
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
+    setOverId(null);
 
-    // Se não soltou em lugar nenhum válido
     if (!over) return;
 
-    // Recupera os dados do card arrastado
     const draggedItem = active.data.current?.atividade as PmpAtividade;
     if (!draggedItem) return;
 
-    // Determinar a semana de destino
     let targetWeekId: string | null = null;
 
-    // Se soltou em um droppable de semana
+    // Cenário 1: Soltou diretamente na coluna (droppable da semana)
     if (over.data.current?.type === "week") {
       targetWeekId = over.data.current.weekId;
-    } else {
-      // Se soltou em cima de outro post-it, pegar a semana dele
-      const overAtividade = atividades.find((a) => a.id === over.id);
-      if (overAtividade) {
-        targetWeekId = overAtividade.semana_referencia;
+    }
+    // Cenário 2: Soltou em cima de outro card
+    else {
+      const overItem = atividades.find((a) => a.id === over.id);
+      if (overItem) {
+        targetWeekId = overItem.semana_referencia;
       }
     }
 
-    // Se encontrou uma semana válida e é diferente da atual
+    // Executa a movimentação se o destino for válido e diferente da origem
     if (targetWeekId && draggedItem.semana_referencia !== targetWeekId) {
       moveMutation.mutate({
         id: draggedItem.id,
@@ -302,7 +316,6 @@ const PMP = () => {
     return `${color.bg} ${color.border} ${color.text} ${color.hover}`;
   };
 
-  // Encontra o item ativo para o Overlay (efeito visual enquanto arrasta)
   const activeItem = activeId ? atividades.find((a) => a.id === activeId) : null;
 
   if (!obraAtiva) {
@@ -333,6 +346,7 @@ const PMP = () => {
         sensors={sensors}
         collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <ScrollArea className="w-full flex-1 border rounded-xl bg-slate-50/50">
@@ -349,7 +363,7 @@ const PMP = () => {
                 </div>
 
                 {/* Área de Drop (Lista de Tarefas) */}
-                <DroppableWeek weekId={week.id}>
+                <DroppableWeek weekId={week.id} isOver={overId === week.id}>
                   {atividades
                     .filter((a) => a.semana_referencia === week.id)
                     .map((atividade) => (
@@ -375,7 +389,6 @@ const PMP = () => {
           <ScrollBar orientation="horizontal" className="h-3" />
         </ScrollArea>
 
-        {/* Drag Overlay - O que aparece flutuando quando você arrasta */}
         <DragOverlay>
           {activeItem ? (
             <div
@@ -390,7 +403,6 @@ const PMP = () => {
         </DragOverlay>
       </DndContext>
 
-      {/* Modal de Criação */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
