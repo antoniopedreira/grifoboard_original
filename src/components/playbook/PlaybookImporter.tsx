@@ -262,10 +262,10 @@ export function PlaybookImporter({ onSave }: PlaybookImporterProps) {
                         1. <strong>Baixe o Modelo:</strong> Use o botão abaixo para baixar a planilha padrão.
                       </p>
                       <p>
-                        2. <strong>Copie os dados:</strong> Cole seu orçamento no modelo respeitando as colunas.
+                        2. <strong>Copie os dados:</strong> Remova células mescladas e fórmulas do seu orçamento.
                       </p>
                       <p>
-                        3. <strong>Sem formatação:</strong> Remova células mescladas, cores e fórmulas.
+                        3. <strong>Sem formatação:</strong> Cole seu orçamento no modelo respeitando as colunas.
                       </p>
                       <p>
                         4. <strong>Sem numeração:</strong> Não inclua a coluna de numeração dos itens (ex: 1.1, 1.2).
