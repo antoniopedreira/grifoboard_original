@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client"; // Import do Supabase
+import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -19,7 +19,8 @@ import {
   ChevronRight,
   LucideIcon,
   Bot,
-  Target, // Novo ícone para Gestão de Metas
+  Target,
+  KanbanSquare, // Ícone para PMP
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -40,13 +41,10 @@ const CustomSidebar = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Verifica se é Admin ao carregar
   useEffect(() => {
     const checkRole = async () => {
       if (userSession?.user) {
         const { data } = await supabase.from("usuarios").select("role").eq("id", userSession.user.id).single();
-
-        // Verifica se a role é admin ou master_admin
         setIsAdmin(data?.role === "admin" || data?.role === "master_admin");
       }
     };
@@ -63,14 +61,13 @@ const CustomSidebar = () => {
     localStorage.setItem("sidebarCollapsed", JSON.stringify(isCollapsed));
   }, [isCollapsed]);
 
-  // Lista de Menus Dinâmica (Baseada no Admin)
   const menuItems: MenuItem[] = useMemo(
     () => [
+      { path: "/pmp", label: "PMP", icon: KanbanSquare }, // <--- PMP Adicionado Aqui (Antes do PCP)
       { path: "/tarefas", label: "PCP", icon: LayoutDashboard },
       { path: "/playbook", label: "Playbook", icon: BookOpen },
       { path: "/diarioobra", label: "Diário de Obra", icon: FileText },
       { path: "/grifoway", label: "GrifoWay", customIcon: grifoIconGold },
-      // Adiciona Gestão de Metas APENAS se for Admin, acima do Marketplace
       ...(isAdmin ? [{ path: "/gestao-metas", label: "Gestão de Metas", icon: Target }] : []),
       { path: "/marketplace", label: "Marketplace", icon: Store },
       { path: "/grifo-ai", label: "GrifoAI", icon: Bot },
@@ -195,8 +192,8 @@ const CustomSidebar = () => {
                       "h-6 w-6 transition-all duration-200 flex-shrink-0",
                       isActive ? "brightness-0 invert" : "group-hover:brightness-0 group-hover:invert",
                     )}
-                    loading="eager" // CORREÇÃO: Força carregamento imediato
-                    decoding="sync" // CORREÇÃO: Prioriza decodificação
+                    loading="eager"
+                    decoding="sync"
                   />
                 ) : item.icon ? (
                   <item.icon
@@ -262,19 +259,19 @@ const CustomSidebar = () => {
           })}
         </nav>
 
-        {/* Footer da Sidebar (User Profile) */}
+        {/* Footer Compacto (User Profile) */}
         <div
           className={cn(
-            "m-4 rounded-xl bg-black/20 border border-white/5 overflow-hidden transition-all duration-300",
-            isCollapsed ? "p-2 flex flex-col items-center gap-4" : "p-4",
+            "m-2 rounded-lg bg-black/20 border border-white/5 overflow-hidden transition-all duration-300",
+            isCollapsed ? "p-1 flex flex-col items-center gap-2" : "p-2", // Menos padding e margem
           )}
         >
-          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3 mb-3")}>
+          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-2 mb-2")}>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <Avatar className="h-10 w-10 border-2 border-secondary shadow-sm cursor-pointer hover:scale-105 transition-transform">
+                <Avatar className="h-8 w-8 border border-secondary shadow-sm cursor-pointer hover:scale-105 transition-transform">
                   <AvatarImage src={userAvatar} />
-                  <AvatarFallback className="bg-secondary text-white font-bold text-xs">
+                  <AvatarFallback className="bg-secondary text-white font-bold text-[10px]">
                     {getInitials(userName)}
                   </AvatarFallback>
                 </Avatar>
@@ -289,10 +286,10 @@ const CustomSidebar = () => {
 
             {!isCollapsed && (
               <div className="flex-1 min-w-0 overflow-hidden">
-                <p className="text-sm font-medium text-white truncate" title={userName}>
+                <p className="text-xs font-medium text-white truncate" title={userName}>
                   {userName}
                 </p>
-                <p className="text-xs text-white/50 truncate" title={userEmail}>
+                <p className="text-[10px] text-white/50 truncate" title={userEmail}>
                   {userEmail}
                 </p>
               </div>
@@ -301,8 +298,8 @@ const CustomSidebar = () => {
 
           <div
             className={cn(
-              "grid gap-2 border-t border-white/10 transition-all",
-              isCollapsed ? "grid-cols-1 w-full pt-2 border-none" : "grid-cols-2 pt-2",
+              "grid gap-1 border-t border-white/10 transition-all",
+              isCollapsed ? "grid-cols-1 w-full pt-1 border-none" : "grid-cols-2 pt-1",
             )}
           >
             <Tooltip delayDuration={0}>
@@ -310,11 +307,11 @@ const CustomSidebar = () => {
                 <button
                   onClick={() => setSettingsOpen(true)}
                   className={cn(
-                    "flex items-center justify-center rounded-md hover:bg-white/10 text-white/70 transition-colors group",
-                    isCollapsed ? "p-2 w-full hover:text-secondary" : "p-2 text-xs",
+                    "flex items-center justify-center rounded hover:bg-white/10 text-white/70 transition-colors group",
+                    isCollapsed ? "p-1.5 w-full hover:text-secondary" : "p-1.5 text-[10px]",
                   )}
                 >
-                  <Settings className={cn(isCollapsed ? "w-5 h-5" : "w-4 h-4 mr-1")} />
+                  <Settings className={cn(isCollapsed ? "w-4 h-4" : "w-3 h-3 mr-1")} />
                   {!isCollapsed && "Config"}
                 </button>
               </TooltipTrigger>
@@ -326,11 +323,11 @@ const CustomSidebar = () => {
                 <button
                   onClick={() => signOut()}
                   className={cn(
-                    "flex items-center justify-center rounded-md hover:bg-red-500/20 hover:text-red-200 transition-colors group",
-                    isCollapsed ? "p-2 w-full text-red-300" : "p-2 text-xs text-white/70",
+                    "flex items-center justify-center rounded hover:bg-red-500/20 hover:text-red-200 transition-colors group",
+                    isCollapsed ? "p-1.5 w-full text-red-300" : "p-1.5 text-[10px] text-white/70",
                   )}
                 >
-                  <LogOut className={cn(isCollapsed ? "w-5 h-5" : "w-4 h-4 mr-1")} />
+                  <LogOut className={cn(isCollapsed ? "w-4 h-4" : "w-3 h-3 mr-1")} />
                   {!isCollapsed && "Sair"}
                 </button>
               </TooltipTrigger>
