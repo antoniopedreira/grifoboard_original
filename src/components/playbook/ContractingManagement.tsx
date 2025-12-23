@@ -16,7 +16,7 @@ interface ContractingItem {
   estimated_value: number;
   status: "Pendente" | "Em Cotação" | "Negociada" | "Contratada" | "Cancelada";
   supplier_name?: string;
-  contract_url?: string; // Coluna do link do contrato
+  contract_url?: string;
 }
 
 const ContractingManagement = () => {
@@ -28,16 +28,17 @@ const ContractingManagement = () => {
   // --- QUERIES & MUTATIONS ---
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["playbook_items"], // Chave atualizada
+    queryKey: ["playbook_items"],
     queryFn: async () => {
-      // Apontando para a tabela correta: playbook_items
       const { data, error } = await supabase
         .from("playbook_items" as any)
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as ContractingItem[];
+
+      // CORREÇÃO AQUI: Cast duplo para resolver o erro TS2352
+      return (data || []) as unknown as ContractingItem[];
     },
   });
 
@@ -98,17 +99,14 @@ const ContractingManagement = () => {
       const fileName = `${itemId}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // 1. Upload para o Storage
       const { error: uploadError } = await supabase.storage.from("playbook-documents").upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. Pegar URL Pública
       const {
         data: { publicUrl },
       } = supabase.storage.from("playbook-documents").getPublicUrl(filePath);
 
-      // 3. Salvar URL no banco (tabela playbook_items)
       await updateMutation.mutateAsync({
         id: itemId,
         field: "contract_url",
@@ -124,7 +122,6 @@ const ContractingManagement = () => {
     }
   };
 
-  // --- HELPERS VISUAIS ---
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Contratada":
@@ -157,7 +154,6 @@ const ContractingManagement = () => {
         </div>
       </div>
 
-      {/* Input de Adicionar */}
       <div className="flex gap-3 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
         <Input
           placeholder="Nome do material ou serviço (ex: Cimento, Pintura...)"
@@ -174,7 +170,6 @@ const ContractingManagement = () => {
         </Button>
       </div>
 
-      {/* Tabela */}
       <div className="rounded-md border border-slate-200 bg-white overflow-hidden">
         <Table>
           <TableHeader className="bg-slate-50">
@@ -267,7 +262,6 @@ const ContractingManagement = () => {
                     </Select>
                   </TableCell>
 
-                  {/* COLUNA DO CONTRATO */}
                   <TableCell className="text-center">
                     {item.status === "Negociada" || item.status === "Contratada" ? (
                       <div className="flex items-center justify-center gap-2">
@@ -342,4 +336,5 @@ const ContractingManagement = () => {
   );
 };
 
+// GARANTINDO A EXPORTAÇÃO DEFAULT
 export default ContractingManagement;

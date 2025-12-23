@@ -3,7 +3,8 @@ import { PlaybookImporter } from "@/components/playbook/PlaybookImporter";
 import { PlaybookTable, PlaybookItem } from "@/components/playbook/PlaybookTable";
 // CORREÇÃO 1: Import default para resolver TS2614
 import PlaybookSummary from "@/components/playbook/PlaybookSummary";
-import { ContractingManagement } from "@/components/playbook/ContractingManagement";
+// CORREÇÃO 2: Import default para ContractingManagement
+import ContractingManagement from "@/components/playbook/ContractingManagement";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Trash2, Loader2, Settings2, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,7 @@ const Playbook = () => {
       }
 
       return {
-        id: item.id, // CORREÇÃO 2: Mantém o UUID original do banco!
+        id: item.id, // Mantém o UUID original do banco!
         descricao: item.descricao,
         unidade: item.unidade,
         qtd: Number(item.qtd),
@@ -391,7 +392,8 @@ const Playbook = () => {
             </TabsContent>
 
             <TabsContent value="contratacao" className="space-y-6 animate-in fade-in duration-300">
-              <ContractingManagement items={playbookData.items as any} onUpdate={silentRefetch} />
+              {/* Removido a prop 'items' que não existia na definição e não é necessária */}
+              <ContractingManagement />
             </TabsContent>
           </Tabs>
         </div>
