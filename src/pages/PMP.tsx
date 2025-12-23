@@ -18,9 +18,8 @@ import {
   CheckCircle2,
   Circle,
   AlertCircle,
-  // Novos ícones para o alerta de prazo
-  Bomb,
-  TimerReset,
+  Bomb, // Ícone da Bomba
+  AlarmClock, // Ícone de Relógio
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -51,9 +50,8 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-// REMOVIDO: import ProjectCountdown from "@/components/dashboard/ProjectCountdown";
 
-// --- CONFIGURAÇÃO DE CORES ---
+// --- CONFIGURAÇÃO DE CORES DOS POST-ITS ---
 const POSTIT_COLORS = {
   yellow: { border: "border-l-yellow-400", bg: "bg-white", text: "text-slate-700", ring: "ring-yellow-400" },
   green: { border: "border-l-emerald-500", bg: "bg-white", text: "text-slate-700", ring: "ring-emerald-500" },
@@ -107,7 +105,7 @@ const KanbanCard = ({
   const theme = POSTIT_COLORS[atividade.cor as ColorKey] || POSTIT_COLORS.yellow;
   const isCompleted = atividade.concluido;
 
-  // Lógica de Atraso
+  // Lógica de Atraso no Card
   const today = startOfDay(new Date());
   const endDate = atividade.data_termino ? parseISO(atividade.data_termino) : null;
   const isDelayed = !isCompleted && endDate && isBefore(endDate, today);
@@ -277,39 +275,74 @@ const PMP = () => {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  // Lógica do "Relógio Bomba"
-  const { daysRemaining, urgencyColor, urgencyBg, urgencyText, isCritical } = useMemo(() => {
+  // Lógica da Bomba Relógio
+  const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
     if (!obraAtiva?.data_termino)
       return {
         daysRemaining: null,
-        urgencyColor: "text-slate-400",
-        urgencyBg: "bg-slate-100",
-        urgencyText: "text-slate-600",
-        isCritical: false,
+        urgencyBg: "",
+        urgencyBorder: "",
+        urgencyText: "",
+        iconColor: "",
+        statusLabel: "",
+        isExploded: false,
       };
 
     const end = parseISO(obraAtiva.data_termino);
     const today = startOfDay(new Date());
     const days = differenceInCalendarDays(end, today);
 
-    let color = "text-emerald-600";
-    let bg = "bg-emerald-50 border-emerald-200";
-    let text = "text-emerald-800";
-    let critical = false;
+    // Configuração Padrão: Estilo Alerta Vermelho
+    let styles = {
+      bg: "bg-red-50",
+      border: "border-red-200",
+      text: "text-red-700",
+      icon: "text-red-500",
+      label: "CONTAGEM REGRESSIVA",
+      exploded: false,
+    };
 
     if (days < 0) {
-      color = "text-red-600 animate-pulse";
-      bg = "bg-red-100 border-red-300 shadow-red-100/50 shadow-lg";
-      text = "text-red-800 font-black";
-      critical = true;
+      // Estourou o prazo
+      styles = {
+        bg: "bg-red-600",
+        border: "border-red-700",
+        text: "text-white",
+        icon: "text-white animate-bounce",
+        label: "PRAZO ESTOURADO!",
+        exploded: true,
+      };
     } else if (days <= 14) {
-      // Menos de 2 semanas
-      color = "text-orange-500";
-      bg = "bg-orange-50 border-orange-200";
-      text = "text-orange-800";
+      // Urgente (menos de 2 semanas)
+      styles = {
+        bg: "bg-red-100",
+        border: "border-red-400",
+        text: "text-red-800",
+        icon: "text-red-600 animate-pulse",
+        label: "PRAZO CRÍTICO",
+        exploded: false,
+      };
+    } else {
+      // "Normal", mas com design de alerta
+      styles = {
+        bg: "bg-orange-50",
+        border: "border-orange-200",
+        text: "text-orange-800",
+        icon: "text-orange-600",
+        label: "TEMPO RESTANTE",
+        exploded: false,
+      };
     }
 
-    return { daysRemaining: days, urgencyColor: color, urgencyBg: bg, urgencyText: text, isCritical: critical };
+    return {
+      daysRemaining: days,
+      urgencyBg: styles.bg,
+      urgencyBorder: styles.border,
+      urgencyText: styles.text,
+      iconColor: styles.icon,
+      statusLabel: styles.label,
+      isExploded: styles.exploded,
+    };
   }, [obraAtiva]);
 
   const weeks = useMemo(() => {
@@ -373,7 +406,7 @@ const PMP = () => {
     });
   };
 
-  // --- MUTATIONS --- (Mantidas iguais)
+  // --- MUTATIONS ---
   const moveMutation = useMutation({
     mutationFn: async ({ id, newDataInicio, newDataTermino, novaSemanaRef }: any) => {
       const { error } = await supabase
@@ -444,7 +477,7 @@ const PMP = () => {
     },
   });
 
-  // --- HANDLERS --- (Mantidos iguais)
+  // --- HANDLERS ---
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
   };
@@ -534,7 +567,7 @@ const PMP = () => {
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 font-sans bg-slate-50/30">
-      {/* HEADER ATUALIZADO COM ALERTA DE BOMBA RELÓGIO */}
+      {/* HEADER: TÍTULO E BOMBA RELÓGIO */}
       <div className="flex flex-col md:flex-row justify-between items-end px-2 py-2 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -546,42 +579,43 @@ const PMP = () => {
           </p>
         </div>
 
-        {/* ÁREA DO ALERTA DE PRAZO (BOMBA RELÓGIO) */}
+        {/* ÁREA DA BOMBA RELÓGIO (ALARME VISUAL) */}
         {daysRemaining !== null && (
           <div
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${urgencyBg} backdrop-blur-sm shadow-sm transition-all relative overflow-hidden group`}
+            className={`flex items-center gap-3 px-5 py-3 rounded-lg border-2 ${urgencyBg} ${urgencyBorder} shadow-sm relative overflow-hidden transition-all duration-300 w-full md:w-auto min-w-[280px]`}
           >
-            {/* Efeito de "Pulso" para crítico */}
-            {isCritical && <div className="absolute inset-0 bg-red-500/10 animate-pulse z-0"></div>}
-
-            <div className={`relative z-10 p-2 rounded-full bg-white/80 ${urgencyColor}`}>
-              <Bomb className={`h-6 w-6 ${isCritical ? "animate-bounce" : ""}`} />
-              {isCritical && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-                </span>
-              )}
+            {/* Ícone da Bomba Pulsante */}
+            <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
+              <Bomb className={`h-6 w-6 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
             </div>
 
-            <div className="z-10 flex flex-col">
-              <span className={`text-xs font-bold uppercase tracking-wider ${urgencyText}`}>
-                {isCritical ? "PRAZO ESTOURADO!" : daysRemaining <= 14 ? "ATENÇÃO AO PRAZO" : "Prazo da Obra"}
-              </span>
-              <span className={`text-xl font-black font-mono leading-none ${urgencyText} flex items-center gap-2`}>
+            <div className="flex flex-col flex-1">
+              <div className="flex justify-between items-center w-full">
+                <span className={`text-[10px] font-black uppercase tracking-widest ${urgencyText}`}>{statusLabel}</span>
+                {isExploded && <AlertCircle className="h-3 w-3 text-white animate-ping" />}
+              </div>
+
+              <div
+                className={`text-2xl font-black font-mono leading-none flex items-center gap-1 mt-0.5 ${urgencyText}`}
+              >
                 {daysRemaining < 0 ? (
-                  <>Isso é uma bomba! {Math.abs(daysRemaining)} dias de atraso</>
+                  <span className="flex items-center gap-2">ATRASO DE {Math.abs(daysRemaining)} DIAS</span>
                 ) : daysRemaining === 0 ? (
-                  "Vence Hoje!"
+                  "VENCE HOJE!"
                 ) : (
-                  <>{daysRemaining} dias restantes</>
+                  <>
+                    {daysRemaining} <span className="text-xs font-bold self-end mb-1">DIAS RESTANTES</span>
+                  </>
                 )}
-                {daysRemaining <= 14 && daysRemaining >= 0 && <TimerReset className="h-5 w-5 opacity-50" />}
-              </span>
+              </div>
+
               {obraAtiva.data_termino && (
-                <span className={`text-[10px] font-medium mt-0.5 ${urgencyText} opacity-80`}>
-                  Previsão: {format(parseISO(obraAtiva.data_termino), "dd/MM/yyyy")}
-                </span>
+                <div
+                  className={`text-[10px] font-bold mt-1 border-t border-current/20 pt-1 flex items-center gap-1 ${urgencyText} opacity-90`}
+                >
+                  <AlarmClock className="h-3 w-3" />
+                  ENTREGA: {format(parseISO(obraAtiva.data_termino), "dd/MM/yyyy")}
+                </div>
               )}
             </div>
           </div>
@@ -645,7 +679,7 @@ const PMP = () => {
         </DragOverlay>
       </DndContext>
 
-      {/* MODAL EDITAR/CRIAR (Mantido igual) */}
+      {/* MODAL EDITAR/CRIAR */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
@@ -663,7 +697,6 @@ const PMP = () => {
                 autoFocus
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-500 uppercase">Início</label>
@@ -682,7 +715,6 @@ const PMP = () => {
                 />
               </div>
             </div>
-
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Responsável</label>
               <div className="relative">
@@ -695,7 +727,6 @@ const PMP = () => {
                 />
               </div>
             </div>
-
             <div className="space-y-3 pt-2">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Categoria</span>
               <div className="flex flex-wrap gap-3">
@@ -707,16 +738,11 @@ const PMP = () => {
                   if (key === "red") bgClass = "bg-red-500";
                   if (key === "purple") bgClass = "bg-purple-500";
                   if (key === "orange") bgClass = "bg-orange-500";
-
                   return (
                     <button
                       key={key}
                       onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
-                      className={`
-                                w-8 h-8 rounded-full border-2 transition-all
-                                ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-1 ring-slate-200" : "border-transparent hover:scale-105"} 
-                                ${bgClass}
-                            `}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-1 ring-slate-200" : "border-transparent hover:scale-105"} ${bgClass}`}
                       title={key}
                     />
                   );
