@@ -99,14 +99,13 @@ const DraggablePostIt = ({ atividade, onDelete }: { atividade: PmpAtividade; onD
 const DroppableWeek = ({
   weekId,
   children,
-  isOver,
 }: {
   weekId: string;
   children: React.ReactNode;
-  isOver: boolean;
 }) => {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: weekId,
+    data: { type: "week", weekId },
   });
 
   return (
@@ -134,7 +133,6 @@ const PMP = () => {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorKey>("yellow");
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [overId, setOverId] = useState<string | null>(null);
 
   // Sensores otimizados para evitar conflito com clique e drag
   const sensors = useSensors(
@@ -259,15 +257,10 @@ const PMP = () => {
     setActiveId(event.active.id as string);
   };
 
-  const handleDragOver = (event: any) => {
-    const { over } = event;
-    setOverId(over?.id ?? null);
-  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    setOverId(null);
 
     // Se não soltou em lugar nenhum válido
     if (!over) return;
@@ -326,9 +319,8 @@ const PMP = () => {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={pointerWithin} // <--- MUDANÇA: 'pointerWithin' funciona muito melhor para colunas do que 'closestCenter'
+        collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <ScrollArea className="w-full flex-1 border rounded-xl bg-slate-50/50">
@@ -345,7 +337,7 @@ const PMP = () => {
                 </div>
 
                 {/* Área de Drop (Lista de Tarefas) */}
-                <DroppableWeek weekId={week.id} isOver={overId === week.id}>
+                <DroppableWeek weekId={week.id}>
                   {atividades
                     .filter((a) => a.semana_referencia === week.id)
                     .map((atividade) => (
