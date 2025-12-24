@@ -1,69 +1,48 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, CheckSquare, BookOpen, Map, Menu } from "lucide-react";
+import { LayoutDashboard, CheckSquare, Bot, Target, KanbanSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
-
-// Importando os Sidebars corretos que você usa no Desktop
-import CustomSidebar from "@/components/CustomSidebar";
-import MasterAdminSidebar from "@/components/MasterAdminSidebar";
 
 export function MobileBottomNav() {
   const location = useLocation();
-  const [open, setOpen] = useState(false);
-
   const isActive = (path: string) => location.pathname === path;
 
-  // Lógica para saber qual Sidebar mostrar (igual ao App.tsx)
-  const masterAdminRoutes = ["/master-admin", "/formularios", "/base-de-dados"];
-  const isMasterAdminPage = masterAdminRoutes.some((route) => location.pathname.startsWith(route));
-
+  // As 5 abas principais solicitadas
   const navItems = [
-    { icon: LayoutDashboard, label: "PCP", path: "/obras" },
-    // CORREÇÃO: Link ajustado para /diarioobra (sem hífen) conforme seu App.tsx
+    { icon: KanbanSquare, label: "PMP", path: "/pmp" },
+    { icon: LayoutDashboard, label: "PCP", path: "/tarefas" }, // Usei /tarefas conforme seu menu desktop original
     { icon: CheckSquare, label: "Diário", path: "/diarioobra" },
-    { icon: BookOpen, label: "Playbook", path: "/playbook" },
-    // CORREÇÃO: Link ajustado para /grifoway (sem hífen) conforme seu App.tsx
-    { icon: Map, label: "GrifoWay", path: "/grifoway" },
+    { icon: Bot, label: "Grifo AI", path: "/grifo-ai" },
+    { icon: Target, label: "Metas", path: "/gestao-metas" },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 pb-safe md:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-      <div className="flex justify-around items-center h-16 px-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              "flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform",
-              isActive(item.path) ? "text-[#A47528]" : "text-slate-400 hover:text-slate-600",
-            )}
-          >
-            <item.icon className={cn("h-6 w-6", isActive(item.path) && "fill-current/10")} />
-            <span className="text-[10px] font-medium">{item.label}</span>
-          </Link>
-        ))}
-
-        {/* Menu Hamburguer que abre a Sidebar correta */}
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <button className="flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-400 hover:text-slate-600 active:scale-95 transition-transform">
-              <Menu className="h-6 w-6" />
-              <span className="text-[10px] font-medium">Menu</span>
-            </button>
-          </SheetTrigger>
-
-          {/* Ajuste de estilo para a Sheet ficar correta no mobile */}
-          <SheetContent side="left" className="p-0 w-[85%] max-w-[300px] overflow-y-auto bg-primary border-r-0">
-            {/* Lógica condicional para mostrar o menu correto */}
-            {isMasterAdminPage ? <MasterAdminSidebar /> : <CustomSidebar />}
-
-            {/* Fix CSS para garantir que o sidebar preencha a Sheet */}
-            <style>{`
-               [data-radix-collection-item] aside { display: flex !important; width: 100%; height: 100%; }
-             `}</style>
-          </SheetContent>
-        </Sheet>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 pb-[env(safe-area-inset-bottom)] md:hidden shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+      <div className="flex justify-around items-center h-16 px-1">
+        {navItems.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-90 transition-all duration-200 tap-highlight-transparent",
+                active ? "text-[#A47528]" : "text-slate-400 hover:text-slate-600",
+              )}
+            >
+              <div className={cn("p-1 rounded-xl transition-all duration-300", active && "bg-[#A47528]/10")}>
+                <item.icon
+                  className={cn("h-6 w-6 transition-all", active && "fill-current")}
+                  strokeWidth={active ? 2.5 : 2}
+                />
+              </div>
+              <span
+                className={cn("text-[9px] font-medium transition-all", active ? "font-bold scale-105" : "font-medium")}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

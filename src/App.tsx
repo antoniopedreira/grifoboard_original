@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { RegistryProvider } from "@/context/RegistryContext";
 import { RouteGuard } from "@/components/auth/RouteGuard";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // Import da Sheet
+import { Menu } from "lucide-react"; // Ícone do Menu
+import { Button } from "@/components/ui/button";
+
+// Imports de Páginas
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import Index from "@/pages/Index";
@@ -27,7 +32,7 @@ import { useEffect } from "react";
 import { Obra } from "./types/supabase";
 import CustomSidebar from "@/components/CustomSidebar";
 import MasterAdminSidebar from "@/components/MasterAdminSidebar";
-import { MobileBottomNav } from "@/components/mobile/MobileBottomNav"; // <--- NOVO IMPORT
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +45,26 @@ const queryClient = new QueryClient({
 
 const masterAdminRoutes = ["/master-admin", "/formularios", "/base-de-dados"];
 
-// Layout Principal Responsivo
+// --- NOVO COMPONENTE: Menu Mobile Lateral ---
+const MobileSidebarTrigger = () => {
+  const location = useLocation();
+  const isMasterAdminPage = masterAdminRoutes.some((r) => location.pathname.startsWith(r));
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="text-primary hover:bg-slate-100 -ml-2">
+          <Menu className="h-6 w-6" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 w-[85%] max-w-[300px] border-r-0 bg-primary">
+        {/* Renderiza o Sidebar correto dentro do menu */}
+        {isMasterAdminPage ? <MasterAdminSidebar /> : <CustomSidebar />}
+      </SheetContent>
+    </Sheet>
+  );
+};
+
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isAuthPage = location.pathname === "/auth" || location.pathname === "/reset-password";
@@ -48,55 +72,46 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const isPortalParceiro = location.pathname === "/portal-parceiro";
   const isMasterAdminPage = masterAdminRoutes.includes(location.pathname);
 
-  // Páginas "App" são aquelas que precisam de sidebar e navegação
   const isAppPage = !isAuthPage && !isFormPage && !isPortalParceiro;
 
   if (!isAppPage) {
     return (
-      <div className="flex flex-col min-h-screen bg-background font-sans">
+      <div className="flex flex-col min-h-[100dvh] bg-background font-sans">
         <main className="flex-1 flex flex-col">{children}</main>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background font-sans">
-      {/* 1. SIDEBAR DESKTOP
-          hidden md:flex -> Escondido no mobile, Flexível no Desktop (md pra cima)
-      */}
-      <div className="hidden md:flex h-full">{isMasterAdminPage ? <MasterAdminSidebar /> : <CustomSidebar />}</div>
+    // Usa 100dvh para corrigir altura em mobile browsers
+    <div className="flex h-[100dvh] overflow-hidden bg-background font-sans">
+      {/* Sidebar Desktop (Só aparece em telas médias+) */}
+      <div className="hidden md:flex h-full flex-shrink-0">
+        {isMasterAdminPage ? <MasterAdminSidebar /> : <CustomSidebar />}
+      </div>
 
-      <div className="flex flex-col flex-1 w-full overflow-hidden">
-        {/* 2. HEADER MOBILE
-            Apenas logotipo e título. O menu hambúrguer foi removido daqui
-            pois agora temos o menu inferior com opção "Menu".
-        */}
-        <div className="md:hidden flex items-center justify-center p-3 bg-white border-b border-border shadow-sm z-20">
+      <div className="flex flex-col flex-1 w-full overflow-hidden relative">
+        {/* Header Mobile: Fixo no topo */}
+        <div className="md:hidden flex items-center justify-between p-3 bg-white border-b border-border shadow-sm z-30 flex-shrink-0 h-14">
           <div className="flex items-center gap-2">
-            <img src="/lovable-uploads/grifo-logo-header.png" className="h-6 w-auto" alt="Grifo" />
+            <MobileSidebarTrigger /> {/* Botão Menu Hamburguer */}
             <span className="font-bold text-primary font-heading text-lg">GrifoBoard</span>
           </div>
+          <img src="/lovable-uploads/grifo-logo-header.png" className="h-6 w-auto" alt="Logo" />
         </div>
 
-        {/* 3. CONTEÚDO PRINCIPAL
-            pb-24 md:pb-0 -> Adiciona espaço embaixo no mobile pra barra não cobrir o conteúdo.
-            scroll-smooth -> Rolagem suave.
-            overflow-y-auto -> Scroll nativo (substituindo ScrollArea para corrigir bugs de sticky).
-        */}
-        <main className="flex-1 relative overflow-y-auto bg-background w-full pb-24 md:pb-0 scroll-smooth">
-          <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full h-full">{children}</div>
+        {/* Conteúdo Principal com Scroll Nativo */}
+        <main className="flex-1 overflow-y-auto w-full pb-20 md:pb-0 scroll-smooth bg-slate-50/50">
+          <div className="p-3 md:p-6 max-w-[1600px] mx-auto w-full h-full">{children}</div>
         </main>
 
-        {/* 4. NAVEGAÇÃO MOBILE INFERIOR
-            O componente já tem 'md:hidden' internamente, então só aparece no celular.
-        */}
+        {/* Navegação Inferior (App Dock) */}
         <MobileBottomNav />
       </div>
     </div>
   );
 };
 
-// Lógica de Restauração de Rota
 const RouteRestorer = () => {
   const { userSession } = useAuth();
   const location = useLocation();
@@ -124,12 +139,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          {/* Rotas Públicas (Sem layout de app) */}
           <Route path="/form/profissionais" element={<FormProfissionais />} />
           <Route path="/form/empresas" element={<FormEmpresas />} />
           <Route path="/form/fornecedores" element={<FormFornecedores />} />
 
-          {/* Rotas da Aplicação (Com Layout Responsivo) */}
           <Route
             path="/*"
             element={
@@ -155,7 +168,6 @@ function App() {
                         <Route path="/pmp" element={<PMP />} />
                         <Route path="/portal-parceiro" element={<PortalParceiro />} />
 
-                        {/* Redirecionamentos Legados */}
                         <Route path="/tarefas" element={<Index onObraSelect={handleObraSelect} />} />
                         <Route path="/dashboard" element={<Index onObraSelect={handleObraSelect} />} />
                         <Route path="/diarioobra" element={<DiarioObra />} />
