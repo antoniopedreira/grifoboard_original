@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
+      // CORREÇÃO AQUI: Aumentando o limite para 5MB
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // ou 5000000
+      },
       manifest: {
         name: "GrifoBoard",
         short_name: "GrifoBoard",
