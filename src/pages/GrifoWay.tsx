@@ -358,16 +358,16 @@ const GrifoWay = () => {
                       </Badge>
                     </div>
 
-                    {/* Item 2: Tarefas PCP */}
+                    {/* Item 2: Tarefas PMP */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
                           <ListTodo className="h-4 w-4" />
                         </div>
-                        <span className="text-sm font-medium">Concluir Tarefas do PCP</span>
+                        <span className="text-sm font-medium">Concluir Atividade do PMP</span>
                       </div>
                       <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100">
-                        +30 XP
+                        +50 XP
                       </Badge>
                     </div>
 

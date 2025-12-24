@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { gamificationService } from "@/services/gamificationService";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -444,6 +445,18 @@ const PMP = () => {
     onError: (_err, _vars, context) => {
       queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context?.previousData);
       toast({ title: "Erro ao atualizar status", variant: "destructive" });
+    },
+    onSuccess: async (_data, variables) => {
+      const userId = userSession?.user?.id;
+      if (!userId) return;
+      
+      if (variables.novoStatus) {
+        // Tarefa concluída - dar 50 XP
+        await gamificationService.awardXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
+      } else {
+        // Tarefa desmarcada - remover XP
+        await gamificationService.removeXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
+      }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
   });
