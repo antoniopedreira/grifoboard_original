@@ -358,11 +358,24 @@ const GrifoWay = () => {
                       </Badge>
                     </div>
 
-                    {/* Item 2: Tarefas PMP */}
+                    {/* Item 2: Tarefas PCP */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
                           <ListTodo className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-medium">Concluir Tarefa do PCP</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100">
+                        +30 XP
+                      </Badge>
+                    </div>
+
+                    {/* Item 3: Atividades PMP */}
+                    <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-slate-100 text-slate-500">
+                          <Target className="h-4 w-4" />
                         </div>
                         <span className="text-sm font-medium">Concluir Atividade do PMP</span>
                       </div>
@@ -371,7 +384,7 @@ const GrifoWay = () => {
                       </Badge>
                     </div>
 
-                    {/* Item 3: Playbook (NOVO) */}
+                    {/* Item 4: Playbook */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
@@ -384,7 +397,7 @@ const GrifoWay = () => {
                       </Badge>
                     </div>
 
-                    {/* Item 4: Checklist */}
+                    {/* Item 5: Checklist */}
                     <div className="flex items-center justify-between p-3 rounded-lg border bg-white border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-slate-100 text-slate-500">
