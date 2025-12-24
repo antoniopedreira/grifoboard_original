@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch"; // Importando Switch
 import {
   Users,
   Loader2,
@@ -25,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cadastrosService } from "@/services/cadastrosService";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { SignupAfterFormDialog } from "@/components/auth/SignupAfterFormDialog"; // 1. Importei o Modal
+import { SignupAfterFormDialog } from "@/components/auth/SignupAfterFormDialog";
 
 // --- Constantes ---
 const OPCOES_REGIOES = ["Região Norte", "Região Nordeste", "Região Centro-Oeste", "Região Sudeste", "Região Sul"];
@@ -163,11 +164,9 @@ export default function Profissionais() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // 2. Novos Estados para o Modal
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
-  
-  // Estado para validação de email
+
   const [emailError, setEmailError] = useState<string | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
 
@@ -197,6 +196,8 @@ export default function Profissionais() {
     regioes_atendidas: [] as string[],
     diferenciais: [] as string[],
     diferenciais_outro: "",
+    // Novo Campo
+    ja_trabalhou_com_grifo: false,
   });
 
   const [filesLogo, setFilesLogo] = useState<File[]>([]);
@@ -204,13 +205,12 @@ export default function Profissionais() {
   const [filesCurriculo, setFilesCurriculo] = useState<File[]>([]);
   const [filesCertificados, setFilesCertificados] = useState<File[]>([]);
 
-  // Verificar se email já existe em todas as tabelas do sistema
   const checkEmailExists = useCallback(async (email: string) => {
     if (!email || !email.includes("@")) {
       setEmailError(null);
       return;
     }
-    
+
     setCheckingEmail(true);
     try {
       const { checkEmailExistsGlobal } = await import("@/services/emailValidationService");
@@ -228,7 +228,6 @@ export default function Profissionais() {
     }
   }, []);
 
-  // Debounce para verificação de email
   useEffect(() => {
     const timer = setTimeout(() => {
       if (formData.email) {
@@ -277,7 +276,6 @@ export default function Profissionais() {
   };
 
   const handleSubmit = async () => {
-    // Validações
     if (!formData.nome_completo || !formData.telefone || !formData.funcao_principal) {
       toast({
         title: "Campos obrigatórios",
@@ -288,7 +286,6 @@ export default function Profissionais() {
       return;
     }
 
-    // Validação de email duplicado
     if (emailError) {
       toast({
         title: "Email inválido",
@@ -325,14 +322,13 @@ export default function Profissionais() {
         curriculo_path: JSON.stringify(curriculoUrls),
         certificacoes_path: JSON.stringify(certificadosUrls),
         data_nascimento: formData.data_nascimento || "2000-01-01",
+        ja_trabalhou_com_grifo: formData.ja_trabalhou_com_grifo, // Campo adicionado ao payload
       };
 
-      // 3. ALTERAÇÃO AQUI: Insert retornando ID
       const { data, error } = await supabase.from("formulario_profissionais").insert(payload).select("id").single();
 
       if (error) throw error;
 
-      // 4. Salvar ID e abrir Modal (sem mostrar tela de sucesso antiga)
       setCreatedId(data.id);
       setShowSignupModal(true);
       window.scrollTo(0, 0);
@@ -390,7 +386,6 @@ export default function Profissionais() {
       </div>
 
       <div className="space-y-6">
-        {/* ETAPA 1: DADOS PESSOAIS */}
         {step === 1 && (
           <div className="space-y-5 animate-in slide-in-from-right duration-500">
             <div className="space-y-2">
@@ -445,7 +440,7 @@ export default function Profissionais() {
                     onChange={(e) => handleChange("email", e.target.value)}
                     className={cn(
                       "bg-slate-50 h-12",
-                      emailError && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                      emailError && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
                     )}
                   />
                   {checkingEmail && (
@@ -515,7 +510,6 @@ export default function Profissionais() {
           </div>
         )}
 
-        {/* ETAPA 2: PERFIL */}
         {step === 2 && (
           <div className="space-y-5 animate-in slide-in-from-right duration-500">
             <div className="space-y-2">
@@ -696,7 +690,6 @@ export default function Profissionais() {
           </div>
         )}
 
-        {/* ETAPA 3: ARQUIVOS */}
         {step === 3 && (
           <div className="space-y-6 animate-in slide-in-from-right duration-500">
             <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm text-blue-800 mb-2">
@@ -754,10 +747,22 @@ export default function Profissionais() {
                 className="bg-slate-50 min-h-[100px]"
               />
             </div>
+
+            {/* Novo Campo Switch */}
+            <div className="flex items-center space-x-2 border p-4 rounded-lg bg-slate-50">
+              <Switch
+                id="ja-trabalhou"
+                checked={formData.ja_trabalhou_com_grifo}
+                onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, ja_trabalhou_com_grifo: checked }))}
+                className="data-[state=checked]:bg-[#C7A347]"
+              />
+              <Label htmlFor="ja-trabalhou" className="cursor-pointer">
+                Já trabalhou com a Grifo anteriormente?
+              </Label>
+            </div>
           </div>
         )}
 
-        {/* CONTROLES DE NAVEGAÇÃO */}
         <div className="flex justify-between gap-4 pt-4 border-t border-slate-100 mt-8">
           {step > 1 ? (
             <Button
@@ -794,7 +799,6 @@ export default function Profissionais() {
         </div>
       </div>
 
-      {/* 5. ADIÇÃO DO COMPONENTE DO MODAL */}
       <SignupAfterFormDialog
         isOpen={showSignupModal}
         onClose={() => setShowSignupModal(false)}

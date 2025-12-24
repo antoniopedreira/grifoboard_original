@@ -24,10 +24,14 @@ export interface ProfissionalPayload {
   telefone: string;
   email?: string | null;
 
+  // Arquivos
   logo_path?: string | null;
   fotos_trabalhos_path?: string | null;
   curriculo_path?: string | null;
   certificacoes_path?: string | null;
+
+  // Novo Campo
+  ja_trabalhou_com_grifo?: boolean;
 }
 
 // --- FORNECEDORES (Atualizado) ---
@@ -56,7 +60,10 @@ export interface FornecedorPayload {
   logo_path?: string | null;
   portfolio_path?: string | null; // Para Catálogos/PDFs
   certificacoes_path?: string | null; // Para Documentos
-  fotos_trabalhos_path?: string | null; // NOVA COLUNA: Para fotos reais
+  fotos_trabalhos_path?: string | null; // Para fotos reais
+
+  // Novo Campo
+  ja_trabalhou_com_grifo?: boolean;
 }
 
 // --- EMPRESAS ---
@@ -81,8 +88,12 @@ export interface EmpresaPayload {
   principais_desafios: string[];
   desafios_outro?: string | null;
 
+  // Arquivos
   logo_path?: string | null;
   apresentacao_path?: string | null;
+
+  // Novo Campo
+  ja_trabalhou_com_grifo?: boolean;
 }
 
 export const cadastrosService = {

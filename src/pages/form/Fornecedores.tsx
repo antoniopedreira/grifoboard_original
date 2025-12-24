@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch"; // Adicione o import do Switch
 import {
   Truck,
   Loader2,
@@ -211,7 +212,7 @@ export default function Fornecedores() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  
+
   // Estado para validação de email
   const [emailError, setEmailError] = useState<string | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
@@ -241,6 +242,9 @@ export default function Fornecedores() {
     cidades_frequentes: "",
     diferenciais: [] as string[],
     diferenciais_outro: "",
+
+    // Novo campo
+    ja_trabalhou_com_grifo: false,
   });
 
   // Arquivos
@@ -255,7 +259,7 @@ export default function Fornecedores() {
       setEmailError(null);
       return;
     }
-    
+
     setCheckingEmail(true);
     try {
       const { checkEmailExistsGlobal } = await import("@/services/emailValidationService");
@@ -367,6 +371,7 @@ export default function Fornecedores() {
         portfolio_path: JSON.stringify(portfolioUrls),
         fotos_trabalhos_path: JSON.stringify(fotosUrls),
         certificacoes_path: JSON.stringify(certUrls),
+        ja_trabalhou_com_grifo: formData.ja_trabalhou_com_grifo, // Campo adicionado
       };
 
       await cadastrosService.createFornecedor(payload);
@@ -705,10 +710,7 @@ export default function Fornecedores() {
                       value={formData.email}
                       onChange={(e) => handleChange("email", e.target.value)}
                       required
-                      className={cn(
-                        "h-12",
-                        emailError && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                      )}
+                      className={cn("h-12", emailError && "border-red-500 focus:border-red-500 focus:ring-red-500/20")}
                     />
                     {checkingEmail && (
                       <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
@@ -722,6 +724,19 @@ export default function Fornecedores() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Novo Campo Switch */}
+            <div className="flex items-center space-x-2 border p-4 rounded-lg bg-slate-50">
+              <Switch
+                id="ja-trabalhou"
+                checked={formData.ja_trabalhou_com_grifo}
+                onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, ja_trabalhou_com_grifo: checked }))}
+                className="data-[state=checked]:bg-[#C7A347]"
+              />
+              <Label htmlFor="ja-trabalhou" className="cursor-pointer">
+                Já forneceu para a Grifo anteriormente?
+              </Label>
             </div>
           </div>
         )}
