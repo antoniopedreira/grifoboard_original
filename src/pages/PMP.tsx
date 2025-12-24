@@ -18,8 +18,8 @@ import {
   CheckCircle2,
   Circle,
   AlertCircle,
-  Bomb, // Ícone da Bomba
-  AlarmClock, // Ícone de Relógio
+  Bomb,
+  AlarmClock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -351,13 +351,16 @@ const PMP = () => {
 
     const start = parseISO(obra.data_inicio);
     const end = parseISO(obra.data_termino);
-    const firstWeekStart = startOfWeek(start, { weekStartsOn: 0 });
+
+    // DEFINIÇÃO: A semana começa na SEGUNDA-FEIRA (weekStartsOn: 1)
+    const firstWeekStart = startOfWeek(start, { weekStartsOn: 1 });
+
     const totalWeeks = Math.max(differenceInWeeks(end, firstWeekStart) + 2, 1);
 
     const weeksArray = [];
     for (let i = 0; i < totalWeeks; i++) {
       const currentWeekStart = addDays(firstWeekStart, i * 7);
-      const currentWeekEnd = addDays(currentWeekStart, 6);
+      const currentWeekEnd = addDays(currentWeekStart, 6); // Se começou segunda, termina no domingo (+6 dias)
       const weekId = format(currentWeekStart, "yyyy-MM-dd");
 
       weeksArray.push({
