@@ -802,6 +802,7 @@ export type Database = {
       }
       playbook_items: {
         Row: {
+          contract_url: string | null
           created_at: string
           data_limite: string | null
           descricao: string
@@ -821,6 +822,7 @@ export type Database = {
           valor_contratado: number | null
         }
         Insert: {
+          contract_url?: string | null
           created_at?: string
           data_limite?: string | null
           descricao: string
@@ -840,6 +842,7 @@ export type Database = {
           valor_contratado?: number | null
         }
         Update: {
+          contract_url?: string | null
           created_at?: string
           data_limite?: string | null
           descricao?: string
@@ -926,29 +929,41 @@ export type Database = {
       }
       pmp_atividades: {
         Row: {
+          concluido: boolean | null
           cor: string | null
           created_at: string | null
+          data_inicio: string | null
+          data_termino: string | null
           descricao: string | null
           id: string
           obra_id: string
+          responsavel: string | null
           semana_referencia: string
           titulo: string
         }
         Insert: {
+          concluido?: boolean | null
           cor?: string | null
           created_at?: string | null
+          data_inicio?: string | null
+          data_termino?: string | null
           descricao?: string | null
           id?: string
           obra_id: string
+          responsavel?: string | null
           semana_referencia: string
           titulo: string
         }
         Update: {
+          concluido?: boolean | null
           cor?: string | null
           created_at?: string | null
+          data_inicio?: string | null
+          data_termino?: string | null
           descricao?: string | null
           id?: string
           obra_id?: string
+          responsavel?: string | null
           semana_referencia?: string
           titulo?: string
         }

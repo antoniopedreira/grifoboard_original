@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -259,6 +260,7 @@ const PMP = () => {
   const { userSession } = useAuth();
   const obraAtiva = userSession?.obraAtiva;
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -560,10 +562,17 @@ const PMP = () => {
 
   if (!obraAtiva) {
     return (
-      <div className="flex flex-col items-center justify-center h-[80vh] text-slate-400 bg-slate-50/50">
-        <CalendarRange className="h-16 w-16 mb-4 opacity-20" />
-        <h2 className="text-lg font-semibold text-slate-700">Nenhuma obra selecionada</h2>
-        <p className="text-sm text-slate-500">Selecione uma obra no menu lateral.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-lg">
+          <h2 className="text-2xl font-bold text-slate-800">Nenhuma obra selecionada</h2>
+          <p className="text-slate-600">Selecione uma obra para continuar.</p>
+          <button
+            onClick={() => navigate("/obras")}
+            className="px-6 py-3 bg-[#C7A347] text-white rounded-xl font-semibold hover:bg-[#B7943F] transition-colors"
+          >
+            Selecionar Obra
+          </button>
+        </div>
       </div>
     );
   }
