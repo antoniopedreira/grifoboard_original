@@ -213,7 +213,8 @@ function formatActionName(action: string): string {
     TAREFA_CONCLUIDA: "Tarefa FAST Concluída",
     DIARIO_CRIADO: "Diário Enviado",
     CONTRATACAO_FAST: "Contratação Fechada",
-    ECONOMIA_PLAYBOOK: "Economia Gerada na Obra 💰", // <--- ADICIONADO AQUI
+    ECONOMIA_PLAYBOOK: "Economia Gerada na Obra 💰",
+    PMP_ATIVIDADE_CONCLUIDA: "Atividade do PMP Concluída",
   };
   return map[action] || action.replace(/_/g, " ");
 }
