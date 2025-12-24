@@ -79,9 +79,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* 3. CONTEÚDO PRINCIPAL
-            pb-20 md:pb-0 -> Adiciona espaço embaixo no mobile pra barra não cobrir o conteúdo.
+            pb-24 md:pb-0 -> Adiciona espaço embaixo no mobile pra barra não cobrir o conteúdo.
+            scroll-smooth -> Rolagem suave.
+            overflow-y-auto -> Scroll nativo (substituindo ScrollArea para corrigir bugs de sticky).
         */}
-        <main className="flex-1 relative overflow-y-auto bg-background w-full pb-20 md:pb-0">
+        <main className="flex-1 relative overflow-y-auto bg-background w-full pb-24 md:pb-0 scroll-smooth">
           <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full h-full">{children}</div>
         </main>
 
@@ -94,7 +96,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Lógica de Restauração de Rota (Mantida igual)
+// Lógica de Restauração de Rota
 const RouteRestorer = () => {
   const { userSession } = useAuth();
   const location = useLocation();
