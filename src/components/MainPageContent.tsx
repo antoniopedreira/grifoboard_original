@@ -13,6 +13,7 @@ import ProjectCountdown from "@/components/dashboard/ProjectCountdown";
 import { Loader2, LayoutList, PieChart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Lazy load analytics components to improve tab switching performance
 const PCPWeeklyChart = lazy(() => import("@/components/chart/PCPWeeklyChart"));
@@ -30,6 +31,7 @@ const AnalyticsLoader = () => (
 const MainPageContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isRegistryOpen, setIsRegistryOpen] = useState(false);
   const [selectedCause, setSelectedCause] = useState<string | null>(null);
@@ -93,7 +95,7 @@ const MainPageContent = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-6">
+    <div className="container mx-auto max-w-[1600px] px-3 sm:px-6 py-4 md:py-6 min-h-screen pb-24 space-y-4 md:space-y-6">
       {/* 1. Header Global */}
       <MainHeader
         onNewTaskClick={() => setIsFormOpen(true)}
@@ -102,32 +104,30 @@ const MainPageContent = () => {
       />
 
       {/* 2. Sistema de Abas - Design Premium */}
-      <Tabs defaultValue="planning" value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-        {/* Header Unificado */}
-        <div className="bg-gradient-to-r from-white via-white to-slate-50/80 rounded-2xl shadow-lg border border-border/40 p-2 sticky top-0 z-20 backdrop-blur-xl">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
+      <Tabs defaultValue="planning" value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4 md:space-y-6">
+        {/* Header Unificado - NÃO sticky no mobile */}
+        <div className={`bg-gradient-to-r from-white via-white to-slate-50/80 rounded-xl md:rounded-2xl shadow-md md:shadow-lg border border-border/40 p-2 ${!isMobile ? 'sticky top-0 z-20' : ''} backdrop-blur-xl`}>
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-2 md:gap-3">
             {/* Tabs com design refinado */}
-            <TabsList className="bg-slate-100/80 p-1.5 rounded-xl h-auto w-full lg:w-auto">
+            <TabsList className="bg-slate-100/80 p-1 md:p-1.5 rounded-lg md:rounded-xl h-auto w-full lg:w-auto">
               <TabsTrigger
                 value="planning"
-                className="gap-2.5 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                className="gap-1.5 md:gap-2.5 px-3 md:px-5 py-2 md:py-2.5 rounded-md md:rounded-lg text-xs md:text-sm font-medium transition-all duration-200
                   data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:shadow-primary/10
                   data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-white/50"
               >
-                <LayoutList className="h-4 w-4" />
-                <span className="hidden sm:inline">Planejamento & Execução</span>
-                <span className="sm:hidden">Planejamento</span>
+                <LayoutList className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <span>Planejamento</span>
               </TabsTrigger>
 
               <TabsTrigger
                 value="analytics"
-                className="gap-2.5 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                className="gap-1.5 md:gap-2.5 px-3 md:px-5 py-2 md:py-2.5 rounded-md md:rounded-lg text-xs md:text-sm font-medium transition-all duration-200
                   data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:shadow-primary/10
                   data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-white/50"
               >
-                <PieChart className="h-4 w-4" />
-                <span className="hidden sm:inline">Indicadores & Inteligência</span>
-                <span className="sm:hidden">Indicadores</span>
+                <PieChart className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <span>Indicadores</span>
               </TabsTrigger>
             </TabsList>
 

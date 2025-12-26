@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Database, Plus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainHeaderProps {
   onNewTaskClick: () => void;
@@ -10,40 +11,49 @@ interface MainHeaderProps {
 
 const MainHeader: React.FC<MainHeaderProps> = ({ onNewTaskClick, onRegistryClick, onChecklistClick }) => {
   const { session } = useAuth();
+  const isMobile = useIsMobile();
 
   return (
-    <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="mb-6 md:mb-8 flex flex-col gap-4">
+      {/* Título e descrição */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight" style={{ color: "#021C2F" }}>
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "#021C2F" }}>
           {session.obraAtiva ? `Tarefas - ${session.obraAtiva.nome_obra}` : "Planejamento Semanal"}
         </h2>
-        <p className="text-muted-foreground text-sm mt-1">Gerencie e acompanhe o progresso das atividades da obra.</p>
+        <p className="text-muted-foreground text-xs md:text-sm mt-1">Gerencie e acompanhe o progresso das atividades da obra.</p>
       </div>
 
-      <div className="flex gap-3">
+      {/* Botões de ação - layout otimizado para mobile */}
+      <div className="flex items-center gap-2 md:gap-3">
         <Button
           variant="outline"
-          className="border-gray-200 hover:bg-gray-50 hover:text-primary transition-colors shadow-sm"
+          size={isMobile ? "sm" : "default"}
+          className="border-gray-200 hover:bg-gray-50 hover:text-primary transition-colors shadow-sm flex-1 md:flex-none"
           style={{ color: "#021C2F" }}
           onClick={onRegistryClick}
         >
-          <Database className="mr-2 h-4 w-4" />
-          Cadastros
+          <Database className="h-4 w-4 md:mr-2" />
+          <span className="hidden sm:inline">Cadastros</span>
         </Button>
 
         <Button
           variant="outline"
-          className="border-gray-200 hover:bg-gray-50 hover:text-primary transition-colors shadow-sm"
+          size={isMobile ? "sm" : "default"}
+          className="border-gray-200 hover:bg-gray-50 hover:text-primary transition-colors shadow-sm flex-1 md:flex-none"
           style={{ color: "#021C2F" }}
           onClick={onChecklistClick}
         >
-          <ClipboardList className="mr-2 h-4 w-4" />
-          Checklist
+          <ClipboardList className="h-4 w-4 md:mr-2" />
+          <span className="hidden sm:inline">Checklist</span>
         </Button>
 
-        <Button onClick={onNewTaskClick} className="shadow-md hover:shadow-lg transition-all">
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Tarefa
+        <Button 
+          onClick={onNewTaskClick} 
+          size={isMobile ? "sm" : "default"}
+          className="shadow-md hover:shadow-lg transition-all flex-1 md:flex-none"
+        >
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden sm:inline">Nova Tarefa</span>
         </Button>
       </div>
     </div>
