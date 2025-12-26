@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { gamificationService } from "@/services/gamificationService";
@@ -258,6 +259,7 @@ const KanbanColumn = ({ weekId, children }: { weekId: string; children: React.Re
 
 // --- PÁGINA PRINCIPAL ---
 const PMP = () => {
+  const isMobile = useIsMobile();
   const { userSession } = useAuth();
   const obraAtiva = userSession?.obraAtiva;
   const { toast } = useToast();
@@ -653,51 +655,100 @@ const PMP = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <ScrollArea className="w-full flex-1 border border-slate-200 rounded-xl bg-white shadow-sm">
-          <div className="flex p-6 gap-4">
-            {weeks.map((week) => (
-              <div key={week.id} className="flex-shrink-0 w-[280px] flex flex-col gap-3 group/column">
-                {/* Header Semana */}
-                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
-                    <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
-                      {week.year}
-                    </span>
+        {/* MOBILE: Layout Vertical */}
+        {isMobile ? (
+          <div className="flex-1 overflow-y-auto pb-24">
+            <div className="flex flex-col gap-4 p-4">
+              {weeks.map((week) => (
+                <div key={week.id} className="flex flex-col gap-3">
+                  {/* Header Semana */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
+                      <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
+                        {week.year}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                      <span className="capitalize">{week.formattedRange}</span>
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                    <span className="capitalize">{week.formattedRange}</span>
+
+                  {/* Coluna Droppable */}
+                  <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[100px] transition-colors">
+                    <KanbanColumn weekId={week.id}>
+                      {getTasksForWeek(week.start, week.end).map((atividade) => (
+                        <KanbanCard
+                          key={`${atividade.id}::${week.id}`}
+                          weekId={week.id}
+                          atividade={atividade}
+                          onDelete={(id) => deleteMutation.mutate(id)}
+                          onClick={(item) => handleOpenEdit(item)}
+                          onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
+                        />
+                      ))}
+                    </KanbanColumn>
+
+                    <Button
+                      variant="ghost"
+                      className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-10 text-sm transition-all"
+                      onClick={() => handleOpenAdd(week.id)}
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" /> Adicionar
+                    </Button>
                   </div>
                 </div>
-
-                {/* Coluna Droppable */}
-                <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] transition-colors hover:border-slate-300">
-                  <KanbanColumn weekId={week.id}>
-                    {getTasksForWeek(week.start, week.end).map((atividade) => (
-                      <KanbanCard
-                        key={`${atividade.id}::${week.id}`}
-                        weekId={week.id}
-                        atividade={atividade}
-                        onDelete={(id) => deleteMutation.mutate(id)}
-                        onClick={(item) => handleOpenEdit(item)}
-                        onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
-                      />
-                    ))}
-                  </KanbanColumn>
-
-                  <Button
-                    variant="ghost"
-                    className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-9 text-xs transition-all"
-                    onClick={() => handleOpenAdd(week.id)}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
-                  </Button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <ScrollBar orientation="horizontal" className="h-2.5" />
-        </ScrollArea>
+        ) : (
+          /* DESKTOP: Layout Horizontal */
+          <ScrollArea className="w-full flex-1 border border-slate-200 rounded-xl bg-white shadow-sm">
+            <div className="flex p-6 gap-4">
+              {weeks.map((week) => (
+                <div key={week.id} className="flex-shrink-0 w-[280px] flex flex-col gap-3 group/column">
+                  {/* Header Semana */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
+                      <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
+                        {week.year}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                      <span className="capitalize">{week.formattedRange}</span>
+                    </div>
+                  </div>
+
+                  {/* Coluna Droppable */}
+                  <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] transition-colors hover:border-slate-300">
+                    <KanbanColumn weekId={week.id}>
+                      {getTasksForWeek(week.start, week.end).map((atividade) => (
+                        <KanbanCard
+                          key={`${atividade.id}::${week.id}`}
+                          weekId={week.id}
+                          atividade={atividade}
+                          onDelete={(id) => deleteMutation.mutate(id)}
+                          onClick={(item) => handleOpenEdit(item)}
+                          onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
+                        />
+                      ))}
+                    </KanbanColumn>
+
+                    <Button
+                      variant="ghost"
+                      className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-9 text-xs transition-all"
+                      onClick={() => handleOpenAdd(week.id)}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" className="h-2.5" />
+          </ScrollArea>
+        )}
 
         <DragOverlay dropAnimation={dropAnimation}>
           {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
