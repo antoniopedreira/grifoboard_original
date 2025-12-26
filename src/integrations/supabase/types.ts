@@ -199,6 +199,7 @@ export type Database = {
           estado: string
           ferramentas_gestao: string | null
           id: string
+          ja_trabalhou_com_grifo: boolean | null
           logo_path: string | null
           nome_contato: string
           nome_empresa: string
@@ -226,6 +227,7 @@ export type Database = {
           estado: string
           ferramentas_gestao?: string | null
           id?: string
+          ja_trabalhou_com_grifo?: boolean | null
           logo_path?: string | null
           nome_contato: string
           nome_empresa: string
@@ -253,6 +255,7 @@ export type Database = {
           estado?: string
           ferramentas_gestao?: string | null
           id?: string
+          ja_trabalhou_com_grifo?: boolean | null
           logo_path?: string | null
           nome_contato?: string
           nome_empresa?: string
@@ -286,6 +289,7 @@ export type Database = {
           estado: string
           fotos_trabalhos_path: string | null
           id: string
+          ja_trabalhou_com_grifo: boolean | null
           logo_path: string | null
           nome_empresa: string
           nome_responsavel: string
@@ -315,6 +319,7 @@ export type Database = {
           estado: string
           fotos_trabalhos_path?: string | null
           id?: string
+          ja_trabalhou_com_grifo?: boolean | null
           logo_path?: string | null
           nome_empresa: string
           nome_responsavel: string
@@ -344,6 +349,7 @@ export type Database = {
           estado?: string
           fotos_trabalhos_path?: string | null
           id?: string
+          ja_trabalhou_com_grifo?: boolean | null
           logo_path?: string | null
           nome_empresa?: string
           nome_responsavel?: string
@@ -381,6 +387,7 @@ export type Database = {
           funcao_principal: string
           funcao_principal_outro: string | null
           id: string
+          ja_trabalhou_com_grifo: boolean | null
           logo_path: string | null
           modalidade_trabalho: string
           nome_completo: string
@@ -412,6 +419,7 @@ export type Database = {
           funcao_principal: string
           funcao_principal_outro?: string | null
           id?: string
+          ja_trabalhou_com_grifo?: boolean | null
           logo_path?: string | null
           modalidade_trabalho: string
           nome_completo: string
@@ -443,6 +451,7 @@ export type Database = {
           funcao_principal?: string
           funcao_principal_outro?: string | null
           id?: string
+          ja_trabalhou_com_grifo?: boolean | null
           logo_path?: string | null
           modalidade_trabalho?: string
           nome_completo?: string
