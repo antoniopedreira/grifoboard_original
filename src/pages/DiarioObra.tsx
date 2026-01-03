@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { diarioService, type DiarioObra as DiarioObraRecord } from "@/services/diarioService";
 import { diarioFotosService, type DiarioFoto } from "@/services/diarioFotosService";
 import { gamificationService } from "@/services/gamificationService";
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,6 +32,9 @@ import {
   History,
   Pencil,
   Trash2,
+  Sun,
+  Sunset,
+  Moon,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -46,6 +51,7 @@ import { PhotoUploader } from "@/components/diario/PhotoUploader";
 import { PhotoGallery } from "@/components/diario/PhotoGallery";
 
 const DiarioObra = () => {
+  const isMobile = useIsMobile();
   const { userSession } = useAuth();
   const { toast } = useToast();
   const [date, setDate] = useState<Date>(new Date());
@@ -340,6 +346,354 @@ const DiarioObra = () => {
 
   const climaOptions = ["Ensolarado", "Nublado", "Chuvoso", "Variável", "Impraticável"];
 
+  // ===== MOBILE VERSION =====
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto pb-32">
+          {/* Header Mobile */}
+          <div className="px-4 pt-3 pb-3 bg-white border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Diário de Obra
+                </h1>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {obraNome || "Selecione uma obra"}
+                </p>
+              </div>
+              
+              {/* Histórico Sheet */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 h-9">
+                    <History className="h-4 w-4" />
+                    {diarioHistory.length > 0 && (
+                      <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                        {diarioHistory.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+                  <SheetHeader className="pb-4 border-b">
+                    <SheetTitle>Diários Salvos</SheetTitle>
+                  </SheetHeader>
+                  <ScrollArea className="h-full py-4">
+                    {isLoadingHistory ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : diarioHistory.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                        <FileText className="h-8 w-8 mb-2 opacity-40" />
+                        <p className="text-sm">Nenhum diário registrado</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {diarioHistory.map((diario) => {
+                          const isSelected = format(date, "yyyy-MM-dd") === diario.data;
+                          return (
+                            <button
+                              key={diario.id}
+                              onClick={() => handleSelectDiario(diario)}
+                              className={cn(
+                                "w-full text-left p-4 rounded-xl transition-all",
+                                isSelected ? "bg-primary/10 border-2 border-primary/30" : "bg-slate-50 border border-slate-100"
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-sm text-foreground">
+                                  {format(parseISO(diario.data), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                                </span>
+                                {isSelected && (
+                                  <Badge variant="default" className="text-xs h-5">Atual</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                                {diario.atividades || "Sem atividades registradas"}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+
+          {/* Date Navigator Mobile */}
+          <div className="px-4 py-3 bg-white/80 border-b border-slate-100">
+            <div className="flex items-center justify-between bg-slate-50 p-1 rounded-xl">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateDay("prev")}
+                className="h-10 w-10"
+              >
+                <ChevronLeft className="h-5 w-5 text-slate-600" />
+              </Button>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" className="flex-1 h-10 font-semibold text-sm">
+                    <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                    {format(date, "dd 'de' MMMM", { locale: ptBR })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus />
+                </PopoverContent>
+              </Popover>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateDay("next")}
+                className="h-10 w-10"
+              >
+                <ChevronRight className="h-5 w-5 text-slate-600" />
+              </Button>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground text-sm">Carregando...</p>
+            </div>
+          ) : (
+            <div className="px-4 py-4 space-y-4">
+              {/* Status Badge */}
+              {diarioId && !isEditMode && (
+                <div className="flex items-center justify-center gap-2 py-2 px-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <span className="text-sm font-medium text-green-700">Diário salvo</span>
+                </div>
+              )}
+
+              {/* Clima Card Mobile */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-sky-50 border-b border-slate-100">
+                  <CloudSun className="h-5 w-5 text-blue-500" />
+                  <span className="font-semibold text-slate-700">Clima</span>
+                </div>
+                <div className="p-4 space-y-3">
+                  {[
+                    { key: "manha", label: "Manhã", icon: Sun, color: "text-amber-500" },
+                    { key: "tarde", label: "Tarde", icon: Sunset, color: "text-orange-500" },
+                    { key: "noite", label: "Noite", icon: Moon, color: "text-indigo-500" },
+                  ].map(({ key, label, icon: Icon, color }) => (
+                    <div key={key} className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg bg-slate-50 ${color}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-medium text-slate-600 w-14">{label}</span>
+                      <Select
+                        value={formData[`clima_${key}` as keyof typeof formData]}
+                        onValueChange={(val) => handleInputChange(`clima_${key}`, val)}
+                        disabled={!isEditMode}
+                      >
+                        <SelectTrigger className={cn("flex-1 h-11", !isEditMode && "bg-slate-50")}>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {climaOptions.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recursos Card Mobile */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-slate-100">
+                  <HardHat className="h-5 w-5 text-amber-600" />
+                  <span className="font-semibold text-slate-700">Recursos</span>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase">Mão de Obra</Label>
+                    <Textarea
+                      placeholder="Ex: 5 Pedreiros, 4 Serventes..."
+                      value={formData.mao_de_obra}
+                      onChange={(e) => handleInputChange("mao_de_obra", e.target.value)}
+                      disabled={!isEditMode}
+                      className={cn("min-h-[80px] text-base resize-none", !isEditMode && "bg-slate-50")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase">Equipamentos</Label>
+                    <Textarea
+                      placeholder="Ex: 1 Betoneira, 1 Serra..."
+                      value={formData.equipamentos}
+                      onChange={(e) => handleInputChange("equipamentos", e.target.value)}
+                      disabled={!isEditMode}
+                      className={cn("min-h-[80px] text-base resize-none", !isEditMode && "bg-slate-50")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Atividades Card Mobile */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-50 to-green-50 border-b border-slate-100">
+                  <ClipboardList className="h-5 w-5 text-emerald-600" />
+                  <span className="font-semibold text-slate-700">Atividades</span>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase">Serviços Executados</Label>
+                    <Textarea
+                      placeholder="Descreva o que foi feito hoje..."
+                      value={formData.atividades}
+                      onChange={(e) => handleInputChange("atividades", e.target.value)}
+                      disabled={!isEditMode}
+                      className={cn("min-h-[120px] text-base resize-none", !isEditMode && "bg-slate-50")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-red-500 uppercase">Ocorrências</Label>
+                    <Textarea
+                      placeholder="Houve algum problema?"
+                      value={formData.ocorrencias}
+                      onChange={(e) => handleInputChange("ocorrencias", e.target.value)}
+                      disabled={!isEditMode}
+                      className={cn("min-h-[80px] text-base resize-none border-red-100", !isEditMode && "bg-slate-50")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase">Observações</Label>
+                    <Textarea
+                      placeholder="Outras anotações..."
+                      value={formData.observacoes}
+                      onChange={(e) => handleInputChange("observacoes", e.target.value)}
+                      disabled={!isEditMode}
+                      className={cn("min-h-[80px] text-base resize-none", !isEditMode && "bg-slate-50")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Fotos Card Mobile */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-violet-50 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-5 w-5 text-purple-600" />
+                    <span className="font-semibold text-slate-700">Fotos</span>
+                    {photos.length > 0 && (
+                      <Badge variant="secondary" className="h-5 text-xs">{photos.length}</Badge>
+                    )}
+                  </div>
+                  {isEditMode && <PhotoUploader onUpload={diarioId ? handlePhotoUpload : handleAddPendingPhotos} />}
+                </div>
+                <div className="p-4 min-h-[120px]">
+                  {/* Pending Photos */}
+                  {!diarioId && pendingPhotos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {pendingPhotos.flatMap((p, idx) =>
+                        p.files.map((file, fileIdx) => (
+                          <div key={`pending-${idx}-${fileIdx}`} className="relative aspect-square rounded-xl overflow-hidden border-2 border-dashed border-primary/40">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt="Foto pendente"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-white text-[10px] py-0.5 text-center font-medium">
+                              Pendente
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                  
+                  {diarioId ? (
+                    <PhotoGallery
+                      photos={photos}
+                      loading={isLoadingPhotos}
+                      onDelete={isEditMode ? handlePhotoDelete : undefined}
+                      currentUserId={userSession?.user?.id}
+                    />
+                  ) : pendingPhotos.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-24 text-muted-foreground border-2 border-dashed border-slate-200 rounded-xl">
+                      <Camera className="h-6 w-6 mb-1 opacity-20" />
+                      <p className="text-xs">Adicione fotos</p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed Bottom Action Bar */}
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-slate-200 shadow-lg z-20">
+          {!isEditMode && diarioId ? (
+            <div className="flex gap-3">
+              <Button
+                onClick={handleEnterEditMode}
+                variant="outline"
+                className="flex-1 h-12 gap-2 border-primary text-primary text-base font-semibold rounded-xl"
+              >
+                <Pencil className="h-5 w-5" />
+                Editar
+              </Button>
+              <Button
+                onClick={() => setShowDeleteDialog(true)}
+                variant="outline"
+                className="h-12 w-12 border-destructive text-destructive rounded-xl"
+                disabled={isDeleting}
+              >
+                {isDeleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || isLoading}
+              className="w-full h-12 bg-primary hover:bg-primary/90 shadow-md text-base font-semibold rounded-xl gap-2"
+            >
+              {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+              Salvar Diário
+            </Button>
+          )}
+        </div>
+
+        {/* Delete Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent className="max-w-[90vw] rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Diário</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel disabled={isDeleting} className="flex-1">Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 bg-destructive hover:bg-destructive/90"
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
+  // ===== DESKTOP VERSION (Original) =====
   return (
     <div className="container mx-auto max-w-[1600px] px-4 sm:px-6 py-6 min-h-screen pb-24 space-y-6">
       {/* Header da Página */}
