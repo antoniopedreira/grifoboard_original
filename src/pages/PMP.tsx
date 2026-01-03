@@ -592,6 +592,213 @@ const PMP = () => {
     );
   }
 
+  // Mobile: estrutura diferente para melhor UX
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
+        {/* HEADER MOBILE: Compacto */}
+        <div className="flex-shrink-0 px-4 pt-3 pb-2 bg-white/80 backdrop-blur-sm border-b border-slate-100">
+          <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <CalendarRange className="h-5 w-5 text-primary" />
+            PMP - Planejamento Mestre
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {obraAtiva.nome_obra} • {weeks.length} semanas • {atividades.length} atividades
+          </p>
+        </div>
+
+        {/* BOMBA RELÓGIO MOBILE */}
+        {daysRemaining !== null && (
+          <div className={`flex-shrink-0 mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}>
+            <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
+              <Bomb className={`h-5 w-5 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
+            </div>
+            <div className="flex flex-col flex-1">
+              <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>{statusLabel}</span>
+              <div className={`text-xl font-black font-mono leading-none flex items-center gap-1 ${urgencyText}`}>
+                {daysRemaining < 0 ? (
+                  <span>ATRASO {Math.abs(daysRemaining)}D</span>
+                ) : daysRemaining === 0 ? (
+                  "VENCE HOJE!"
+                ) : (
+                  <>
+                    {daysRemaining} <span className="text-[10px] font-bold self-end mb-0.5">DIAS</span>
+                  </>
+                )}
+              </div>
+              {obraAtiva.data_termino && (
+                <div className={`text-[9px] font-medium mt-1 flex items-center gap-1 ${urgencyText} opacity-80`}>
+                  <AlarmClock className="h-2.5 w-2.5" />
+                  ENTREGA: {format(parseISO(obraAtiva.data_termino), "dd/MM/yyyy")}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* LISTA DE SEMANAS MOBILE - Scroll Vertical */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32">
+            <div className="flex flex-col gap-5">
+              {weeks.map((week) => {
+                const weekTasks = getTasksForWeek(week.start, week.end);
+                const completedCount = weekTasks.filter(t => t.concluido).length;
+                
+                return (
+                  <div key={week.id} className="flex flex-col gap-2">
+                    {/* Header Semana - Compacto e Visual */}
+                    <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-800 text-base">{week.label}</span>
+                          <span className="text-[10px] text-slate-400 font-mono bg-slate-100 px-1.5 py-0.5 rounded">
+                            {week.year}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-500">{week.formattedRange}</span>
+                      </div>
+                      {weekTasks.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className={`font-semibold ${completedCount === weekTasks.length ? 'text-green-600' : 'text-slate-600'}`}>
+                            {completedCount}/{weekTasks.length}
+                          </span>
+                          {completedCount === weekTasks.length && weekTasks.length > 0 && (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Coluna Droppable - Cards */}
+                    <div className="bg-white/50 rounded-xl border border-dashed border-slate-200 p-3 min-h-[80px]">
+                      <KanbanColumn weekId={week.id}>
+                        {weekTasks.map((atividade) => (
+                          <KanbanCard
+                            key={`${atividade.id}::${week.id}`}
+                            weekId={week.id}
+                            atividade={atividade}
+                            onDelete={(id) => deleteMutation.mutate(id)}
+                            onClick={(item) => handleOpenEdit(item)}
+                            onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
+                          />
+                        ))}
+                      </KanbanColumn>
+
+                      {/* Botão Adicionar - Touch Friendly */}
+                      <Button
+                        variant="ghost"
+                        className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white h-12 text-sm font-medium rounded-xl border border-dashed border-slate-200"
+                        onClick={() => handleOpenAdd(week.id)}
+                      >
+                        <Plus className="h-5 w-5 mr-2" /> Adicionar Atividade
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <DragOverlay dropAnimation={dropAnimation}>
+            {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
+          </DragOverlay>
+        </DndContext>
+
+        {/* MODAL MOBILE */}
+        <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+          <DialogContent className="max-w-[95vw] rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">
+                {editingId ? "Editar Atividade" : "Nova Atividade"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">O que será feito?</label>
+                <Input
+                  placeholder="Descrição da atividade..."
+                  value={formData.titulo}
+                  onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                  className="h-12 text-base"
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500 uppercase">Início</label>
+                  <Input
+                    type="date"
+                    value={formData.data_inicio}
+                    onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500 uppercase">Término</label>
+                  <Input
+                    type="date"
+                    value={formData.data_termino}
+                    onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Responsável</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    className="pl-9 h-12 text-base"
+                    placeholder="Quem irá executar?"
+                    value={formData.responsavel}
+                    onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-3 pt-1">
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Categoria</span>
+                <div className="flex flex-wrap gap-3">
+                  {Object.entries(POSTIT_COLORS).map(([key]) => {
+                    let bgClass = "bg-slate-200";
+                    if (key === "yellow") bgClass = "bg-yellow-400";
+                    if (key === "green") bgClass = "bg-emerald-500";
+                    if (key === "blue") bgClass = "bg-blue-500";
+                    if (key === "red") bgClass = "bg-red-500";
+                    if (key === "purple") bgClass = "bg-purple-500";
+                    if (key === "orange") bgClass = "bg-orange-500";
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
+                        className={`w-10 h-10 rounded-full border-2 transition-all ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-2 ring-slate-200" : "border-transparent"} ${bgClass}`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleSaveForm}
+                disabled={saveMutation.isPending}
+                className="w-full h-12 bg-primary text-white hover:bg-primary/90 text-base font-semibold rounded-xl"
+              >
+                {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // DESKTOP: Layout Original
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 font-sans bg-slate-50/30">
       {/* HEADER: TÍTULO E BOMBA RELÓGIO */}
@@ -655,100 +862,52 @@ const PMP = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {/* MOBILE: Layout Vertical */}
-        {isMobile ? (
-          <div className="flex-1 overflow-y-auto pb-24">
-            <div className="flex flex-col gap-4 p-4">
-              {weeks.map((week) => (
-                <div key={week.id} className="flex flex-col gap-3">
-                  {/* Header Semana */}
-                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
-                      <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
-                        {week.year}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                      <span className="capitalize">{week.formattedRange}</span>
-                    </div>
+        {/* DESKTOP: Layout Horizontal */}
+        <ScrollArea className="w-full flex-1 border border-slate-200 rounded-xl bg-white shadow-sm">
+          <div className="flex p-6 gap-4">
+            {weeks.map((week) => (
+              <div key={week.id} className="flex-shrink-0 w-[280px] flex flex-col gap-3 group/column">
+                {/* Header Semana */}
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
+                    <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
+                      {week.year}
+                    </span>
                   </div>
-
-                  {/* Coluna Droppable */}
-                  <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[100px] transition-colors">
-                    <KanbanColumn weekId={week.id}>
-                      {getTasksForWeek(week.start, week.end).map((atividade) => (
-                        <KanbanCard
-                          key={`${atividade.id}::${week.id}`}
-                          weekId={week.id}
-                          atividade={atividade}
-                          onDelete={(id) => deleteMutation.mutate(id)}
-                          onClick={(item) => handleOpenEdit(item)}
-                          onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
-                        />
-                      ))}
-                    </KanbanColumn>
-
-                    <Button
-                      variant="ghost"
-                      className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-10 text-sm transition-all"
-                      onClick={() => handleOpenAdd(week.id)}
-                    >
-                      <Plus className="h-4 w-4 mr-1.5" /> Adicionar
-                    </Button>
+                  <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                    <span className="capitalize">{week.formattedRange}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Coluna Droppable */}
+                <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] transition-colors hover:border-slate-300">
+                  <KanbanColumn weekId={week.id}>
+                    {getTasksForWeek(week.start, week.end).map((atividade) => (
+                      <KanbanCard
+                        key={`${atividade.id}::${week.id}`}
+                        weekId={week.id}
+                        atividade={atividade}
+                        onDelete={(id) => deleteMutation.mutate(id)}
+                        onClick={(item) => handleOpenEdit(item)}
+                        onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
+                      />
+                    ))}
+                  </KanbanColumn>
+
+                  <Button
+                    variant="ghost"
+                    className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-9 text-xs transition-all"
+                    onClick={() => handleOpenAdd(week.id)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
-        ) : (
-          /* DESKTOP: Layout Horizontal */
-          <ScrollArea className="w-full flex-1 border border-slate-200 rounded-xl bg-white shadow-sm">
-            <div className="flex p-6 gap-4">
-              {weeks.map((week) => (
-                <div key={week.id} className="flex-shrink-0 w-[280px] flex flex-col gap-3 group/column">
-                  {/* Header Semana */}
-                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
-                      <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
-                        {week.year}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                      <span className="capitalize">{week.formattedRange}</span>
-                    </div>
-                  </div>
-
-                  {/* Coluna Droppable */}
-                  <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] transition-colors hover:border-slate-300">
-                    <KanbanColumn weekId={week.id}>
-                      {getTasksForWeek(week.start, week.end).map((atividade) => (
-                        <KanbanCard
-                          key={`${atividade.id}::${week.id}`}
-                          weekId={week.id}
-                          atividade={atividade}
-                          onDelete={(id) => deleteMutation.mutate(id)}
-                          onClick={(item) => handleOpenEdit(item)}
-                          onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
-                        />
-                      ))}
-                    </KanbanColumn>
-
-                    <Button
-                      variant="ghost"
-                      className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-9 text-xs transition-all"
-                      onClick={() => handleOpenAdd(week.id)}
-                    >
-                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" className="h-2.5" />
-          </ScrollArea>
-        )}
+          <ScrollBar orientation="horizontal" className="h-2.5" />
+        </ScrollArea>
 
         <DragOverlay dropAnimation={dropAnimation}>
           {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
