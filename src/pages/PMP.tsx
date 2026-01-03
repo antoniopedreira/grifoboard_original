@@ -596,55 +596,56 @@ const PMP = () => {
   if (isMobile) {
     return (
       <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
-        {/* HEADER MOBILE: Compacto */}
-        <div className="flex-shrink-0 px-4 pt-3 pb-2 bg-white/80 backdrop-blur-sm border-b border-slate-100">
-          <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <CalendarRange className="h-5 w-5 text-primary" />
-            PMP - Planejamento Mestre
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {obraAtiva.nome_obra} • {weeks.length} semanas • {atividades.length} atividades
-          </p>
-        </div>
-
-        {/* BOMBA RELÓGIO MOBILE */}
-        {daysRemaining !== null && (
-          <div className={`flex-shrink-0 mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}>
-            <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
-              <Bomb className={`h-5 w-5 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
-            </div>
-            <div className="flex flex-col flex-1">
-              <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>{statusLabel}</span>
-              <div className={`text-xl font-black font-mono leading-none flex items-center gap-1 ${urgencyText}`}>
-                {daysRemaining < 0 ? (
-                  <span>ATRASO {Math.abs(daysRemaining)}D</span>
-                ) : daysRemaining === 0 ? (
-                  "VENCE HOJE!"
-                ) : (
-                  <>
-                    {daysRemaining} <span className="text-[10px] font-bold self-end mb-0.5">DIAS</span>
-                  </>
-                )}
-              </div>
-              {obraAtiva.data_termino && (
-                <div className={`text-[9px] font-medium mt-1 flex items-center gap-1 ${urgencyText} opacity-80`}>
-                  <AlarmClock className="h-2.5 w-2.5" />
-                  ENTREGA: {format(parseISO(obraAtiva.data_termino), "dd/MM/yyyy")}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* LISTA DE SEMANAS MOBILE - Scroll Vertical */}
+        {/* LISTA DE SEMANAS MOBILE - Scroll Vertical (inclui header e bomba) */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32">
-            <div className="flex flex-col gap-5">
+          <div className="flex-1 overflow-y-auto pb-32">
+            {/* HEADER MOBILE: Dentro do scroll */}
+            <div className="px-4 pt-3 pb-2 bg-white border-b border-slate-100">
+              <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <CalendarRange className="h-5 w-5 text-primary" />
+                PMP - Planejamento Mestre
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {obraAtiva.nome_obra} • {weeks.length} semanas • {atividades.length} atividades
+              </p>
+            </div>
+
+            {/* BOMBA RELÓGIO MOBILE - Dentro do scroll */}
+            {daysRemaining !== null && (
+              <div className={`mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}>
+                <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
+                  <Bomb className={`h-5 w-5 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>{statusLabel}</span>
+                  <div className={`text-xl font-black font-mono leading-none flex items-center gap-1 ${urgencyText}`}>
+                    {daysRemaining < 0 ? (
+                      <span>ATRASO {Math.abs(daysRemaining)}D</span>
+                    ) : daysRemaining === 0 ? (
+                      "VENCE HOJE!"
+                    ) : (
+                      <>
+                        {daysRemaining} <span className="text-[10px] font-bold self-end mb-0.5">DIAS</span>
+                      </>
+                    )}
+                  </div>
+                  {obraAtiva.data_termino && (
+                    <div className={`text-[9px] font-medium mt-1 flex items-center gap-1 ${urgencyText} opacity-80`}>
+                      <AlarmClock className="h-2.5 w-2.5" />
+                      ENTREGA: {format(parseISO(obraAtiva.data_termino), "dd/MM/yyyy")}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SEMANAS */}
+            <div className="flex flex-col gap-5 px-4 pt-4">
               {weeks.map((week) => {
                 const weekTasks = getTasksForWeek(week.start, week.end);
                 const completedCount = weekTasks.filter(t => t.concluido).length;
