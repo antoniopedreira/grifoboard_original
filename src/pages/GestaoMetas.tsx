@@ -679,6 +679,10 @@ const GestaoMetas = () => {
                       <span className="font-mono text-slate-200">{formatCurrency(squad.faturamento)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500 text-xs uppercase tracking-wider">Lucro</span>
+                      <span className="font-mono text-emerald-400">{formatCurrency(squad.lucro)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-500 text-xs uppercase tracking-wider">Margem</span>
                       <span
                         className={`font-mono font-bold ${squad.margem >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-500"}`}
@@ -739,7 +743,7 @@ const GestaoMetas = () => {
                       </div>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-800/50">
+                  <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-800/50">
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase mb-1">Faturamento</p>
                       <p className="font-mono text-sm text-slate-300">{formatCurrency(obra.faturamento_realizado)}</p>
@@ -747,6 +751,12 @@ const GestaoMetas = () => {
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase mb-1">Lucro</p>
                       <p className="font-mono text-sm text-emerald-400">{formatCurrency(obra.lucro_realizado)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase mb-1">Margem</p>
+                      <p className={`font-mono text-sm font-bold ${obra.faturamento_realizado > 0 ? ((obra.lucro_realizado / obra.faturamento_realizado) * 100 >= meta.meta_margem_liquida ? "text-emerald-400" : "text-amber-500") : "text-slate-500"}`}>
+                        {obra.faturamento_realizado > 0 ? `${((obra.lucro_realizado / obra.faturamento_realizado) * 100).toFixed(2)}%` : "N/A"}
+                      </p>
                     </div>
                   </div>
                   <div className="text-center text-[10px] text-slate-500 pt-2 border-t border-slate-800/30">
