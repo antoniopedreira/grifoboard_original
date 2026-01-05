@@ -193,10 +193,18 @@ const DiarioObra = () => {
 
       // === GAMIFICAÇÃO: Dar XP apenas para NOVO diário ===
       if (isNewDiario && userSession?.user?.id) {
+        // Calcula XP baseado se foi preenchido no dia correto (sem timezone, apenas data local)
+        const diarioDateStr = format(date, "yyyy-MM-dd");
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        // 60 XP se preenchido no mesmo dia, 20 XP se atrasado
+        const xpAmount = diarioDateStr === todayStr ? 60 : 20;
+        
         await gamificationService.awardXP(
           userSession.user.id,
           'DIARIO_CRIADO',
-          50,
+          xpAmount,
           savedDiario.id
         );
       }
