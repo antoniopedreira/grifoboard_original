@@ -140,11 +140,11 @@ const GestaoMetas = () => {
       const { data: obrasData } = await supabase
         .from("obras" as any)
         .select(
-          "id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, usuario_id, nps, data_inicio, status",
+          "id, nome_obra, faturamento_realizado, lucro_realizado, considerar_na_meta, usuario_id, nps, data_inicio, data_termino, status",
         )
         .eq("empresa_id", userData.empresa_id)
-        .gte("data_inicio", dataInicioAno)
-        .lte("data_inicio", dataFimAno)
+        .gte("data_termino", dataInicioAno)
+        .lte("data_termino", dataFimAno)
         .order("nome_obra");
 
       return {
