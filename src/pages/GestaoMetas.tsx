@@ -86,6 +86,7 @@ const GestaoMetas = () => {
   // Modais
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isLancamentoModalOpen, setIsLancamentoModalOpen] = useState(false);
+  const [selectedObraForEdit, setSelectedObraForEdit] = useState<string | null>(null);
 
   // Estados de Edição
   const [tempMeta, setTempMeta] = useState<MetaAnual>({
@@ -96,6 +97,20 @@ const GestaoMetas = () => {
 
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
+
+  // Formatação BRL para inputs
+  const formatBRLInput = (value: number): string => {
+    if (value === 0) return "";
+    return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const parseBRLInput = (value: string): number => {
+    if (!value || value.trim() === "") return 0;
+    // Remove pontos de milhar e substitui vírgula por ponto
+    const cleaned = value.replace(/\./g, "").replace(",", ".");
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
 
   // --- QUERY PRINCIPAL ---
   const { data: dashboardData, isLoading } = useQuery({
@@ -712,7 +727,11 @@ const GestaoMetas = () => {
               {rankingObras.map((obra) => (
                 <div
                   key={obra.id}
-                  className="bg-slate-900 p-5 rounded-lg border border-slate-800 hover:border-slate-600 transition-all flex flex-col gap-4 group"
+                  onClick={() => {
+                    setSelectedObraForEdit(obra.id);
+                    handleOpenLancamento(true);
+                  }}
+                  className="bg-slate-900 p-5 rounded-lg border border-slate-800 hover:border-[#C7A347] transition-all flex flex-col gap-4 group cursor-pointer"
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -740,8 +759,12 @@ const GestaoMetas = () => {
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase mb-1">Lucro</p>
-                      <p className="font-mono text-sm text-slate-300">{formatCurrency(obra.lucro_realizado)}</p>
+                      <p className="font-mono text-sm text-emerald-400">{formatCurrency(obra.lucro_realizado)}</p>
                     </div>
+                  </div>
+                  <div className="text-center text-[10px] text-slate-500 pt-2 border-t border-slate-800/30">
+                    <Edit3 className="h-3 w-3 inline-block mr-1" />
+                    Clique para editar
                   </div>
                 </div>
               ))}
@@ -837,12 +860,12 @@ const GestaoMetas = () => {
 
                         <TableCell>
                           <Input
-                            type="number"
+                            type="text"
                             placeholder="0,00"
-                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={obra.faturamento_realizado === 0 ? "" : obra.faturamento_realizado}
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
+                            value={formatBRLInput(obra.faturamento_realizado)}
                             onChange={(e) => {
-                              const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                              const val = parseBRLInput(e.target.value);
                               handleLocalChange(obra.id, "faturamento_realizado", val);
                             }}
                           />
@@ -850,12 +873,12 @@ const GestaoMetas = () => {
 
                         <TableCell>
                           <Input
-                            type="number"
+                            type="text"
                             placeholder="0,00"
-                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={obra.lucro_realizado === 0 ? "" : obra.lucro_realizado}
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
+                            value={formatBRLInput(obra.lucro_realizado)}
                             onChange={(e) => {
-                              const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                              const val = parseBRLInput(e.target.value);
                               handleLocalChange(obra.id, "lucro_realizado", val);
                             }}
                           />
