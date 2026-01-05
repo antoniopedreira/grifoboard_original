@@ -1183,6 +1183,7 @@ export type Database = {
       ranking_grifoway: {
         Row: {
           empresa_id: string | null
+          nome: string | null
           pontuacao_geral: number | null
           posicao_empresa: number | null
           posicao_geral: number | null
