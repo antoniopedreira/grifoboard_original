@@ -98,19 +98,6 @@ const GestaoMetas = () => {
   const [localObras, setLocalObras] = useState<ObraFinanceira[]>([]);
   const [isSavingObras, setIsSavingObras] = useState(false);
 
-  // Formatação BRL para inputs
-  const formatBRLInput = (value: number): string => {
-    if (value === 0) return "";
-    return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
-  const parseBRLInput = (value: string): number => {
-    if (!value || value.trim() === "") return 0;
-    // Remove pontos de milhar e substitui vírgula por ponto
-    const cleaned = value.replace(/\./g, "").replace(",", ".");
-    const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : parsed;
-  };
 
   // --- QUERY PRINCIPAL ---
   const { data: dashboardData, isLoading } = useQuery({
@@ -860,12 +847,13 @@ const GestaoMetas = () => {
 
                         <TableCell>
                           <Input
-                            type="text"
+                            type="number"
+                            step="0.01"
                             placeholder="0,00"
-                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
-                            value={formatBRLInput(obra.faturamento_realizado)}
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            value={obra.faturamento_realizado === 0 ? "" : obra.faturamento_realizado}
                             onChange={(e) => {
-                              const val = parseBRLInput(e.target.value);
+                              const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                               handleLocalChange(obra.id, "faturamento_realizado", val);
                             }}
                           />
@@ -873,12 +861,13 @@ const GestaoMetas = () => {
 
                         <TableCell>
                           <Input
-                            type="text"
+                            type="number"
+                            step="0.01"
                             placeholder="0,00"
-                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347]"
-                            value={formatBRLInput(obra.lucro_realizado)}
+                            className="h-8 text-right bg-slate-950 border-slate-700 text-white font-mono text-xs focus:border-[#C7A347] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            value={obra.lucro_realizado === 0 ? "" : obra.lucro_realizado}
                             onChange={(e) => {
-                              const val = parseBRLInput(e.target.value);
+                              const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                               handleLocalChange(obra.id, "lucro_realizado", val);
                             }}
                           />
