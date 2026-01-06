@@ -34,8 +34,6 @@ import {
   Upload,
   X,
   AlertTriangle,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { registrosService } from "@/services/registroService";
@@ -209,7 +207,7 @@ const KanbanCard = ({
             isCompleted
               ? "text-green-500"
               : hasRestrictions
-                ? "text-slate-300 cursor-not-allowed" // Desabilitado visualmente se tem restrição
+                ? "text-slate-300 cursor-not-allowed"
                 : isDelayed
                   ? "text-red-500"
                   : "text-slate-300 hover:text-slate-400"
@@ -423,7 +421,7 @@ const PMP = () => {
     enabled: !!obraAtiva?.id,
   });
 
-  // 4. Lógica da Bomba Relógio (REINSERIDA)
+  // 4. Lógica da Bomba Relógio
   const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
     if (!obraAtiva?.data_termino)
       return {
@@ -476,7 +474,7 @@ const PMP = () => {
     };
   }, [obraAtiva]);
 
-  // 5. Geração das Semanas (REINSERIDA)
+  // 5. Geração das Semanas
   const weeks = useMemo(() => {
     if (!obraAtiva?.data_inicio || !obraAtiva?.data_termino) return [];
     const start = parseISO(obraAtiva.data_inicio);
@@ -560,7 +558,7 @@ const PMP = () => {
         .eq("id", id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] }); // Atualiza tudo pois afeta o check da atividade
+      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
       toast({ title: "Restrição atualizada" });
     },
   });
@@ -568,8 +566,6 @@ const PMP = () => {
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       let atividadeId = editingId;
-
-      // 1. Salva ou Atualiza Atividade
       if (editingId) {
         await supabase
           .from("pmp_atividades" as any)
@@ -586,7 +582,6 @@ const PMP = () => {
         atividadeId = inserted.id;
       }
 
-      // 2. Salva Restrições Novas (as que não tem ID)
       const novasRestricoes = restricoesTemp.filter((r) => !r.id);
       if (novasRestricoes.length > 0 && atividadeId) {
         const payload = novasRestricoes.map((r) => ({
@@ -633,6 +628,95 @@ const PMP = () => {
   });
 
   // --- HANDLERS ---
+
+  const handlePlantaUpload = async (file: File) => {
+    if (!obraAtiva?.id) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Formato inválido", description: "Use JPEG, PNG ou WebP", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingPlanta(true);
+    setImageError(false);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `pmp-planta-${obraAtiva.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${obraAtiva.id}/${fileName}`;
+
+      if (obraAtiva.pmp_planta_url) {
+        try {
+          const urlObj = new URL(obraAtiva.pmp_planta_url);
+          const pathParts = urlObj.pathname.split("/diario-obra/");
+          if (pathParts.length > 1) {
+            const oldPath = pathParts[1];
+            await supabase.storage.from("diario-obra").remove([oldPath]);
+          }
+        } catch (e) {
+          console.log("Erro ao limpar imagem antiga", e);
+        }
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from("diario-obra")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("diario-obra").getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("obras")
+        .update({ pmp_planta_url: urlData.publicUrl })
+        .eq("id", obraAtiva.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
+      toast({ title: "Imagem enviada com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao enviar imagem", variant: "destructive" });
+    } finally {
+      setIsUploadingPlanta(false);
+    }
+  };
+
+  const handleRemovePlanta = async () => {
+    if (!obraAtiva?.id || !obraAtiva.pmp_planta_url) return;
+
+    setIsUploadingPlanta(true);
+    try {
+      try {
+        const urlObj = new URL(obraAtiva.pmp_planta_url);
+        const pathParts = urlObj.pathname.split("/diario-obra/");
+        if (pathParts.length > 1) {
+          const oldPath = pathParts[1];
+          await supabase.storage.from("diario-obra").remove([oldPath]);
+        }
+      } catch (e) {
+        console.log("Erro ao remover arquivo do bucket", e);
+      }
+
+      const { error } = await supabase.from("obras").update({ pmp_planta_url: null }).eq("id", obraAtiva.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
+      toast({ title: "Imagem removida!" });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao remover imagem", variant: "destructive" });
+    } finally {
+      setIsUploadingPlanta(false);
+    }
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
@@ -706,7 +790,6 @@ const PMP = () => {
     toggleCheckMutation.mutate({ id, novoStatus: !currentStatus });
   };
 
-  // Funções de Modal e Formulário
   const handleOpenAdd = (weekId: string) => {
     setEditingId(null);
     setFormData({
@@ -767,20 +850,6 @@ const PMP = () => {
       data_inicio: formData.data_inicio || null,
       data_termino: formData.data_termino || null,
       setor: formData.setor || null,
-    });
-  };
-
-  // Helpers
-  const getTasksForWeek = (weekStart: Date, weekEnd: Date) => {
-    return atividades.filter((atividade) => {
-      if (!atividade.data_inicio) return atividade.semana_referencia === format(weekStart, "yyyy-MM-dd");
-      const start = parseISO(atividade.data_inicio);
-      if (!isValid(start)) return false;
-      return areIntervalsOverlapping(
-        { start, end: atividade.data_termino ? parseISO(atividade.data_termino) : start },
-        { start: weekStart, end: weekEnd },
-        { inclusive: true },
-      );
     });
   };
 
