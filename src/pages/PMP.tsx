@@ -385,7 +385,8 @@ const PMP = () => {
     initialData: obraAtivaContext,
   });
 
-  const obraAtiva = obraData || obraAtivaContext;
+  // Cast forçado para any para evitar o erro de tipagem "Property 'id' does not exist on type 'SelectQueryError...'"
+  const obraAtiva = (obraData || obraAtivaContext) as any;
 
   useEffect(() => {
     setImageError(false);
