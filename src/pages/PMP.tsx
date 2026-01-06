@@ -60,7 +60,7 @@ import {
   DropAnimation,
   defaultDropAnimationSideEffects,
   useDroppable,
-  DragOverlay, // Adicionado aqui
+  DragOverlay,
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -367,12 +367,17 @@ const PMP = () => {
 
   // --- QUERIES ---
 
-  // 1. Obra Atual
+  // 1. Obra Atual (Query Corrigida com 'as any' para evitar SelectQueryError)
   const { data: obraData } = useQuery({
     queryKey: ["obra_atual", obraAtivaContext?.id],
     queryFn: async () => {
       if (!obraAtivaContext?.id) return null;
-      const { data, error } = await supabase.from("obras").select("*").eq("id", obraAtivaContext.id).single();
+      const { data, error } = await supabase
+        .from("obras" as any) // Cast forçado para evitar erros de TS
+        .select("*")
+        .eq("id", obraAtivaContext.id)
+        .single();
+
       if (error) throw error;
       return data;
     },
@@ -380,8 +385,7 @@ const PMP = () => {
     initialData: obraAtivaContext,
   });
 
-  // Cast forçado para any para evitar o erro de tipagem "Property 'id' does not exist on type 'SelectQueryError...'"
-  const obraAtiva = (obraData || obraAtivaContext) as any;
+  const obraAtiva = obraData || obraAtivaContext;
 
   useEffect(() => {
     setImageError(false);
@@ -636,7 +640,7 @@ const PMP = () => {
     },
   });
 
-  // --- HANDLERS ---
+  // --- HANDLERS (AGORA COM ACESSO A getTasksForWeek) ---
 
   const handlePlantaUpload = async (file: File) => {
     if (!obraAtiva?.id) return;
@@ -655,7 +659,10 @@ const PMP = () => {
 
       const { data: urlData } = supabase.storage.from("diario-obra").getPublicUrl(filePath);
 
-      await supabase.from("obras").update({ pmp_planta_url: urlData.publicUrl }).eq("id", obraAtiva.id);
+      await supabase
+        .from("obras" as any)
+        .update({ pmp_planta_url: urlData.publicUrl })
+        .eq("id", obraAtiva.id);
 
       queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
       toast({ title: "Imagem enviada com sucesso!" });
@@ -671,7 +678,10 @@ const PMP = () => {
     if (!obraAtiva?.id) return;
     setIsUploadingPlanta(true);
     try {
-      await supabase.from("obras").update({ pmp_planta_url: null }).eq("id", obraAtiva.id);
+      await supabase
+        .from("obras" as any)
+        .update({ pmp_planta_url: null })
+        .eq("id", obraAtiva.id);
       queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
       toast({ title: "Imagem removida!" });
     } catch (error) {
