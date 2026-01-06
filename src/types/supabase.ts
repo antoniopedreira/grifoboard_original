@@ -7,6 +7,7 @@ export interface Obra {
   status: string;
   usuario_id: string;
   created_at: string;
+  pmp_planta_url?: string | null;
 }
 
 export interface Tarefa {
