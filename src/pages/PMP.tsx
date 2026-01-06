@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -26,6 +26,9 @@ import {
   AlarmClock,
   MapPin,
   Settings,
+  Image as ImageIcon,
+  Upload,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { registrosService } from "@/services/registroService";
@@ -66,6 +69,12 @@ const POSTIT_COLORS = {
   red: { border: "border-l-red-500", bg: "bg-white", text: "text-slate-700", ring: "ring-red-500" },
   purple: { border: "border-l-purple-500", bg: "bg-white", text: "text-slate-700", ring: "ring-purple-500" },
   orange: { border: "border-l-orange-500", bg: "bg-white", text: "text-slate-700", ring: "ring-orange-500" },
+  pink: { border: "border-l-pink-500", bg: "bg-white", text: "text-slate-700", ring: "ring-pink-500" },
+  cyan: { border: "border-l-cyan-500", bg: "bg-white", text: "text-slate-700", ring: "ring-cyan-500" },
+  lime: { border: "border-l-lime-500", bg: "bg-white", text: "text-slate-700", ring: "ring-lime-500" },
+  indigo: { border: "border-l-indigo-500", bg: "bg-white", text: "text-slate-700", ring: "ring-indigo-500" },
+  amber: { border: "border-l-amber-500", bg: "bg-white", text: "text-slate-700", ring: "ring-amber-500" },
+  teal: { border: "border-l-teal-500", bg: "bg-white", text: "text-slate-700", ring: "ring-teal-500" },
 };
 
 type ColorKey = keyof typeof POSTIT_COLORS;
@@ -285,6 +294,8 @@ const PMP = () => {
   const [activeDragItem, setActiveDragItem] = useState<PmpAtividade | null>(null);
   const [isSetorModalOpen, setIsSetorModalOpen] = useState(false);
   const [newSetor, setNewSetor] = useState("");
+  const [isUploadingPlanta, setIsUploadingPlanta] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -319,6 +330,86 @@ const PMP = () => {
       toast({ title: "Erro ao cadastrar setor", variant: "destructive" });
     },
   });
+
+  // Função para upload da planta/imagem
+  const handlePlantaUpload = async (file: File) => {
+    if (!obraAtiva?.id) return;
+    
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Formato inválido", description: "Use JPEG, PNG ou WebP", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingPlanta(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `pmp-planta-${obraAtiva.id}.${fileExt}`;
+      const filePath = `${obraAtiva.id}/${fileName}`;
+
+      // Se já existe imagem, deletar a antiga
+      if (obraAtiva.pmp_planta_url) {
+        const oldPath = obraAtiva.pmp_planta_url.split('/').slice(-2).join('/');
+        await supabase.storage.from('diario-obra').remove([oldPath]);
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('diario-obra')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('diario-obra')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('obras')
+        .update({ pmp_planta_url: urlData.publicUrl })
+        .eq('id', obraAtiva.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ['obras'] });
+      toast({ title: "Imagem enviada com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao enviar imagem", variant: "destructive" });
+    } finally {
+      setIsUploadingPlanta(false);
+    }
+  };
+
+  // Função para remover planta
+  const handleRemovePlanta = async () => {
+    if (!obraAtiva?.id || !obraAtiva.pmp_planta_url) return;
+
+    setIsUploadingPlanta(true);
+    try {
+      const oldPath = obraAtiva.pmp_planta_url.split('/').slice(-2).join('/');
+      await supabase.storage.from('diario-obra').remove([oldPath]);
+
+      const { error } = await supabase
+        .from('obras')
+        .update({ pmp_planta_url: null })
+        .eq('id', obraAtiva.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['obras'] });
+      toast({ title: "Imagem removida!" });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao remover imagem", variant: "destructive" });
+    } finally {
+      setIsUploadingPlanta(false);
+    }
+  };
 
   // Lógica da Bomba Relógio
   const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
@@ -639,6 +730,18 @@ const PMP = () => {
   if (isMobile) {
     return (
       <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handlePlantaUpload(file);
+            e.target.value = '';
+          }}
+        />
         {/* LISTA DE SEMANAS MOBILE - Scroll Vertical (inclui header e bomba) */}
         <DndContext
           sensors={sensors}
@@ -745,6 +848,68 @@ const PMP = () => {
                   </div>
                 );
               })}
+
+              {/* SEÇÃO IMAGEM DA PLANTA/SETORES - MOBILE */}
+              <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4 mx-0">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-slate-700 text-sm">Planta de Setores</h3>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingPlanta}
+                    >
+                      {isUploadingPlanta ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Upload className="h-3 w-3" />
+                      )}
+                    </Button>
+                    {obraAtiva.pmp_planta_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs text-red-600"
+                        onClick={handleRemovePlanta}
+                        disabled={isUploadingPlanta}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                {obraAtiva.pmp_planta_url ? (
+                  <div className="relative rounded-lg overflow-hidden border border-slate-100">
+                    <img
+                      src={obraAtiva.pmp_planta_url}
+                      alt="Planta de Setores"
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                    <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
+                    <p className="text-xs text-slate-500 text-center">
+                      Importe a planta do projeto
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 h-9"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Selecionar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -839,20 +1004,28 @@ const PMP = () => {
               </div>
               <div className="space-y-3 pt-1">
                 <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Categoria</span>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   {Object.entries(POSTIT_COLORS).map(([key]) => {
-                    let bgClass = "bg-slate-200";
-                    if (key === "yellow") bgClass = "bg-yellow-400";
-                    if (key === "green") bgClass = "bg-emerald-500";
-                    if (key === "blue") bgClass = "bg-blue-500";
-                    if (key === "red") bgClass = "bg-red-500";
-                    if (key === "purple") bgClass = "bg-purple-500";
-                    if (key === "orange") bgClass = "bg-orange-500";
+                    const colorMap: Record<string, string> = {
+                      yellow: "bg-yellow-400",
+                      green: "bg-emerald-500",
+                      blue: "bg-blue-500",
+                      red: "bg-red-500",
+                      purple: "bg-purple-500",
+                      orange: "bg-orange-500",
+                      pink: "bg-pink-500",
+                      cyan: "bg-cyan-500",
+                      lime: "bg-lime-500",
+                      indigo: "bg-indigo-500",
+                      amber: "bg-amber-500",
+                      teal: "bg-teal-500",
+                    };
+                    const bgClass = colorMap[key] || "bg-slate-200";
                     return (
                       <button
                         key={key}
                         onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
-                        className={`w-10 h-10 rounded-full border-2 transition-all ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-2 ring-slate-200" : "border-transparent"} ${bgClass}`}
+                        className={`w-9 h-9 rounded-full border-2 transition-all ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-2 ring-slate-200" : "border-transparent"} ${bgClass}`}
                       />
                     );
                   })}
@@ -991,6 +1164,81 @@ const PMP = () => {
         </DragOverlay>
       </DndContext>
 
+      {/* SEÇÃO IMAGEM DA PLANTA/SETORES */}
+      <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-slate-700">Planta de Setores</h3>
+          </div>
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handlePlantaUpload(file);
+                e.target.value = '';
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingPlanta}
+            >
+              {isUploadingPlanta ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <Upload className="h-4 w-4 mr-1" />
+              )}
+              {obraAtiva.pmp_planta_url ? 'Substituir' : 'Importar Imagem'}
+            </Button>
+            {obraAtiva.pmp_planta_url && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleRemovePlanta}
+                disabled={isUploadingPlanta}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Remover
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {obraAtiva.pmp_planta_url ? (
+          <div className="relative rounded-lg overflow-hidden border border-slate-100">
+            <img
+              src={obraAtiva.pmp_planta_url}
+              alt="Planta de Setores do Projeto"
+              className="w-full h-auto object-contain max-h-[500px]"
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+            <ImageIcon className="h-12 w-12 text-slate-300 mb-3" />
+            <p className="text-sm text-slate-500 text-center">
+              Importe uma imagem da planta do projeto com os setores identificados
+            </p>
+            <p className="text-xs text-slate-400 mt-1">JPEG, PNG ou WebP • Máx. 5MB</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Selecionar Imagem
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* MODAL EDITAR/CRIAR */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-[450px]">
@@ -1074,20 +1322,28 @@ const PMP = () => {
             </div>
             <div className="space-y-3 pt-2">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Categoria</span>
-              <div className="flex flex-wrap gap-3">
-                {Object.entries(POSTIT_COLORS).map(([key, value]) => {
-                  let bgClass = "bg-slate-200";
-                  if (key === "yellow") bgClass = "bg-yellow-400";
-                  if (key === "green") bgClass = "bg-emerald-500";
-                  if (key === "blue") bgClass = "bg-blue-500";
-                  if (key === "red") bgClass = "bg-red-500";
-                  if (key === "purple") bgClass = "bg-purple-500";
-                  if (key === "orange") bgClass = "bg-orange-500";
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(POSTIT_COLORS).map(([key]) => {
+                  const colorMap: Record<string, string> = {
+                    yellow: "bg-yellow-400",
+                    green: "bg-emerald-500",
+                    blue: "bg-blue-500",
+                    red: "bg-red-500",
+                    purple: "bg-purple-500",
+                    orange: "bg-orange-500",
+                    pink: "bg-pink-500",
+                    cyan: "bg-cyan-500",
+                    lime: "bg-lime-500",
+                    indigo: "bg-indigo-500",
+                    amber: "bg-amber-500",
+                    teal: "bg-teal-500",
+                  };
+                  const bgClass = colorMap[key] || "bg-slate-200";
                   return (
                     <button
                       key={key}
                       onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-1 ring-slate-200" : "border-transparent hover:scale-105"} ${bgClass}`}
+                      className={`w-7 h-7 rounded-full border-2 transition-all ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-1 ring-slate-200" : "border-transparent hover:scale-105"} ${bgClass}`}
                       title={key}
                     />
                   );

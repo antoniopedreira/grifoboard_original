@@ -670,6 +670,7 @@ export type Database = {
           lucro_realizado: number | null
           nome_obra: string
           nps: number | null
+          pmp_planta_url: string | null
           status: string | null
           usuario_id: string | null
         }
@@ -686,6 +687,7 @@ export type Database = {
           lucro_realizado?: number | null
           nome_obra: string
           nps?: number | null
+          pmp_planta_url?: string | null
           status?: string | null
           usuario_id?: string | null
         }
@@ -702,6 +704,7 @@ export type Database = {
           lucro_realizado?: number | null
           nome_obra?: string
           nps?: number | null
+          pmp_planta_url?: string | null
           status?: string | null
           usuario_id?: string | null
         }
