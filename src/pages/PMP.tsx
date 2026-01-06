@@ -367,13 +367,13 @@ const PMP = () => {
 
   // --- QUERIES ---
 
-  // 1. Obra Atual (Query Corrigida com 'as any' para evitar SelectQueryError)
+  // 1. Obra Atual
   const { data: obraData } = useQuery<any>({
     queryKey: ["obra_atual", obraAtivaContext?.id],
     queryFn: async () => {
       if (!obraAtivaContext?.id) return null;
       const { data, error } = await supabase
-        .from("obras" as any) // Cast forçado para evitar erros de TS
+        .from("obras" as any)
         .select("*")
         .eq("id", obraAtivaContext.id)
         .single();
@@ -382,10 +382,9 @@ const PMP = () => {
       return data;
     },
     enabled: !!obraAtivaContext?.id,
-    initialData: obraAtivaContext as any, // Cast inicial
+    initialData: obraAtivaContext as any,
   });
 
-  // Cast forçado para any para evitar o erro de tipagem "Property 'id' does not exist on type 'SelectQueryError...'"
   const obraAtiva = (obraData || obraAtivaContext) as any;
 
   useEffect(() => {
@@ -421,7 +420,7 @@ const PMP = () => {
     enabled: !!obraAtiva?.id,
   });
 
-  // --- HELPER FUNCTION (MOVIDA PARA CIMA para evitar erro TS2304) ---
+  // --- HELPER FUNCTION ---
   const getTasksForWeek = (weekStart: Date, weekEnd: Date) => {
     return atividades.filter((atividade) => {
       if (!atividade.data_inicio) return atividade.semana_referencia === format(weekStart, "yyyy-MM-dd");
@@ -577,9 +576,14 @@ const PMP = () => {
     },
   });
 
+  // === MUTATION CORRIGIDA PARA SALVAR RESTRIÇÕES ===
   const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (inputData: any) => {
+      // Extrai restrições do objeto de dados
+      const { restricoes, ...data } = inputData;
       let atividadeId = editingId;
+
+      // 1. Salva ou Atualiza Atividade
       if (editingId) {
         await supabase
           .from("pmp_atividades" as any)
@@ -596,15 +600,18 @@ const PMP = () => {
         atividadeId = inserted.id;
       }
 
-      const novasRestricoes = restricoesTemp.filter((r) => !r.id);
+      // 2. Salva Restrições Novas (usando a lista passada por parâmetro)
+      const novasRestricoes = restricoes ? restricoes.filter((r: any) => !r.id) : [];
+
       if (novasRestricoes.length > 0 && atividadeId) {
-        const payload = novasRestricoes.map((r) => ({
+        const payload = novasRestricoes.map((r: any) => ({
           atividade_id: atividadeId,
           descricao: r.descricao,
           data_limite: r.data_limite,
           resolvido: false,
         }));
-        await supabase.from("pmp_restricoes" as any).insert(payload);
+        const { error: restError } = await supabase.from("pmp_restricoes" as any).insert(payload);
+        if (restError) throw restError;
       }
     },
     onSuccess: () => {
@@ -641,7 +648,7 @@ const PMP = () => {
     },
   });
 
-  // --- HANDLERS (AGORA COM ACESSO A getTasksForWeek) ---
+  // --- HANDLERS ---
 
   const handlePlantaUpload = async (file: File) => {
     if (!obraAtiva?.id) return;
@@ -823,15 +830,18 @@ const PMP = () => {
     setEditingId(null);
   };
 
+  // === SAVE FORM CORRIGIDO ===
   const handleSaveForm = () => {
     if (!formData.titulo) return toast({ title: "Título obrigatório", variant: "destructive" });
     const semanaRef = formData.data_inicio || format(new Date(), "yyyy-MM-dd");
+    // Passa 'restricoes' explicitamente para garantir que a mutation pegue o estado atual
     saveMutation.mutate({
       ...formData,
       semana_referencia: semanaRef,
       data_inicio: formData.data_inicio || null,
       data_termino: formData.data_termino || null,
       setor: formData.setor || null,
+      restricoes: restricoesTemp,
     });
   };
 
