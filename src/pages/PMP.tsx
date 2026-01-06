@@ -215,24 +215,42 @@ const KanbanCard = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100/50">
-        <div className="flex items-center gap-2 text-[10px] text-slate-500">
-          {dateDisplay && (
+      <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-slate-100/50">
+        {/* Linha de Data */}
+        {dateDisplay && (
+          <div className="flex items-center gap-2 text-[10px]">
             <div
               className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${isDelayed ? "bg-red-50 text-red-600 font-medium" : "bg-slate-100 text-slate-600"}`}
             >
               <CalendarIcon className="h-3 w-3" />
               <span>{dateDisplay}</span>
             </div>
-          )}
-        </div>
-
-        {atividade.responsavel && (
-          <div className="flex items-center gap-1 text-[10px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded max-w-[50%]">
-            <User className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{atividade.responsavel}</span>
           </div>
         )}
+
+        {/* Linha de Setor e Responsável */}
+        <div className="flex items-center justify-between gap-2">
+          {/* EXIBIÇÃO DO SETOR */}
+          {atividade.setor ? (
+            <div className="flex items-center gap-1 text-[10px] text-slate-600 font-medium bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded max-w-[50%]">
+              <MapPin className="h-3 w-3 flex-shrink-0 text-slate-400" />
+              <span className="truncate" title={atividade.setor}>
+                {atividade.setor}
+              </span>
+            </div>
+          ) : (
+            <div></div>
+          )}
+
+          {atividade.responsavel && (
+            <div className="flex items-center gap-1 text-[10px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded max-w-[50%] ml-auto">
+              <User className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate" title={atividade.responsavel}>
+                {atividade.responsavel}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {onDelete && (
@@ -352,6 +370,7 @@ const PMP = () => {
       const fileName = `pmp-planta-${obraAtiva.id}.${fileExt}`;
       const filePath = `${obraAtiva.id}/${fileName}`;
 
+      // Se já existe imagem, deletar a antiga
       if (obraAtiva.pmp_planta_url) {
         const oldPath = obraAtiva.pmp_planta_url.split("/").slice(-2).join("/");
         await supabase.storage.from("diario-obra").remove([oldPath]);
@@ -404,8 +423,7 @@ const PMP = () => {
     }
   };
 
-  // Lógica da Bomba Relógio e Semanas (Mantida igual ao código anterior)
-  // ... Copie a lógica de bomba e weeks da versão anterior se necessário, ou mantenha a que já está aqui ...
+  // Lógica da Bomba Relógio
   const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
     if (!obraAtiva?.data_termino)
       return {
@@ -417,18 +435,23 @@ const PMP = () => {
         statusLabel: "",
         isExploded: false,
       };
+
     const end = parseISO(obraAtiva.data_termino);
     const today = startOfDay(new Date());
     const days = differenceInCalendarDays(end, today);
+
+    // Configuração Padrão: Estilo Alerta Vermelho
     let styles = {
-      bg: "bg-orange-50",
-      border: "border-orange-200",
-      text: "text-orange-800",
-      icon: "text-orange-600",
-      label: "TEMPO RESTANTE",
+      bg: "bg-red-50",
+      border: "border-red-200",
+      text: "text-red-700",
+      icon: "text-red-500",
+      label: "CONTAGEM REGRESSIVA",
       exploded: false,
     };
+
     if (days < 0) {
+      // Estourou o prazo
       styles = {
         bg: "bg-red-600",
         border: "border-red-700",
@@ -438,6 +461,7 @@ const PMP = () => {
         exploded: true,
       };
     } else if (days <= 14) {
+      // Urgente (menos de 2 semanas)
       styles = {
         bg: "bg-red-100",
         border: "border-red-400",
@@ -446,7 +470,18 @@ const PMP = () => {
         label: "PRAZO CRÍTICO",
         exploded: false,
       };
+    } else {
+      // "Normal", mas com design de alerta
+      styles = {
+        bg: "bg-orange-50",
+        border: "border-orange-200",
+        text: "text-orange-800",
+        icon: "text-orange-600",
+        label: "TEMPO RESTANTE",
+        exploded: false,
+      };
     }
+
     return {
       daysRemaining: days,
       urgencyBg: styles.bg,
@@ -461,15 +496,21 @@ const PMP = () => {
   const weeks = useMemo(() => {
     const obra = obraAtiva as any;
     if (!obra?.data_inicio || !obra?.data_termino) return [];
+
     const start = parseISO(obra.data_inicio);
     const end = parseISO(obra.data_termino);
+
+    // DEFINIÇÃO: A semana começa na SEGUNDA-FEIRA (weekStartsOn: 1)
     const firstWeekStart = startOfWeek(start, { weekStartsOn: 1 });
+
     const totalWeeks = Math.max(differenceInWeeks(end, firstWeekStart) + 2, 1);
+
     const weeksArray = [];
     for (let i = 0; i < totalWeeks; i++) {
       const currentWeekStart = addDays(firstWeekStart, i * 7);
-      const currentWeekEnd = addDays(currentWeekStart, 6);
+      const currentWeekEnd = addDays(currentWeekStart, 6); // Se começou segunda, termina no domingo (+6 dias)
       const weekId = format(currentWeekStart, "yyyy-MM-dd");
+
       weeksArray.push({
         id: weekId,
         label: `Semana ${i + 1}`,
@@ -482,17 +523,17 @@ const PMP = () => {
     return weeksArray;
   }, [obraAtiva]);
 
-  // Query e Mutations (Mantidas)
-  const { data: atividades = [] } = useQuery({
+  const { data: atividades = [], isLoading } = useQuery({
     queryKey: ["pmp_atividades", obraAtiva?.id],
     queryFn: async () => {
       if (!obraAtiva?.id) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("pmp_atividades" as any)
         .select("*")
         .eq("obra_id", obraAtiva.id)
         .order("concluido", { ascending: true })
         .order("created_at", { ascending: true });
+      if (error) throw error;
       return (data || []) as unknown as PmpAtividade[];
     },
     enabled: !!obraAtiva?.id,
@@ -500,11 +541,14 @@ const PMP = () => {
 
   const getTasksForWeek = (weekStart: Date, weekEnd: Date) => {
     return atividades.filter((atividade) => {
-      if (!atividade.data_inicio || !atividade.data_termino)
+      if (!atividade.data_inicio || !atividade.data_termino) {
         return atividade.semana_referencia === format(weekStart, "yyyy-MM-dd");
+      }
       const taskStart = parseISO(atividade.data_inicio);
       const taskEnd = parseISO(atividade.data_termino);
+
       if (!isValid(taskStart) || !isValid(taskEnd)) return false;
+
       return areIntervalsOverlapping(
         { start: taskStart, end: taskEnd },
         { start: weekStart, end: weekEnd },
@@ -513,56 +557,82 @@ const PMP = () => {
     });
   };
 
+  // --- MUTATIONS ---
   const moveMutation = useMutation({
     mutationFn: async ({ id, newDataInicio, newDataTermino, novaSemanaRef }: any) => {
-      await supabase
+      const { error } = await supabase
         .from("pmp_atividades" as any)
         .update({ data_inicio: newDataInicio, data_termino: newDataTermino, semana_referencia: novaSemanaRef })
         .eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
+    onError: () => toast({ title: "Erro ao mover", variant: "destructive" }),
   });
 
   const toggleCheckMutation = useMutation({
     mutationFn: async ({ id, novoStatus }: { id: string; novoStatus: boolean }) => {
-      await supabase
+      const { error } = await supabase
         .from("pmp_atividades" as any)
         .update({ concluido: novoStatus })
         .eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, novoStatus }) => {
+      await queryClient.cancelQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
+      const previousData = queryClient.getQueryData(["pmp_atividades", obraAtiva?.id]);
+      queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], (old: PmpAtividade[] | undefined) => {
+        if (!old) return [];
+        return old.map((t) => (t.id === id ? { ...t, concluido: novoStatus } : t));
+      });
+      return { previousData };
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(["pmp_atividades", obraAtiva?.id], context?.previousData);
+      toast({ title: "Erro ao atualizar status", variant: "destructive" });
     },
     onSuccess: async (_data, variables) => {
       const userId = userSession?.user?.id;
-      if (userId) {
-        if (variables.novoStatus)
-          await gamificationService.awardXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
-        else await gamificationService.removeXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
+      if (!userId) return;
+
+      if (variables.novoStatus) {
+        // Tarefa concluída - dar 50 XP
+        await gamificationService.awardXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
+      } else {
+        // Tarefa desmarcada - remover XP
+        await gamificationService.removeXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
       }
-      queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      if (editingId)
-        await supabase
+      if (editingId) {
+        const { error } = await supabase
           .from("pmp_atividades" as any)
           .update(data)
           .eq("id", editingId);
-      else await supabase.from("pmp_atividades" as any).insert({ obra_id: obraAtiva.id, ...data });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("pmp_atividades" as any).insert({ obra_id: obraAtiva.id, ...data });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
       handleCloseModal();
-      toast({ title: "Salvo com sucesso" });
+      toast({ title: editingId ? "Atividade atualizada" : "Atividade criada" });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase
+      const { error } = await supabase
         .from("pmp_atividades" as any)
         .delete()
         .eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
@@ -570,7 +640,7 @@ const PMP = () => {
     },
   });
 
-  // Handlers
+  // --- HANDLERS ---
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
   };
@@ -584,13 +654,13 @@ const PMP = () => {
     const originWeekId = activeData?.originWeekId as string;
     let targetWeekId = "";
     if (over.data.current?.type === "Column") targetWeekId = over.data.current.weekId;
-
+    else if (over.data.current?.type === "Card") return;
     if (targetWeekId && draggedTask && originWeekId && targetWeekId !== originWeekId) {
       const originDate = parseISO(originWeekId);
       const targetDate = parseISO(targetWeekId);
       const daysDiff = differenceInCalendarDays(targetDate, originDate);
-      let newDataInicio = null,
-        newDataTermino = null;
+      let newDataInicio = null;
+      let newDataTermino = null;
       if (draggedTask.data_inicio && draggedTask.data_termino) {
         newDataInicio = addDays(parseISO(draggedTask.data_inicio), daysDiff).toISOString();
         newDataTermino = addDays(parseISO(draggedTask.data_termino), daysDiff).toISOString();
@@ -621,8 +691,8 @@ const PMP = () => {
       titulo: atividade.titulo,
       cor: atividade.cor as ColorKey,
       responsavel: atividade.responsavel || "",
-      data_inicio: atividade.data_inicio?.split("T")[0] || "",
-      data_termino: atividade.data_termino?.split("T")[0] || "",
+      data_inicio: atividade.data_inicio ? atividade.data_inicio.split("T")[0] : atividade.semana_referencia,
+      data_termino: atividade.data_termino ? atividade.data_termino.split("T")[0] : "",
       setor: atividade.setor || "",
     });
     setIsModalOpen(true);
@@ -632,24 +702,55 @@ const PMP = () => {
     setIsModalOpen(false);
     setEditingId(null);
   };
+
   const handleSaveForm = () => {
     if (!formData.titulo) return toast({ title: "Título obrigatório", variant: "destructive" });
     const semanaRef = formData.data_inicio || format(new Date(), "yyyy-MM-dd");
     saveMutation.mutate({
-      ...formData,
-      semana_referencia: semanaRef,
+      titulo: formData.titulo,
+      cor: formData.cor,
+      responsavel: formData.responsavel,
       data_inicio: formData.data_inicio || null,
       data_termino: formData.data_termino || null,
+      semana_referencia: semanaRef,
       setor: formData.setor || null,
     });
   };
 
-  if (!obraAtiva) return <div className="flex justify-center items-center h-screen">Selecione uma obra</div>;
+  if (!obraAtiva) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-lg">
+          <h2 className="text-2xl font-bold text-slate-800">Nenhuma obra selecionada</h2>
+          <p className="text-slate-600">Selecione uma obra para continuar.</p>
+          <button
+            onClick={() => navigate("/obras")}
+            className="px-6 py-3 bg-[#C7A347] text-white rounded-xl font-semibold hover:bg-[#B7943F] transition-colors"
+          >
+            Selecionar Obra
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // LAYOUT MOBILE (Mantido igual)
   if (isMobile) {
     return (
       <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handlePlantaUpload(file);
+            e.target.value = "";
+          }}
+        />
+        {/* LISTA DE SEMANAS MOBILE - Scroll Vertical (inclui header e bomba) */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -657,50 +758,299 @@ const PMP = () => {
           onDragEnd={handleDragEnd}
         >
           <div className="flex-1 overflow-y-auto pb-32">
-            {/* ... Header Mobile ... */}
+            {/* HEADER MOBILE: Dentro do scroll */}
             <div className="px-4 pt-3 pb-2 bg-white border-b border-slate-100">
               <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <CalendarRange className="h-5 w-5 text-primary" /> PMP
+                <CalendarRange className="h-5 w-5 text-primary" />
+                PMP - Planejamento Mestre
               </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {obraAtiva.nome_obra} • {weeks.length} semanas • {atividades.length} atividades
+              </p>
             </div>
 
-            {/* ... Lista Vertical de Semanas ... */}
-            <div className="flex flex-col gap-5 px-4 pt-4">
-              {weeks.map((week) => (
-                <div key={week.id} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100">
-                    <span className="font-bold">{week.label}</span>
+            {/* BOMBA RELÓGIO MOBILE - Dentro do scroll */}
+            {daysRemaining !== null && (
+              <div
+                className={`mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}
+              >
+                <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
+                  <Bomb className={`h-5 w-5 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>
+                    {statusLabel}
+                  </span>
+                  <div className={`text-xl font-black font-mono leading-none flex items-center gap-1 ${urgencyText}`}>
+                    {daysRemaining < 0 ? (
+                      <span>ATRASO {Math.abs(daysRemaining)}D</span>
+                    ) : daysRemaining === 0 ? (
+                      "VENCE HOJE!"
+                    ) : (
+                      <>
+                        {daysRemaining} <span className="text-[10px] font-bold self-end mb-0.5">DIAS</span>
+                      </>
+                    )}
                   </div>
-                  <div className="bg-white/50 rounded-xl border border-dashed border-slate-200 p-3 min-h-[80px]">
-                    <KanbanColumn weekId={week.id}>
-                      {getTasksForWeek(week.start, week.end).map((atividade) => (
-                        <KanbanCard
-                          key={`${atividade.id}::${week.id}`}
-                          weekId={week.id}
-                          atividade={atividade}
-                          onDelete={(id) => deleteMutation.mutate(id)}
-                          onClick={handleOpenEdit}
-                          onToggleCheck={(id, s) => toggleCheckMutation.mutate({ id, novoStatus: !s })}
-                        />
-                      ))}
-                    </KanbanColumn>
-                    <Button variant="ghost" className="w-full mt-2" onClick={() => handleOpenAdd(week.id)}>
-                      <Plus className="h-5 w-5 mr-2" /> Adicionar
+                  {obraAtiva.data_termino && (
+                    <div className={`text-[9px] font-medium mt-1 flex items-center gap-1 ${urgencyText} opacity-80`}>
+                      <AlarmClock className="h-2.5 w-2.5" />
+                      ENTREGA: {format(parseISO(obraAtiva.data_termino), "dd/MM/yyyy")}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SEMANAS */}
+            <div className="flex flex-col gap-5 px-4 pt-4">
+              {weeks.map((week) => {
+                const weekTasks = getTasksForWeek(week.start, week.end);
+                const completedCount = weekTasks.filter((t) => t.concluido).length;
+
+                return (
+                  <div key={week.id} className="flex flex-col gap-2">
+                    {/* Header Semana - Compacto e Visual */}
+                    <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-800 text-base">{week.label}</span>
+                          <span className="text-[10px] text-slate-400 font-mono bg-slate-100 px-1.5 py-0.5 rounded">
+                            {week.year}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-500">{week.formattedRange}</span>
+                      </div>
+                      {weekTasks.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span
+                            className={`font-semibold ${completedCount === weekTasks.length ? "text-green-600" : "text-slate-600"}`}
+                          >
+                            {completedCount}/{weekTasks.length}
+                          </span>
+                          {completedCount === weekTasks.length && weekTasks.length > 0 && (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Coluna Droppable - Cards */}
+                    <div className="bg-white/50 rounded-xl border border-dashed border-slate-200 p-3 min-h-[80px]">
+                      <KanbanColumn weekId={week.id}>
+                        {weekTasks.map((atividade) => (
+                          <KanbanCard
+                            key={`${atividade.id}::${week.id}`}
+                            weekId={week.id}
+                            atividade={atividade}
+                            onDelete={(id) => deleteMutation.mutate(id)}
+                            onClick={(item) => handleOpenEdit(item)}
+                            onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
+                          />
+                        ))}
+                      </KanbanColumn>
+
+                      {/* Botão Adicionar - Touch Friendly */}
+                      <Button
+                        variant="ghost"
+                        className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white h-12 text-sm font-medium rounded-xl border border-dashed border-slate-200"
+                        onClick={() => handleOpenAdd(week.id)}
+                      >
+                        <Plus className="h-5 w-5 mr-2" /> Adicionar Atividade
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* SEÇÃO IMAGEM DA PLANTA/SETORES - MOBILE */}
+              <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4 mx-0">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-slate-700 text-sm">Planta de Setores</h3>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingPlanta}
+                    >
+                      {isUploadingPlanta ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Upload className="h-3 w-3" />
+                      )}
                     </Button>
+                    {obraAtiva.pmp_planta_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs text-red-600"
+                        onClick={handleRemovePlanta}
+                        disabled={isUploadingPlanta}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-              ))}
+
+                {obraAtiva.pmp_planta_url ? (
+                  <div className="relative rounded-lg overflow-hidden border border-slate-100">
+                    <img
+                      src={obraAtiva.pmp_planta_url}
+                      alt="Planta de Setores"
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                    <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
+                    <p className="text-xs text-slate-500 text-center">Importe a planta do projeto</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 h-9"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Selecionar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          <DragOverlay>
+
+          <DragOverlay dropAnimation={dropAnimation}>
             {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
           </DragOverlay>
         </DndContext>
-        {/* Modal Mobile */}
+
+        {/* MODAL MOBILE */}
         <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
-          <DialogContent>
-            <DialogTitle>Atividade</DialogTitle>
-            {/* Form Mobile */}
+          <DialogContent className="max-w-[95vw] rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">
+                {editingId ? "Editar Atividade" : "Nova Atividade"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">O que será feito?</label>
+                <Input
+                  placeholder="Descrição da atividade..."
+                  value={formData.titulo}
+                  onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                  className="h-12 text-base"
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500 uppercase">Início</label>
+                  <Input
+                    type="date"
+                    value={formData.data_inicio}
+                    onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500 uppercase">Término</label>
+                  <Input
+                    type="date"
+                    value={formData.data_termino}
+                    onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Responsável</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    className="pl-9 h-12 text-base"
+                    placeholder="Quem irá executar?"
+                    value={formData.responsavel}
+                    onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700">Setor</label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-primary hover:text-primary/80"
+                    onClick={() => setIsSetorModalOpen(true)}
+                  >
+                    <Settings className="h-3 w-3 mr-1" /> Cadastrar
+                  </Button>
+                </div>
+                <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
+                  <SelectTrigger className="h-12">
+                    <MapPin className="h-4 w-4 text-slate-400 mr-2" />
+                    <SelectValue placeholder="Selecione o setor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {setores.length > 0 ? (
+                      setores.map((setor) => (
+                        <SelectItem key={setor} value={setor}>
+                          {setor}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-3 text-center text-sm text-muted-foreground">Nenhum setor cadastrado</div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3 pt-1">
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Categoria</span>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(POSTIT_COLORS).map(([key]) => {
+                    const colorMap: Record<string, string> = {
+                      yellow: "bg-yellow-400",
+                      green: "bg-emerald-500",
+                      blue: "bg-blue-500",
+                      red: "bg-red-500",
+                      purple: "bg-purple-500",
+                      orange: "bg-orange-500",
+                      pink: "bg-pink-500",
+                      cyan: "bg-cyan-500",
+                      lime: "bg-lime-500",
+                      indigo: "bg-indigo-500",
+                      amber: "bg-amber-500",
+                      teal: "bg-teal-500",
+                    };
+                    const bgClass = colorMap[key] || "bg-slate-200";
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
+                        className={`w-9 h-9 rounded-full border-2 transition-all ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-2 ring-slate-200" : "border-transparent"} ${bgClass}`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleSaveForm}
+                disabled={saveMutation.isPending}
+                className="w-full h-12 bg-primary text-white hover:bg-primary/90 text-base font-semibold rounded-xl"
+              >
+                {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -862,7 +1212,6 @@ const PMP = () => {
               value={formData.titulo}
               onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
             />
-            {/* ... Outros campos do formulário (Data, Responsável, Setor, Cor) ... */}
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="date"
@@ -880,6 +1229,38 @@ const PMP = () => {
               value={formData.responsavel}
               onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
             />
+
+            {/* SELETOR DE SETOR NO DESKTOP */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">Setor</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs text-primary hover:text-primary/80"
+                  onClick={() => setIsSetorModalOpen(true)}
+                >
+                  <Settings className="h-3 w-3 mr-1" /> Cadastrar
+                </Button>
+              </div>
+              <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
+                <SelectTrigger>
+                  <MapPin className="h-4 w-4 text-slate-400 mr-2" />
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {setores.length > 0 ? (
+                    setores.map((setor) => (
+                      <SelectItem key={setor} value={setor}>
+                        {setor}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-3 text-center text-sm text-muted-foreground">Nenhum setor cadastrado</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Seletor de Cores */}
             <div className="flex flex-wrap gap-2">
