@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -78,6 +78,22 @@ const POSTIT_COLORS = {
 };
 
 type ColorKey = keyof typeof POSTIT_COLORS;
+
+// Mapa explícito de cores para os botões do seletor (garante que o Tailwind gere as classes)
+const COLOR_BG_MAP: Record<ColorKey, string> = {
+  yellow: "bg-yellow-400",
+  green: "bg-emerald-500",
+  blue: "bg-blue-500",
+  red: "bg-red-500",
+  purple: "bg-purple-500",
+  orange: "bg-orange-500",
+  pink: "bg-pink-500",
+  cyan: "bg-cyan-500",
+  lime: "bg-lime-500",
+  indigo: "bg-indigo-500",
+  amber: "bg-amber-500",
+  teal: "bg-teal-500",
+};
 
 interface PmpAtividade {
   id: string;
@@ -309,11 +325,11 @@ const PMP = () => {
   const [isSetorModalOpen, setIsSetorModalOpen] = useState(false);
   const [newSetor, setNewSetor] = useState("");
   const [isUploadingPlanta, setIsUploadingPlanta] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  // QUERY IMPORTANTE: Busca a obra do banco para garantir dados frescos (imagem, data_termino, etc)
   const { data: obraData } = useQuery({
     queryKey: ["obra_atual", obraAtivaContext?.id],
     queryFn: async () => {
@@ -323,11 +339,14 @@ const PMP = () => {
       return data;
     },
     enabled: !!obraAtivaContext?.id,
-    initialData: obraAtivaContext, // Usa o contexto enquanto carrega
+    initialData: obraAtivaContext,
   });
 
-  // Usamos obraData em vez de obraAtivaContext para o resto do componente
   const obraAtiva = obraData || obraAtivaContext;
+
+  useEffect(() => {
+    setImageError(false);
+  }, [obraAtiva?.pmp_planta_url]);
 
   const { data: setores = [], refetch: refetchSetores } = useQuery({
     queryKey: ["registros-pmp-setores", obraAtiva?.id],
@@ -374,17 +393,15 @@ const PMP = () => {
     }
 
     setIsUploadingPlanta(true);
+    setImageError(false);
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `pmp-planta-${obraAtiva.id}-${Date.now()}.${fileExt}`; // Timestamp para evitar cache
+      const fileName = `pmp-planta-${obraAtiva.id}-${Date.now()}.${fileExt}`;
       const filePath = `${obraAtiva.id}/${fileName}`;
 
-      // Se já existe imagem, deletar a antiga
       if (obraAtiva.pmp_planta_url) {
-        const oldUrl = obraAtiva.pmp_planta_url;
-        // Tenta extrair o path do bucket da URL antiga
         try {
-          const urlObj = new URL(oldUrl);
+          const urlObj = new URL(obraAtiva.pmp_planta_url);
           const pathParts = urlObj.pathname.split("/diario-obra/");
           if (pathParts.length > 1) {
             const oldPath = pathParts[1];
@@ -410,7 +427,6 @@ const PMP = () => {
 
       if (updateError) throw updateError;
 
-      // Invalida a query da obra para atualizar a imagem na tela imediatamente
       queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
       toast({ title: "Imagem enviada com sucesso!" });
     } catch (error) {
@@ -614,6 +630,7 @@ const PMP = () => {
     },
   });
 
+  // --- HANDLER DE DRAG AND DROP (CORRIGIDO) ---
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
   };
@@ -622,18 +639,27 @@ const PMP = () => {
     const { active, over } = event;
     setActiveDragItem(null);
     if (!over) return;
+
     const activeData = active.data.current;
     const draggedTask = activeData?.atividade as PmpAtividade;
     const originWeekId = activeData?.originWeekId as string;
-    let targetWeekId = "";
-    if (over.data.current?.type === "Column") targetWeekId = over.data.current.weekId;
 
-    if (targetWeekId && draggedTask && originWeekId && targetWeekId !== originWeekId) {
+    let targetWeekId = "";
+    // Se soltou sobre uma coluna, pega o ID da coluna
+    if (over.data.current?.type === "Column") {
+      targetWeekId = over.data.current.weekId;
+    }
+
+    // Removida a verificação targetWeekId !== originWeekId para permitir "drop" na mesma coluna
+    // Isso garante que a UI não trave ou dê feedback negativo, mesmo que a data não mude.
+    if (targetWeekId && draggedTask && originWeekId) {
       const originDate = parseISO(originWeekId);
       const targetDate = parseISO(targetWeekId);
       const daysDiff = differenceInCalendarDays(targetDate, originDate);
-      let newDataInicio = null,
-        newDataTermino = null;
+
+      let newDataInicio = null;
+      let newDataTermino = null;
+
       if (draggedTask.data_inicio && draggedTask.data_termino) {
         newDataInicio = addDays(parseISO(draggedTask.data_inicio), daysDiff).toISOString();
         newDataTermino = addDays(parseISO(draggedTask.data_termino), daysDiff).toISOString();
@@ -641,6 +667,7 @@ const PMP = () => {
         newDataInicio = targetDate.toISOString();
         newDataTermino = addDays(targetDate, 5).toISOString();
       }
+
       moveMutation.mutate({ id: draggedTask.id, newDataInicio, newDataTermino, novaSemanaRef: targetWeekId });
     }
   };
@@ -803,18 +830,31 @@ const PMP = () => {
                 </div>
               </div>
 
-              {obraAtiva.pmp_planta_url ? (
+              {obraAtiva.pmp_planta_url && !imageError ? (
                 <div className="relative rounded-lg overflow-hidden border border-slate-100">
                   <img
                     src={obraAtiva.pmp_planta_url}
                     alt="Planta de Setores"
                     className="w-full h-auto object-contain"
+                    onError={() => setImageError(true)}
                   />
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-                  <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
-                  <p className="text-xs text-slate-500 text-center">Importe a planta do projeto</p>
+                  {imageError ? (
+                    <>
+                      <AlertCircle className="h-10 w-10 mb-2 text-red-400 opacity-50" />
+                      <p className="text-sm text-red-500 font-medium">Erro ao carregar imagem</p>
+                      <p className="text-xs text-center text-slate-500 mt-1">
+                        Verifique se o bucket 'diario-obra' é Público
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
+                      <p className="text-xs text-slate-500 text-center">Importe a planta do projeto</p>
+                    </>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -873,12 +913,13 @@ const PMP = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {/* CORREÇÃO AQUI: Usando o mapa de cores */}
               <div className="flex flex-wrap gap-2">
                 {Object.keys(POSTIT_COLORS).map((key) => (
                   <button
                     key={key}
                     onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
-                    className={`w-9 h-9 rounded-full bg-${key}-500 border ${formData.cor === key ? "ring-2" : ""}`}
+                    className={`w-9 h-9 rounded-full border-2 transition-all ${COLOR_BG_MAP[key as ColorKey]} ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-2 ring-slate-200" : "border-transparent"}`}
                   />
                 ))}
               </div>
@@ -1014,12 +1055,27 @@ const PMP = () => {
         </div>
 
         <div className="flex-1 w-full overflow-hidden rounded-lg border border-slate-100 bg-slate-50 relative flex items-center justify-center">
-          {obraAtiva.pmp_planta_url ? (
-            <img src={obraAtiva.pmp_planta_url} alt="Planta" className="w-full h-full object-contain" />
+          {obraAtiva.pmp_planta_url && !imageError ? (
+            <img
+              src={obraAtiva.pmp_planta_url}
+              alt="Planta"
+              className="w-full h-full object-contain"
+              onError={() => setImageError(true)}
+            />
           ) : (
             <div className="flex flex-col items-center text-slate-400">
-              <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
-              <p className="text-sm">Nenhuma planta cadastrada</p>
+              {imageError ? (
+                <>
+                  <AlertCircle className="h-12 w-12 mb-2 text-red-400 opacity-50" />
+                  <p className="text-sm text-red-500 font-medium">Erro ao carregar imagem</p>
+                  <p className="text-xs mt-1">Verifique se o bucket 'diario-obra' é Público no Supabase</p>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
+                  <p className="text-sm">Nenhuma planta cadastrada</p>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1085,12 +1141,13 @@ const PMP = () => {
               </Select>
             </div>
 
+            {/* CORREÇÃO AQUI: Usando o mapa estático de classes para as cores */}
             <div className="flex flex-wrap gap-2">
               {Object.keys(POSTIT_COLORS).map((key) => (
                 <button
                   key={key}
                   onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
-                  className={`w-6 h-6 rounded-full bg-${key}-500 border ${formData.cor === key ? "ring-2" : ""}`}
+                  className={`w-6 h-6 rounded-full border-2 transition-all ${COLOR_BG_MAP[key as ColorKey]} ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-1 ring-slate-200" : "border-transparent"}`}
                 />
               ))}
             </div>
