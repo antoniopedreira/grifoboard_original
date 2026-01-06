@@ -423,7 +423,83 @@ const PMP = () => {
     enabled: !!obraAtiva?.id,
   });
 
-  // 4. Lista Plana de Restrições (para a Tabela)
+  // 4. Lógica da Bomba Relógio (REINSERIDA)
+  const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
+    if (!obraAtiva?.data_termino)
+      return {
+        daysRemaining: null,
+        urgencyBg: "",
+        urgencyBorder: "",
+        urgencyText: "",
+        iconColor: "",
+        statusLabel: "",
+        isExploded: false,
+      };
+    const end = parseISO(obraAtiva.data_termino);
+    const today = startOfDay(new Date());
+    const days = differenceInCalendarDays(end, today);
+    let styles = {
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+      text: "text-orange-800",
+      icon: "text-orange-600",
+      label: "TEMPO RESTANTE",
+      exploded: false,
+    };
+    if (days < 0) {
+      styles = {
+        bg: "bg-red-600",
+        border: "border-red-700",
+        text: "text-white",
+        icon: "text-white animate-bounce",
+        label: "PRAZO ESTOURADO!",
+        exploded: true,
+      };
+    } else if (days <= 14) {
+      styles = {
+        bg: "bg-red-100",
+        border: "border-red-400",
+        text: "text-red-800",
+        icon: "text-red-600 animate-pulse",
+        label: "PRAZO CRÍTICO",
+        exploded: false,
+      };
+    }
+    return {
+      daysRemaining: days,
+      urgencyBg: styles.bg,
+      urgencyBorder: styles.border,
+      urgencyText: styles.text,
+      iconColor: styles.icon,
+      statusLabel: styles.label,
+      isExploded: styles.exploded,
+    };
+  }, [obraAtiva]);
+
+  // 5. Geração das Semanas (REINSERIDA)
+  const weeks = useMemo(() => {
+    if (!obraAtiva?.data_inicio || !obraAtiva?.data_termino) return [];
+    const start = parseISO(obraAtiva.data_inicio);
+    const end = parseISO(obraAtiva.data_termino);
+    const firstWeekStart = startOfWeek(start, { weekStartsOn: 1 });
+    const totalWeeks = Math.max(differenceInWeeks(end, firstWeekStart) + 2, 1);
+    const weeksArray = [];
+    for (let i = 0; i < totalWeeks; i++) {
+      const currentWeekStart = addDays(firstWeekStart, i * 7);
+      const weekId = format(currentWeekStart, "yyyy-MM-dd");
+      weeksArray.push({
+        id: weekId,
+        label: `Semana ${i + 1}`,
+        year: format(currentWeekStart, "yyyy"),
+        start: currentWeekStart,
+        end: addDays(currentWeekStart, 6),
+        formattedRange: `${format(currentWeekStart, "dd/MM")} - ${format(addDays(currentWeekStart, 6), "dd/MM")}`,
+      });
+    }
+    return weeksArray;
+  }, [obraAtiva]);
+
+  // 6. Lista Plana de Restrições (para a Tabela)
   const todasRestricoes = useMemo(() => {
     const list: (Restricao & { atividadeTitulo: string; semana: string; atividadeId: string })[] = [];
     atividades.forEach((ativ) => {
@@ -557,6 +633,10 @@ const PMP = () => {
   });
 
   // --- HANDLERS ---
+
+  const handleDragStart = (event: DragStartEvent) => {
+    if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -704,6 +784,10 @@ const PMP = () => {
     });
   };
 
+  const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.5" } } }),
+  };
+
   if (!obraAtiva) return <div className="flex justify-center items-center h-screen">Selecione uma obra</div>;
 
   return (
@@ -719,6 +803,17 @@ const PMP = () => {
             {obraAtiva.nome_obra} • {weeks.length} semanas
           </p>
         </div>
+        {daysRemaining !== null && (
+          <div
+            className={`flex items-center gap-3 px-5 py-3 rounded-lg border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}
+          >
+            <Bomb className={`h-6 w-6 ${iconColor}`} />
+            <div>
+              <span className={`text-[10px] font-black uppercase ${urgencyText}`}>{statusLabel}</span>
+              <div className={`text-2xl font-black ${urgencyText}`}>{daysRemaining} DIAS</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 1. KANBAN BOARD */}
@@ -776,7 +871,7 @@ const PMP = () => {
             </div>
             <ScrollBar orientation="horizontal" className="h-3" />
           </ScrollArea>
-          <DragOverlay>
+          <DragOverlay dropAnimation={dropAnimation}>
             {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
           </DragOverlay>
         </DndContext>
