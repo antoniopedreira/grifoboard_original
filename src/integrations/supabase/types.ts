@@ -948,6 +948,7 @@ export type Database = {
           obra_id: string
           responsavel: string | null
           semana_referencia: string
+          setor: string | null
           titulo: string
         }
         Insert: {
@@ -961,6 +962,7 @@ export type Database = {
           obra_id: string
           responsavel?: string | null
           semana_referencia: string
+          setor?: string | null
           titulo: string
         }
         Update: {
@@ -974,6 +976,7 @@ export type Database = {
           obra_id?: string
           responsavel?: string | null
           semana_referencia?: string
+          setor?: string | null
           titulo?: string
         }
         Relationships: [
