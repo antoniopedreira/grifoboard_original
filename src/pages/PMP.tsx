@@ -368,7 +368,7 @@ const PMP = () => {
   // --- QUERIES ---
 
   // 1. Obra Atual (Query Corrigida com 'as any' para evitar SelectQueryError)
-  const { data: obraData } = useQuery({
+  const { data: obraData } = useQuery<any>({
     queryKey: ["obra_atual", obraAtivaContext?.id],
     queryFn: async () => {
       if (!obraAtivaContext?.id) return null;
@@ -382,7 +382,7 @@ const PMP = () => {
       return data;
     },
     enabled: !!obraAtivaContext?.id,
-    initialData: obraAtivaContext,
+    initialData: obraAtivaContext as any, // Cast inicial
   });
 
   // Cast forçado para any para evitar o erro de tipagem "Property 'id' does not exist on type 'SelectQueryError...'"
