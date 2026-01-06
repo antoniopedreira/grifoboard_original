@@ -60,6 +60,7 @@ import {
   DropAnimation,
   defaultDropAnimationSideEffects,
   useDroppable,
+  DragOverlay, // Adicionado aqui
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -379,7 +380,7 @@ const PMP = () => {
     initialData: obraAtivaContext,
   });
 
-  // Cast forçado para evitar erros de tipagem com SelectQueryError
+  // Cast forçado para any para evitar o erro de tipagem "Property 'id' does not exist on type 'SelectQueryError...'"
   const obraAtiva = (obraData || obraAtivaContext) as any;
 
   useEffect(() => {
@@ -415,7 +416,7 @@ const PMP = () => {
     enabled: !!obraAtiva?.id,
   });
 
-  // --- HELPER FUNCTION (MOVIDA PARA CIMA) ---
+  // --- HELPER FUNCTION (MOVIDA PARA CIMA para evitar erro TS2304) ---
   const getTasksForWeek = (weekStart: Date, weekEnd: Date) => {
     return atividades.filter((atividade) => {
       if (!atividade.data_inicio) return atividade.semana_referencia === format(weekStart, "yyyy-MM-dd");
@@ -635,7 +636,7 @@ const PMP = () => {
     },
   });
 
-  // --- HANDLERS (AGORA COM ACESSO A getTasksForWeek) ---
+  // --- HANDLERS ---
 
   const handlePlantaUpload = async (file: File) => {
     if (!obraAtiva?.id) return;
@@ -705,17 +706,24 @@ const PMP = () => {
 
     let novaOrdem = activeTask.ordem || 0;
 
+    // Se soltou sobre um CARD (não na coluna vazia)
     if (over.data.current?.type !== "Column") {
       const overTask = over.data.current?.atividade as PmpAtividade;
       if (overTask) {
         const delta = 500;
+        // Se já tem ordem, calcula média/delta
         if (activeTask.ordem && overTask.ordem) {
-          novaOrdem = activeTask.ordem > overTask.ordem ? overTask.ordem - delta : overTask.ordem + delta;
+          if (activeTask.ordem > overTask.ordem) {
+            novaOrdem = overTask.ordem - delta; // Moveu pra cima
+          } else {
+            novaOrdem = overTask.ordem + delta; // Moveu pra baixo
+          }
         } else {
           novaOrdem = (overTask.ordem || 0) + delta;
         }
       }
     } else {
+      // Se soltou na COLUNA (vazia ou no fim), vai pro final daquela semana
       const targetTasks = getTasksForWeek(parseISO(targetWeekId), addDays(parseISO(targetWeekId), 6));
       const maxOrder = targetTasks.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
       novaOrdem = maxOrder + 1000;
@@ -724,6 +732,7 @@ const PMP = () => {
     let newDataInicio = null;
     let newDataTermino = null;
 
+    // Se mudou de coluna, atualiza datas
     if (targetWeekId !== originWeekId) {
       const originDate = parseISO(originWeekId);
       const targetDate = parseISO(targetWeekId);
