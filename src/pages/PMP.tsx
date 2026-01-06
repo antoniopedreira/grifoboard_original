@@ -9,8 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Loader2,
   Plus,
@@ -29,6 +33,9 @@ import {
   Image as ImageIcon,
   Upload,
   X,
+  AlertTriangle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { registrosService } from "@/services/registroService";
@@ -57,9 +64,8 @@ import {
   DropAnimation,
   defaultDropAnimationSideEffects,
   useDroppable,
-  DragOverEvent,
 } from "@dnd-kit/core";
-import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 // --- CONFIGURAÇÃO DE CORES ---
@@ -95,6 +101,13 @@ const COLOR_BG_MAP: Record<ColorKey, string> = {
   teal: "bg-teal-500",
 };
 
+interface Restricao {
+  id?: string;
+  descricao: string;
+  data_limite: string;
+  resolvido?: boolean;
+}
+
 interface PmpAtividade {
   id: string;
   obra_id: string;
@@ -107,6 +120,8 @@ interface PmpAtividade {
   concluido?: boolean;
   setor?: string | null;
   ordem?: number;
+  // Join
+  pmp_restricoes?: Restricao[];
 }
 
 // --- CARD (Sortable) ---
@@ -121,7 +136,7 @@ const KanbanCard = ({
   atividade: PmpAtividade;
   weekId: string;
   onDelete?: (id: string) => void;
-  onToggleCheck?: (id: string, currentStatus: boolean) => void;
+  onToggleCheck?: (id: string, currentStatus: boolean, hasRestrictions: boolean) => void;
   onClick?: (atividade: PmpAtividade) => void;
   isOverlay?: boolean;
 }) => {
@@ -140,6 +155,10 @@ const KanbanCard = ({
 
   const theme = POSTIT_COLORS[atividade.cor as ColorKey] || POSTIT_COLORS.yellow;
   const isCompleted = atividade.concluido;
+
+  // Verifica restrições pendentes
+  const restricoesPendentes = atividade.pmp_restricoes?.filter((r) => !r.resolvido).length || 0;
+  const hasRestrictions = restricoesPendentes > 0;
 
   const today = startOfDay(new Date());
   const endDate = atividade.data_termino ? parseISO(atividade.data_termino) : null;
@@ -184,10 +203,16 @@ const KanbanCard = ({
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
-            if (onToggleCheck) onToggleCheck(atividade.id, !!isCompleted);
+            if (onToggleCheck) onToggleCheck(atividade.id, !!isCompleted, hasRestrictions);
           }}
           className={`mt-0.5 transition-colors ${
-            isCompleted ? "text-green-500" : isDelayed ? "text-red-500" : "text-slate-300 hover:text-slate-400"
+            isCompleted
+              ? "text-green-500"
+              : hasRestrictions
+                ? "text-slate-300 cursor-not-allowed" // Desabilitado visualmente se tem restrição
+                : isDelayed
+                  ? "text-red-500"
+                  : "text-slate-300 hover:text-slate-400"
           }`}
         >
           {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
@@ -209,10 +234,17 @@ const KanbanCard = ({
                 CONCLUÍDO
               </Badge>
             )}
-
             {isDelayed && (
               <Badge variant="destructive" className="text-[9px] h-4 px-1.5 font-bold flex items-center gap-1">
                 <AlertCircle className="h-2 w-2" /> ATRASADO
+              </Badge>
+            )}
+            {hasRestrictions && !isCompleted && (
+              <Badge
+                variant="outline"
+                className="text-[9px] h-4 px-1.5 font-bold flex items-center gap-1 bg-amber-50 text-amber-700 border-amber-200"
+              >
+                <AlertTriangle className="h-2 w-2" /> {restricoesPendentes} RESTRIÇÕES
               </Badge>
             )}
           </div>
@@ -315,6 +347,7 @@ const PMP = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Estados
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -326,15 +359,24 @@ const PMP = () => {
     setor: "",
   });
 
+  // Estado para Restrições dentro do Modal
+  const [restricoesTemp, setRestricoesTemp] = useState<Restricao[]>([]);
+  const [novaRestricao, setNovaRestricao] = useState({ descricao: "", data_limite: "" });
+
+  // Estados Globais
   const [activeDragItem, setActiveDragItem] = useState<PmpAtividade | null>(null);
   const [isSetorModalOpen, setIsSetorModalOpen] = useState(false);
   const [newSetor, setNewSetor] = useState("");
   const [isUploadingPlanta, setIsUploadingPlanta] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showResolvedRestrictions, setShowResolvedRestrictions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
+  // --- QUERIES ---
+
+  // 1. Obra Atual
   const { data: obraData } = useQuery({
     queryKey: ["obra_atual", obraAtivaContext?.id],
     queryFn: async () => {
@@ -346,13 +388,13 @@ const PMP = () => {
     enabled: !!obraAtivaContext?.id,
     initialData: obraAtivaContext,
   });
-
   const obraAtiva = obraData || obraAtivaContext;
 
   useEffect(() => {
     setImageError(false);
   }, [obraAtiva?.pmp_planta_url]);
 
+  // 2. Setores
   const { data: setores = [], refetch: refetchSetores } = useQuery({
     queryKey: ["registros-pmp-setores", obraAtiva?.id],
     queryFn: async () => {
@@ -363,14 +405,50 @@ const PMP = () => {
     enabled: !!obraAtiva?.id,
   });
 
+  // 3. Atividades com Restrições (JOIN)
+  const { data: atividades = [] } = useQuery({
+    queryKey: ["pmp_atividades", obraAtiva?.id],
+    queryFn: async () => {
+      if (!obraAtiva?.id) return [];
+      const { data, error } = await supabase
+        .from("pmp_atividades" as any)
+        .select("*, pmp_restricoes(*)") // Join para pegar restrições
+        .eq("obra_id", obraAtiva.id)
+        .order("ordem", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return (data || []) as unknown as PmpAtividade[];
+    },
+    enabled: !!obraAtiva?.id,
+  });
+
+  // 4. Lista Plana de Restrições (para a Tabela)
+  const todasRestricoes = useMemo(() => {
+    const list: (Restricao & { atividadeTitulo: string; semana: string; atividadeId: string })[] = [];
+    atividades.forEach((ativ) => {
+      if (ativ.pmp_restricoes) {
+        ativ.pmp_restricoes.forEach((rest) => {
+          list.push({
+            ...rest,
+            atividadeTitulo: ativ.titulo,
+            atividadeId: ativ.id,
+            semana: ativ.semana_referencia,
+          });
+        });
+      }
+    });
+    return list.sort((a, b) => new Date(a.data_limite).getTime() - new Date(b.data_limite).getTime());
+  }, [atividades]);
+
+  const restricoesFiltradas = todasRestricoes.filter((r) => (showResolvedRestrictions ? true : !r.resolvido));
+
+  // --- MUTATIONS ---
+
   const addSetorMutation = useMutation({
     mutationFn: async (valor: string) => {
       if (!obraAtiva?.id) throw new Error("Nenhuma obra selecionada");
-      await registrosService.criarRegistro({
-        obra_id: obraAtiva.id,
-        tipo: "sector",
-        valor: valor.trim(),
-      });
+      await registrosService.criarRegistro({ obra_id: obraAtiva.id, tipo: "sector", valor: valor.trim() });
     },
     onSuccess: () => {
       refetchSetores();
@@ -380,211 +458,6 @@ const PMP = () => {
     },
   });
 
-  const handlePlantaUpload = async (file: File) => {
-    if (!obraAtiva?.id) return;
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    if (!allowedTypes.includes(file.type)) {
-      toast({ title: "Formato inválido", description: "Use JPEG, PNG ou WebP", variant: "destructive" });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
-      return;
-    }
-
-    setIsUploadingPlanta(true);
-    setImageError(false);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `pmp-planta-${obraAtiva.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${obraAtiva.id}/${fileName}`;
-
-      if (obraAtiva.pmp_planta_url) {
-        try {
-          const urlObj = new URL(obraAtiva.pmp_planta_url);
-          const pathParts = urlObj.pathname.split("/diario-obra/");
-          if (pathParts.length > 1) {
-            const oldPath = pathParts[1];
-            await supabase.storage.from("diario-obra").remove([oldPath]);
-          }
-        } catch (e) {
-          console.log("Erro ao limpar imagem antiga", e);
-        }
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from("diario-obra")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from("diario-obra").getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from("obras")
-        .update({ pmp_planta_url: urlData.publicUrl })
-        .eq("id", obraAtiva.id);
-
-      if (updateError) throw updateError;
-
-      queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
-      toast({ title: "Imagem enviada com sucesso!" });
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Erro ao enviar imagem", variant: "destructive" });
-    } finally {
-      setIsUploadingPlanta(false);
-    }
-  };
-
-  const handleRemovePlanta = async () => {
-    if (!obraAtiva?.id || !obraAtiva.pmp_planta_url) return;
-
-    setIsUploadingPlanta(true);
-    try {
-      try {
-        const urlObj = new URL(obraAtiva.pmp_planta_url);
-        const pathParts = urlObj.pathname.split("/diario-obra/");
-        if (pathParts.length > 1) {
-          const oldPath = pathParts[1];
-          await supabase.storage.from("diario-obra").remove([oldPath]);
-        }
-      } catch (e) {
-        console.log("Erro ao remover arquivo do bucket", e);
-      }
-
-      const { error } = await supabase.from("obras").update({ pmp_planta_url: null }).eq("id", obraAtiva.id);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
-      toast({ title: "Imagem removida!" });
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Erro ao remover imagem", variant: "destructive" });
-    } finally {
-      setIsUploadingPlanta(false);
-    }
-  };
-
-  const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
-    if (!obraAtiva?.data_termino)
-      return {
-        daysRemaining: null,
-        urgencyBg: "",
-        urgencyBorder: "",
-        urgencyText: "",
-        iconColor: "",
-        statusLabel: "",
-        isExploded: false,
-      };
-    const end = parseISO(obraAtiva.data_termino);
-    const days = differenceInCalendarDays(end, startOfDay(new Date()));
-    let styles = {
-      bg: "bg-orange-50",
-      border: "border-orange-200",
-      text: "text-orange-800",
-      icon: "text-orange-600",
-      label: "TEMPO RESTANTE",
-      exploded: false,
-    };
-    if (days < 0) {
-      styles = {
-        bg: "bg-red-600",
-        border: "border-red-700",
-        text: "text-white",
-        icon: "text-white animate-bounce",
-        label: "PRAZO ESTOURADO!",
-        exploded: true,
-      };
-    } else if (days <= 14) {
-      styles = {
-        bg: "bg-red-100",
-        border: "border-red-400",
-        text: "text-red-800",
-        icon: "text-red-600 animate-pulse",
-        label: "PRAZO CRÍTICO",
-        exploded: false,
-      };
-    }
-    return {
-      daysRemaining: days,
-      urgencyBg: styles.bg,
-      urgencyBorder: styles.border,
-      urgencyText: styles.text,
-      iconColor: styles.icon,
-      statusLabel: styles.label,
-      isExploded: styles.exploded,
-    };
-  }, [obraAtiva]);
-
-  const weeks = useMemo(() => {
-    if (!obraAtiva?.data_inicio || !obraAtiva?.data_termino) return [];
-    const start = parseISO(obraAtiva.data_inicio);
-    const end = parseISO(obraAtiva.data_termino);
-    const firstWeekStart = startOfWeek(start, { weekStartsOn: 1 });
-    const totalWeeks = Math.max(differenceInWeeks(end, firstWeekStart) + 2, 1);
-    const weeksArray = [];
-    for (let i = 0; i < totalWeeks; i++) {
-      const currentWeekStart = addDays(firstWeekStart, i * 7);
-      const weekId = format(currentWeekStart, "yyyy-MM-dd");
-      weeksArray.push({
-        id: weekId,
-        label: `Semana ${i + 1}`,
-        year: format(currentWeekStart, "yyyy"),
-        start: currentWeekStart,
-        end: addDays(currentWeekStart, 6),
-        formattedRange: `${format(currentWeekStart, "dd/MM")} - ${format(addDays(currentWeekStart, 6), "dd/MM")}`,
-      });
-    }
-    return weeksArray;
-  }, [obraAtiva]);
-
-  const { data: atividades = [] } = useQuery({
-    queryKey: ["pmp_atividades", obraAtiva?.id],
-    queryFn: async () => {
-      if (!obraAtiva?.id) return [];
-      const { data } = await supabase
-        .from("pmp_atividades" as any)
-        .select("*")
-        .eq("obra_id", obraAtiva.id)
-        .order("ordem", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: true });
-      return (data || []) as unknown as PmpAtividade[];
-    },
-    enabled: !!obraAtiva?.id,
-  });
-
-  const getTasksForWeek = (weekStart: Date, weekEnd: Date) => {
-    return atividades.filter((atividade) => {
-      if (!atividade.data_inicio) return atividade.semana_referencia === format(weekStart, "yyyy-MM-dd");
-      const start = parseISO(atividade.data_inicio);
-      if (!isValid(start)) return false;
-      return areIntervalsOverlapping(
-        { start, end: atividade.data_termino ? parseISO(atividade.data_termino) : start },
-        { start: weekStart, end: weekEnd },
-        { inclusive: true },
-      );
-    });
-  };
-
-  const moveMutation = useMutation({
-    mutationFn: async ({ id, newDataInicio, newDataTermino, novaSemanaRef, novaOrdem }: any) => {
-      const updateData: any = { semana_referencia: novaSemanaRef };
-      if (newDataInicio) updateData.data_inicio = newDataInicio;
-      if (newDataTermino) updateData.data_termino = newDataTermino;
-      if (novaOrdem !== undefined) updateData.ordem = novaOrdem;
-
-      await supabase
-        .from("pmp_atividades" as any)
-        .update(updateData)
-        .eq("id", id);
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
-  });
-
   const toggleCheckMutation = useMutation({
     mutationFn: async ({ id, novoStatus }: { id: string; novoStatus: boolean }) => {
       await supabase
@@ -592,26 +465,82 @@ const PMP = () => {
         .update({ concluido: novoStatus })
         .eq("id", id);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
+    onSuccess: async (_data, variables) => {
+      const userId = userSession?.user?.id;
+      if (userId) {
+        if (variables.novoStatus)
+          await gamificationService.awardXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
+        else await gamificationService.removeXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] });
+    },
+  });
+
+  const resolveRestricaoMutation = useMutation({
+    mutationFn: async ({ id, resolvido }: { id: string; resolvido: boolean }) => {
+      await supabase
+        .from("pmp_restricoes" as any)
+        .update({ resolvido })
+        .eq("id", id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] }); // Atualiza tudo pois afeta o check da atividade
+      toast({ title: "Restrição atualizada" });
+    },
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const maxOrder = atividades.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
-      const dataWithOrder = { ...data, ordem: maxOrder + 1000 };
+      let atividadeId = editingId;
 
-      if (editingId)
+      // 1. Salva ou Atualiza Atividade
+      if (editingId) {
         await supabase
           .from("pmp_atividades" as any)
           .update(data)
           .eq("id", editingId);
-      else await supabase.from("pmp_atividades" as any).insert({ obra_id: obraAtiva.id, ...dataWithOrder });
+      } else {
+        const maxOrder = atividades.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
+        const { data: inserted, error } = await supabase
+          .from("pmp_atividades" as any)
+          .insert({ obra_id: obraAtiva.id, ordem: maxOrder + 1000, ...data })
+          .select()
+          .single();
+        if (error) throw error;
+        atividadeId = inserted.id;
+      }
+
+      // 2. Salva Restrições Novas (as que não tem ID)
+      const novasRestricoes = restricoesTemp.filter((r) => !r.id);
+      if (novasRestricoes.length > 0 && atividadeId) {
+        const payload = novasRestricoes.map((r) => ({
+          atividade_id: atividadeId,
+          descricao: r.descricao,
+          data_limite: r.data_limite,
+          resolvido: false,
+        }));
+        await supabase.from("pmp_restricoes" as any).insert(payload);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
       handleCloseModal();
       toast({ title: "Salvo com sucesso" });
     },
+  });
+
+  const moveMutation = useMutation({
+    mutationFn: async ({ id, newDataInicio, newDataTermino, novaSemanaRef, novaOrdem }: any) => {
+      const updateData: any = { semana_referencia: novaSemanaRef };
+      if (newDataInicio) updateData.data_inicio = newDataInicio;
+      if (newDataTermino) updateData.data_termino = newDataTermino;
+      if (novaOrdem !== undefined) updateData.ordem = novaOrdem;
+      await supabase
+        .from("pmp_atividades" as any)
+        .update(updateData)
+        .eq("id", id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pmp_atividades", obraAtiva?.id] }),
   });
 
   const deleteMutation = useMutation({
@@ -627,11 +556,8 @@ const PMP = () => {
     },
   });
 
-  const handleDragStart = (event: DragStartEvent) => {
-    if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
-  };
+  // --- HANDLERS ---
 
-  // --- LÓGICA DE REORDENAÇÃO ---
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragItem(null);
@@ -651,39 +577,24 @@ const PMP = () => {
 
     if (!targetWeekId) return;
 
-    // Calcular nova ordem
     let novaOrdem = activeTask.ordem || 0;
-
-    // Pegar todas as tarefas da semana de destino (para calcular ordem relativa)
-    const targetTasks = getTasksForWeek(
-      parseISO(targetWeekId), // data da semana
-      addDays(parseISO(targetWeekId), 6),
-    );
+    const targetTasks = getTasksForWeek(parseISO(targetWeekId), addDays(parseISO(targetWeekId), 6));
 
     if (over.data.current?.type !== "Column") {
       const overTask = over.data.current?.atividade as PmpAtividade;
       if (overTask) {
-        // Lógica simples: se arrastou pra cima, ordem menor. Se pra baixo, maior.
-        // Para maior precisão, deveria usar indices do array visual, mas isso é complexo sem estado local.
-        // Vamos usar a ordem do alvo e subtrair/somar um delta.
         const delta = 500;
         if (activeTask.ordem && overTask.ordem) {
-          if (activeTask.ordem > overTask.ordem) {
-            novaOrdem = overTask.ordem - delta;
-          } else {
-            novaOrdem = overTask.ordem + delta;
-          }
+          novaOrdem = activeTask.ordem > overTask.ordem ? overTask.ordem - delta : overTask.ordem + delta;
         } else {
           novaOrdem = (overTask.ordem || 0) + delta;
         }
       }
     } else {
-      // Soltou na coluna (final)
       const maxOrder = targetTasks.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
       novaOrdem = maxOrder + 1000;
     }
 
-    // Datas
     let newDataInicio = null;
     let newDataTermino = null;
 
@@ -691,7 +602,6 @@ const PMP = () => {
       const originDate = parseISO(originWeekId);
       const targetDate = parseISO(targetWeekId);
       const daysDiff = differenceInCalendarDays(targetDate, originDate);
-
       if (activeTask.data_inicio && activeTask.data_termino) {
         newDataInicio = addDays(parseISO(activeTask.data_inicio), daysDiff).toISOString();
         newDataTermino = addDays(parseISO(activeTask.data_termino), daysDiff).toISOString();
@@ -701,15 +611,22 @@ const PMP = () => {
       }
     }
 
-    moveMutation.mutate({
-      id: activeTask.id,
-      newDataInicio,
-      newDataTermino,
-      novaSemanaRef: targetWeekId,
-      novaOrdem,
-    });
+    moveMutation.mutate({ id: activeTask.id, newDataInicio, newDataTermino, novaSemanaRef: targetWeekId, novaOrdem });
   };
 
+  const handleToggleCheck = (id: string, currentStatus: boolean, hasRestrictions: boolean) => {
+    if (!currentStatus && hasRestrictions) {
+      toast({
+        title: "Restrições Pendentes",
+        description: "Você deve resolver todas as restrições antes de concluir esta atividade.",
+        variant: "destructive",
+      });
+      return;
+    }
+    toggleCheckMutation.mutate({ id, novoStatus: !currentStatus });
+  };
+
+  // Funções de Modal e Formulário
   const handleOpenAdd = (weekId: string) => {
     setEditingId(null);
     setFormData({
@@ -720,6 +637,7 @@ const PMP = () => {
       data_termino: addDays(parseISO(weekId), 5).toISOString().split("T")[0],
       setor: "",
     });
+    setRestricoesTemp([]);
     setIsModalOpen(true);
   };
 
@@ -733,13 +651,33 @@ const PMP = () => {
       data_termino: atividade.data_termino?.split("T")[0] || "",
       setor: atividade.setor || "",
     });
+    setRestricoesTemp(atividade.pmp_restricoes || []);
     setIsModalOpen(true);
+  };
+
+  const handleAddRestricao = () => {
+    if (!novaRestricao.descricao || !novaRestricao.data_limite) return;
+    setRestricoesTemp([...restricoesTemp, { ...novaRestricao }]);
+    setNovaRestricao({ descricao: "", data_limite: "" });
+  };
+
+  const handleRemoveRestricao = async (index: number, id?: string) => {
+    if (id) {
+      await supabase
+        .from("pmp_restricoes" as any)
+        .delete()
+        .eq("id", id);
+    }
+    const newList = [...restricoesTemp];
+    newList.splice(index, 1);
+    setRestricoesTemp(newList);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
   };
+
   const handleSaveForm = () => {
     if (!formData.titulo) return toast({ title: "Título obrigatório", variant: "destructive" });
     const semanaRef = formData.data_inicio || format(new Date(), "yyyy-MM-dd");
@@ -752,217 +690,26 @@ const PMP = () => {
     });
   };
 
-  const dropAnimation: DropAnimation = {
-    sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.5" } } }),
+  // Helpers
+  const getTasksForWeek = (weekStart: Date, weekEnd: Date) => {
+    return atividades.filter((atividade) => {
+      if (!atividade.data_inicio) return atividade.semana_referencia === format(weekStart, "yyyy-MM-dd");
+      const start = parseISO(atividade.data_inicio);
+      if (!isValid(start)) return false;
+      return areIntervalsOverlapping(
+        { start, end: atividade.data_termino ? parseISO(atividade.data_termino) : start },
+        { start: weekStart, end: weekEnd },
+        { inclusive: true },
+      );
+    });
   };
 
   if (!obraAtiva) return <div className="flex justify-center items-center h-screen">Selecione uma obra</div>;
 
-  // LAYOUT MOBILE
-  if (isMobile) {
-    return (
-      <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handlePlantaUpload(file);
-            e.target.value = "";
-          }}
-        />
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex-1 overflow-y-auto pb-32">
-            <div className="px-4 pt-3 pb-2 bg-white border-b border-slate-100">
-              <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <CalendarRange className="h-5 w-5 text-primary" /> PMP
-              </h1>
-            </div>
-
-            {/* Bomba Mobile */}
-            {daysRemaining !== null && (
-              <div
-                className={`mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}
-              >
-                <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
-                  <Bomb className={`h-5 w-5 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
-                </div>
-                <div className="flex flex-col flex-1">
-                  <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>
-                    {statusLabel}
-                  </span>
-                  <div className={`text-xl font-black font-mono leading-none flex items-center gap-1 ${urgencyText}`}>
-                    {daysRemaining < 0 ? (
-                      <span>ATRASO {Math.abs(daysRemaining)}D</span>
-                    ) : daysRemaining === 0 ? (
-                      "VENCE HOJE!"
-                    ) : (
-                      <>
-                        {daysRemaining} <span className="text-[10px] font-bold self-end mb-0.5">DIAS</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-5 px-4 pt-4">
-              {weeks.map((week) => (
-                <div key={week.id} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100">
-                    <span className="font-bold">{week.label}</span>
-                  </div>
-                  <div className="bg-white/50 rounded-xl border border-dashed border-slate-200 p-3 min-h-[80px]">
-                    <KanbanColumn weekId={week.id} tasks={getTasksForWeek(week.start, week.end)}>
-                      {getTasksForWeek(week.start, week.end).map((atividade) => (
-                        <KanbanCard
-                          key={`${atividade.id}::${week.id}`}
-                          weekId={week.id}
-                          atividade={atividade}
-                          onDelete={(id) => deleteMutation.mutate(id)}
-                          onClick={handleOpenEdit}
-                          onToggleCheck={(id, s) => toggleCheckMutation.mutate({ id, novoStatus: !s })}
-                        />
-                      ))}
-                    </KanbanColumn>
-                    <Button variant="ghost" className="w-full mt-2" onClick={() => handleOpenAdd(week.id)}>
-                      <Plus className="h-5 w-5 mr-2" /> Adicionar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4 mx-4 mt-6 mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold text-slate-700 text-sm">Planta de Setores</h3>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingPlanta}
-                  >
-                    {isUploadingPlanta ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                  </Button>
-                  {obraAtiva.pmp_planta_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs text-red-600"
-                      onClick={handleRemovePlanta}
-                      disabled={isUploadingPlanta}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-              {obraAtiva.pmp_planta_url && !imageError ? (
-                <div className="relative rounded-lg overflow-hidden border border-slate-100">
-                  <img
-                    src={obraAtiva.pmp_planta_url}
-                    alt="Planta"
-                    className="w-full h-auto object-contain"
-                    onError={() => setImageError(true)}
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-                  <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
-                  <p className="text-xs text-slate-500">Importe a planta</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-3 h-9"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" /> Selecionar
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-          <DragOverlay dropAnimation={dropAnimation}>
-            {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
-          </DragOverlay>
-        </DndContext>
-
-        <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
-          <DialogContent className="max-w-[95vw] rounded-2xl">
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Editar" : "Nova"} Atividade</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-3">
-              <Input
-                placeholder="Título"
-                value={formData.titulo}
-                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                autoFocus
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  type="date"
-                  value={formData.data_inicio}
-                  onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
-                />
-                <Input
-                  type="date"
-                  value={formData.data_termino}
-                  onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
-                />
-              </div>
-              <Input
-                placeholder="Responsável"
-                value={formData.responsavel}
-                onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
-              />
-              <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {setores.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex flex-wrap gap-2">
-                {Object.keys(POSTIT_COLORS).map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
-                    className={`w-9 h-9 rounded-full border-2 transition-all ${COLOR_BG_MAP[key as ColorKey]} ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-2 ring-slate-200" : "border-transparent"}`}
-                  />
-                ))}
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleSaveForm}>Salvar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
-  }
-
-  // DESKTOP
   return (
     <div className="min-h-screen flex flex-col space-y-4 font-sans bg-slate-50/30 pb-20">
-      <div className="flex flex-col md:flex-row justify-between items-end px-2 py-2 gap-4">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-end px-4 py-2 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <CalendarRange className="h-6 w-6 text-primary" />
@@ -972,19 +719,9 @@ const PMP = () => {
             {obraAtiva.nome_obra} • {weeks.length} semanas
           </p>
         </div>
-        {daysRemaining !== null && (
-          <div
-            className={`flex items-center gap-3 px-5 py-3 rounded-lg border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}
-          >
-            <Bomb className={`h-6 w-6 ${iconColor}`} />
-            <div>
-              <span className={`text-[10px] font-black uppercase ${urgencyText}`}>{statusLabel}</span>
-              <div className={`text-2xl font-black ${urgencyText}`}>{daysRemaining} DIAS</div>
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* 1. KANBAN BOARD */}
       <div className="h-[580px] w-full border border-slate-200 rounded-xl bg-white shadow-sm flex-shrink-0 overflow-hidden flex flex-col">
         <DndContext
           sensors={sensors}
@@ -1017,7 +754,7 @@ const PMP = () => {
                                 atividade={atividade}
                                 onDelete={(id) => deleteMutation.mutate(id)}
                                 onClick={(item) => handleOpenEdit(item)}
-                                onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
+                                onToggleCheck={handleToggleCheck}
                               />
                             ))}
                           </KanbanColumn>
@@ -1039,18 +776,106 @@ const PMP = () => {
             </div>
             <ScrollBar orientation="horizontal" className="h-3" />
           </ScrollArea>
-          <DragOverlay dropAnimation={dropAnimation}>
+          <DragOverlay>
             {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
           </DragOverlay>
         </DndContext>
       </div>
 
+      {/* 2. PAINEL DE RESTRIÇÕES (NOVO) */}
+      <div className="w-full border border-slate-200 rounded-xl bg-white shadow-sm p-6 flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <h3 className="font-semibold text-slate-700 text-lg">Painel de Restrições</h3>
+            <Badge variant="outline" className="ml-2">
+              {restricoesFiltradas.length} pendentes
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="show-resolved" className="text-sm text-slate-600 cursor-pointer">
+              Mostrar Resolvidas
+            </Label>
+            <Switch
+              id="show-resolved"
+              checked={showResolvedRestrictions}
+              onCheckedChange={setShowResolvedRestrictions}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-100 overflow-hidden">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead className="w-[50px]"></TableHead>
+                <TableHead>Atividade</TableHead>
+                <TableHead>Restrição</TableHead>
+                <TableHead>Semana</TableHead>
+                <TableHead>Data Limite</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {restricoesFiltradas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                    Nenhuma restrição encontrada.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                restricoesFiltradas.map((restricao) => (
+                  <TableRow key={restricao.id} className={restricao.resolvido ? "bg-slate-50/50" : ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={restricao.resolvido}
+                        onCheckedChange={(checked) =>
+                          resolveRestricaoMutation.mutate({ id: restricao.id!, resolvido: !!checked })
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium text-slate-700">{restricao.atividadeTitulo}</TableCell>
+                    <TableCell>{restricao.descricao}</TableCell>
+                    <TableCell className="text-slate-500 text-xs">
+                      {restricao.semana && format(parseISO(restricao.semana), "dd/MM")}
+                    </TableCell>
+                    <TableCell
+                      className={
+                        isBefore(parseISO(restricao.data_limite), startOfDay(new Date())) && !restricao.resolvido
+                          ? "text-red-600 font-bold"
+                          : ""
+                      }
+                    >
+                      {format(parseISO(restricao.data_limite), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {restricao.resolvido ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          Resolvido
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          Pendente
+                        </Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* 3. PLANTA DE SETORES */}
       <div className="h-[450px] w-full border border-slate-200 rounded-xl bg-white shadow-sm p-4 flex-shrink-0 flex flex-col">
+        {/* ... Cabeçalho da Planta ... */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5 text-primary" />
             <h3 className="font-semibold text-slate-700">Planta de Setores</h3>
           </div>
+          {/* ... Botões Upload ... */}
           <div className="flex gap-2">
             <input
               ref={fileInputRef}
@@ -1082,6 +907,7 @@ const PMP = () => {
             )}
           </div>
         </div>
+        {/* ... Imagem ... */}
         <div className="flex-1 w-full overflow-hidden rounded-lg border border-slate-100 bg-slate-50 relative flex items-center justify-center">
           {obraAtiva.pmp_planta_url && !imageError ? (
             <img
@@ -1092,88 +918,150 @@ const PMP = () => {
             />
           ) : (
             <div className="flex flex-col items-center text-slate-400">
-              {imageError ? (
-                <>
-                  <AlertCircle className="h-12 w-12 mb-2 text-red-400 opacity-50" />
-                  <p className="text-sm text-red-500 font-medium">Erro ao carregar imagem</p>
-                </>
-              ) : (
-                <>
-                  <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
-                  <p className="text-sm">Nenhuma planta cadastrada</p>
-                </>
-              )}
+              <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
+              <p className="text-sm">Nenhuma planta cadastrada</p>
             </div>
           )}
         </div>
       </div>
 
+      {/* MODAL CRIAR/EDITAR ATIVIDADE */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar" : "Nova"} Atividade</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Input
-              placeholder="Título"
-              value={formData.titulo}
-              onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-            />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Título</Label>
               <Input
-                type="date"
-                value={formData.data_inicio}
-                onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
-              />
-              <Input
-                type="date"
-                value={formData.data_termino}
-                onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
+                placeholder="O que será feito?"
+                value={formData.titulo}
+                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
               />
             </div>
-            <Input
-              placeholder="Responsável"
-              value={formData.responsavel}
-              onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
-            />
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">Setor</label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-xs text-primary hover:text-primary/80"
-                  onClick={() => setIsSetorModalOpen(true)}
-                >
-                  <Settings className="h-3 w-3 mr-1" /> Cadastrar
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Início</Label>
+                <Input
+                  type="date"
+                  value={formData.data_inicio}
+                  onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Término</Label>
+                <Input
+                  type="date"
+                  value={formData.data_termino}
+                  onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Responsável</Label>
+                <Input
+                  placeholder="Nome"
+                  value={formData.responsavel}
+                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label>Setor</Label>
+                  <Button variant="link" className="h-4 p-0 text-xs" onClick={() => setIsSetorModalOpen(true)}>
+                    Novo
+                  </Button>
+                </div>
+                <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {setores.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* SEÇÃO DE RESTRIÇÕES NO MODAL */}
+            <div className="space-y-2 border-t pt-4 mt-2">
+              <Label className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" /> Restrições (Lookahead)
+              </Label>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1 space-y-1">
+                  <Input
+                    placeholder="Descrição da restrição (ex: Falta material)"
+                    value={novaRestricao.descricao}
+                    onChange={(e) => setNovaRestricao({ ...novaRestricao, descricao: e.target.value })}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="w-[140px] space-y-1">
+                  <Input
+                    type="date"
+                    value={novaRestricao.data_limite}
+                    onChange={(e) => setNovaRestricao({ ...novaRestricao, data_limite: e.target.value })}
+                    className="text-sm"
+                  />
+                </div>
+                <Button type="button" onClick={handleAddRestricao} size="icon" className="shrink-0">
+                  <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
-                <SelectTrigger>
-                  <MapPin className="h-4 w-4 text-slate-400 mr-2" />
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {setores.length > 0 ? (
-                    setores.map((setor) => (
-                      <SelectItem key={setor} value={setor}>
-                        {setor}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-3 text-center text-sm text-muted-foreground">Nenhum setor cadastrado</div>
-                  )}
-                </SelectContent>
-              </Select>
+
+              {/* Lista de Restrições Adicionadas */}
+              {restricoesTemp.length > 0 && (
+                <div className="bg-slate-50 rounded-md border border-slate-100 p-2 space-y-1 mt-2">
+                  {restricoesTemp.map((rest, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between text-sm bg-white p-2 rounded border border-slate-100 shadow-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        {rest.resolvido ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-amber-500" />
+                        )}
+                        <span className={rest.resolvido ? "line-through text-slate-400" : ""}>{rest.descricao}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-400">
+                          {rest.data_limite && format(parseISO(rest.data_limite), "dd/MM")}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-red-400 hover:text-red-600"
+                          onClick={() => handleRemoveRestricao(index, rest.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex flex-wrap gap-2">
-              {Object.keys(POSTIT_COLORS).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${COLOR_BG_MAP[key as ColorKey]} ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-1 ring-slate-200" : "border-transparent"}`}
-                />
-              ))}
+
+            <div className="space-y-2 pt-2">
+              <Label>Cor do Card</Label>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(POSTIT_COLORS).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${COLOR_BG_MAP[key as ColorKey]} ${formData.cor === key ? "border-slate-600 scale-110 ring-2" : "border-transparent"}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
