@@ -289,7 +289,7 @@ const KanbanColumn = ({ weekId, children }: { weekId: string; children: React.Re
 const PMP = () => {
   const isMobile = useIsMobile();
   const { userSession } = useAuth();
-  const obraAtiva = userSession?.obraAtiva;
+  const obraAtivaContext = userSession?.obraAtiva;
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -312,6 +312,22 @@ const PMP = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // QUERY IMPORTANTE: Busca a obra do banco para garantir dados frescos (imagem, data_termino, etc)
+  const { data: obraData } = useQuery({
+    queryKey: ["obra_atual", obraAtivaContext?.id],
+    queryFn: async () => {
+      if (!obraAtivaContext?.id) return null;
+      const { data, error } = await supabase.from("obras").select("*").eq("id", obraAtivaContext.id).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!obraAtivaContext?.id,
+    initialData: obraAtivaContext, // Usa o contexto enquanto carrega
+  });
+
+  // Usamos obraData em vez de obraAtivaContext para o resto do componente
+  const obraAtiva = obraData || obraAtivaContext;
 
   const { data: setores = [], refetch: refetchSetores } = useQuery({
     queryKey: ["registros-pmp-setores", obraAtiva?.id],
@@ -360,12 +376,23 @@ const PMP = () => {
     setIsUploadingPlanta(true);
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `pmp-planta-${obraAtiva.id}.${fileExt}`;
+      const fileName = `pmp-planta-${obraAtiva.id}-${Date.now()}.${fileExt}`; // Timestamp para evitar cache
       const filePath = `${obraAtiva.id}/${fileName}`;
 
+      // Se já existe imagem, deletar a antiga
       if (obraAtiva.pmp_planta_url) {
-        const oldPath = obraAtiva.pmp_planta_url.split("/").slice(-2).join("/");
-        await supabase.storage.from("diario-obra").remove([oldPath]);
+        const oldUrl = obraAtiva.pmp_planta_url;
+        // Tenta extrair o path do bucket da URL antiga
+        try {
+          const urlObj = new URL(oldUrl);
+          const pathParts = urlObj.pathname.split("/diario-obra/");
+          if (pathParts.length > 1) {
+            const oldPath = pathParts[1];
+            await supabase.storage.from("diario-obra").remove([oldPath]);
+          }
+        } catch (e) {
+          console.log("Erro ao limpar imagem antiga", e);
+        }
       }
 
       const { error: uploadError } = await supabase.storage
@@ -383,7 +410,8 @@ const PMP = () => {
 
       if (updateError) throw updateError;
 
-      queryClient.invalidateQueries({ queryKey: ["obras"] });
+      // Invalida a query da obra para atualizar a imagem na tela imediatamente
+      queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
       toast({ title: "Imagem enviada com sucesso!" });
     } catch (error) {
       console.error(error);
@@ -398,14 +426,22 @@ const PMP = () => {
 
     setIsUploadingPlanta(true);
     try {
-      const oldPath = obraAtiva.pmp_planta_url.split("/").slice(-2).join("/");
-      await supabase.storage.from("diario-obra").remove([oldPath]);
+      try {
+        const urlObj = new URL(obraAtiva.pmp_planta_url);
+        const pathParts = urlObj.pathname.split("/diario-obra/");
+        if (pathParts.length > 1) {
+          const oldPath = pathParts[1];
+          await supabase.storage.from("diario-obra").remove([oldPath]);
+        }
+      } catch (e) {
+        console.log("Erro ao remover arquivo do bucket", e);
+      }
 
       const { error } = await supabase.from("obras").update({ pmp_planta_url: null }).eq("id", obraAtiva.id);
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ["obras"] });
+      queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
       toast({ title: "Imagem removida!" });
     } catch (error) {
       console.error(error);
@@ -651,14 +687,12 @@ const PMP = () => {
     });
   };
 
-  // DEFINIÇÃO DA ANIMAÇÃO DROP
   const dropAnimation: DropAnimation = {
     sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.5" } } }),
   };
 
   if (!obraAtiva) return <div className="flex justify-center items-center h-screen">Selecione uma obra</div>;
 
-  // LAYOUT MOBILE (Mantido igual)
   if (isMobile) {
     return (
       <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
@@ -738,6 +772,60 @@ const PMP = () => {
                 </div>
               ))}
             </div>
+
+            <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4 mx-4 mt-6 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-slate-700 text-sm">Planta de Setores</h3>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingPlanta}
+                  >
+                    {isUploadingPlanta ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                  </Button>
+                  {obraAtiva.pmp_planta_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs text-red-600"
+                      onClick={handleRemovePlanta}
+                      disabled={isUploadingPlanta}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {obraAtiva.pmp_planta_url ? (
+                <div className="relative rounded-lg overflow-hidden border border-slate-100">
+                  <img
+                    src={obraAtiva.pmp_planta_url}
+                    alt="Planta de Setores"
+                    className="w-full h-auto object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                  <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
+                  <p className="text-xs text-slate-500 text-center">Importe a planta do projeto</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 h-9"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" /> Selecionar
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           <DragOverlay dropAnimation={dropAnimation}>
             {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
@@ -745,7 +833,6 @@ const PMP = () => {
         </DndContext>
 
         <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
-          {/* Modal Mobile reutiliza o conteúdo do desktop */}
           <DialogContent className="max-w-[95vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar" : "Nova"} Atividade</DialogTitle>
