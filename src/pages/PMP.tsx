@@ -60,6 +60,7 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 // --- CONFIGURAÇÃO DE CORES DOS POST-ITS ---
 const POSTIT_COLORS = {
@@ -301,11 +302,11 @@ const PMP = () => {
 
   // Query para buscar setores cadastrados
   const { data: setores = [], refetch: refetchSetores } = useQuery({
-    queryKey: ['registros-pmp-setores', obraAtiva?.id],
+    queryKey: ["registros-pmp-setores", obraAtiva?.id],
     queryFn: async () => {
       if (!obraAtiva?.id) return [];
       const registros = await registrosService.listarRegistros(obraAtiva.id);
-      return registros.filter(r => r.tipo === 'sector').map(r => r.valor);
+      return registros.filter((r) => r.tipo === "sector").map((r) => r.valor);
     },
     enabled: !!obraAtiva?.id,
   });
@@ -313,10 +314,10 @@ const PMP = () => {
   // Mutation para adicionar setor
   const addSetorMutation = useMutation({
     mutationFn: async (valor: string) => {
-      if (!obraAtiva?.id) throw new Error('Nenhuma obra selecionada');
+      if (!obraAtiva?.id) throw new Error("Nenhuma obra selecionada");
       await registrosService.criarRegistro({
         obra_id: obraAtiva.id,
-        tipo: 'sector',
+        tipo: "sector",
         valor: valor.trim(),
       });
     },
@@ -334,8 +335,8 @@ const PMP = () => {
   // Função para upload da planta/imagem
   const handlePlantaUpload = async (file: File) => {
     if (!obraAtiva?.id) return;
-    
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
       toast({ title: "Formato inválido", description: "Use JPEG, PNG ou WebP", variant: "destructive" });
       return;
@@ -348,34 +349,32 @@ const PMP = () => {
 
     setIsUploadingPlanta(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `pmp-planta-${obraAtiva.id}.${fileExt}`;
       const filePath = `${obraAtiva.id}/${fileName}`;
 
       // Se já existe imagem, deletar a antiga
       if (obraAtiva.pmp_planta_url) {
-        const oldPath = obraAtiva.pmp_planta_url.split('/').slice(-2).join('/');
-        await supabase.storage.from('diario-obra').remove([oldPath]);
+        const oldPath = obraAtiva.pmp_planta_url.split("/").slice(-2).join("/");
+        await supabase.storage.from("diario-obra").remove([oldPath]);
       }
 
       const { error: uploadError } = await supabase.storage
-        .from('diario-obra')
+        .from("diario-obra")
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from('diario-obra')
-        .getPublicUrl(filePath);
+      const { data: urlData } = supabase.storage.from("diario-obra").getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
-        .from('obras')
+        .from("obras")
         .update({ pmp_planta_url: urlData.publicUrl })
-        .eq('id', obraAtiva.id);
+        .eq("id", obraAtiva.id);
 
       if (updateError) throw updateError;
 
-      queryClient.invalidateQueries({ queryKey: ['obras'] });
+      queryClient.invalidateQueries({ queryKey: ["obras"] });
       toast({ title: "Imagem enviada com sucesso!" });
     } catch (error) {
       console.error(error);
@@ -391,17 +390,14 @@ const PMP = () => {
 
     setIsUploadingPlanta(true);
     try {
-      const oldPath = obraAtiva.pmp_planta_url.split('/').slice(-2).join('/');
-      await supabase.storage.from('diario-obra').remove([oldPath]);
+      const oldPath = obraAtiva.pmp_planta_url.split("/").slice(-2).join("/");
+      await supabase.storage.from("diario-obra").remove([oldPath]);
 
-      const { error } = await supabase
-        .from('obras')
-        .update({ pmp_planta_url: null })
-        .eq('id', obraAtiva.id);
+      const { error } = await supabase.from("obras").update({ pmp_planta_url: null }).eq("id", obraAtiva.id);
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['obras'] });
+      queryClient.invalidateQueries({ queryKey: ["obras"] });
       toast({ title: "Imagem removida!" });
     } catch (error) {
       console.error(error);
@@ -582,7 +578,7 @@ const PMP = () => {
     onSuccess: async (_data, variables) => {
       const userId = userSession?.user?.id;
       if (!userId) return;
-      
+
       if (variables.novoStatus) {
         // Tarefa concluída - dar 50 XP
         await gamificationService.awardXP(userId, "PMP_ATIVIDADE_CONCLUIDA", 50, variables.id);
@@ -739,7 +735,7 @@ const PMP = () => {
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handlePlantaUpload(file);
-            e.target.value = '';
+            e.target.value = "";
           }}
         />
         {/* LISTA DE SEMANAS MOBILE - Scroll Vertical (inclui header e bomba) */}
@@ -763,12 +759,16 @@ const PMP = () => {
 
             {/* BOMBA RELÓGIO MOBILE - Dentro do scroll */}
             {daysRemaining !== null && (
-              <div className={`mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}>
+              <div
+                className={`mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}
+              >
                 <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
                   <Bomb className={`h-5 w-5 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
                 </div>
                 <div className="flex flex-col flex-1">
-                  <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>{statusLabel}</span>
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>
+                    {statusLabel}
+                  </span>
                   <div className={`text-xl font-black font-mono leading-none flex items-center gap-1 ${urgencyText}`}>
                     {daysRemaining < 0 ? (
                       <span>ATRASO {Math.abs(daysRemaining)}D</span>
@@ -794,8 +794,8 @@ const PMP = () => {
             <div className="flex flex-col gap-5 px-4 pt-4">
               {weeks.map((week) => {
                 const weekTasks = getTasksForWeek(week.start, week.end);
-                const completedCount = weekTasks.filter(t => t.concluido).length;
-                
+                const completedCount = weekTasks.filter((t) => t.concluido).length;
+
                 return (
                   <div key={week.id} className="flex flex-col gap-2">
                     {/* Header Semana - Compacto e Visual */}
@@ -811,7 +811,9 @@ const PMP = () => {
                       </div>
                       {weekTasks.length > 0 && (
                         <div className="flex items-center gap-1.5 text-xs">
-                          <span className={`font-semibold ${completedCount === weekTasks.length ? 'text-green-600' : 'text-slate-600'}`}>
+                          <span
+                            className={`font-semibold ${completedCount === weekTasks.length ? "text-green-600" : "text-slate-600"}`}
+                          >
                             {completedCount}/{weekTasks.length}
                           </span>
                           {completedCount === weekTasks.length && weekTasks.length > 0 && (
@@ -883,7 +885,7 @@ const PMP = () => {
                     )}
                   </div>
                 </div>
-                
+
                 {obraAtiva.pmp_planta_url ? (
                   <div className="relative rounded-lg overflow-hidden border border-slate-100">
                     <img
@@ -895,9 +897,7 @@ const PMP = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
                     <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
-                    <p className="text-xs text-slate-500 text-center">
-                      Importe a planta do projeto
-                    </p>
+                    <p className="text-xs text-slate-500 text-center">Importe a planta do projeto</p>
                     <Button
                       variant="outline"
                       size="sm"
@@ -981,10 +981,7 @@ const PMP = () => {
                     <Settings className="h-3 w-3 mr-1" /> Cadastrar
                   </Button>
                 </div>
-                <Select
-                  value={formData.setor}
-                  onValueChange={(value) => setFormData({ ...formData, setor: value })}
-                >
+                <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
                   <SelectTrigger className="h-12">
                     <MapPin className="h-4 w-4 text-slate-400 mr-2" />
                     <SelectValue placeholder="Selecione o setor" />
@@ -992,12 +989,12 @@ const PMP = () => {
                   <SelectContent>
                     {setores.length > 0 ? (
                       setores.map((setor) => (
-                        <SelectItem key={setor} value={setor}>{setor}</SelectItem>
+                        <SelectItem key={setor} value={setor}>
+                          {setor}
+                        </SelectItem>
                       ))
                     ) : (
-                      <div className="px-2 py-3 text-center text-sm text-muted-foreground">
-                        Nenhum setor cadastrado
-                      </div>
+                      <div className="px-2 py-3 text-center text-sm text-muted-foreground">Nenhum setor cadastrado</div>
                     )}
                   </SelectContent>
                 </Select>
@@ -1048,7 +1045,7 @@ const PMP = () => {
     );
   }
 
-  // DESKTOP: Layout Original
+  // DESKTOP: Layout Original (Agora com Resizable Panels)
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 font-sans bg-slate-50/30">
       {/* HEADER: TÍTULO E BOMBA RELÓGIO */}
@@ -1106,138 +1103,196 @@ const PMP = () => {
         )}
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
+      <ResizablePanelGroup
+        direction="vertical"
+        className="flex-1 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden"
       >
-        {/* DESKTOP: Layout Horizontal */}
-        <ScrollArea className="w-full flex-1 border border-slate-200 rounded-xl bg-white shadow-sm">
-          <div className="flex p-6 gap-4">
-            {weeks.map((week) => (
-              <div key={week.id} className="flex-shrink-0 w-[280px] flex flex-col gap-3 group/column">
-                {/* Header Semana */}
-                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{week.label}</span>
-                    <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
-                      {week.year}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                    <span className="capitalize">{week.formattedRange}</span>
-                  </div>
+        {/* PANEL 1: KANBAN BOARD (Maior destaque) */}
+        <ResizablePanel defaultSize={70} minSize={30}>
+          <div className="h-full flex flex-col">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <ScrollArea className="w-full h-full">
+                <div className="flex p-6 gap-4 h-full">
+                  {weeks.map((week) => (
+                    <div key={week.id} className="flex-shrink-0 w-[280px] flex flex-col gap-3 group/column">
+                      {/* Header Semana */}
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">
+                            {week.label}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100">
+                            {week.year}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                          <span className="capitalize">{week.formattedRange}</span>
+                        </div>
+                      </div>
+
+                      {/* Coluna Droppable */}
+                      <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] flex-1 transition-colors hover:border-slate-300">
+                        <KanbanColumn weekId={week.id}>
+                          {getTasksForWeek(week.start, week.end).map((atividade) => (
+                            <KanbanCard
+                              key={`${atividade.id}::${week.id}`}
+                              weekId={week.id}
+                              atividade={atividade}
+                              onDelete={(id) => deleteMutation.mutate(id)}
+                              onClick={(item) => handleOpenEdit(item)}
+                              onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
+                            />
+                          ))}
+                        </KanbanColumn>
+
+                        <Button
+                          variant="ghost"
+                          className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-9 text-xs transition-all"
+                          onClick={() => handleOpenAdd(week.id)}
+                        >
+                          <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                <ScrollBar orientation="horizontal" className="h-2.5" />
+              </ScrollArea>
 
-                {/* Coluna Droppable */}
-                <div className="bg-slate-50/50 rounded-lg border border-dashed border-slate-200 p-2 min-h-[150px] transition-colors hover:border-slate-300">
-                  <KanbanColumn weekId={week.id}>
-                    {getTasksForWeek(week.start, week.end).map((atividade) => (
-                      <KanbanCard
-                        key={`${atividade.id}::${week.id}`}
-                        weekId={week.id}
-                        atividade={atividade}
-                        onDelete={(id) => deleteMutation.mutate(id)}
-                        onClick={(item) => handleOpenEdit(item)}
-                        onToggleCheck={(id, status) => toggleCheckMutation.mutate({ id, novoStatus: !status })}
-                      />
-                    ))}
-                  </KanbanColumn>
+              <DragOverlay dropAnimation={dropAnimation}>
+                {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
+              </DragOverlay>
+            </DndContext>
+          </div>
+        </ResizablePanel>
 
+        <ResizableHandle withHandle />
+
+        {/* PANEL 2: PLANTA DE SETORES (Redimensionável) */}
+        <ResizablePanel defaultSize={30} minSize={10} maxSize={80}>
+          <div className="h-full flex flex-col p-4 bg-slate-50/30">
+            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-slate-700">Planta de Setores</h3>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePlantaUpload(file);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingPlanta}
+                >
+                  {isUploadingPlanta ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-1" />
+                  )}
+                  {obraAtiva.pmp_planta_url ? "Substituir" : "Importar Imagem"}
+                </Button>
+                {obraAtiva.pmp_planta_url && (
                   <Button
-                    variant="ghost"
-                    className="w-full mt-2 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 h-9 text-xs transition-all"
-                    onClick={() => handleOpenAdd(week.id)}
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={handleRemovePlanta}
+                    disabled={isUploadingPlanta}
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
+                    <X className="h-4 w-4 mr-1" />
+                    Remover
                   </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white relative">
+              {obraAtiva.pmp_planta_url ? (
+                <img
+                  src={obraAtiva.pmp_planta_url}
+                  alt="Planta de Setores do Projeto"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                  <ImageIcon className="h-12 w-12 text-slate-300 mb-3" />
+                  <p className="text-sm text-slate-500 text-center">
+                    Importe uma imagem da planta do projeto com os setores identificados
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">JPEG, PNG ou WebP • Máx. 5MB</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+
+      {/* MODAL CADASTRAR SETOR */}
+      <Dialog open={isSetorModalOpen} onOpenChange={setIsSetorModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              Cadastrar Setor
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Nome do Setor</label>
+              <Input
+                placeholder="Ex: Térreo, 1º Pavimento, Área Externa..."
+                value={newSetor}
+                onChange={(e) => setNewSetor(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {setores.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-500 uppercase">Setores Cadastrados</label>
+                <div className="flex flex-wrap gap-2">
+                  {setores.map((setor) => (
+                    <Badge key={setor} variant="secondary" className="text-xs">
+                      {setor}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="h-2.5" />
-        </ScrollArea>
-
-        <DragOverlay dropAnimation={dropAnimation}>
-          {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
-        </DragOverlay>
-      </DndContext>
-
-      {/* SEÇÃO IMAGEM DA PLANTA/SETORES */}
-      <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <ImageIcon className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-slate-700">Planta de Setores</h3>
-          </div>
-          <div className="flex gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handlePlantaUpload(file);
-                e.target.value = '';
-              }}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingPlanta}
-            >
-              {isUploadingPlanta ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : (
-                <Upload className="h-4 w-4 mr-1" />
-              )}
-              {obraAtiva.pmp_planta_url ? 'Substituir' : 'Importar Imagem'}
-            </Button>
-            {obraAtiva.pmp_planta_url && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={handleRemovePlanta}
-                disabled={isUploadingPlanta}
-              >
-                <X className="h-4 w-4 mr-1" />
-                Remover
-              </Button>
             )}
           </div>
-        </div>
-        
-        {obraAtiva.pmp_planta_url ? (
-          <div className="relative rounded-lg overflow-hidden border border-slate-100">
-            <img
-              src={obraAtiva.pmp_planta_url}
-              alt="Planta de Setores do Projeto"
-              className="w-full h-auto object-contain max-h-[500px]"
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-            <ImageIcon className="h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm text-slate-500 text-center">
-              Importe uma imagem da planta do projeto com os setores identificados
-            </p>
-            <p className="text-xs text-slate-400 mt-1">JPEG, PNG ou WebP • Máx. 5MB</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Selecionar Imagem
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSetorModalOpen(false)}>
+              Cancelar
             </Button>
-          </div>
-        )}
-      </div>
+            <Button
+              onClick={() => {
+                if (newSetor.trim()) {
+                  addSetorMutation.mutate(newSetor);
+                }
+              }}
+              disabled={addSetorMutation.isPending || !newSetor.trim()}
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              {addSetorMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Cadastrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* MODAL EDITAR/CRIAR */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
@@ -1299,10 +1354,7 @@ const PMP = () => {
                   <Settings className="h-3 w-3 mr-1" /> Cadastrar
                 </Button>
               </div>
-              <Select
-                value={formData.setor}
-                onValueChange={(value) => setFormData({ ...formData, setor: value })}
-              >
+              <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
                 <SelectTrigger>
                   <MapPin className="h-4 w-4 text-slate-400 mr-2" />
                   <SelectValue placeholder="Selecione o setor" />
@@ -1310,12 +1362,12 @@ const PMP = () => {
                 <SelectContent>
                   {setores.length > 0 ? (
                     setores.map((setor) => (
-                      <SelectItem key={setor} value={setor}>{setor}</SelectItem>
+                      <SelectItem key={setor} value={setor}>
+                        {setor}
+                      </SelectItem>
                     ))
                   ) : (
-                    <div className="px-2 py-3 text-center text-sm text-muted-foreground">
-                      Nenhum setor cadastrado
-                    </div>
+                    <div className="px-2 py-3 text-center text-sm text-muted-foreground">Nenhum setor cadastrado</div>
                   )}
                 </SelectContent>
               </Select>
@@ -1359,61 +1411,6 @@ const PMP = () => {
             >
               {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* MODAL CADASTRAR SETOR */}
-      <Dialog open={isSetorModalOpen} onOpenChange={setIsSetorModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              Cadastrar Setor
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Nome do Setor</label>
-              <Input
-                placeholder="Ex: Térreo, 1º Pavimento, Área Externa..."
-                value={newSetor}
-                onChange={(e) => setNewSetor(e.target.value)}
-                autoFocus
-              />
-            </div>
-            {setores.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 uppercase">Setores Cadastrados</label>
-                <div className="flex flex-wrap gap-2">
-                  {setores.map((setor) => (
-                    <Badge key={setor} variant="secondary" className="text-xs">
-                      {setor}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsSetorModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => {
-                if (newSetor.trim()) {
-                  addSetorMutation.mutate(newSetor);
-                }
-              }}
-              disabled={addSetorMutation.isPending || !newSetor.trim()}
-              className="bg-primary text-white hover:bg-primary/90"
-            >
-              {addSetorMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Cadastrar
             </Button>
           </DialogFooter>
         </DialogContent>
