@@ -57,7 +57,6 @@ import {
   DropAnimation,
   defaultDropAnimationSideEffects,
   useDroppable,
-  // Novos imports para Sortable
   DragOverEvent,
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -81,7 +80,6 @@ const POSTIT_COLORS = {
 
 type ColorKey = keyof typeof POSTIT_COLORS;
 
-// Mapa explícito para garantir que o Tailwind gere as classes de background
 const COLOR_BG_MAP: Record<ColorKey, string> = {
   yellow: "bg-yellow-400",
   green: "bg-emerald-500",
@@ -108,7 +106,7 @@ interface PmpAtividade {
   responsavel?: string | null;
   concluido?: boolean;
   setor?: string | null;
-  ordem?: number; // Novo campo para ordenação
+  ordem?: number;
 }
 
 // --- CARD (Sortable) ---
@@ -129,7 +127,6 @@ const KanbanCard = ({
 }) => {
   const uniqueDragId = `${atividade.id}::${weekId}`;
 
-  // Usando useSortable para permitir reordenação
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: uniqueDragId,
     data: { atividade, originWeekId: weekId },
@@ -292,7 +289,6 @@ const KanbanColumn = ({
     data: { type: "Column", weekId },
   });
 
-  // IDs únicos para o SortableContext
   const itemIds = useMemo(() => tasks.map((t) => `${t.id}::${weekId}`), [tasks, weekId]);
 
   return (
@@ -339,7 +335,6 @@ const PMP = () => {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  // Query de Obra
   const { data: obraData } = useQuery({
     queryKey: ["obra_atual", obraAtivaContext?.id],
     queryFn: async () => {
@@ -358,7 +353,6 @@ const PMP = () => {
     setImageError(false);
   }, [obraAtiva?.pmp_planta_url]);
 
-  // Query de Setores
   const { data: setores = [], refetch: refetchSetores } = useQuery({
     queryKey: ["registros-pmp-setores", obraAtiva?.id],
     queryFn: async () => {
@@ -388,12 +382,37 @@ const PMP = () => {
 
   const handlePlantaUpload = async (file: File) => {
     if (!obraAtiva?.id) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Formato inválido", description: "Use JPEG, PNG ou WebP", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
+      return;
+    }
+
     setIsUploadingPlanta(true);
     setImageError(false);
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `pmp-planta-${obraAtiva.id}-${Date.now()}.${fileExt}`;
       const filePath = `${obraAtiva.id}/${fileName}`;
+
+      if (obraAtiva.pmp_planta_url) {
+        try {
+          const urlObj = new URL(obraAtiva.pmp_planta_url);
+          const pathParts = urlObj.pathname.split("/diario-obra/");
+          if (pathParts.length > 1) {
+            const oldPath = pathParts[1];
+            await supabase.storage.from("diario-obra").remove([oldPath]);
+          }
+        } catch (e) {
+          console.log("Erro ao limpar imagem antiga", e);
+        }
+      }
 
       const { error: uploadError } = await supabase.storage
         .from("diario-obra")
@@ -403,7 +422,12 @@ const PMP = () => {
 
       const { data: urlData } = supabase.storage.from("diario-obra").getPublicUrl(filePath);
 
-      await supabase.from("obras").update({ pmp_planta_url: urlData.publicUrl }).eq("id", obraAtiva.id);
+      const { error: updateError } = await supabase
+        .from("obras")
+        .update({ pmp_planta_url: urlData.publicUrl })
+        .eq("id", obraAtiva.id);
+
+      if (updateError) throw updateError;
 
       queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
       toast({ title: "Imagem enviada com sucesso!" });
@@ -416,20 +440,35 @@ const PMP = () => {
   };
 
   const handleRemovePlanta = async () => {
-    if (!obraAtiva?.id) return;
+    if (!obraAtiva?.id || !obraAtiva.pmp_planta_url) return;
+
     setIsUploadingPlanta(true);
     try {
-      await supabase.from("obras").update({ pmp_planta_url: null }).eq("id", obraAtiva.id);
+      try {
+        const urlObj = new URL(obraAtiva.pmp_planta_url);
+        const pathParts = urlObj.pathname.split("/diario-obra/");
+        if (pathParts.length > 1) {
+          const oldPath = pathParts[1];
+          await supabase.storage.from("diario-obra").remove([oldPath]);
+        }
+      } catch (e) {
+        console.log("Erro ao remover arquivo do bucket", e);
+      }
+
+      const { error } = await supabase.from("obras").update({ pmp_planta_url: null }).eq("id", obraAtiva.id);
+
+      if (error) throw error;
+
       queryClient.invalidateQueries({ queryKey: ["obra_atual", obraAtiva.id] });
       toast({ title: "Imagem removida!" });
     } catch (error) {
       console.error(error);
+      toast({ title: "Erro ao remover imagem", variant: "destructive" });
     } finally {
       setIsUploadingPlanta(false);
     }
   };
 
-  // Hooks de Cálculo
   const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
     if (!obraAtiva?.data_termino)
       return {
@@ -443,15 +482,41 @@ const PMP = () => {
       };
     const end = parseISO(obraAtiva.data_termino);
     const days = differenceInCalendarDays(end, startOfDay(new Date()));
-    // ... lógica simples de alerta
+    let styles = {
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+      text: "text-orange-800",
+      icon: "text-orange-600",
+      label: "TEMPO RESTANTE",
+      exploded: false,
+    };
+    if (days < 0) {
+      styles = {
+        bg: "bg-red-600",
+        border: "border-red-700",
+        text: "text-white",
+        icon: "text-white animate-bounce",
+        label: "PRAZO ESTOURADO!",
+        exploded: true,
+      };
+    } else if (days <= 14) {
+      styles = {
+        bg: "bg-red-100",
+        border: "border-red-400",
+        text: "text-red-800",
+        icon: "text-red-600 animate-pulse",
+        label: "PRAZO CRÍTICO",
+        exploded: false,
+      };
+    }
     return {
       daysRemaining: days,
-      urgencyBg: "bg-slate-50",
-      urgencyBorder: "border-slate-200",
-      urgencyText: "text-slate-700",
-      iconColor: "text-slate-500",
-      statusLabel: "PRAZO",
-      isExploded: false,
+      urgencyBg: styles.bg,
+      urgencyBorder: styles.border,
+      urgencyText: styles.text,
+      iconColor: styles.icon,
+      statusLabel: styles.label,
+      isExploded: styles.exploded,
     };
   }, [obraAtiva]);
 
@@ -481,12 +546,11 @@ const PMP = () => {
     queryKey: ["pmp_atividades", obraAtiva?.id],
     queryFn: async () => {
       if (!obraAtiva?.id) return [];
-      // Ordena por ordem (se existir) ou created_at
       const { data } = await supabase
         .from("pmp_atividades" as any)
         .select("*")
         .eq("obra_id", obraAtiva.id)
-        .order("ordem", { ascending: true, nullsFirst: false }) // Tenta ordenar por ordem
+        .order("ordem", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       return (data || []) as unknown as PmpAtividade[];
     },
@@ -506,7 +570,6 @@ const PMP = () => {
     });
   };
 
-  // Mutation para atualizar ordem e semana
   const moveMutation = useMutation({
     mutationFn: async ({ id, newDataInicio, newDataTermino, novaSemanaRef, novaOrdem }: any) => {
       const updateData: any = { semana_referencia: novaSemanaRef };
@@ -534,12 +597,15 @@ const PMP = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
+      const maxOrder = atividades.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
+      const dataWithOrder = { ...data, ordem: maxOrder + 1000 };
+
       if (editingId)
         await supabase
           .from("pmp_atividades" as any)
           .update(data)
           .eq("id", editingId);
-      else await supabase.from("pmp_atividades" as any).insert({ obra_id: obraAtiva.id, ...data });
+      else await supabase.from("pmp_atividades" as any).insert({ obra_id: obraAtiva.id, ...dataWithOrder });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
@@ -561,11 +627,11 @@ const PMP = () => {
     },
   });
 
-  // --- DRAG AND DROP HANDLERS ---
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.atividade) setActiveDragItem(event.active.data.current.atividade as PmpAtividade);
   };
 
+  // --- LÓGICA DE REORDENAÇÃO ---
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragItem(null);
@@ -577,24 +643,47 @@ const PMP = () => {
     const originWeekId = active.data.current?.originWeekId as string;
     let targetWeekId = "";
 
-    // Se soltou sobre uma coluna
     if (over.data.current?.type === "Column") {
       targetWeekId = over.data.current.weekId;
-    }
-    // Se soltou sobre outro card (pega a coluna do card alvo)
-    else if (over.data.current?.originWeekId) {
+    } else if (over.data.current?.originWeekId) {
       targetWeekId = over.data.current.originWeekId;
     }
 
     if (!targetWeekId) return;
 
     // Calcular nova ordem
-    // Logica simples: Se mudou de posição visualmente, calculamos a nova ordem.
-    // Como estamos usando Sortable, active.id e over.id nos dão as posições relativas.
-    // Para simplificar: apenas atualizamos a semana. A reordenação fina requer mais lógica de backend (recalcular indices).
-    // Mas vamos permitir o drop na mesma coluna.
+    let novaOrdem = activeTask.ordem || 0;
 
-    // Se mudou de semana, atualiza datas
+    // Pegar todas as tarefas da semana de destino (para calcular ordem relativa)
+    const targetTasks = getTasksForWeek(
+      parseISO(targetWeekId), // data da semana
+      addDays(parseISO(targetWeekId), 6),
+    );
+
+    if (over.data.current?.type !== "Column") {
+      const overTask = over.data.current?.atividade as PmpAtividade;
+      if (overTask) {
+        // Lógica simples: se arrastou pra cima, ordem menor. Se pra baixo, maior.
+        // Para maior precisão, deveria usar indices do array visual, mas isso é complexo sem estado local.
+        // Vamos usar a ordem do alvo e subtrair/somar um delta.
+        const delta = 500;
+        if (activeTask.ordem && overTask.ordem) {
+          if (activeTask.ordem > overTask.ordem) {
+            novaOrdem = overTask.ordem - delta;
+          } else {
+            novaOrdem = overTask.ordem + delta;
+          }
+        } else {
+          novaOrdem = (overTask.ordem || 0) + delta;
+        }
+      }
+    } else {
+      // Soltou na coluna (final)
+      const maxOrder = targetTasks.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
+      novaOrdem = maxOrder + 1000;
+    }
+
+    // Datas
     let newDataInicio = null;
     let newDataTermino = null;
 
@@ -612,17 +701,12 @@ const PMP = () => {
       }
     }
 
-    // Calcula uma nova "ordem" baseada na posição do drop (simplificado)
-    // Se houver suporte no backend, isso salvará a ordem.
-    const newIndex = over.data.current?.sortable?.index || 0;
-    const novaOrdem = newIndex * 1000; // Exemplo simples
-
     moveMutation.mutate({
       id: activeTask.id,
       newDataInicio,
       newDataTermino,
       novaSemanaRef: targetWeekId,
-      novaOrdem, // Envia a nova ordem se a coluna existir no banco
+      novaOrdem,
     });
   };
 
@@ -674,10 +758,210 @@ const PMP = () => {
 
   if (!obraAtiva) return <div className="flex justify-center items-center h-screen">Selecione uma obra</div>;
 
-  // Renderização principal
+  // LAYOUT MOBILE
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full min-h-0 bg-slate-50/30">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handlePlantaUpload(file);
+            e.target.value = "";
+          }}
+        />
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 overflow-y-auto pb-32">
+            <div className="px-4 pt-3 pb-2 bg-white border-b border-slate-100">
+              <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <CalendarRange className="h-5 w-5 text-primary" /> PMP
+              </h1>
+            </div>
+
+            {/* Bomba Mobile */}
+            {daysRemaining !== null && (
+              <div
+                className={`mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}
+              >
+                <div className={`relative p-2 rounded-full bg-white/20 border-2 border-current ${iconColor}`}>
+                  <Bomb className={`h-5 w-5 ${isExploded ? "animate-bounce" : "animate-pulse"}`} />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${urgencyText}`}>
+                    {statusLabel}
+                  </span>
+                  <div className={`text-xl font-black font-mono leading-none flex items-center gap-1 ${urgencyText}`}>
+                    {daysRemaining < 0 ? (
+                      <span>ATRASO {Math.abs(daysRemaining)}D</span>
+                    ) : daysRemaining === 0 ? (
+                      "VENCE HOJE!"
+                    ) : (
+                      <>
+                        {daysRemaining} <span className="text-[10px] font-bold self-end mb-0.5">DIAS</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-5 px-4 pt-4">
+              {weeks.map((week) => (
+                <div key={week.id} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100">
+                    <span className="font-bold">{week.label}</span>
+                  </div>
+                  <div className="bg-white/50 rounded-xl border border-dashed border-slate-200 p-3 min-h-[80px]">
+                    <KanbanColumn weekId={week.id} tasks={getTasksForWeek(week.start, week.end)}>
+                      {getTasksForWeek(week.start, week.end).map((atividade) => (
+                        <KanbanCard
+                          key={`${atividade.id}::${week.id}`}
+                          weekId={week.id}
+                          atividade={atividade}
+                          onDelete={(id) => deleteMutation.mutate(id)}
+                          onClick={handleOpenEdit}
+                          onToggleCheck={(id, s) => toggleCheckMutation.mutate({ id, novoStatus: !s })}
+                        />
+                      ))}
+                    </KanbanColumn>
+                    <Button variant="ghost" className="w-full mt-2" onClick={() => handleOpenAdd(week.id)}>
+                      <Plus className="h-5 w-5 mr-2" /> Adicionar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4 mx-4 mt-6 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-slate-700 text-sm">Planta de Setores</h3>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingPlanta}
+                  >
+                    {isUploadingPlanta ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                  </Button>
+                  {obraAtiva.pmp_planta_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs text-red-600"
+                      onClick={handleRemovePlanta}
+                      disabled={isUploadingPlanta}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {obraAtiva.pmp_planta_url && !imageError ? (
+                <div className="relative rounded-lg overflow-hidden border border-slate-100">
+                  <img
+                    src={obraAtiva.pmp_planta_url}
+                    alt="Planta"
+                    className="w-full h-auto object-contain"
+                    onError={() => setImageError(true)}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                  <ImageIcon className="h-10 w-10 text-slate-300 mb-2" />
+                  <p className="text-xs text-slate-500">Importe a planta</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 h-9"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" /> Selecionar
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+          <DragOverlay dropAnimation={dropAnimation}>
+            {activeDragItem ? <KanbanCard atividade={activeDragItem} weekId="overlay" isOverlay /> : null}
+          </DragOverlay>
+        </DndContext>
+
+        <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+          <DialogContent className="max-w-[95vw] rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar" : "Nova"} Atividade</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-3">
+              <Input
+                placeholder="Título"
+                value={formData.titulo}
+                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                autoFocus
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  type="date"
+                  value={formData.data_inicio}
+                  onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+                />
+                <Input
+                  type="date"
+                  value={formData.data_termino}
+                  onChange={(e) => setFormData({ ...formData, data_termino: e.target.value })}
+                />
+              </div>
+              <Input
+                placeholder="Responsável"
+                value={formData.responsavel}
+                onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+              />
+              <Select value={formData.setor} onValueChange={(value) => setFormData({ ...formData, setor: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {setores.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(POSTIT_COLORS).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setFormData({ ...formData, cor: key as ColorKey })}
+                    className={`w-9 h-9 rounded-full border-2 transition-all ${COLOR_BG_MAP[key as ColorKey]} ${formData.cor === key ? "border-slate-600 scale-110 ring-2 ring-offset-2 ring-slate-200" : "border-transparent"}`}
+                  />
+                ))}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleSaveForm}>Salvar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // DESKTOP
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col space-y-4 font-sans bg-slate-50/30">
-      {/* HEADER */}
+    <div className="min-h-screen flex flex-col space-y-4 font-sans bg-slate-50/30 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-end px-2 py-2 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -688,9 +972,19 @@ const PMP = () => {
             {obraAtiva.nome_obra} • {weeks.length} semanas
           </p>
         </div>
+        {daysRemaining !== null && (
+          <div
+            className={`flex items-center gap-3 px-5 py-3 rounded-lg border-2 ${urgencyBg} ${urgencyBorder} shadow-sm`}
+          >
+            <Bomb className={`h-6 w-6 ${iconColor}`} />
+            <div>
+              <span className={`text-[10px] font-black uppercase ${urgencyText}`}>{statusLabel}</span>
+              <div className={`text-2xl font-black ${urgencyText}`}>{daysRemaining} DIAS</div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* KANBAN BOARD */}
       <div className="h-[580px] w-full border border-slate-200 rounded-xl bg-white shadow-sm flex-shrink-0 overflow-hidden flex flex-col">
         <DndContext
           sensors={sensors}
@@ -751,7 +1045,6 @@ const PMP = () => {
         </DndContext>
       </div>
 
-      {/* PLANTA DE SETORES */}
       <div className="h-[450px] w-full border border-slate-200 rounded-xl bg-white shadow-sm p-4 flex-shrink-0 flex flex-col">
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -789,7 +1082,6 @@ const PMP = () => {
             )}
           </div>
         </div>
-
         <div className="flex-1 w-full overflow-hidden rounded-lg border border-slate-100 bg-slate-50 relative flex items-center justify-center">
           {obraAtiva.pmp_planta_url && !imageError ? (
             <img
@@ -800,14 +1092,22 @@ const PMP = () => {
             />
           ) : (
             <div className="flex flex-col items-center text-slate-400">
-              <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
-              <p className="text-sm">Nenhuma planta cadastrada</p>
+              {imageError ? (
+                <>
+                  <AlertCircle className="h-12 w-12 mb-2 text-red-400 opacity-50" />
+                  <p className="text-sm text-red-500 font-medium">Erro ao carregar imagem</p>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
+                  <p className="text-sm">Nenhuma planta cadastrada</p>
+                </>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* MODAL */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
@@ -836,7 +1136,6 @@ const PMP = () => {
               value={formData.responsavel}
               onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
             />
-
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-slate-700">Setor</label>
@@ -867,8 +1166,6 @@ const PMP = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* SELETOR DE CORES CORRIGIDO */}
             <div className="flex flex-wrap gap-2">
               {Object.keys(POSTIT_COLORS).map((key) => (
                 <button
