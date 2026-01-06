@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Loader2,
   Plus,
@@ -23,8 +24,11 @@ import {
   AlertCircle,
   Bomb,
   AlarmClock,
+  MapPin,
+  Settings,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { registrosService } from "@/services/registroService";
 import {
   format,
   addDays,
@@ -76,6 +80,7 @@ interface PmpAtividade {
   data_termino?: string | null;
   responsavel?: string | null;
   concluido?: boolean;
+  setor?: string | null;
 }
 
 // --- CARD (Draggable) ---
@@ -274,11 +279,46 @@ const PMP = () => {
     responsavel: "",
     data_inicio: "",
     data_termino: "",
+    setor: "",
   });
 
   const [activeDragItem, setActiveDragItem] = useState<PmpAtividade | null>(null);
+  const [isSetorModalOpen, setIsSetorModalOpen] = useState(false);
+  const [newSetor, setNewSetor] = useState("");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // Query para buscar setores cadastrados
+  const { data: setores = [], refetch: refetchSetores } = useQuery({
+    queryKey: ['registros-pmp-setores', obraAtiva?.id],
+    queryFn: async () => {
+      if (!obraAtiva?.id) return [];
+      const registros = await registrosService.listarRegistros(obraAtiva.id);
+      return registros.filter(r => r.tipo === 'sector').map(r => r.valor);
+    },
+    enabled: !!obraAtiva?.id,
+  });
+
+  // Mutation para adicionar setor
+  const addSetorMutation = useMutation({
+    mutationFn: async (valor: string) => {
+      if (!obraAtiva?.id) throw new Error('Nenhuma obra selecionada');
+      await registrosService.criarRegistro({
+        obra_id: obraAtiva.id,
+        tipo: 'sector',
+        valor: valor.trim(),
+      });
+    },
+    onSuccess: () => {
+      refetchSetores();
+      setNewSetor("");
+      setIsSetorModalOpen(false);
+      toast({ title: "Setor cadastrado com sucesso!" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao cadastrar setor", variant: "destructive" });
+    },
+  });
 
   // Lógica da Bomba Relógio
   const { daysRemaining, urgencyBg, urgencyBorder, urgencyText, iconColor, statusLabel, isExploded } = useMemo(() => {
@@ -537,6 +577,7 @@ const PMP = () => {
       responsavel: "",
       data_inicio: weekId,
       data_termino: addDays(parseISO(weekId), 5).toISOString().split("T")[0],
+      setor: "",
     });
     setIsModalOpen(true);
   };
@@ -549,6 +590,7 @@ const PMP = () => {
       responsavel: atividade.responsavel || "",
       data_inicio: atividade.data_inicio ? atividade.data_inicio.split("T")[0] : atividade.semana_referencia,
       data_termino: atividade.data_termino ? atividade.data_termino.split("T")[0] : "",
+      setor: atividade.setor || "",
     });
     setIsModalOpen(true);
   };
@@ -568,6 +610,7 @@ const PMP = () => {
       data_inicio: formData.data_inicio || null,
       data_termino: formData.data_termino || null,
       semana_referencia: semanaRef,
+      setor: formData.setor || null,
     });
   };
 
@@ -760,6 +803,39 @@ const PMP = () => {
                     onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700">Setor</label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-primary hover:text-primary/80"
+                    onClick={() => setIsSetorModalOpen(true)}
+                  >
+                    <Settings className="h-3 w-3 mr-1" /> Cadastrar
+                  </Button>
+                </div>
+                <Select
+                  value={formData.setor}
+                  onValueChange={(value) => setFormData({ ...formData, setor: value })}
+                >
+                  <SelectTrigger className="h-12">
+                    <MapPin className="h-4 w-4 text-slate-400 mr-2" />
+                    <SelectValue placeholder="Selecione o setor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {setores.length > 0 ? (
+                      setores.map((setor) => (
+                        <SelectItem key={setor} value={setor}>{setor}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-3 text-center text-sm text-muted-foreground">
+                        Nenhum setor cadastrado
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-3 pt-1">
                 <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Categoria</span>
@@ -963,6 +1039,39 @@ const PMP = () => {
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">Setor</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs text-primary hover:text-primary/80"
+                  onClick={() => setIsSetorModalOpen(true)}
+                >
+                  <Settings className="h-3 w-3 mr-1" /> Cadastrar
+                </Button>
+              </div>
+              <Select
+                value={formData.setor}
+                onValueChange={(value) => setFormData({ ...formData, setor: value })}
+              >
+                <SelectTrigger>
+                  <MapPin className="h-4 w-4 text-slate-400 mr-2" />
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {setores.length > 0 ? (
+                    setores.map((setor) => (
+                      <SelectItem key={setor} value={setor}>{setor}</SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-3 text-center text-sm text-muted-foreground">
+                      Nenhum setor cadastrado
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-3 pt-2">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Categoria</span>
               <div className="flex flex-wrap gap-3">
@@ -994,6 +1103,61 @@ const PMP = () => {
             >
               {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL CADASTRAR SETOR */}
+      <Dialog open={isSetorModalOpen} onOpenChange={setIsSetorModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              Cadastrar Setor
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Nome do Setor</label>
+              <Input
+                placeholder="Ex: Térreo, 1º Pavimento, Área Externa..."
+                value={newSetor}
+                onChange={(e) => setNewSetor(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {setores.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-500 uppercase">Setores Cadastrados</label>
+                <div className="flex flex-wrap gap-2">
+                  {setores.map((setor) => (
+                    <Badge key={setor} variant="secondary" className="text-xs">
+                      {setor}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsSetorModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (newSetor.trim()) {
+                  addSetorMutation.mutate(newSetor);
+                }
+              }}
+              disabled={addSetorMutation.isPending || !newSetor.trim()}
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              {addSetorMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Cadastrar
             </Button>
           </DialogFooter>
         </DialogContent>
