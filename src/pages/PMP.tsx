@@ -367,7 +367,7 @@ const PMP = () => {
 
   // --- QUERIES ---
 
-  // 1. Obra Atual
+  // 1. Obra Atual - Cast explícito para 'any' para evitar erros de tipagem
   const { data: obraData } = useQuery<any>({
     queryKey: ["obra_atual", obraAtivaContext?.id],
     queryFn: async () => {
@@ -576,19 +576,24 @@ const PMP = () => {
     },
   });
 
-  // === MUTATION CORRIGIDA PARA SALVAR RESTRIÇÕES ===
+  // === MUTATION CORRIGIDA E DEBUGADA ===
   const saveMutation = useMutation({
     mutationFn: async (inputData: any) => {
-      // Extrai restrições do objeto de dados
       const { restricoes, ...data } = inputData;
       let atividadeId = editingId;
 
+      console.log("Iniciando SaveMutation", { editingId, data, restricoes });
+
       // 1. Salva ou Atualiza Atividade
       if (editingId) {
-        await supabase
+        const { error } = await supabase
           .from("pmp_atividades" as any)
           .update(data)
           .eq("id", editingId);
+        if (error) {
+          console.error("Erro ao atualizar atividade:", error);
+          throw error;
+        }
       } else {
         const maxOrder = atividades.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
         const { data: inserted, error } = await supabase
@@ -596,12 +601,16 @@ const PMP = () => {
           .insert({ obra_id: obraAtiva.id, ordem: maxOrder + 1000, ...data })
           .select()
           .single();
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao criar atividade:", error);
+          throw error;
+        }
         atividadeId = inserted.id;
       }
 
-      // 2. Salva Restrições Novas (usando a lista passada por parâmetro)
+      // 2. Salva Restrições Novas
       const novasRestricoes = restricoes ? restricoes.filter((r: any) => !r.id) : [];
+      console.log("Novas Restrições a inserir:", novasRestricoes);
 
       if (novasRestricoes.length > 0 && atividadeId) {
         const payload = novasRestricoes.map((r: any) => ({
@@ -611,13 +620,24 @@ const PMP = () => {
           resolvido: false,
         }));
         const { error: restError } = await supabase.from("pmp_restricoes" as any).insert(payload);
-        if (restError) throw restError;
+        if (restError) {
+          console.error("Erro ao inserir restrições:", restError);
+          throw restError;
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pmp_atividades"] });
       handleCloseModal();
       toast({ title: "Salvo com sucesso" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao salvar",
+        description: "Verifique o console para mais detalhes. Possível erro de permissão (RLS).",
+        variant: "destructive",
+      });
+      console.error("Erro completo na mutation:", error);
     },
   });
 
@@ -724,12 +744,11 @@ const PMP = () => {
 
     let novaOrdem = activeTask.ordem || 0;
 
-    // Se soltou sobre um CARD (não na coluna vazia)
+    // Se soltou sobre um CARD
     if (over.data.current?.type !== "Column") {
       const overTask = over.data.current?.atividade as PmpAtividade;
       if (overTask) {
         const delta = 500;
-        // Se já tem ordem, calcula média/delta
         if (activeTask.ordem && overTask.ordem) {
           if (activeTask.ordem > overTask.ordem) {
             novaOrdem = overTask.ordem - delta; // Moveu pra cima
@@ -741,7 +760,7 @@ const PMP = () => {
         }
       }
     } else {
-      // Se soltou na COLUNA (vazia ou no fim), vai pro final daquela semana
+      // Se soltou na COLUNA
       const targetTasks = getTasksForWeek(parseISO(targetWeekId), addDays(parseISO(targetWeekId), 6));
       const maxOrder = targetTasks.reduce((max, t) => Math.max(max, t.ordem || 0), 0);
       novaOrdem = maxOrder + 1000;
@@ -750,7 +769,6 @@ const PMP = () => {
     let newDataInicio = null;
     let newDataTermino = null;
 
-    // Se mudou de coluna, atualiza datas
     if (targetWeekId !== originWeekId) {
       const originDate = parseISO(originWeekId);
       const targetDate = parseISO(targetWeekId);
@@ -830,11 +848,9 @@ const PMP = () => {
     setEditingId(null);
   };
 
-  // === SAVE FORM CORRIGIDO ===
   const handleSaveForm = () => {
     if (!formData.titulo) return toast({ title: "Título obrigatório", variant: "destructive" });
     const semanaRef = formData.data_inicio || format(new Date(), "yyyy-MM-dd");
-    // Passa 'restricoes' explicitamente para garantir que a mutation pegue o estado atual
     saveMutation.mutate({
       ...formData,
       semana_referencia: semanaRef,
